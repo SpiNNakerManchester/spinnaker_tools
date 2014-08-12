@@ -1,0 +1,52 @@
+# Common includes for making SpiNNaker binaries
+
+GNU := 1
+LIB := 0
+
+# If SPINN_DIRS is not defined, this is an error!
+ifndef SPINN_DIRS
+    $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker tools folder))
+endif
+SPINN_LIB_DIR = $(SPINN_DIRS)/lib
+SPINN_INC_DIR = $(SPINN_DIRS)/include
+SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
+
+
+# ------------------------------------------------------------------------------
+# Tools
+
+ifeq ($(GNU),1)
+  GP := arm-none-eabi
+  AS := $(GP)-as --defsym GNU=1 -mthumb-interwork -march=armv5te
+  CA := $(GP)-gcc -c -Os -mthumb-interwork -march=armv5te -std=gnu99 -I $(SPINN_INC_DIR)
+  CC := $(CA) -mthumb -DTHUMB
+  ifeq ($(LIB), 1)
+    CFLAGS += -fdata-sections -ffunction-sections
+  endif
+
+  SCRIPT := $(SPINN_TOOLS_DIR)/sark.lnk
+
+  LD := $(GP)-ld -i
+  AR := $(GP)-ar -rcs
+  OC := $(GP)-objcopy
+  OD := $(GP)-objdump -dxt > $(APP).txt
+
+else
+  AS := armasm --keep --cpu=5te --apcs /interwork
+  CA := armcc -c --c99 --cpu=5te -Ospace --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
+  CC := $(CA) --thumb -DTHUMB
+  ifeq ($(LIB), 1)
+    CFLAGS += --split_sections
+  endif
+
+  SCRIPT := $(SPINN_TOOLS_DIR)/sark.sct
+
+  LD := armlink --partial
+
+  AR := armar -rsc
+  OC := fromelf
+  OD := fromelf -cds --output $(APP).txt
+
+endif
+
+RM := rm -f

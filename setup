@@ -1,0 +1,10 @@
+#!/bin/sh
+# Setup script to define the location of this library and the output folders
+# to allow this library to be used in other builds
+set -a
+
+# Define the location of this library
+SPINN_DIRS=$PWD
+
+# Define the version of this library
+SPINN_VERSION=131

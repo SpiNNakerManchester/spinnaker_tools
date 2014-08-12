@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+
+# Utility to read two files, pad them both to a multiple of 4 bytes
+# and write to stdout. The files are assumed to be less than 64KB.
+
+use strict;
+use warnings;
+
+die "bad args\n" unless $#ARGV == 1 && -r $ARGV[0] && -r $ARGV[1];
+
+open my ($fh), "<", $ARGV[0] or die;
+binmode($fh);
+my $len_ro = sysread $fh, my ($buf_ro), 65536;
+close $fh;
+
+open $fh, "<", $ARGV[1] or die;
+binmode($fh);
+my $len_rw = sysread $fh, my ($buf_rw), 65536;
+close $fh;
+
+my $pad_ro = (($len_ro & 3) != 0) ? 4 - ($len_ro & 3) : 0;
+my $pad_rw = (($len_rw & 3) != 0) ? 4 - ($len_rw & 3) : 0;
+
+binmode(STDOUT);
+print $buf_ro, chr(0) x $pad_ro, $buf_rw, chr(0) x $pad_rw;
