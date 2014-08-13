@@ -1,7 +1,11 @@
 # Common includes for making SpiNNaker binaries
 
-GNU := 1
-LIB := 0
+ifndef GNU
+    GNU := 1
+endif
+ifndef LIB
+    LIB := 0
+endif
 
 # If SPINN_DIRS is not defined, this is an error!
 ifndef SPINN_DIRS

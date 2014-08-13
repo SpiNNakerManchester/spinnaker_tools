@@ -4,6 +4,8 @@ BUILD_DIR := ../build
 LIB := 1
 include ../Makefile.common
 
+CFLAGS += -DSARK_API
+
 #-------------------------------------------------------------------------------
 ifeq ($(GNU),1)
     LIBNAME := libsark
