@@ -22,16 +22,17 @@ SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
 ifeq ($(GNU),1)
   GP := arm-none-eabi
   AS := $(GP)-as --defsym GNU=1 -mthumb-interwork -march=armv5te
-  CA := $(GP)-gcc -c -Os -mthumb-interwork -march=armv5te -std=gnu99 -I $(SPINN_INC_DIR)
-  CC := $(CA) -mthumb -DTHUMB
   
   ifeq ($(LIB), 1)
+    CA := $(GP)-gcc -c -Os -mthumb-interwork -march=armv5te -std=gnu99 -I $(SPINN_INC_DIR)
     CFLAGS += -fdata-sections -ffunction-sections
     LD := $(GP)-ld -i
   else
+    CA := $(GP)-gcc -mthumb-interwork -march=armv5te -std=gnu99 -I $(SPINN_INC_DIR) -c
     LD := $(GP)-gcc -T$(SPINN_TOOLS_DIR)/sark.lnk -Wl,-e,cpu_reset -Wl,-static -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
   endif
   
+  CC := $(CA) -mthumb -DTHUMB
   AR := $(GP)-ar -rcs
   OC := $(GP)-objcopy
   OD := $(GP)-objdump -dxt
