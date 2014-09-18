@@ -8,3 +8,6 @@ SPINN_DIRS=$PWD
 
 # Define the version of this library
 SPINN_VERSION=131
+
+chmod u+x $SPINN_DIRS/tools/*
+
