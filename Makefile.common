@@ -32,7 +32,7 @@ ifeq ($(GNU),1)
     LD := $(GP)-gcc -T$(SPINN_TOOLS_DIR)/sark.lnk -Wl,-e,cpu_reset -Wl,-static -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
   endif
   
-  CC := $(CA) -mthumb -DTHUMB
+  CC := $(CA)
   AR := $(GP)-ar -rcs
   OC := $(GP)-objcopy
   OD := $(GP)-objdump -dxt
@@ -41,7 +41,7 @@ ifeq ($(GNU),1)
 else
   AS := armasm --keep --cpu=5te --apcs /interwork
   CA := armcc -c --c99 --cpu=5te -Ospace --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
-  CC := $(CA) --thumb -DTHUMB
+  CC := $(CA)
   
   ifeq ($(LIB), 1)
     CFLAGS += --split_sections
