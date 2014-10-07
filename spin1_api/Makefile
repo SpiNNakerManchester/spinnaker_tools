@@ -37,10 +37,10 @@ $(SARKOBJ):
 # API
 
 $(BUILD_DIR)/spin1_api.o: spin1_api.c $(HEADER) 
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC_THUMB) $(CFLAGS) -o $@ $<
 
 $(BUILD_DIR)/spin1_isr.o: spin1_isr.c $(HEADER) 
-	$(CA) $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 
 #-------------------------------------------------------------------------------
 

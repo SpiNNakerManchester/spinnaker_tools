@@ -69,10 +69,10 @@ endif
 # SARK C sources
 
 $(BUILD_DIR)/%.o: %.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h $(SPINN_INC_DIR)/spin1_api.h
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC_THUMB) $(CFLAGS) -o $@ $<
 	
 $(BUILD_DIR)/sark_isr.o: sark_isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h $(SPINN_INC_DIR)/spin1_api.h
-	$(CA) $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 
 #-------------------------------------------------------------------------------
 
