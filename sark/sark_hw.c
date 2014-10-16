@@ -279,14 +279,18 @@ void rtr_mc_init (uint start)
 // the first entry) holds the count which is used if the count
 // parameter is zero. The parameter offset is added to the entry
 // number to address each router table entry
+// If the "app_id" parameter is non-zero it is used to force the
+// app_id in the copy table.
 
-uint rtr_mc_load (rtr_entry_t *e, uint count, uint offset)
+uint rtr_mc_load (rtr_entry_t *e, uint count, uint offset, uint app_id)
 {
   if (count == 0)
     count = e->free;
 
   if (count > MC_TABLE_SIZE)
     return 0;
+
+  app_id <<= 24;
 
   for (uint i = 0; i < count; i++)
     {
@@ -295,7 +299,7 @@ uint rtr_mc_load (rtr_entry_t *e, uint count, uint offset)
       if (entry >= MC_TABLE_SIZE)
 	return 0;
 
-      rtr_mc_set (entry, e->key, e->mask, e->route);
+      rtr_mc_set (entry, e->key, e->mask, app_id + e->route);
       e++;
     }
 
@@ -311,10 +315,15 @@ uint rtr_mc_set (uint entry, uint key, uint mask, uint route)
     return 0;
 
   rtr_entry_t *copy = sv->rtr_copy + entry;
+  uint app_id = route >> 24;
+
+  if (app_id == 0)
+    app_id = sark_vec->app_id;
 
   route &= 0x00ffffff;
+
   copy->route = route;
-  copy->free = 0x8000 + (sark.virt_cpu << 8) + sark_vec->app_id;
+  copy->free = 0x8000 + (sark.virt_cpu << 8) + app_id;
 
   uint phys_mask = v2p_mask (route >> NUM_LINKS);
   route &= (1 << NUM_LINKS) - 1;

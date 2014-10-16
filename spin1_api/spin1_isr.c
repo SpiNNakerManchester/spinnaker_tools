@@ -66,7 +66,7 @@ INT_HANDLER cc_rx_ready_isr (void)
 
       if (callback[MCPL_PACKET_RECEIVED].cback != NULL)
 	schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
-#if API_DEBUG == TRUE
+#if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
 	thrown++;
 #endif
@@ -77,7 +77,7 @@ INT_HANDLER cc_rx_ready_isr (void)
 
       if(callback[MC_PACKET_RECEIVED].cback != NULL)
 	schedule (MC_PACKET_RECEIVED, rx_key, 0);
-#if API_DEBUG == TRUE
+#if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
 	thrown++;
 #endif
@@ -436,15 +436,15 @@ INT_HANDLER soft_int_isr ()
   // Clear software interrupt in the VIC
 
   vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
-  
-  // Clear flag to indicate event has been serviced
-
-  user_pending = FALSE;
 
   // If application callback registered schedule it
 
   if (callback[USER_EVENT].cback != NULL)
     schedule (USER_EVENT, user_arg0, user_arg1);
+
+  // Clear flag to indicate event has been serviced
+
+  user_pending = FALSE;
 
   // Ack VIC
 
@@ -471,13 +471,13 @@ INT_HANDLER soft_int_fiqsr ()
 
   vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
 
-  // Clear flag to indicate event has been serviced
-
-  user_pending = FALSE;
-
   // Execute preeminent callback
 
   callback[USER_EVENT].cback (user_arg0, user_arg1);
+
+  // Clear flag to indicate event has been serviced
+
+  user_pending = FALSE;
 }
 /*
 *******/

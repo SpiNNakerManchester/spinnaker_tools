@@ -543,7 +543,7 @@ is not in use.
 typedef struct app_data
 {
   uchar cores;			//!< Number of cores using this ID
-  uchar clean;			//!< Set if this ID has been celaned
+  uchar clean;			//!< Set if this ID has been cleaned
   uchar sema;			//!< Semaphore
   uchar lead;			//!< Lead core number
   uint mask;			//!< Mask of cores using this ID
@@ -2029,15 +2029,17 @@ is an array of "rtr_entry_t". the "next" field holds the entry number
 to be loaded. If the count parameter is zero, the count is taken from
 the "free" field of the first entry entry in the table. The offset
 parameter is added to the entry number to address each router table
-entry
+entry. The "app_id" parameter sets the app_id in the router table
+copy if non-zero. Otherwise it will be taken from SARK.
 
 \param e pointer to first entry in table
 \param count size of table (or 0 to use count from table)
 \param offset added to entry numbers from table
+\param app_id sets app_id in table if non-zero
 \return 1 if successful, 0 on failure (count or entry out of range)
 */
 
-uint rtr_mc_load (rtr_entry_t *e, uint count, uint offset);
+uint rtr_mc_load (rtr_entry_t *e, uint count, uint offset, uint app_id);
 
 /*!
 Sets a given entry in the router MC table. The supplied route is based

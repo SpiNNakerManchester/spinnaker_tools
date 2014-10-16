@@ -596,7 +596,7 @@ static volatile uint * const cc  = (uint *) CC_BASE;
 static volatile uint * const tc  = (uint *) TIMER_BASE;
 static volatile uint * const tc1 = (uint *) TIMER1_BASE;
 static volatile uint * const tc2 = (uint *) TIMER2_BASE;;
-static volatile uint * const vic = (uint *) VIC_BASE;
+static volatile uint * const vic = (uint *) VIC_BASE_UNBUF; // NB unbuffered
 static volatile uint * const dma = (uint *) DMA_BASE;
 
 static volatile uint * const sc  = (uint *) SYSCTL_BASE;

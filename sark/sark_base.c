@@ -27,7 +27,7 @@ void __attribute__((weak)) schedule_sysmode (uchar event_id,
 
 //------------------------------------------------------------------------------
 
-#define SARK_VER_NUM  		130
+#define SARK_VER_NUM  		133
 
 #define SARK_VER_STR		"SARK/SpiNNaker"
 
