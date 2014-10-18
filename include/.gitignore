@@ -1,0 +1,6 @@
+*
+!.gitignore
+!sark.h
+!spin1_api_params.h
+!spin1_api.h
+!spinnaker.h
