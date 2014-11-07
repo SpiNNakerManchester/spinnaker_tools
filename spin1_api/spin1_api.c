@@ -531,7 +531,9 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
 
   if (priority < 0)
   {
-    if (fiq_event == -1)
+    if (fiq_event == -1 ||
+	(event_id == MC_PACKET_RECEIVED && fiq_event == MCPL_PACKET_RECEIVED) ||
+	(event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED))
       fiq_event = event_id;
     else
       rt_error (RTE_API);
@@ -543,7 +545,7 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
     {
       if (pkt_prio == -2)
 	pkt_prio = priority;
-      else if (pkt_prio == -1 && priority != -1)
+      else if (pkt_prio != priority)
 	rt_error (RTE_API);
     }
 }
