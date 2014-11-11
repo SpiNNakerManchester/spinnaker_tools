@@ -47,8 +47,11 @@
 /* function results   */
 #define SUCCESS            (uint) 1
 #define FAILURE            (uint) 0
+
+#ifndef NULL
 /* Null pointer value */
 #define NULL               0
+#endif // NULL
 
 // ------------------------------------------------------------------------
 // event definitions
