@@ -15,47 +15,50 @@ SPINN_LIB_DIR = $(SPINN_DIRS)/lib
 SPINN_INC_DIR = $(SPINN_DIRS)/include
 SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
 
-
 # ------------------------------------------------------------------------------
 # Tools
 
 ifeq ($(GNU),1)
-  GP := arm-none-eabi
-  AS := $(GP)-as --defsym GNU=1 -mthumb-interwork -march=armv5te
-  
-  ifeq ($(LIB), 1)
-    CC := $(GP)-gcc -c -Os -mthumb-interwork -march=armv5te -std=gnu99 -I $(SPINN_INC_DIR)
-    CFLAGS += -fdata-sections -ffunction-sections
-    LD := $(GP)-ld -i
-  else
-    CC := $(GP)-gcc -mthumb-interwork -march=armv5te -std=gnu99 -I $(SPINN_INC_DIR) -c
-    LD := $(GP)-gcc -T$(SPINN_TOOLS_DIR)/sark.lnk -Wl,-e,cpu_reset -Wl,-static -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
-    LFLAGS += -L $(SPINN_LIB_DIR)
-  endif
-  
-  CC_THUMB := $(CC) -mthumb -DTHUMB
-  AR := $(GP)-ar -rcs
-  OC := $(GP)-objcopy
-  OD := $(GP)-objdump -dxt
-  NM := $(GP)-nm
+
+    # GNU Compiler (gcc) settings
+    GP := arm-none-eabi
+    AS := $(GP)-as --defsym GNU=1 -mthumb-interwork -march=armv5te
+    
+    ifeq ($(LIB), 1)
+        CC := $(GP)-gcc -c -Os -mthumb-interwork -march=armv5te -std=gnu99 -I $(SPINN_INC_DIR)
+        CFLAGS += -fdata-sections -ffunction-sections
+        LD := $(GP)-ld -i
+    else
+        CC := $(GP)-gcc -mthumb-interwork -march=armv5te -std=gnu99 -I $(SPINN_INC_DIR) -c
+        LD := $(GP)-gcc -T$(SPINN_TOOLS_DIR)/sark.lnk -Wl,-e,cpu_reset -Wl,-static -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
+        LFLAGS += -L $(SPINN_LIB_DIR)
+    endif
+    
+    CC_THUMB := $(CC) -mthumb -DTHUMB
+    AR := $(GP)-ar -rcs
+    OC := $(GP)-objcopy
+    OD := $(GP)-objdump -dxt
+    NM := $(GP)-nm
+    SPINN_LIBS += $(SPINN_LIB_DIR)/libspin1_api.a
 
 else
-  AS := armasm --keep --cpu=5te --apcs /interwork
-  CC := armcc -c --c99 --cpu=5te -Ospace --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
-  CC_THUMB := $(CC) --thumb -DTHUMB
-  
-  ifeq ($(LIB), 1)
-    CFLAGS += --split_sections
-    LD := armlink --partial
-  else
-    LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct --remove --entry cpu_reset
-  endif
-
-  AR := armar -rsc
-  OC := fromelf
-  OD := fromelf -cds --output
-  NM := nm
-
+    # ARM Compiler settings
+    AS := armasm --keep --cpu=5te --apcs /interwork
+    CC := armcc -c --c99 --cpu=5te -Ospace --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
+    CC_THUMB := $(CC) --thumb -DTHUMB
+    
+    ifeq ($(LIB), 1)
+        CFLAGS += --split_sections
+        LD := armlink --partial
+    else
+        LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct --remove --entry cpu_reset
+    endif
+    
+    AR := armar -rsc
+    OC := fromelf
+    OD := fromelf -cds --output
+    NM := nm
+    SPINN_LIBS += $(SPINN_LIB_DIR)/spin1_api.a
 endif
 
 RM := rm -f
