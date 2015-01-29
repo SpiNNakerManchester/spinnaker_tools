@@ -61,3 +61,35 @@ endif
 RM := rm -f
 CAT = cat
 LS  = ls -l
+
+# Primary target is an APLX file - built from the ELF
+#  1) Create a binary file which is the concatenation of RO and RW sections
+#  2) Make an APLX header from the ELF file with "mkaplx" and concatenate
+#     that with the binary to make the APLX file
+#  3) Remove temporary files and "ls" the APLX file
+$(APP_OUTPUT_DIR)%.aplx: $(BUILD_DIR)%.elf
+ifeq ($(GNU),1)
+	$(OC) -O binary -j RO_DATA $< $(BUILD_DIR)RO_DATA.bin
+	$(OC) -O binary -j RW_DATA $< $(BUILD_DIR)RW_DATA.bin
+	$(SPINN_TOOLS_DIR)/mkbin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin > $(BUILD_DIR)$*.bin
+else
+	$(OC) --bin --output $*.bin $<
+endif
+	$(SPINN_TOOLS_DIR)/mkaplx -nm $(NM) $< | $(CAT) - $(BUILD_DIR)$*.bin > $@
+	$(RM) $(BUILD_DIR)$*.bin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin
+	$(LS) $@
+
+# Build the ELF file
+#  1) Make a "sark_build.c" file containing app. name and build time
+#     with "mkbuild" and compile it
+#  2) Link application object(s), build file and library to make the ELF
+#  3) Tidy up temporaries and create a list file
+$(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT) $(SPINN_LIBS) 
+	$(SPINN_TOOLS_DIR)/mkbuild $* > $(BUILD_DIR)sark_build.c
+	$(CC) -o $(BUILD_DIR)sark_build.o $(BUILD_DIR)sark_build.c
+	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)sark_build.o $(SPINN_LIBS) $(LIBRARIES) -o $@
+	$(RM) $(BUILD_DIR)sark_build.c $(BUILD_DIR)sark_build.o
+	$(OD) > $(BUILD_DIR)$*.txt $@
+
+$(BUILD_DIR)%.o: %.c
+	$(CC) $(CFLAGS) -o $@ $<
