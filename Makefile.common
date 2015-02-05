@@ -14,6 +14,7 @@ endif
 SPINN_LIB_DIR = $(SPINN_DIRS)/lib
 SPINN_INC_DIR = $(SPINN_DIRS)/include
 SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
+SPINN_MAKE_LIB_DIR = $(SPINN_DIRS)/make_lib
 
 # ------------------------------------------------------------------------------
 # Tools
