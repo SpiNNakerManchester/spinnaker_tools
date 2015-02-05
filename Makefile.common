@@ -63,8 +63,10 @@ else
 endif
 
 RM := rm -f
-CAT = cat
-LS  = ls -l
+CAT := cat
+LS := ls -l
+MKDIR := mkdir -p
+CP := cp
 
 # Primary target is an APLX file - built from the ELF
 #  1) Create a binary file which is the concatenation of RO and RW sections
