@@ -37,7 +37,7 @@ above otherwise application compilation will fail.
 To quickly compile a simple single-file application for SpiNNaker, you can use
 the following command:
 
-	make -f $SPINN_DIRS/Makefile.app APP=example
+	$ make -f $SPINN_DIRS/Makefile.app APP=example
 
 This will compile the application in `example.c` and produce a SpiNNaker binary
 called `example.aplx` in the current directory.
