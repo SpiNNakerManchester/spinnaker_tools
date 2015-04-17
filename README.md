@@ -10,7 +10,7 @@ Setup
 
 These makefiles require the CodeSourcery ARM cross compiler to be installed.
 Installation instructions can be found on the [SpiNNaker
-Wiki](https://spinnaker.cs.manchester.ac.uk/tiki-index.php?page=CodeSorcery+ARM+Cross+Compiler).
+Wiki](https://github.com/SpiNNakerManchester/SpiNNakerManchester.github.io/wiki/1.3-C-Development-for-SpiNNaker#-install-development-dependencies).
 
 Once the compiler has been installed, you must build the standard SpiNNaker
 libraries:
