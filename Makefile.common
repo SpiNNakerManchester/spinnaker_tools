@@ -93,7 +93,7 @@ endif
 $(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT) $(SPINN_LIBS) 
 	$(SPINN_TOOLS_DIR)/mkbuild $* > $(BUILD_DIR)sark_build.c
 	$(CC) -o $(BUILD_DIR)sark_build.o $(BUILD_DIR)sark_build.c
-	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)sark_build.o $(SPINN_LIBS) $(LIBRARIES) -o $@
+	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)sark_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
 	$(RM) $(BUILD_DIR)sark_build.c $(BUILD_DIR)sark_build.o
 	$(OD) > $(BUILD_DIR)$*.txt $@
 
