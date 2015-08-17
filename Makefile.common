@@ -90,7 +90,7 @@ endif
 #     with "mkbuild" and compile it
 #  2) Link application object(s), build file and library to make the ELF
 #  3) Tidy up temporaries and create a list file
-$(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT) $(SPINN_LIBS) 
+$(BUILD_DIR)%.elf: .build_directory .output_directory $(OBJECTS) $(SCRIPT) $(SPINN_LIBS) 
 	$(SPINN_TOOLS_DIR)/mkbuild $* > $(BUILD_DIR)sark_build.c
 	$(CC) -o $(BUILD_DIR)sark_build.o $(BUILD_DIR)sark_build.c
 	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)sark_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
@@ -99,3 +99,9 @@ $(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT) $(SPINN_LIBS)
 
 $(BUILD_DIR)%.o: %.c
 	$(CC) $(CFLAGS) -o $@ $<
+
+.build_directory:
+	$(MKDIR) $(BUILD_DIR)
+	
+.output_directory:
+	$(MKDIR) $(APP_OUTPUT_DIR)
