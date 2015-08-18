@@ -68,12 +68,14 @@ LS := ls -l
 MKDIR := mkdir -p
 CP := cp
 
+
 # Primary target is an APLX file - built from the ELF
 #  1) Create a binary file which is the concatenation of RO and RW sections
 #  2) Make an APLX header from the ELF file with "mkaplx" and concatenate
 #     that with the binary to make the APLX file
 #  3) Remove temporary files and "ls" the APLX file
 $(APP_OUTPUT_DIR)%.aplx: $(BUILD_DIR)%.elf
+	$(MKDIR) $(APP_OUTPUT_DIR)
 ifeq ($(GNU),1)
 	$(OC) -O binary -j RO_DATA $< $(BUILD_DIR)RO_DATA.bin
 	$(OC) -O binary -j RW_DATA $< $(BUILD_DIR)RW_DATA.bin
@@ -90,7 +92,8 @@ endif
 #     with "mkbuild" and compile it
 #  2) Link application object(s), build file and library to make the ELF
 #  3) Tidy up temporaries and create a list file
-$(BUILD_DIR)%.elf: .build_directory .output_directory $(OBJECTS) $(SCRIPT) $(SPINN_LIBS) 
+$(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT) $(SPINN_LIBS)
+	$(MKDIR) $(BUILD_DIR)
 	$(SPINN_TOOLS_DIR)/mkbuild $* > $(BUILD_DIR)sark_build.c
 	$(CC) -o $(BUILD_DIR)sark_build.o $(BUILD_DIR)sark_build.c
 	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)sark_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
@@ -98,10 +101,5 @@ $(BUILD_DIR)%.elf: .build_directory .output_directory $(OBJECTS) $(SCRIPT) $(SPI
 	$(OD) > $(BUILD_DIR)$*.txt $@
 
 $(BUILD_DIR)%.o: %.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-.build_directory:
 	$(MKDIR) $(BUILD_DIR)
-	
-.output_directory:
-	$(MKDIR) $(APP_OUTPUT_DIR)
+	$(CC) $(CFLAGS) -o $@ $<
