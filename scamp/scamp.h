@@ -81,8 +81,8 @@
 //------------------------------------------------------------------------------
 
 // NN opcodes
-// Codes < 8 have propagation limited by the ID field in the packet.
-// Codes >= 8 have various other ways of handling propagation.
+// Codes < 7 have propagation limited by the ID field in the packet.
+// Codes >= 7 have various other ways of handling propagation.
 // Codes 0-3, 8-11 have explicit FwdRty in the packet.
 // Codes 4-7, 12-15 use stored FwdRty parameters
 
@@ -94,7 +94,7 @@
 #define NN_CMD_SIG1     	4	// Misc (MEM, etc)
 #define NN_CMD_P2PC 		5	// P2P Address setup
 #define NN_CMD_FFS   		6	// Flood fill start
-#define NN_CMD_SP_7		7
+#define NN_CMD_FFCS		7       // Flood fill core and region select
 
 #define NN_CMD_P2PB		8	// Hop count limited
 #define NN_CMD_MSST		9	// Self-limiting

@@ -53,6 +53,7 @@ typedef struct nn_desc_t
 
   uint sum;			// Checksum
   uint region;			// Region
+  uint cores;                   // Selected cores to load
   uint* aplx_addr;		// APLX block addr
   uint load_addr;		// Block load base
   uint id_set[4];		// ID bitmap (128 bits)
@@ -63,6 +64,7 @@ typedef struct nn_desc_t
   uint errors;			// Counter for bad checksums
   uint buf[SDP_BUF_SIZE/4];	// Holding buffer
 
+  uint64 last_ffcs;             // Index of the last FFCS packet
 } nn_desc_t;
 
 //------------------------------------------------------------------------------
@@ -661,6 +663,10 @@ void nn_cmd_ffs  (uint data, uint key)
   sark_word_set (nn_desc.fbs_set, 0, 32);
   sark_word_set (nn_desc.fbe_set, 0, 32);
 
+  // Reset the flood-fill selected cores and FFCS index
+  nn_desc.cores = 0;
+  nn_desc.last_ffcs = 0;
+
   uint mask = nn_desc.region & 0xffff;
   uint region = nn_desc.region >> 16;
   uint level = region & 3;
@@ -673,6 +679,41 @@ void nn_cmd_ffs  (uint data, uint key)
     }
 
   nn_desc.state = FF_ST_EXBLK;
+}
+
+
+uint nn_cmd_ffcs (uint data, uint key)
+{
+  // Select cores to flood-fill to
+  // Determine if we're in the region specified by the packet
+  uint mask = data & 0xffff;
+  uint region = data >> 16;
+  uint level = region & 3;
+
+  // Extract the cores from the key.
+  uint cores = key & 0x0003ffff;
+
+  // If we've seen this packet before then return 1 to indicate that it
+  // shouldn't be forwarded.
+  uint64 id = (((uint64) data) << 18) | cores;
+  if (id <= nn_desc.last_ffcs)
+  {
+    return 1;
+  }
+  nn_desc.last_ffcs = id;
+
+  if ((mask == 0) ||
+      (((levels[level].level_addr >> 16) == region)) &&
+      (levels[level].level_addr & mask))
+    {
+      // We're in the region, so ensure that load is set
+      nn_desc.load = 1;
+
+      // And include the cores that we wish to load
+      nn_desc.cores |= cores;
+    }
+
+  return 0;
 }
 
 
@@ -775,7 +816,7 @@ uint nn_cmd_ffe (uint id, uint data, uint key)
       && nn_desc.load)
     {
       if (!event_queue_proc (proc_start_app, (uint) nn_desc.aplx_addr,
-			     data, PRIO_0))
+			     data | nn_desc.cores, PRIO_0))
 	sw_error (SW_OPT);
     }
 
@@ -881,7 +922,7 @@ void nn_rcv_pkt (uint link, uint data, uint key)
   nn_desc.stats[cmd]++;
 #endif
 
-  if (cmd < 8 && id != 0) //const - use (non-zero) ID to stop propagation
+  if (cmd < 7 && id != 0) //const - use (non-zero) ID to stop propagation
     {
       uint word = id >> 5; 		// Word in id_set
       uint bit = 1 << (id & 31); 	// Bit in word
@@ -924,6 +965,11 @@ void nn_rcv_pkt (uint link, uint data, uint key)
 
     case NN_CMD_FFS:
       nn_cmd_ffs (data, key);
+      break;
+
+    case NN_CMD_FFCS:
+      if (nn_cmd_ffcs (data, key))
+        return;
       break;
 
     case NN_CMD_P2PB:
