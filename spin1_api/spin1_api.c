@@ -4,16 +4,17 @@
 *  SpiNNaker API functions
 *
 * AUTHOR
-*  Thomas Sharp - thomas.sharp@cs.man.ac.uk
-*  Luis Plana   - luis.plana@manchester.ac.uk
+*  Thomas Sharp  - thomas.sharp@cs.man.ac.uk
+*  Luis Plana    - luis.plana@manchester.ac.uk
+*  Sergio Davies - sergio.davies@manchester.ac.uk
 *
 * DETAILS
 *  Created on       : 08 June 2011
-*  Version          : $Revision: 2011 $
-*  Last modified on : $Date: 2012-10-24 14:50:54 +0100 (Wed, 24 Oct 2012) $
-*  Last modified by : $Author: plana $
-*  $Id: spin1_api.c 2011 2012-10-24 13:50:54Z plana $
-*  $HeadURL: https://solem.cs.man.ac.uk/svn/spin1_api/trunk/src/spin1_api.c $
+*  Version          : $$
+*  Last modified on : $Date: 2015-09-17 17:36:00$
+*  Last modified by : $Author: sergiodavies $
+*  $Id: $
+*  $HeadURL: $
 *
 * COPYRIGHT
 *  Copyright (c) The University of Manchester, 2011. All rights reserved.
@@ -69,6 +70,7 @@ tx_packet_queue_t tx_packet_queue;
 // -----------------------
 static task_queue_t task_queue[NUM_PRIORITIES-1];  // priority <= 0 is non-queueable
 cback_t callback[NUM_EVENTS];
+cback_t sdp_callback[NUM_SDP_PORTS];
 uchar user_pending = FALSE;
 uint user_arg0;
 uint user_arg1;
@@ -500,6 +502,60 @@ void dispatch()
 /*
 *******/
 
+
+/****f* spin1_api.c/sdp_callback_handler
+*
+* SUMMARY
+*  This function demultiplexes SDP messages based on the destination port
+*  and triggers the appropriate callback registered against the receiving
+*  SDP port. If no callback is registered, the packet is dumped.
+*
+*  If the priority of the callback is the same of this handler, the
+*  callback is immediately triggered. In alternative, if the priority is
+*  lower than the priority of this handler the callback is scheduled
+*  with the appropriate priority, and is dispatched appropriately by
+*  the sceduler.
+*
+*  This demultiplexer replaces the SDP_MESSAGE_RX event, therefore the
+*  two mechanisms are mutually exclusive.
+*
+* SYNOPSIS
+*  void sdp_callback_handler (uint mailbox, uint port)
+*
+* INPUTS
+*  uint mailbox: event for which callback should be enabled
+*  uint port: callback function
+*
+* SOURCE
+*/
+void sdp_callback_handler (uint mailbox, uint port)
+{
+  int handler_priority = callback[SDP_PACKET_RX].priority;
+  int port_priority = sdp_callback[port].priority;
+
+  // if a callback is associated with the port, process it
+  if (sdp_callback[port].cback != NULL)
+  {
+    // message priority can only be equal or lower than the handler priority
+    // if it is equal, proceed to the callback
+    // if it is lower, schedule a callback with the appropriate priority
+    if (handler_priority == port_priority)
+      sdp_callback[port].cback(mailbox, port);
+    else
+      spin1_schedule_callback (sdp_callback[port].cback, mailbox,
+                               port, port_priority);
+  }
+  else
+  {
+    // if no callback is associated, dump the received packet
+    sdp_msg_t *msg = (sdp_msg_t *) mailbox;
+    sark_msg_free(msg);
+  }
+}
+/*
+*******/
+
+
 // ------------------------------------------------------------------------
 // simulation control and event management functions
 // ------------------------------------------------------------------------
@@ -524,6 +580,15 @@ void dispatch()
 */
 void spin1_callback_on (uint event_id, callback_t cback, int priority)
 {
+  // check if sdp_callback_handler is already in place and user
+  // tries to set up a different callback
+
+  if (event_id == SDP_PACKET_RX &&
+  cback != sdp_callback_handler &&
+  callback[event_id].cback == sdp_callback_handler)
+    rt_error (RTE_API);
+
+  // set up the callback
   callback[event_id].cback = cback;
   callback[event_id].priority = priority;
 
@@ -573,6 +638,97 @@ void spin1_callback_off(uint event_id)
 
   if (callback[event_id].priority < 0)
     fiq_event = -1;
+}
+/*
+*******/
+
+
+/****f* spin1_api.c/spin1_sdp_callback_on
+*
+* SUMMARY
+*  This function sets the given callback to be scheduled on occurrence of
+*  receiving a packet on the specified SDP port. The priority argument
+*  dictates the order in which callbacks are executed by the scheduler.
+*
+* SYNOPSIS
+*  void spin1_sdp_callback_on(uint sdp_port, callback_t cback, int priority)
+*
+* INPUTS
+*  uint sdp_port: SDP port for which callback should be enabled
+*  callback_t cback: callback function
+*  int priority:   0 = non-queueable callback (associated to irq)
+*                > 0 = queueable callback
+*                < 0 = preeminent callback (associated to fiq)
+*
+* SOURCE
+*/
+void spin1_sdp_callback_on (uint sdp_port, callback_t cback, int priority)
+{
+  int i, highest_priority = NUM_PRIORITIES - 1;
+
+  if (callback[SDP_PACKET_RX].cback != NULL &&
+      callback[SDP_PACKET_RX].cback != sdp_callback_handler)
+    rt_error (RTE_API);
+
+  //add callback to list, based on port
+  sdp_callback[sdp_port].cback = cback;
+  sdp_callback[sdp_port].priority = priority;
+
+  //set up sdp handler
+  if (callback[SDP_PACKET_RX].cback == NULL)
+    spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, priority);
+  else
+  //check priority
+  {
+    for (i = 0; i < NUM_SDP_PORTS; i++)
+      if (sdp_callback[i].cback != NULL &&
+          sdp_callback[i].priority < highest_priority)
+        highest_priority = sdp_callback[i].priority;
+
+    spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, highest_priority);
+  }
+}
+/*
+*******/
+
+
+/****f* spin1_api.c/spin1_sdp_callback_off
+*
+* SUMMARY
+*  This function disables the callback for a packet receive on
+*  the specified SDP port.
+*
+* SYNOPSIS
+*  void spin1_sdp_callback_off(uint sdp_port)
+*
+* INPUTS
+*  uint sdp_port: SDP port for which callback should be disabled
+*
+* SOURCE
+*/
+void spin1_sdp_callback_off (uint sdp_port)
+{
+  int i, highest_priority = NUM_PRIORITIES - 1;
+  uint remove = 1;
+
+  // remove callback from list, based on port
+  sdp_callback[sdp_port].cback = NULL;
+
+  // check if there are other callbacks
+  for (i = 0; i < NUM_SDP_PORTS; i++)
+    if (sdp_callback[i].cback != NULL)
+    {
+      remove = 0;
+      if (sdp_callback[i].priority < highest_priority)
+        highest_priority = sdp_callback[i].priority;
+    }
+
+  // if no other callbacks are in place remove handler
+  // otherwise set priority accordingly
+  if (remove == 1)
+    spin1_callback_off(SDP_PACKET_RX);
+  else
+    spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, highest_priority);
 }
 /*
 *******/
