@@ -516,7 +516,7 @@ void dispatch()
 *  with the appropriate priority, and is dispatched appropriately by
 *  the sceduler.
 *
-*  This demultiplexer replaces the SDP_MESSAGE_RX event, therefore the
+*  This demultiplexer replaces the SDP_PACKET_RX event, therefore the
 *  two mechanisms are mutually exclusive.
 *
 * SYNOPSIS

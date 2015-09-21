@@ -48,7 +48,7 @@
 #include "spin1_api.h"
 #include "spin1_api_params.h"
 
-#define TEST_ID 10
+#define TEST_ID 5
 
 #define TEST_MESSAGE "test send sdp message\n"
 #define TEST_MESSAGE_LEN 23
