@@ -528,7 +528,7 @@ void dispatch()
 *
 * SOURCE
 */
-void sdp_callback_handler (uint mailbox, uint port)
+void sdp_callback_handler(uint mailbox, uint port)
 {
   int handler_priority = callback[SDP_PACKET_RX].priority;
   int port_priority = sdp_callback[port].priority;
@@ -540,10 +540,14 @@ void sdp_callback_handler (uint mailbox, uint port)
     // if it is equal, proceed to the callback
     // if it is lower, schedule a callback with the appropriate priority
     if (handler_priority == port_priority)
+    {
       sdp_callback[port].cback(mailbox, port);
+    } 
     else
+    {
       spin1_schedule_callback (sdp_callback[port].cback, mailbox,
                                port, port_priority);
+    }
   }
   else
   {
@@ -584,9 +588,11 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
   // tries to set up a different callback
 
   if (event_id == SDP_PACKET_RX &&
-  cback != sdp_callback_handler &&
-  callback[event_id].cback == sdp_callback_handler)
+      cback != sdp_callback_handler &&
+      callback[event_id].cback == sdp_callback_handler)
+  {
     rt_error (RTE_API);
+  }
 
   // set up the callback
   callback[event_id].cback = cback;
@@ -668,7 +674,9 @@ void spin1_sdp_callback_on (uint sdp_port, callback_t cback, int priority)
 
   if (callback[SDP_PACKET_RX].cback != NULL &&
       callback[SDP_PACKET_RX].cback != sdp_callback_handler)
+  {
     rt_error (RTE_API);
+  }
 
   //add callback to list, based on port
   sdp_callback[sdp_port].cback = cback;
@@ -676,15 +684,20 @@ void spin1_sdp_callback_on (uint sdp_port, callback_t cback, int priority)
 
   //set up sdp handler
   if (callback[SDP_PACKET_RX].cback == NULL)
-    spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, priority);
-  else
-  //check priority
   {
+    spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, priority);
+  } 
+  else
+  {
+    //check priority
     for (i = 0; i < NUM_SDP_PORTS; i++)
+    {
       if (sdp_callback[i].cback != NULL &&
           sdp_callback[i].priority < highest_priority)
+      {
         highest_priority = sdp_callback[i].priority;
-
+      }
+    }
     spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, highest_priority);
   }
 }
@@ -716,19 +729,27 @@ void spin1_sdp_callback_off (uint sdp_port)
 
   // check if there are other callbacks
   for (i = 0; i < NUM_SDP_PORTS; i++)
+  {
     if (sdp_callback[i].cback != NULL)
     {
       remove = 0;
       if (sdp_callback[i].priority < highest_priority)
+      {
         highest_priority = sdp_callback[i].priority;
+      }
     }
+  }
 
   // if no other callbacks are in place remove handler
   // otherwise set priority accordingly
   if (remove == 1)
+  {
     spin1_callback_off(SDP_PACKET_RX);
+  }
   else
+  {
     spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, highest_priority);
+  }
 }
 /*
 *******/
