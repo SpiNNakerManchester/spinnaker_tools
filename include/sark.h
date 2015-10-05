@@ -554,6 +554,7 @@ typedef struct app_data
 
 // SDP messages
 
+#define NUM_SDP_PORTS	8	//!< Number of SDP ports (0-7)
 #define PORT_SHIFT		5	//!< Port is in top 3 bits
 #define PORT_MASK		0xe0    //!< Port is in top 3 bits
 #define CPU_MASK		0x1f	//!< CPU is in bottom 5 bits

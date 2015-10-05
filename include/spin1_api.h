@@ -105,6 +105,8 @@ void spin1_delay_us (uint n);
 // ------------------------------------------------------------------------
 void spin1_callback_on(uint event_id, callback_t cback, int priority);
 void spin1_callback_off(uint event_id);
+void spin1_sdp_callback_on (uint sdp_port, callback_t cback, int priority);
+void spin1_sdp_callback_off (uint sdp_port);
 uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1, uint priority);
 uint spin1_trigger_user_event(uint arg0, uint arg1);
 // ------------------------------------------------------------------------

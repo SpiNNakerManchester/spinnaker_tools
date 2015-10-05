@@ -196,9 +196,11 @@ exc_error	mov	r10, lr			; LR to r10
 
 ; Come here if error did not change mode.
 
-rt_error	mov  	r11, r0			; Error code to r11
+rt_error	proc		 		; !! ST
+		mov  	r11, r0			; Error code to r11
 		mrs	r8, cpsr		; CPSR to r8
 		mov	r10, lr	    	       	; LR to r10
+		endp				; !! ST
 
 ; Now dump state - r0-r7, psr, sp, lr
 
