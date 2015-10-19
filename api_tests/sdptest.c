@@ -48,7 +48,7 @@
 #include "spin1_api.h"
 #include "spin1_api_params.h"
 
-#define TEST_ID 5
+#define TEST_ID 1
 
 #define TEST_MESSAGE "test send sdp message\n"
 #define TEST_MESSAGE_LEN 23
@@ -144,11 +144,40 @@ func_t function_sender_list[] =
 
 sdp_msg_t msg;
 
+typedef enum buffered_operations{
+    BUFFER_OPERATION_READ,
+    BUFFER_OPERATION_WRITE
+}buffered_operations;
+
+typedef struct recording_channel_t {
+    unsigned char *start;
+    unsigned char *current_write;
+    unsigned char *current_read;
+    unsigned char *end;
+    unsigned char region_id;
+    buffered_operations last_buffer_operation;
+} recording_channel_t;
+
 void c_main (void)
 {
   //wait for 1 msec
   unsigned int timer_period = 100000;
 
+  recording_channel_t a;
+  a.start = (unsigned char *) 10;
+  a.current_write = (unsigned char *) 11;
+  a.current_read = (unsigned char *) 12;
+  a.end = (unsigned char *) 13;
+  a.region_id = 14;
+  a.last_buffer_operation = BUFFER_OPERATION_WRITE;
+  
+  
+  io_printf (IO_BUF, "recording_channel_t size = %d\n", sizeof(recording_channel_t));
+  io_printf (IO_BUF, "start size = %d\n", sizeof(a.start));
+  io_printf (IO_BUF, "region_id size = %d\n", sizeof(a.region_id));
+  io_printf (IO_BUF, "last_buffer_operation size = %d\n", sizeof(a.last_buffer_operation));
+  io_printf (IO_BUF, "last_buffer_operation address = 0x%08x\n", (unsigned int) &a);
+  
   io_printf (IO_BUF, "Running test %d\n", TEST_ID);
 
   spin1_set_timer_tick(timer_period);
