@@ -836,6 +836,10 @@ void spin1_exit (uint error)
                      (1 << DMA_ERR_INT)  |
                      (1 << DMA_DONE_INT);
 
+  //removing any handler for the SDP messages
+
+  callback[SDP_PACKET_RX].cback = NULL;
+
   // Report back the return code and stop the simulation
 
   run = 0;
