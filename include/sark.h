@@ -420,6 +420,8 @@ typedef enum signal_e signal;	//!< Typedef for enum signal_e
 #define CMD_WRITE  		3	//!< Write memory
 #define CMD_APLX  		4	//!< Run via APLX (Deprecated)
 #define CMD_FILL  		5	//!< Fill memory
+#define CMD_STOP      6 //!< Stop simulation
+#define CMD_RUNTIME   7 //!< Update runtime
 
 // Following for monitors only
 
