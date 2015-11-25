@@ -1,0 +1,30 @@
+#
+# sark.sct	   armlink scatter file for SARK/SpiNNaker applications
+#
+# Copyright (C)    The University of Manchester - 2011
+#
+# Author           Steve Temple, APT Group, School of Computer Science
+#
+# Email            temples@cs.man.ac.uk
+#
+
+
+IMAGE 0
+{
+      	ITCM 0 0x7f00
+  	{   
+    	    	* (_alib_reset, +FIRST)
+    		* (+RO)
+		* (_alib_align, +LAST)
+  	}
+
+  	DTCM 0x400000 0xf800
+  	{
+    		* (+RW)
+		* (+ZI)
+  	}
+
+	STACK 0x40f800 EMPTY 0x800
+	{
+	}
+}

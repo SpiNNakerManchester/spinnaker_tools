@@ -1,0 +1,12 @@
+
+# make APP=simple
+# tubotron &
+
+app_load simple.aplx all 1 16
+sleep
+ps
+app_sig all 16 sync0
+ps
+sleep 20
+ps
+app_stop 16

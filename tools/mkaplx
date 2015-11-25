@@ -1,0 +1,225 @@
+#!/usr/bin/perl
+
+##------------------------------------------------------------------------------
+##
+## mkaplx	    An application to build APLX headers
+##
+## Copyright (C)    The University of Manchester - 2009-2013
+##
+## Author           Steve Temple, APT Group, School of Computer Science
+## Email            temples@cs.man.ac.uk
+##
+##------------------------------------------------------------------------------
+
+use strict;
+use warnings;
+
+
+my @files;
+my @sizes;
+my @addrs;
+
+
+sub usage ()
+{
+    die "usage: mkaplx [-text] [-scamp] [-boot] <ELF file> [<file> <addr>]*\n"
+}
+
+my $count = 0;
+my ($text, $scamp, $boot) = (0, 0, 0);
+
+
+# Process arguments
+
+while (defined $ARGV[0] && $ARGV[0] =~ /^-.+/)
+{
+    my $flag = shift @ARGV;
+    $text = 1 if $flag eq "-text";
+    $scamp = 1 if $flag eq "-scamp";
+    $boot = 1 if $flag eq "-boot";
+}
+
+usage () unless $#ARGV >= 0;
+
+my $file = shift @ARGV;
+
+die "can't open \"$file\"\n" unless -r $file;
+
+usage () unless ($#ARGV & 1) == 1;
+
+
+# Process any extra files on command line
+
+while ($#ARGV > 0)
+{
+    my $file = shift @ARGV;
+    my $addr = shift @ARGV;
+    die "can't read \"$file\"\n" unless -r $file;
+    die "bad address \"$addr\"\n" unless $addr =~ /^[A-Fa-f0-9]+$/;
+    push @files, $file;
+    push @addrs, $addr;
+    push @sizes, -s $file;
+    $count++;
+}
+
+
+# Constants and variables
+
+my $APLX_ACOPY = 1;
+my $APLX_RCOPY = 2;
+my $APLX_FILL = 3;
+my $APLX_EXEC = 4;
+
+my ($RO_TO, $RO_FROM, $RO_LENGTH);
+my ($RW_TO, $RW_FROM, $RW_LENGTH);
+my ($ZI_TO, $ZI_LENGTH);
+
+
+# Read ELF file symbols using "nm"
+
+open my $fh, "-|", "nm $file" or die "Can't open pipe \"nm $file\"\n";
+
+while (<$fh>)
+{
+    my ($addr, $type, $name) = split;
+
+    $RO_TO =     hex $addr if $name eq 'Image$$ITCM$$RO$$Base' ||
+	                      $name eq 'RO_BASE';
+
+    $RO_LENGTH = hex $addr if $name eq 'Image$$ITCM$$RO$$Length' ||
+	                      $name eq 'RO_LENGTH';
+
+    $RW_TO =     hex $addr if $name eq 'Image$$DTCM$$RW$$Base' ||
+	                      $name eq 'RW_BASE';
+
+    $RW_LENGTH = hex $addr if $name eq 'Image$$DTCM$$RW$$Length' ||
+	                      $name eq 'RW_LENGTH';
+
+    $ZI_TO =     hex $addr if $name eq 'Image$$DTCM$$ZI$$Base' ||
+	                      $name eq 'ZI_BASE';
+
+    $ZI_LENGTH = hex $addr if $name eq 'Image$$DTCM$$ZI$$Length' ||
+	                      $name eq 'ZI_LENGTH';
+}
+
+close $fh;
+
+
+# Generate APLX data as ARM assembler (-text) or binary (default)
+
+my $image_size = $RO_LENGTH + $RW_LENGTH;	# Size of main image
+my $image_aplx = 64;				# Size of basic header
+
+$RO_FROM = $image_aplx;
+$RW_FROM = $image_aplx + $RO_LENGTH - 16;
+
+if ($text)
+{
+    my $time = localtime time ();
+    printf "; Auto-generated from \"$file\" - $time\n\n";
+    printf "\t\tget	spinnaker.s\n";
+    printf "\t\tget	sark.s\n\n";
+    printf "\t\tarea 	boot_aplx, readonly, code\n\n";
+
+    if ($scamp)
+    {
+	printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n", # boot_aplx
+          0x7f00, 256, 128;
+	printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n", # def_app
+          0x7000, 512-16, 3584;
+	printf "\t\tdcd\tAPLX_EXEC,  0x%08x, 0x%08x, 0x%08x\n", # dis. int.
+          0x7f18, 0, 0;
+	printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n", # def_app
+          0xf5007f00, 384-48, 128;
+	$RO_FROM = 4096 - 64;
+	$RW_FROM = 4096 - 80 + $RO_LENGTH;
+    }
+
+    if ($boot)
+    {
+	printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n", # boot_aplx
+          0x7f00, -128, 128;
+	printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n", # def_app
+          0x7000, 512-128-16, 3584;
+	printf "\t\tdcd\tAPLX_EXEC,  0x%08x, 0x%08x, 0x%08x\n", # dis. int.
+          0x7f18, 0, 0;
+	printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n", # def_app
+          0xf5007f00, 384-128-48, 128;
+	$RO_FROM = 4096 - 128 - 64;
+	$RW_FROM = 4096 - 128 - 80 + $RO_LENGTH;
+     }
+
+    my $from = $image_size + $image_aplx + 16 * $count;
+
+    for (my $i = 0; $i < $count; $i++)
+    {
+	my $to = hex $addrs[$i];
+	my $length = $sizes[$i];
+
+	printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n",
+            $to, $from, $length;
+
+	$from += $sizes[$i] - 16;
+    }
+
+    
+    printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n",
+        $RO_TO, $RO_FROM, $RO_LENGTH;
+
+    printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n",
+	$RW_TO, $RW_FROM, $RW_LENGTH if $RW_LENGTH != 0;
+
+    printf "\t\tdcd\tAPLX_FILL,  0x%08x, 0x%08x, 0x%08x\n",
+	$ZI_TO, $ZI_LENGTH, 0 if $ZI_LENGTH != 0;
+
+    printf "\t\tdcd\tAPLX_EXEC,  0x%08x, 0x%08x, 0x%08x\n",
+        $RO_TO, 0, 0;
+
+    print "\t\tdcd\t0, 0, 0, 0\n" if $RW_LENGTH == 0;
+
+    print "\t\tdcd\t0, 0, 0, 0\n" if $ZI_LENGTH == 0;
+
+    print "aplx_end\n\t\tend\n";
+}
+else
+{
+    if ($scamp)
+    {
+	print pack "V4", $APLX_RCOPY, 0x7f00, 256, 128;
+	print pack "V4", $APLX_RCOPY, 0x7000, 512-16, 3584;
+	print pack "V4", $APLX_EXEC, 0x7f18, 0, 0;
+	print pack "V4", $APLX_RCOPY, 0xf5007f00, 384-48, 128;
+	$RO_FROM = 4096 - 64;
+	$RW_FROM = 4096 - 80 + $RO_LENGTH;
+    }
+
+    if ($boot)
+    {
+	print pack "V4", $APLX_RCOPY, 0x7f00, -128, 128;
+	print pack "V4", $APLX_RCOPY, 0x7000, 512-128-16, 3584;
+	print pack "V4", $APLX_EXEC, 0x7f18, 0, 0;
+	print pack "V4", $APLX_RCOPY, 0xf5007f00, 384-128-48, 128;
+	$RO_FROM = 4096 - 128 - 64;
+	$RW_FROM = 4096 - 128 - 80 + $RO_LENGTH;
+    }
+
+    my $from = $image_size + $image_aplx + 16 * $count;
+
+    for (my $i = 0; $i < $count; $i++)
+    {
+	my $to = hex $addrs[$i];
+	my $length = $sizes[$i];
+
+	print pack "V4", $APLX_RCOPY, $to, $from, $length;
+
+	$from += $sizes[$i] - 16;
+    }
+
+    print pack "V4", $APLX_RCOPY, $RO_TO, $RO_FROM, $RO_LENGTH;
+    print pack "V4", $APLX_RCOPY, $RW_TO, $RW_FROM, $RW_LENGTH if $RW_LENGTH != 0;
+    print pack "V4", $APLX_FILL,  $ZI_TO, $ZI_LENGTH, 0 if $ZI_LENGTH != 0;
+    print pack "V4", $APLX_EXEC,  $RO_TO, 0,          0;
+
+    print pack "V4", 0, 0, 0, 0 if $RW_LENGTH == 0;
+    print pack "V4", 0, 0, 0, 0 if $ZI_LENGTH == 0;
+}

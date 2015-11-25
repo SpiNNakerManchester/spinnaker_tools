@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+
+##------------------------------------------------------------------------------
+##
+## mkhdr   	    Simplistic script to convert C header files to ARM assembly
+##
+## Copyright (C)    The University of Manchester - 2009, 2010, 2011
+##
+## Author           Steve Temple, APT Group, School of Computer Science
+## Email            temples@cs.man.ac.uk
+##
+##------------------------------------------------------------------------------
+
+
+# This program reads a C language .h file and converts it to an ARM
+# assember format file. Only a limited range of conversions is
+# performed - its main purpose is to convert "#define NAME VALUE" to
+# "NAME equ VALUE".
+#
+# Single line comments "//" are converted to ";". Multi-line comments
+# "/* .. */" are not supported.
+#
+# Conditional compilation by means of "#if(n)def NAME" is supported but
+# there must be no trailing characters on the matching "#else" and
+# "#endif" lines.
+#
+# Lines of the form
+#
+#   #define NAME INT_AT(VALUE)
+#   #define NAME BYTE_AT(VALUE)
+#
+# are converted to
+#
+#   NAME equ VALUE
+#
+# Unrecognised lines are omitted from the output and multiple blank
+# lines are compressed.
+
+
+use strict;
+use warnings;
+
+
+my $blank = 0;
+my $time = localtime (time ());
+
+printf ";\n; Auto-generated from \"%s\" - $time\n;\n", $ARGV[0] || "<STDIN>";
+
+
+while (<>)
+{
+    chomp;
+    s/^\s+|\s+$//g;
+    s/\/\//;/;
+
+    if (/^$/)
+    {
+	print "\n" unless $blank;
+	$blank = 1;
+	next;
+    }
+
+    $blank = 0;
+
+    if (/^;/)
+    {
+	print "$_\n";
+    }
+    elsif (/^#define\s+(\w+)\s+(.+)/)
+    {
+	my ($name, $val) = ($1, $2);
+	my $rest = '';
+
+	($val, $rest) = ($2, $3) if $val =~ /^(INT|BYTE)_AT\((.+?)\)(.*)/;
+	printf "%-15s equ     $val$rest\n", $name;
+    }
+    elsif (/^#ifdef\s+(\w+)/)
+    {
+	printf "%-15s if      :def: $1\n", '';
+    }
+    elsif (/^#ifndef\s+(\w+)/)
+    {
+	printf "%-15s if      :lnot: :def: $1\n", '';
+    }
+    elsif (/^#else$/)
+    {
+	printf "%-15s else\n", '';
+    }
+    elsif (/^#endif$/)
+    {
+	printf "%-15s endif\n", '';
+    }
+    else
+    {
+	$blank = 1;
+    }
+}
+
+printf "\n%-15s end\n", '';

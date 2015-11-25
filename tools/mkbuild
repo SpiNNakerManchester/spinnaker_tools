@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+
+# Utility to create a small C file (on stdout) which contains
+# a string constant containing the first 15 characters of the
+# argument and an integer constant which is the Unix time.
+
+die "bad args" unless $#ARGV == 0;
+
+my $name = substr $ARGV[0], 0, 15;
+
+printf "const int  build_date   = %d;\n", time ();
+printf "const char build_name\[\] = \"%s\";\n", $name;

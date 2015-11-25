@@ -1,0 +1,75 @@
+
+/*
+// sark.lnk	    GNU linker script for SARK/SpiNNaker applications
+//
+// Copyright (C)    The University of Manchester - 2011-2013
+//
+// Author           Steve Temple, APT Group, School of Computer Science
+//
+// Email            temples@cs.man.ac.uk
+//
+*/
+
+
+MEMORY
+{
+    ITCM : ORIGIN = 0, LENGTH = 0x7f00
+    DTCM : ORIGIN = 0x400000, LENGTH = 0xf800
+}
+
+
+SECTIONS
+{
+    ITCM_BASE = 0x00000000;
+    DTCM_BASE = 0x00400000;
+
+    STACK_TOP = 0x00410000;
+    STACK_SIZE = 0x800;
+
+    APLX_SIZE = 64;
+    APLX_ENTRY = 16;
+
+    . = ITCM_BASE;
+
+    RO_DATA :
+    {
+          * (_alib_reset);
+          * (alib_*);
+          * (.text*);
+          * (.rodata*);
+    } > ITCM
+
+    . = ALIGN (4);
+
+    RO_LENGTH = . - ITCM_BASE;
+
+    . = DTCM_BASE;
+
+    RW_DATA  :
+    {
+        * (.data*);
+    } > DTCM
+
+    . = ALIGN (4);
+
+    RW_LENGTH = . - DTCM_BASE;
+
+    ZI_DATA  :
+    {
+	* (.bss*);
+	* (COMMON);
+    } > DTCM
+
+    . = ALIGN (4);
+
+    HEAP_BASE = .;
+
+    RO_BASE = ITCM_BASE;
+    RO_FROM = APLX_SIZE;
+
+    RW_BASE = DTCM_BASE;
+    RW_FROM = APLX_SIZE + RO_LENGTH - APLX_ENTRY;
+
+    ZI_BASE = RW_BASE + RW_LENGTH;
+    ZI_LENGTH = HEAP_BASE - ZI_BASE;
+}

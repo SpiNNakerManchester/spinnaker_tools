@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Make sark.a
+
+make API=1 GNU=0 clean
+make API=1 GNU=0 install

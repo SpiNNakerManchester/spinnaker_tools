@@ -1,0 +1,76 @@
+#-------------------------------------------------------------------------------
+#
+# Setup script for low-level Spinnaker work
+#
+#-------------------------------------------------------------------------------
+
+set -a
+
+#-------------------------------------------------------------------------------
+
+# SPINN_DIRS should point to the directory containing subdirs "tools",
+# "lib", "include", etc. It's used by many tools to locate resources.
+# used during the building of SpiNNaker applications. The subdirectory
+# "tools" contains locally developed tools for building applications.
+
+SPINN_DIRS=$PWD
+
+#-------------------------------------------------------------------------------
+
+# SPINN_PATH is a path variable (elements separated by ":"). It's used
+# to find resources used while building and running applications. It
+# should always contain at least the "boot" directory of $SPINN_DIRS
+
+SPINN_PATH=$SPINN_DIRS/boot
+
+#-------------------------------------------------------------------------------
+
+# SPINN_STV is the version number of the low-level software tools
+
+SPINN_STV=134
+
+#-------------------------------------------------------------------------------
+
+# Add the "tools" directory to the Unix PATH and to the Perl library
+# search path.
+
+PATH=$SPINN_DIRS/tools:$PATH
+
+PERL5LIB=$SPINN_DIRS/tools:$PERL5LIB
+
+#-------------------------------------------------------------------------------
+
+# Set up variables pointing to the ARM software development tools
+# These tools need a licence file so set that up as well. You may need
+# to edit this section for your local environment
+
+# *** EDIT HERE ***
+
+ARMTOOLS=/home/amulinks/spinnaker/tools/RVDS40
+
+ARMBIN=$ARMTOOLS/RVCT/Programs/4.0/400/linux-pentium
+ARMLIB=$ARMTOOLS/RVCT/Data/4.0/400/lib
+ARMINC=$ARMTOOLS/RVCT/Data/4.0/400/include/unix
+
+LM_LICENSE_FILE=8224@cadmaster.cs.man.ac.uk:$LM_LICENSE_FILE
+
+#-------------------------------------------------------------------------------
+
+# Set up variables pointing to the GNU software development tools.
+# You may need to edit this section for your local environment
+
+# *** EDIT HERE ***
+
+GNUTOOLS=/home/amulinks/spinnaker/tools/arm-2013.05
+
+GNUBIN=$GNUTOOLS/bin
+
+#-------------------------------------------------------------------------------
+
+# Finally, add ARM and GNU software development tools to the PATH
+
+PATH=$GNUBIN:$ARMBIN:$PATH
+
+#-------------------------------------------------------------------------------
+
+# The End

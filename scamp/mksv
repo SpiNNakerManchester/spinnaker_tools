@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use SpiNN::Struct;
+
+my $sv = SpiNN::Struct->new;
+
+die "mksv: failed\n" unless defined $sv;
+
+print substr $sv->pack ("sv"), 0, 128;

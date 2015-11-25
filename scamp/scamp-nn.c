@@ -1,0 +1,1001 @@
+
+//------------------------------------------------------------------------------
+//
+// scamp-nn.c	    NN packet handling for SC&MP
+//
+// Copyright (C)    The University of Manchester - 2009-2011
+//
+// Author           Steve Temple, APT Group, School of Computer Science
+// Email            temples@cs.man.ac.uk
+//
+//------------------------------------------------------------------------------
+
+
+#include "spinnaker.h"
+#include "sark.h"
+#include "scamp.h"
+
+//------------------------------------------------------------------------------
+
+
+#define BC_TABLE_SIZE 		16
+
+#define FF_ST_IDLE  0		// Doing nothing
+#define FF_ST_EXBLK 1		// Rcvd FFS or FBE, awaiting FBS, FFE
+#define FF_ST_INBLK 2		// Rcvd FBS, awaiting FBD, FBE
+
+#define PART_ID (CHIP_ID_CODE & 0xfff00000)
+
+#define NN_STATS
+
+//------------------------------------------------------------------------------
+
+typedef struct nn_desc_t
+{
+  uchar state;			// FF state
+  uchar error;			// Error flag
+  uchar forward;		// Rebroadcast code
+  uchar retry;			// Rebroadcast retry
+
+  uchar id;			// ID of current FF
+  uchar block_len;		// Block length
+  uchar block_count;		// Block count
+  uchar block_num;		// Block number
+
+  uchar app_id;			// AppID
+  uchar load;			// Set if for us
+  ushort srce_addr; 		// P2P of sender
+
+  ushort word_len;		// Number of words in block
+  ushort word_count;		// Count of received words
+
+  uint gidr_id;			// GIDR ID
+
+  uint sum;			// Checksum
+  uint region;			// Region
+  uint* aplx_addr;		// APLX block addr
+  uint load_addr;		// Block load base
+  uint id_set[4];		// ID bitmap (128 bits)
+  uint fbs_set[8];		// Block bitmap for FBS (must be >= 8 words)
+  uint fbd_set[8];		// Word bitmap for FBD (must be >= 8 words)
+  uint fbe_set[8];		// Block bitmap for FBE (must be >= 8 words)
+  uint stats[16];		// Counters for each packet type
+  uint errors;			// Counter for bad checksums
+  uint buf[SDP_BUF_SIZE/4];	// Holding buffer
+
+} nn_desc_t;
+
+//------------------------------------------------------------------------------
+
+
+pkt_buf_t pkt_buf_table[BC_TABLE_SIZE];
+pkt_buf_t *pkt_buf_list;
+
+uint pkt_buf_count;
+uint pkt_buf_max;
+
+uint *hop_table;
+
+level_t levels[4];
+
+uchar core_app[MAX_CPUS];
+uint app_mask[256];
+
+nn_desc_t nn_desc;
+
+pkt_buf_t peek_pkt;
+pkt_buf_t poke_pkt;
+
+
+//------------------------------------------------------------------------------
+
+// Given a P2P address, compute P2P address of chip with Ethernet interface
+// on same PCB. Table is for standard 48-chip boards only. Will work with
+// 4-chip boards - may not work for more exotic combinations!
+// Also computes the position of the chip on the PCB as offset from (0,0)
+
+// Each byte in this table is a pair of X,Y values which are subtracted
+// from a P2P address to give the address of the Ethernet-attached chip
+// on the same 48-chip PCB.
+
+char eth_map[12][12] =
+  {
+    {0x00, 0x10, 0x20, 0x30, 0x40, 0x14, 0x24, 0x34, 0x44, 0x54, 0x64, 0x74},
+    {0x01, 0x11, 0x21, 0x31, 0x41, 0x51, 0x25, 0x35, 0x45, 0x55, 0x65, 0x75},
+    {0x02, 0x12, 0x22, 0x32, 0x42, 0x52, 0x62, 0x36, 0x46, 0x56, 0x66, 0x76},
+    {0x03, 0x13, 0x23, 0x33, 0x43, 0x53, 0x63, 0x73, 0x47, 0x57, 0x67, 0x77},
+
+    {0x40, 0x14, 0x24, 0x34, 0x44, 0x54, 0x64, 0x74, 0x00, 0x10, 0x20, 0x30},
+    {0x41, 0x51, 0x25, 0x35, 0x45, 0x55, 0x65, 0x75, 0x01, 0x11, 0x21, 0x31},
+    {0x42, 0x52, 0x62, 0x36, 0x46, 0x56, 0x66, 0x76, 0x02, 0x12, 0x22, 0x32},
+    {0x43, 0x53, 0x63, 0x73, 0x47, 0x57, 0x67, 0x77, 0x03, 0x13, 0x23, 0x33},
+
+    {0x44, 0x54, 0x64, 0x74, 0x00, 0x10, 0x20, 0x30, 0x40, 0x14, 0x24, 0x34},
+    {0x45, 0x55, 0x65, 0x75, 0x01, 0x11, 0x21, 0x31, 0x41, 0x51, 0x25, 0x35},
+    {0x46, 0x56, 0x66, 0x76, 0x02, 0x12, 0x22, 0x32, 0x42, 0x52, 0x62, 0x36},
+    {0x47, 0x57, 0x67, 0x77, 0x03, 0x13, 0x23, 0x33, 0x43, 0x53, 0x63, 0x73}
+  };
+
+
+void compute_eth (int x, int y, int x_size, int y_size)
+{
+  //  Compute x % 12, y % 12 the cheap way...
+
+  int xm = x;
+  while (xm >= 12)
+    xm -= 12;
+
+  int ym = y;
+  while (ym >= 12)
+    ym -= 12;
+
+  // Get table entry and split fields
+
+  int t = eth_map[ym][xm];
+  int xt = t >> 4;
+  int yt = t & 15;
+
+  // Add offsets to current address and adjust for wrapping
+
+  x -= xt;
+  if (x < 0)
+    x += x_size;
+
+  y -= yt;
+  if (y < 0)
+    y += y_size;
+
+  sv->board_addr = (xt << 8) + yt;
+  sv->eth_addr = sv->dbg_addr = (x << 8) + y;
+}
+
+
+//------------------------------------------------------------------------------
+
+// Given a P2P address, compute region addresses for each of the four
+// levels.
+
+void compute_level (uint p2p_addr)
+{
+  uint x = p2p_addr >> 8;
+  uint y = p2p_addr & 255;
+
+  for (uint l = 0; l < 4; l++)
+    {
+      uint shift = 6 - 2 * l;
+      uint mask = ~((4 << shift) - 1);
+      uint bit = ((x >> shift) & 3) + 4 * ((y >> shift) & 3);
+      uint nx = x & mask;
+      uint ny = y & mask;
+      levels[l].level_addr = (nx << 24) + ((ny + l) << 16) + (1 << bit);
+    }
+}
+
+
+void level_config (void)
+{
+  for (uint level = 0; level < 4; level++)
+    {
+      uint base = (levels[level].level_addr >> 16) & 0xfcfc;
+      uint shift = 6 - 2 * level;	// {6, 4, 2, 0};
+      uint width = (1 << shift) - 1;	// {63, 15, 3, 0};
+
+      for (uint ix = 0; ix < 4; ix++)
+	{
+	  for (uint iy = 0; iy < 4; iy++)
+	    {
+	      uint num = ix + 4 * iy;
+	      uint addr = ((ix << 8) + iy) << shift;
+
+	      // Now probe four chips at the corners of the region. Can optimise
+	      // this to a single chip for level=3
+
+	      for (uint i = 0; i < 4; i++)
+		{
+		  uint wx = (i & 1) * width;
+		  uint wy = (i >> 1) * width;
+		  uint a = base + addr + (wx << 8) + wy;
+		  uint link = rtr_p2p_get (a);
+
+		  if (link != 6)
+		    {
+		      levels[level].addr[num] = a;
+		      levels[level].valid[num] = 1;
+		      break;
+		    }
+
+		  if (level == 3)
+		    break;
+		}
+	    }
+	}
+    }
+}
+
+
+//------------------------------------------------------------------------------
+
+
+void peek_ack_pkt (uint link, uint data, uint key)
+{
+  if (peek_pkt.flags != 1)
+    {
+      pkt_t t = {link, data, key};
+      peek_pkt.pkt = t;
+      peek_pkt.flags = 1;
+    }
+}
+
+
+void poke_ack_pkt (uint link, uint data, uint key)
+{
+  if (poke_pkt.flags != 1)
+    {
+      pkt_t t = {link, data, key};
+      poke_pkt.pkt = t;
+      poke_pkt.flags = 1;
+    }
+}
+
+
+//------------------------------------------------------------------------------
+
+
+uint link_read_word (uint addr, uint link, uint *buf, uint timeout)
+{
+  peek_pkt.flags = 0;
+
+  if (! pkt_tx (PKT_NND + (link << 18), 0, addr))
+    return RC_PKT_TX;
+
+  event_t* e = event_new (proc_byte_set, (uint) &peek_pkt.flags, 2);
+
+  if (e == NULL)
+    {
+      sw_error (SW_OPT);
+      return RC_BUF;
+    }
+
+  uint id = e->ID;
+
+  timer_schedule (e, timeout);
+
+  while (peek_pkt.flags == 0)
+    continue;
+
+  if (peek_pkt.flags == 2)
+    return RC_TIMEOUT;
+
+  timer_cancel (e, id);
+
+  if (buf != NULL)
+    *buf = peek_pkt.pkt.data;
+
+  return RC_OK;
+}
+
+
+uint link_write_word (uint addr, uint link, uint *buf, uint timeout)
+{
+  poke_pkt.flags = 0;
+
+  if (! pkt_tx (PKT_NND + PKT_PL + (link << 18), *buf, addr))
+    return RC_PKT_TX;
+
+  event_t* e = event_new (proc_byte_set, (uint) &poke_pkt.flags, 2);
+
+  if (e == NULL)
+    {
+      sw_error (SW_OPT);
+      return RC_BUF;
+    }
+
+  uint id = e->ID;
+
+  timer_schedule (e, timeout);
+
+  while (poke_pkt.flags == 0)
+    continue;
+
+  if (poke_pkt.flags == 2)
+    return RC_TIMEOUT;
+  
+  timer_cancel (e, id);
+
+  return RC_OK;
+}
+
+
+uint probe_links (uint mask, uint timeout)
+{
+  uint link_ok = 0;
+
+  for (uint link = 0; link < NUM_LINKS; link++)
+    {
+      uint link_bit = 1 << link;
+
+      if ((mask & link_bit) &&
+	  link_read_word (SYSCTL_BASE, link, NULL, timeout)) // Does PEEK
+	{
+	  if (peek_pkt.pkt.key == (SYSCTL_BASE + 1) &&
+	      (peek_pkt.pkt.data & 0xfff00000) == PART_ID &&
+	      peek_pkt.pkt.ctrl == link)
+	    {
+	      link_ok |= link_bit;
+	    }
+	}
+    }
+
+  if (mask & 0x80) // const
+    sv->link_up = link_up = link_ok;
+
+  return link_ok;
+}
+
+
+//------------------------------------------------------------------------------
+
+
+pkt_buf_t* pkt_buf_get ()
+{
+  pkt_buf_t *pkt = pkt_buf_list;
+
+  if (pkt != NULL)
+    {
+      pkt_buf_list = pkt->next;
+      pkt_buf_count++;
+      if (pkt_buf_count > pkt_buf_max)
+	pkt_buf_max = pkt_buf_count;
+    }
+
+  return pkt;
+}
+
+
+void pkt_buf_free (pkt_buf_t *pkt)
+{
+  pkt->next = pkt_buf_list;
+  pkt_buf_list = pkt;
+
+  pkt_buf_count--;
+}
+
+
+uint next_id (void)
+{
+  uint t = sv->last_id + 1;
+  if (t > 127)
+    t = 1;
+  sv->last_id = t;
+  return t << 1;
+}
+
+
+void nn_mark (uint key)
+{
+  uint id = (key >> 1) & 127;
+
+  uint w = id >> 5; 		// Word in id_set
+  uint b = 1 << (id & 31); 	// Bit in word
+  uint v = nn_desc.id_set[w];	// Get word from array
+
+  nn_desc.id_set[w] = v | b;
+  w = (w + 2) % 4;
+  nn_desc.id_set[w] = 0;
+}
+
+
+void ff_nn_send (uint key, uint data, uint fwd_rty, uint add_id)
+{
+  if (add_id)
+    key |= next_id ();
+
+  uint count = fwd_rty & 7;
+  uint delay = fwd_rty & 0xf8;
+  uint forward = fwd_rty >> 8;
+
+  key |= chksum_64 (key, data);
+
+  do
+    {
+      for (uint link = 0; link < NUM_LINKS; link++)
+	{
+	  if (forward & (1 << link) & link_up)
+	    {
+	      sark_delay_us (delay);
+	      (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+	    }
+	}
+    }
+  while (count--);
+}
+
+
+void nn_init ()
+{
+  nn_desc.forward = sv->forward; // V104 20jul12 (was 0x3e)
+
+  hop_table = sv->hop_table;
+
+  pkt_buf_t *pkt = (pkt_buf_t *) pkt_buf_table;
+
+  pkt_buf_list = pkt;
+
+  for (uint i = 0; i < BC_TABLE_SIZE; i++)
+    {
+      pkt->next = (i != (BC_TABLE_SIZE - 1)) ? pkt + 1 : NULL;
+      pkt++;
+    }
+}
+
+
+//------------------------------------------------------------------------------
+
+// Configure P2P address (also sets network dimensions and "max_hops")
+
+// Time of arrival of this packet is also used to 'improve' the
+// random seed.
+
+
+const signed char lx[6] = {-1, -1,  0, +1, +1,  0};
+const signed char ly[6] = { 0, -1, -1,  0, +1, +1};
+
+uint nn_cmd_p2pc (uint link, uint data)
+{
+  uint addr = data & 0xffff;
+
+  int addr_x = addr >> 8;
+  int addr_y = addr & 255;
+
+  rtr_p2p_set (addr, link);
+
+  addr_x += lx[link];
+  addr_y += ly[link];
+
+  uint dims = data >> 16;
+  int dim_x = dims >> 8;
+  int dim_y = dims & 255;
+
+  max_hops = 2 * (dim_x + dim_y) - 5;
+
+  sv->p2p_dims = p2p_dims = dims;
+  sv->p2p_up = p2p_up = 1;
+
+  if (addr_x >= dim_x)
+    addr_x = 0;
+  else if (addr_x < 0)
+    addr_x += dim_x;
+
+  if (addr_y >= dim_y)
+    addr_y = 0;
+  else if (addr_y < 0)
+    addr_y += dim_y;
+
+  compute_eth (addr_x, addr_y, dim_x, dim_y);
+
+  sv->p2p_addr = p2p_addr = (addr_x << 8) + addr_y;
+  cc[CC_SAR] = 0x07000000 + p2p_addr;
+  
+  rtr_p2p_set (p2p_addr, 7);
+  compute_level (p2p_addr);
+
+  hop_table[p2p_addr] = 0x80000000;
+
+  return (dims << 16) + p2p_addr;
+}
+
+
+//------------------------------------------------------------------------------
+
+// Write the Router Control Register. Various fields may be selected
+// using 'spare' bits in the word. The field is updated if the bit
+// is set
+//
+// bit 5 - Wait2
+// bit 4 - Wait1
+// bit 3 - W bit
+// bit 2 - MP field
+// bit 1 - TP field
+
+// !! resync TP update timer?
+
+void nn_cmd_rtrc (uint data)
+{
+  uint t1 = 0;
+  uint t2 = 0;
+
+  if (data & 0x20) {t2 |= data & 0xff000000; t1 |= 0xff000000;} // Wait2
+  if (data & 0x10) {t2 |= data & 0x00ff0000; t1 |= 0x00ff0000;} // Wait1
+  if (data & 0x08) {t2 |= data & 0x00008000; t1 |= 0x00008000;} // W bit
+  if (data & 0x04) {t2 |= data & 0x00001f00; t1 |= 0x00001f00;} // MP
+  if (data & 0x02) {t2 |= data & 0x000000c0; t1 |= 0x000000c0;} // TP
+
+  t1 = rtr[RTR_CONTROL] & ~t1;
+  rtr[RTR_CONTROL] = t1 | t2;
+}
+
+
+//------------------------------------------------------------------------------
+
+// SIG0 does simple commands whose data fits into 28 bits. Returns 0 if
+// packet should not be propagated, 1 otherwise.
+
+uint nn_cmd_sig0 (uint data)
+{
+  uint op = data >> 28;
+
+  switch (op)
+    {
+    case 0: // Set forward & retry
+      nn_desc.forward = sv->forward = data >> 8;	// 8 bits
+      nn_desc.retry = sv->retry = data;			// 8 bits
+      break;
+
+    case 1: // Set LEDs
+      sark_led_set (data);
+      break;
+
+    case 2: // Global Time Phase
+      sv->tp_scale = data & 15;
+      sv->tp_timer = 0;
+      break;
+
+    case 3: // ID set/reset ## what's this? Set last_id here ?
+      if (data == nn_desc.gidr_id)
+	return 0;
+
+      nn_desc.gidr_id = data;
+      sark_word_set (nn_desc.id_set, (data & 1) ? 0xff : 0x00, 16);
+      break;
+
+    case 4: // Trigger "level_config"
+      event_queue_proc ((event_proc) level_config, 0, 0, PRIO_0);
+      break;
+
+    case 5: // Signal application
+      signal_app (data);
+      break;
+    }
+      /*
+    case GSIG_TP: 	// Router time phase period
+    case GSIG_RST: 	// Shut down APs
+    case GSIG_DOWN:	// Minimum power mode
+    case GSIG_UP:	// Operational mode
+      */
+  return 1;
+}
+
+
+void nn_cmd_mem (uint data, uint key)
+{
+  uint type = (key >> 18) & 3;
+  uint op = (key >> 16) & 3;
+  uint base = SV_SV;
+
+  if (op == 1)
+    base = SYSRAM_BASE;
+  else if (op == 2)
+    base = SYSCTL_BASE;
+  else if (op == 3)
+    base = sv->mem_ptr;
+
+  uint ptr = base + ((key >> 8) & 255);
+  
+  if (type == 0)
+    * (uchar *) ptr = data;
+  else if (type == 1)
+    * (short *) ptr = data;
+  else
+    * (uint *) ptr = data;
+}
+
+
+void nn_cmd_sig1 (uint data, uint key)
+{
+  uint op = (key >> 20) & 15;
+
+  if (op == 0) // Memory write
+    {
+      nn_cmd_mem (data, key);
+    }
+}
+
+
+//------------------------------------------------------------------------------
+
+// P2P Broadcast - used to propagate P2P addresses and maintain the P2P
+// routing table.
+
+// Two additional tables are kept with entries for each possible address.
+// The "hop table" contains the number of hops to the address (initialised
+// with 65535) and the "id table" contains the last ID that was used to
+// update the tables (initialised to 128)
+
+// An update occurs when a packet with a new ID arrives or a packet with
+// a lower hop count than the current one. The link on which the packet
+// arrived is used to update the P2P routing table.
+
+// Returns data with P2P_STOP_BIT set if the packet should not be propagated
+
+#define P2PB_STOP_BIT 0x400	   // Set to stop propagation
+
+uint nn_cmd_p2pb (uint id, uint data, uint link)
+{
+  uint addr = data >> 16;
+  uint hops = data & 0x3ff;	// Bottom 10 bits
+
+  uint table_id = hop_table[addr] >> 24;
+  uint table_hops = hop_table[addr] & 0xffff;
+
+  if (addr != p2p_addr && (id != table_id || hops < table_hops))
+    {
+      if (table_hops == 0xffff)
+	sv->p2p_active++;
+
+      hop_table[addr] = (id << 24) + hops;
+
+      rtr_p2p_set (addr, link);
+
+      if (hops >= max_hops)
+	data |= P2PB_STOP_BIT;
+    }
+  else
+    data |= P2PB_STOP_BIT;
+
+  return data + 1;
+}
+
+
+//------------------------------------------------------------------------------
+
+
+void nn_cmd_ffs  (uint data, uint key)
+{
+  nn_desc.aplx_addr = sv->sdram_sys;
+  nn_desc.region = data;
+  nn_desc.id = (key >> 17) & 127;	// 8 bits (LSB zero)
+  nn_desc.block_len = key >> 8;		// 8 bits
+  nn_desc.block_count = 0;		// 8 bits
+  nn_desc.error = nn_desc.load = 0;
+
+  sark_word_set (nn_desc.fbs_set, 0, 32);
+  sark_word_set (nn_desc.fbe_set, 0, 32);
+
+  uint mask = nn_desc.region & 0xffff;
+  uint region = nn_desc.region >> 16;
+  uint level = region & 3;
+
+  if ((mask == 0) ||
+      (((levels[level].level_addr >> 16) == region)) &&
+      (levels[level].level_addr & mask))
+    {
+      nn_desc.load = 1;
+    }
+
+  nn_desc.state = FF_ST_EXBLK;
+}
+
+
+uint nn_cmd_fbs (uint id, uint data, uint key)
+{
+  if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK)
+    return 0;
+
+  uint block_num = (key >> 16) & 255;
+  uint word = block_num >> 5;
+  uint bit = 1 << (block_num & 31);
+  uint mask = nn_desc.fbs_set[word];
+
+  if ((mask & bit) != 0)
+    return 0;
+
+  nn_desc.fbs_set[word] = mask | bit;
+
+  nn_desc.load_addr = data;
+  nn_desc.sum = data;
+  nn_desc.word_len = ((key >> 8) & 255) + 1;
+  nn_desc.block_num = block_num;
+  nn_desc.word_count = 0;
+
+  sark_word_set (nn_desc.fbd_set, 0, 32);
+
+  nn_desc.state = FF_ST_INBLK;
+
+  return 1;
+}
+
+
+uint nn_cmd_fbd (uint id, uint data, uint key)
+{
+  uint block_num = (key >> 16) & 0xff; // Block num
+
+  if (id != nn_desc.id || block_num != nn_desc.block_num ||
+      nn_desc.state != FF_ST_INBLK)
+    return 0;
+
+  uint offset = (key >> 8) & 0xff;
+  uint word = offset >> 5;
+  uint bit = 1 << (offset & 31);
+  uint mask = nn_desc.fbd_set[word];
+
+  if ((mask & bit) != 0)
+    return 0;
+
+  nn_desc.word_count++;
+  nn_desc.fbd_set[word] = mask | bit;
+  nn_desc.buf[offset] = data;
+  nn_desc.sum += data;
+
+  return 1;
+}
+
+
+uint nn_cmd_fbe (uint id, uint data, uint key)
+{
+  uint block_num = (key >> 16) & 0xff;
+
+  if (id != nn_desc.id || block_num != nn_desc.block_num ||
+      nn_desc.state != FF_ST_INBLK)
+    return 0;
+
+  uint word = block_num >> 5;
+  uint bit = 1 << (block_num & 31);
+  uint mask = nn_desc.fbe_set[word];
+
+  if ((mask & bit) != 0)
+    return 0;
+
+  nn_desc.fbe_set[word] = mask | bit;
+
+  nn_desc.sum += data;
+
+  if (nn_desc.sum == 0 && nn_desc.word_count == nn_desc.word_len)
+    {
+      nn_desc.block_count++;
+      sark_word_cpy ((void *) nn_desc.load_addr, nn_desc.buf,
+		     nn_desc.word_len * 4);
+    }
+  else
+    nn_desc.error = 1;
+
+  nn_desc.state = FF_ST_EXBLK;
+
+  return 1;
+}
+
+
+uint nn_cmd_ffe (uint id, uint data, uint key)
+{
+  if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK)
+    return 0;
+
+  nn_desc.state = FF_ST_IDLE;
+
+  if (nn_desc.error == 0 && nn_desc.block_count == nn_desc.block_len
+      && nn_desc.load)
+    {
+      if (!event_queue_proc (proc_start_app, (uint) nn_desc.aplx_addr,
+			     data, PRIO_0))
+	sw_error (SW_OPT);
+    }
+
+  return 1;
+}
+
+
+void proc_pkt_bc (uint i_pkt, uint count)
+{
+  pkt_buf_t *pkt = (pkt_buf_t *) i_pkt;
+
+  uint forward = pkt->fwd;
+  uint link = pkt->link;
+  uint offset = (forward & 0x40) ? 0 : link;
+
+  for (uint l = 0; l < NUM_LINKS; l++)
+    {
+      if (forward & (1 << l))
+	{
+	  uint p = l + offset;
+
+	  if (p >= NUM_LINKS)
+	    p -= NUM_LINKS;
+
+	  if ((1 << p) & link_up)
+	    {
+	      if (! pkt_tx (pkt->pkt.ctrl + (p << 18), pkt->pkt.data, pkt->pkt.key))
+		sw_error (SW_OPT);
+	    }
+	}
+    }
+
+  count--;
+
+  if (count != 0)
+    {
+      if (!timer_schedule_proc (proc_pkt_bc, (uint) pkt, count, pkt->delay))
+	sw_error (SW_OPT);
+    }
+  else
+    {
+      pkt_buf_free (pkt);
+    }
+}
+
+
+uint msst_hops;
+uint msst_route;
+uint msst_link;
+uint msst_count;
+
+uint nn_cmd_msst (uint data, uint link)
+{
+  uint *p = sv->sysram_base;
+  p[msst_count++] = data + (link << 16);
+  p[msst_count] = 0;
+
+  uint hops = data & 0xffff;
+
+  sv->utmp2++;
+
+  if (msst_hops == 0)
+    {
+      sv->utmp0 = msst_hops = hops;
+      sv->utmp1 = msst_route = link_up & ~(1 << link);
+      msst_link = link;
+    }
+  else if (msst_hops > hops)
+    {
+      sv->utmp0 = msst_hops = hops;
+      msst_route &= ~(1 << link);
+      sv->utmp1 = msst_route |= (1 << msst_link);
+      msst_link = link;
+    }
+  else
+    {
+      sv->utmp1 = msst_route &= ~(1 << link);
+      hops = BIT_31;
+    }
+
+  rtr_mc_set (0, 0xffff5555, 0xffffffff,
+	      MC_CORE_ROUTE (0) + msst_route);
+
+  return hops + 1;
+}
+
+
+
+void nn_rcv_pkt (uint link, uint data, uint key)
+{
+  uint t = chksum_64 (key, data);
+
+  if (t != 0)
+    {
+      nn_desc.errors++;
+      return;
+    }
+
+  uint cmd = (key >> 24) & 15;
+  uint id = (key >> 1) & 127;
+
+#ifdef NN_STATS
+  nn_desc.stats[cmd]++;
+#endif
+
+  if (cmd < 8 && id != 0) //const - use (non-zero) ID to stop propagation
+    {
+      uint word = id >> 5; 		// Word in id_set
+      uint bit = 1 << (id & 31); 	// Bit in word
+      uint mask = nn_desc.id_set[word];	// Get mask word from array
+
+      if (mask & bit)
+	return;
+
+      nn_desc.id_set[word] = mask | bit;
+      word = (word + 2) % 4;
+      nn_desc.id_set[word] = 0;
+    }
+  
+  switch (cmd)
+    {
+    case NN_CMD_SIG0:
+      if (nn_cmd_sig0 (data))
+	break;
+      return;
+
+    case NN_CMD_RTRC:
+      nn_cmd_rtrc (data);
+      break;
+
+    case NN_CMD_LTPC:
+      t = sv->tp_timer + 2;
+      if ((t <= data) && ((t ^ data) & BIT_31) == 0)
+	sv->tp_timer = data - 1;
+      else
+	return;
+      break;
+
+    case NN_CMD_SIG1:
+      nn_cmd_sig1 (data, key);
+      break;
+
+    case NN_CMD_P2PC:
+      data = nn_cmd_p2pc (link, data);
+      break;
+
+    case NN_CMD_FFS:
+      nn_cmd_ffs (data, key);
+      break;
+
+    case NN_CMD_P2PB:
+      data = nn_cmd_p2pb (id, data, link);
+      if (data & P2PB_STOP_BIT)
+	return;
+      break;
+
+    case NN_CMD_MSST:
+      data = nn_cmd_msst (data, link);
+      if (data & BIT_31)
+	return;
+      break;
+
+    case NN_CMD_FBS:
+      if (nn_cmd_fbs (id, data, key))
+	break;
+      return;
+
+    case NN_CMD_FBD:
+      if (nn_cmd_fbd (id, data, key))
+	break;
+      return;
+
+    case NN_CMD_FBE:
+      if (nn_cmd_fbe (id, data, key))
+	break;
+      return;
+
+    case NN_CMD_FFE:
+      if (nn_cmd_ffe (id, data, key))
+	break;
+      return;
+
+     default: // Ignore...
+      return;
+    }
+
+  // Now forward the incoming packet
+
+  uint forward, retry;
+
+  if (cmd & 4) //const 
+    {
+      forward = nn_desc.forward;
+      retry = nn_desc.retry;
+    }
+  else
+    {
+      forward = (key >> 16) & 255;
+      retry = (key >> 8) & 255;
+    }
+
+  key &= 0x0fffffff;
+  key |= chksum_64 (key, data);
+
+  pkt_buf_t *pkt = pkt_buf_get ();
+
+  if (pkt == NULL) // !! ??
+    {
+      sw_error (SW_OPT);
+      return;
+    }
+
+  pkt->fwd = forward;
+  pkt->delay = (retry & 0xf8) + 8;
+  pkt->link = link;
+
+  pkt_t tp = {PKT_NN + PKT_PL, data, key};
+  pkt->pkt = tp;
+    
+  if (!timer_schedule_proc (proc_pkt_bc,
+			    (uint) pkt, (retry & 7) + 1, 8)) // const
+    sw_error (SW_OPT);
+}

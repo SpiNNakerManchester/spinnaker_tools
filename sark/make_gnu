@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# make libsark.a
+
+make API=1 GNU=1 clean
+make API=1 GNU=1 install

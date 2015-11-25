@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Make spin1_api.a
+
+make GNU=0 clean
+make GNU=0 install

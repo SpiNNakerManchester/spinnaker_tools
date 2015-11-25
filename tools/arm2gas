@@ -1,0 +1,202 @@
+#!/usr/bin/perl
+
+##------------------------------------------------------------------------------
+##
+## arm2gas 	    Simplistic script to convert "armasm" source to GNU "as"
+##
+## Copyright (C)    The University of Manchester - 2009-2013
+##
+## Author           Steve Temple, APT Group, School of Computer Science
+## Email            temples@cs.man.ac.uk
+##
+##------------------------------------------------------------------------------
+
+# This program converts ARM assembly language source files into GNU "as" format.
+# Processor opcodes are not converted as both assemblers support the same
+# syntax. Assembler directives are converted but only a subset is currently
+# supported and new ones will have to be added as the need arises. Labels
+# and comments are converted as appropriate.
+#
+# The following conversions are currently done
+#
+# NAME equ VALUE		.equ NAME, VALUE
+# area NAME, etc		.section NAME, "ax"
+# export NAME			.global NAME
+# import NAME			.global NAME
+# dcd VALUES			.word VALUES
+# dcw VALUES			.short VALUES
+# dcb VALUES			.byte VALUES
+# NAME1 rn NAME2		NAME1 .req NAME2
+# align VALUE			.align VALUE
+# if :def: NAME			.ifdef NAME
+# if :lnot: :def: NAME		.ifndef NAME
+# else				.else
+# endif				.endif
+# macro				.macro
+# mend				.endm
+# code16			.thumb
+# code32			.arm
+# ltorg				.ltorg
+# % VALUE			.space VALUE
+# space VALUE			.space VALUE
+# get FILE.s			.include FILE.gas
+# NAME proc			.type NAME STT_FUNC <newline> NAME:
+# end 				[ignored]
+# endp				[ignored]
+# preserve8			[ignored]
+# entry				[ignored]
+
+
+use strict;
+use warnings;
+
+my $space = " " x 16;
+my $macro = 0;
+
+while (<>)
+{
+    my $comment = "";
+    my $label = "";
+    my $op = "";
+    my $rest = "";
+
+    chomp;
+
+    if (s/\s*(;.*)$//)
+    {
+	$comment = $1;
+	$comment =~ s/\s+$//;
+	$comment =~ s/^;/@/;
+    }
+
+    if (s/^(\S+)\s*//)
+    {
+	$label = "$1:";
+    }
+
+    if (s/^\s*(\S+)\s*//)
+    {
+	$op = lc $1;
+    }
+
+    if (s/(.+)//)
+    {
+	$rest = "$1 ";
+	$rest =~ s/\s+$//;
+    }
+
+    $label = sprintf "%-15s ", $label;
+    $op = sprintf "%-7s ", $op if $op ne "";
+    $rest = sprintf "%-23s ", $rest if $op ne "" && $comment ne "";
+
+#    print "/$label/$op/$rest/$comment\n";
+
+    if ($macro)
+    {
+	print "$space.macro  $op$rest$comment\n";
+	$macro = 0;
+    }
+    elsif ($op eq 'area    ')
+    {
+	$rest =~ s/\s*,.*//;	# Lose all but first field
+	$rest =~ s/\|//g;	# Strip out "|"
+	print "$space.section $rest, \"ax\"$comment\n";
+    }
+    elsif ($op eq 'export  ' || $op eq 'import  ')
+    {
+	if ($rest =~ s/\s*\[weak\]//i)
+	{
+	    print "$space.global $rest$comment\n";
+	    print "$space.weak   $rest\n";
+	}
+	else
+	{
+	    print "$space.global $rest$comment\n";
+	}	    
+    }
+    elsif ($op eq 'equ     ')
+    {
+	$label =~ s/:\s*$//;
+	print "$space.equ    $label, $rest$comment\n";
+    }
+    elsif ($op eq 'dcd     ')
+    {
+	print "$label.word   $rest$comment\n";
+    }
+    elsif ($op eq 'dcw     ')
+    {
+	print "$label.short  $rest$comment\n";
+    }
+    elsif ($op eq 'dcb     ')
+    {
+	print "$label.byte   $rest$comment\n";
+    }
+    elsif ($op eq 'rn      ')
+    {
+	$label =~ s/:/ /;
+	print "$label.req    $rest$comment\n";
+    }
+    elsif ($op eq 'align   ')
+    {
+	print "$label.balign  $rest, 0 $comment\n";
+    }
+    elsif ($op eq 'else    ' || $op eq 'endif   ')
+    {
+	print "$label.$op   $rest$comment\n";
+    }
+    elsif ($op eq 'mend    ')
+    {
+	print "$label.endm   $rest$comment\n";
+    }
+    elsif ($op eq 'code16  ')
+    {
+	print "$label.thumb  $rest$comment\n";
+    }
+    elsif ($op eq 'code32  ')
+    {
+	print "$label.arm    $rest$comment\n";
+    }
+    elsif ($op eq 'ltorg   ')
+    {
+	print "$label.ltorg  $rest$comment\n";
+    }
+    elsif ($op eq 'proc    ')
+    {
+	my $l = $label;
+	$l =~ s/:\s*//;
+	print "$space.type   $l, STT_FUNC $comment\n";
+	$label =~ s/\s*$//;
+	print "$label\n";
+    }
+    elsif ($op eq 'if      ' && $rest =~ s/:lnot:\s*:def:\s*//i)
+    {
+	print "$label.ifndef  $rest$comment\n";
+    }
+    elsif ($op eq 'if      ' && $rest =~ s/:def:\s*//i)
+    {
+	print "$label.ifdef  $rest$comment\n";
+    }
+    elsif ($op eq 'macro   ')
+    {
+	$macro = 1;
+    }
+    elsif ($op eq '%       ' || $op eq 'space   ')
+    {
+	print "$label.space  $rest$comment\n";
+    }
+    elsif ($op eq 'get     ')
+    {
+	$rest =~ s/\.s$//;
+	print "$label.include \"$rest.gas\"$comment\n";
+    }
+    elsif ($op eq 'end     ' || $op eq 'endp    ' || $op eq 'preserve8 ' ||
+	$op eq 'entry   ')
+    {
+#!!	print "\@ $label$op$rest$comment\n";
+    }
+    else
+    {
+	$label = "" if $label eq $space && $op eq "";
+	print "$label$op$rest$comment\n";
+    }
+}

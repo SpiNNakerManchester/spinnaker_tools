@@ -1,0 +1,8 @@
+
+# make APP=interrupt THUMB=0
+# tubotron &
+
+app_load interrupt.aplx . 7 16
+sleep 10
+iobuf 7
+app_stop 16
