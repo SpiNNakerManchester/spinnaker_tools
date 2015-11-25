@@ -440,6 +440,7 @@ typedef enum signal_e signal;	//!< Typedef for enum signal_e
 
 #define CMD_ALLOC		28	//!< Memory allocation
 #define CMD_RTR			29	//!< Router control
+#define CMD_INFO		31	//!< Get chip/core info
 
 // 48-63 reserved for BMP
 

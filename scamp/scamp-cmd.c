@@ -396,6 +396,61 @@ uint cmd_rtr (sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+// Get information about this chip. Intended to support a host probing the
+// machine for its basic information.
+//
+// No input arguments expected.
+//
+// The response will contain arg1-3 as desribed below with an additional data
+// payload indicating the application states of all cores.
+// * arg1:
+//   * Bits  4:0  - The number of working cores (including the monitor)
+//   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
+//                  Chip ID in system controller, 0 otherwise. This check is
+//                  performed on demand.
+//   * Bits 31:14 - Undefined
+// * arg2: The size (in bytes) of the largest free block in the SDRAM heap
+// * arg3: The size (in bytes) of the largest free block in the SysRAM heap
+// * The data payload which follows contains an 18-byte block which gives the
+//   cpu_state_e of each application core with byte 0 containing core 0's state
+//   and so-on.
+
+uint cmd_info (sdp_msg_t *msg)
+{
+  // Get number of working CPUs
+  msg->arg1 = sv->num_cpus & 0x0000001F;
+  
+  // Get working link bitmap
+  uint timeout = sv->peek_time;
+  uint local_chip_id = sc[SC_CHIP_ID];
+  for (uint link = 0; link < NUM_LINKS; link++)
+    {
+      // A link is determined working if: a link read of the remote system
+      // controller's chip ID returns and the chip ID matches this chip's ID
+      // (i.e. the remote chip is the same type of chip as this one!).
+      uint remote_chip_id;
+      uint rc = link_read_word ((uint)(sc + SC_CHIP_ID), link, &remote_chip_id, timeout);
+      if (rc == RC_OK && remote_chip_id == local_chip_id)
+        msg->arg1 |= 1 << (link + 8);
+    }
+
+  // Get largest free block in SDRAM
+  msg->arg2 = sark_heap_max (sv->sdram_heap, ALLOC_LOCK);
+  // 
+  // Get largest free block in SysRAM
+  msg->arg3 = sark_heap_max (sv->sysram_heap, ALLOC_LOCK);
+  
+  // Add core states to the message
+  uchar *buf = (uchar*) &(msg->data);
+  for (uint core = 0; core < NUM_CPUS; core++)
+    *(buf++) = sv_vcpu[core].cpu_state;
+
+  // Returned packet has arg1-3 and a byte per core of data payload
+  return 12 + 18;
+}
+
+//------------------------------------------------------------------------------
+
 extern level_t levels[4];
 extern uint pkt_tx (uint tcr, uint data, uint key);
 
@@ -782,6 +837,9 @@ uint scamp_debug (sdp_msg_t *msg, uint srce_ip)
 
     case CMD_RTR:
       return cmd_rtr (msg);
+    
+    case CMD_INFO:
+      return cmd_info (msg);
 
     default:
       msg->cmd_rc = RC_CMD;
