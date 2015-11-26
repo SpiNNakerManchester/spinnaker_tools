@@ -1837,6 +1837,11 @@ field while the block is allocated. If the "tag" is non-zero, the
 block is only allocated if the tag is not in use.  The tag (and AppID)
 is stored in the "alloc_tag" table while the block is allocated.
 
+If this command is used to allocate for an app-id which isn't the
+caller's, the user should set sv->app_data[app_id].clean to 0 for the
+application concerned.  This ensures that the memory will be cleaned
+up by a stop signal.
+
 \param heap the heap from which the block should be allocated
 \param size the size of the block in bytes
 \param tag 8-bit tag
@@ -1912,6 +1917,11 @@ uint rtr_alloc (uint size);
 /*!
 Allocate a block of entries in the router multicast table (and
 associate the supplied app_id with this block).
+
+If this command is used to allocate for an app-id which isn't the
+caller's, the user should set sv->app_data[app_id].clean to 0 for the
+application concerned.  This ensures that the memory will be cleaned
+up by a stop signal.
 
 \param size number of entries to allocate
 \param app_id AppID associated with block

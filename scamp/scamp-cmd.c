@@ -691,6 +691,7 @@ uint cmd_alloc (sdp_msg_t *msg)
 				      msg->arg2,
 				      msg->arg3,
 				      ALLOC_LOCK + ALLOC_ID + (app_id << 8));
+      sv->app_data[app_id].clean = 0;
       break;
 
     case FREE_SDRAM:
@@ -703,6 +704,7 @@ uint cmd_alloc (sdp_msg_t *msg)
 
     case ALLOC_RTR:
       msg->arg1 = rtr_alloc_id (msg->arg2, app_id);
+      sv->app_data[app_id].clean = 0;
       break;
 
     case FREE_RTR:
