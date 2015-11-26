@@ -1952,6 +1952,17 @@ re-initialised. Returns number of blocks freed.
 
 uint rtr_free_id (uint app_id, uint clear);
 
+/*!
+Get a pointer to a tagged allocation. If the "app_id" parameter is zero uses
+the core's app_id.
+
+\param tag The tag of the allocation to get a pointer to
+\param app_id AppID whose tagged allocation to read (or 0 to use the core's app ID)
+\return A pointer
+*/
+
+void *sark_tag_ptr (uint tag, uint app_id);
+
 //------------------------------------------------------------------------------
 
 // Routines exported by SARK - sark_hw.c
