@@ -186,15 +186,25 @@ void proc_init_cores (uint virt_mask, uint phys_mask)
 }
 
 
-// Stop an application on a set of cores
+// Stop an application on a set of cores and free up any global resources
+// associated with the application
 
-void proc_stop_app (uint virt_mask, uint phys_mask)
+void proc_stop_app (uint app_id_and_virt_mask, uint app_mask_and_phys_mask)
 {
+  uint app_id = app_id_and_virt_mask >> 24;
+  uint virt_mask = app_id_and_virt_mask & 0x00FFFFFF;
+  
+  uint app_mask = app_mask_and_phys_mask >> 24;
+  uint phys_mask = app_mask_and_phys_mask & 0x00FFFFFF;
+  
   clock_ap (phys_mask, 0);
 
-  for (uint i = 1; i < num_cpus; i++)
-    if (virt_mask & (1 << i))
-      clean_app_id (core_app[i]);
+  uint candidate_app_id = app_id;
+  while ((candidate_app_id & app_mask) == app_id)
+    {
+      clean_app_id (candidate_app_id);
+      candidate_app_id ++;
+    }
 
   proc_init_cores (virt_mask, phys_mask);
 }
@@ -239,7 +249,7 @@ void signal_app (uint data)
       break;
 
     case SIG_STOP:
-      event_queue_proc (proc_stop_app, virt_mask, phys_mask, PRIO_0);
+      event_queue_proc (proc_stop_app, (app_id << 24) | virt_mask, (app_mask << 24) | phys_mask, PRIO_0);
       break;
 
     case SIG_SYNC0:
