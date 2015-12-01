@@ -102,11 +102,13 @@ sw_timer_t led_timer;
 sw_timer_t probe_timer;
 sw_timer_t p2pb_timer;
 sw_timer_t p2pc_timer;
+sw_timer_t biff_timer;
 
 uint ltpc_timer;
 
 uint max_hops;		// Maximum packet hop count
 uint link_up;		// Bitmap of working links
+uint link_en = 0x3f;	// Bitmap of enabled links
 uint ticks;		// Counts 10ms ticks
 
 srom_data_t srom;	// Copy of SROM struct
@@ -766,6 +768,28 @@ void assign_virt_cpu (uint phys_cpu)
   sark_word_cpy (v2p_map, sv->v2p_map, MAX_CPUS);
 }
 
+//------------------------------------------------------------------------------
+
+// Disables a specified core and recomputes the virtual core map accordingly.
+// This command has a number of dangerous effects:
+// * All application cores are rebooted (so that the new virtual core map takes
+//   effect)
+// * If the core to be disabled includes
+
+void remap_phys_cores(uint phys_cores)
+{
+  sc[SC_CLR_OK] = phys_cores;
+
+  // At the end of this function all CPUs which are not in the "OK" state
+  // (which is cleared above) have their clocks stopped. Thus, if the monitor
+  // core (which is executing this code) was flagged as bad, it will also be
+  // disabled.
+  assign_virt_cpu (sark.phys_cpu);
+
+  boot_ap ();
+
+  sark_word_set (sv_vcpu + num_cpus, 0, sizeof (vcpu_t));
+}
 
 //------------------------------------------------------------------------------
 
@@ -844,6 +868,7 @@ void sv_init (void)
 
   sark_block_init (sv->shm_buf, sv->num_buf, sizeof (sdp_msg_t));
 
+  init_timer (&biff_timer, sv->biff_timer); // XXX: Not in SV yet...
   init_timer (&p2pc_timer, sv->p2pc_timer);
   init_timer (&p2pb_timer, sv->p2pb_timer);
   init_timer (&probe_timer, sv->probe_timer);
@@ -1036,8 +1061,25 @@ void compute_msst (void)
 void proc_100hz (uint a1, uint a2)
 {
   ticks++;
+  
+  // Flood-fill all board-info
+  if (run_timer (&biff_timer) && sv->board_info[0])
+    {
+      uint num_info_words = sv->board_info[0];
+      uint *info_word = sv->board_info + 1;
+      while (num_info_words--)
+        {
+          // Run command on this chip
+          nn_cmd_biff(0, 0, *(info_word));
+          // Also flood to other chips on this board
+          biff_nn_send(*(info_word++));
+        }
+    }
 
-  if (sv->root_chip && run_timer (&p2pc_timer))
+  // Send out board coordinate information after the board-info flood-fill
+  // process has been allowed to complete
+
+  if (biff_timer->repeat == 255 && sv->root_chip && run_timer (&p2pc_timer))
     {
       // For board test only send on links 0-2
       uint p2pc_fwd = (sv->bt_flags & 1) ? 0x0700 : 0x3f00;

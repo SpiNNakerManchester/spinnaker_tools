@@ -755,14 +755,8 @@ uint cmd_remap (sdp_msg_t *msg)
       return 0;
     }
 
-  sc[SC_CLR_OK] = 1 << phys_core;
+  remap_phys_cores(1 << phys_core);
 
-  assign_virt_cpu (sark.phys_cpu);
-
-  boot_ap ();
-
-  sark_word_set (sv_vcpu + num_cpus, 0, sizeof (vcpu_t));
-    
   return 0;
 }
 
