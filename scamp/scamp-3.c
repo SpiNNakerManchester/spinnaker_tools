@@ -812,12 +812,30 @@ const uint rst_init[] = {0x45206e49, 0x79726576, 0x65724420, 0x48206d61,
 			 0x20656d6f, 0x65482061, 0x61747261, 0x00656863};
 
 
+void get_board_info (void)
+{
+  sdp_msg_t msg;
+
+  msg.arg1 = (256 << 16) + 32;	// 256 bytes, send 32 bit command
+  msg.arg2 = (3 << 24) + 0x100;	// READ, address 0x100
+
+  (void) cmd_srom (&msg);
+
+  sark_word_cpy (sv_board_info, &msg.arg1, 256);
+
+  if (sv_board_info[0] < 64)
+    sv->board_info = sv_board_info;
+}
+  
+
 void sv_init (void)
 {
   sark_word_cpy (sv_vectors, rst_init, SV_VSIZE); 	// Copy Reset vectors
   sark_word_cpy (&srom, sv_srom, sizeof (srom_data_t));	// Copy SROM block
 
   sark_word_set ((void *) 0xf5007fc0, 0, 64);		// Kludge...
+
+  get_board_info ();
 
   if (sv->hw_ver == 0 && srom.flags & SRF_PRESENT)	// Set hardware version
     sv->hw_ver = (srom.flags >> 4) & 15;
