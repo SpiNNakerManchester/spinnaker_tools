@@ -754,6 +754,75 @@ sub cmd_flash_write
 }
 
 
+sub board_info
+{
+    my $file = shift;
+
+    die "Can't open $file" unless open my $fh, "<", $file;
+
+    my $count = 0;
+    my @words;
+
+    while (<$fh>)
+    {
+	chomp;
+	s/^\s+|\s+$//g;
+	next if /^#/ || /^$/;
+
+	if (/chip\s+([0-7])\s+([0-7])\s+(.+)$/)
+	{
+	    my ($x, $y, $rest) = ($1, $2, $3);
+	    my ($core, $link) = (0, 0);
+
+	    if ($rest =~ s/core\s+(\S+)\s*//)
+	    {
+		$core = parse_bits ($1, 0, 17);
+		die "bad core list ($.) \"$_\"" unless $core;
+	    }
+
+	    if ($rest =~ s/link\s+(\S+)\s*//)
+	    {
+		$link = parse_bits ($1, 0, 5);
+		die "bad link list ($.) $_" unless $link;
+	    }
+
+	    die "bad line ($.) \"$_\"" if $rest;
+
+	    my $word = ($x << 27) + ($y << 24) + ($link << 18) + $core;
+
+	    push @words, $word;
+	    $count++
+	}
+	else
+	{
+	    close $fh;
+	    die "bad line ($.) \"$_\"";
+	}
+    }
+
+    close $fh;
+    return pack "VV*", $count, @words;
+}
+
+
+sub cmd_board_info
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $file = $cli->{arg_v}->[0];
+
+    return "bad args" if $ac != 1;
+ 
+    eval
+    {
+	my $buffer = board_info ($file);
+	$bmp->flash_write (0x2000, $buffer);
+    };
+
+    return $@;
+}
+
+
 #-------------------------------------------------------------------------------
 
 
@@ -1750,6 +1819,9 @@ my $bmp_cmds =
     xreset =>    [\&cmd_xreset,
 		 '[low|high|pulse]',
 		 'Reset FPGAs'],
+    board_info =>  [\&cmd_board_info,
+		 '<file.F>',
+		 'load board_info from file'],
     sload =>    [\&cmd_sload,
 		 '<file.F> <addr.X> [log]',
 		 'load BMP memory from file'],
