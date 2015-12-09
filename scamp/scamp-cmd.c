@@ -672,6 +672,8 @@ uint cmd_sig (sdp_msg_t *msg)
 // op 3 - allocate router - arg2 = count
 // op 4 - free router - arg2 = entry, arg3 = clear
 // op 5 - free router by ID - arg2 = clear
+// op 6 - return free bytes in SDRAM heap & largest block size
+// op 7 - return block point by AppID and Tag
 
 uint cmd_alloc (sdp_msg_t *msg)
 {
@@ -713,6 +715,15 @@ uint cmd_alloc (sdp_msg_t *msg)
 
     case FREE_RTR_ID:
       msg->arg1 = rtr_free_id (app_id, msg->arg2);
+      break;
+
+    case SDRAM_SPACE:
+      msg->arg1 = sv->sdram_heap->free_bytes;
+      msg->arg2 = sark_heap_max (sv->sdram_heap, ALLOC_LOCK);
+      return 8;
+
+    case HEAP_TAG_PTR:
+      msg->arg1 = (uint) sark_tag_ptr (msg->arg2 & 255, app_id);
       break;
     }
 
