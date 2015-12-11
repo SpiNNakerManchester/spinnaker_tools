@@ -120,7 +120,7 @@
 #define NN_CMD_FFCS		7       // Flood fill core and region select
 
 #define NN_CMD_P2PB		8	// Hop count limited
-#define NN_CMD_MSST		9	// Self-limiting
+#define NN_CMD_SP_9		9	// Spare
 #define NN_CMD_SP_10 		10	// Spare
 #define NN_CMD_BIFF		11	// Board-info flood-fill (handled specially)
 

@@ -905,46 +905,6 @@ void proc_pkt_bc (uint i_pkt, uint count)
 }
 
 
-uint msst_hops;
-uint msst_route;
-uint msst_link;
-uint msst_count;
-
-uint nn_cmd_msst (uint data, uint link)
-{
-  uint *p = sv->sysram_base;
-  p[msst_count++] = data + (link << 16);
-  p[msst_count] = 0;
-
-  uint hops = data & 0xffff;
-
-  sv->utmp2++;
-
-  if (msst_hops == 0)
-    {
-      sv->utmp0 = msst_hops = hops;
-      sv->utmp1 = msst_route = link_up & link_en & ~(1 << link);
-      msst_link = link;
-    }
-  else if (msst_hops > hops)
-    {
-      sv->utmp0 = msst_hops = hops;
-      msst_route &= ~(1 << link);
-      sv->utmp1 = msst_route |= (1 << msst_link);
-      msst_link = link;
-    }
-  else
-    {
-      sv->utmp1 = msst_route &= ~(1 << link);
-      hops = BIT_31;
-    }
-
-  rtr_mc_set (0, 0xffff5555, 0xffffffff,
-	      MC_CORE_ROUTE (0) + msst_route);
-
-  return hops + 1;
-}
-
 void nn_cmd_biff(uint x, uint y, uint data)
 {
   // Board info data is formatted like so:
@@ -1139,12 +1099,6 @@ void nn_rcv_pkt (uint link, uint data, uint key)
     case NN_CMD_P2PB:
       data = nn_cmd_p2pb (id, data, link);
       if (data & P2PB_STOP_BIT)
-	return;
-      break;
-
-    case NN_CMD_MSST:
-      data = nn_cmd_msst (data, link);
-      if (data & BIT_31)
 	return;
       break;
 
