@@ -1037,15 +1037,15 @@ typedef struct sv
 
   volatile uchar lock;		//!< 64 Lock variable
   uchar link_en;		//!< 65 Bit map of enabled links
-  uchar __PAD1;			//!< 66
+  uchar last_biff_id;		//!< 66 Last ID used in BIFF
   uchar bt_flags;		//!< 67 Board Test flags
 
   mem_block_t shm_root; 	//!< 68 Control block for SHM bufs
 
-  uint utmp0;			//!< 70 Four temps...
+  uint utmp0;			//!< 70 Three temps...
   uint utmp1;			//!< 74
   uint utmp2;			//!< 78
-  uint utmp3;			//!< 7c
+  uint biff_timer;		//!< 7c
 
   uchar status_map[20];		//!< 80 Set during SC&MP ROM boot
   uchar p2v_map[20];		//!< 94 Phys to Virt core map
