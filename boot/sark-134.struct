@@ -37,11 +37,11 @@ retry                C  0x29  %02x  0           # NNP retry parameter
 peek_time            C  0x2a  %d    100         # Link peek/poke timeout (us)
 led_period           C  0x2b  %d    50          # LED half-period (10ms units)
 
-p2pc_timer           V  0x2c  %08x  0x02020a52  # P2PC packet timer
+p2pc_timer           V  0x2c  %08x  0x010a6401  # P2PC packet timer
 
 led0                 V  0x30  %08x  0x00000001  # LED definitions
 led1                 V  0x34  %08x  0x00000000  # LED definitions
-p2pb_timer           V  0x38  %08x  0x01320001  # P2PB packet timer
+p2pb_timer           V  0x38  %08x  0x01140852  # P2PB packet timer
 random               V  0x3c  %08x  0           # Random seed
 
 root_chip            C  0x40  %d    0           # Set to 1 if "root chip"
@@ -49,7 +49,7 @@ num_buf              C  0x41  %d    7           # Number of SHM buffers
 boot_delay           C  0x42  %d    10          # Delay between boot NN pkts (us)
 soft_wdog            C  0x43  %d    3           # Watchdog count (0 disables)
 
-probe_timer          V  0x44  %08x  0x010a0001  # Probe Timer
+probe_timer          V  0x44  %08x  0x010a6401  # Probe Timer
 sysram_heap          V  0x48  %08x  1024        # User SysRAM size (words)
 sdram_heap           V  0x4c  %08x  1048576     # User SDRAM size (words)
 
