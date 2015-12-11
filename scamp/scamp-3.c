@@ -864,7 +864,8 @@ void sv_init (void)
 
   sark_word_set ((void *) 0xf5007fc0, 0, 64);		// Kludge...
 
-  get_board_info ();
+  if (srom.flags & SRF_PRESENT)				// Get board_info ??
+    get_board_info ();
 
   if (sv->hw_ver == 0 && srom.flags & SRF_PRESENT)	// Set hardware version
     sv->hw_ver = (srom.flags >> 4) & 15;
@@ -878,6 +879,7 @@ void sv_init (void)
 
   sv_vcpu[0].cpu_state = CPU_STATE_RUN;
   sv_vcpu[0].time = sv->unix_time;
+  sv_vcpu[0].phys_cpu = sark.phys_cpu;
   sark_str_cpy (sv_vcpu[0].app_name, build_name);
 
   // Set up SHM buffers

@@ -26,7 +26,7 @@ use SpiNN::Util qw/read_file hex_dump parse_bits/;
 #-------------------------------------------------------------------------------
 
 
-my $version = "1.36";
+my $version = "1.38T";
 
 my $bmp;		# SpiNN::Cmd object for BMP
 my $cli;		# SpiNN::CLI object
@@ -59,6 +59,83 @@ my $CMD_POWER = 57;
 #-------------------------------------------------------------------------------
 
 
+sub get_fw_ver
+{
+    my $v = $bmp->ver (raw => 1);
+
+    return $v->[5];
+}
+
+
+sub get_flash_buf
+{
+    my $v = $bmp->scp_cmd ($CMD_BMP_INFO,
+			    arg1 => 0,
+			    unpack => "V8");
+    return $v->[5]
+}
+
+
+sub read_flash_data
+{
+    my $data = $bmp->read (0x1000, 4096);
+
+    return $data;
+}
+
+
+sub update_flash_data
+{
+    my $data = shift;
+
+    $data = substr $data, 0, 4092;
+    $data .= pack "V", ~crc32 ($data);	# Append CRC
+
+
+    my $ver = get_fw_ver ();
+    my $fb = get_flash_buf ();
+
+    if ($ver >= 138)
+    {
+	$bmp->write ($fb, $data);
+
+	$bmp->scp_cmd ($CMD_FLASH_WRITE,	# Write back to flash (with erase)
+		       arg1 => 0x1000,
+		       arg2 => 4096,
+		       arg3 => 1);
+    }
+    else
+    {
+	print ("Firmware upgrade (from $ver) recommended!\n");
+
+	$bmp->scp_cmd ($CMD_FLASH_ERASE,	# Erase sector
+		       arg1 => 0x1000,
+		       arg2 => 0x2000);
+
+	$bmp->write ($fb, $data);	# Put updated data in buffer
+
+	$bmp->scp_cmd ($CMD_FLASH_WRITE,	# Write back to flash
+		       arg1 => 0x1000,
+		       arg2 => 4096,
+		       arg3 => 0);
+    }
+
+    my $new = read_flash_data ();
+
+    return 1 if $new eq $data;
+
+    if (open my $fh, ">", "/tmp/bmp-data-flash")
+    {
+	syswrite $fh, $data, 4096;
+	close $fh;
+	print "Data saved in \"/tmp/bmp-data-flash\"...\n";
+    }
+
+    return 0;	
+}
+
+
+
 sub cmd_xslot
 {
     my $cli = shift;
@@ -77,38 +154,24 @@ sub cmd_xslot
 
     eval
     {
-	$data = $bmp->read (0x1000, 4092);
-    };
+	$data = read_flash_data ();
 
-    return $@ if $@;
-
-    my ($type, $size, $flags) = unpack "C2 v",
-      substr $data, 256 + 128 * $slot, 4;
+	my ($type, $size, $flags) = unpack "C2 v",
+	substr $data, 256 + 128 * $slot, 4;
 
 #    printf "# type %d size %d flags %x\n", $type, $size, $flags;
 
-    return "slot not configured" unless $type == 3;
+	die "slot not configured\n" unless $type == 3;
 
-    $flags |= 0x8000 if $state eq "on";
-    $flags &= ~0x8000 if $state eq "off";
+	$flags |= 0x8000 if $state eq "on";
+	$flags &= ~0x8000 if $state eq "off";
 
-    $flags = ($flags & ~7) | $chip if $chip;
+	$flags = ($flags & ~7) | $chip if $chip;
 
-    substr $data, 256 + 128 * $slot, 4, pack "C2 v", $type, $size, $flags;
-    $data .= pack "V", ~crc32 ($data);	# Append CRC
+	substr $data, 256 + 128 * $slot, 4, pack "C2 v", $type, $size, $flags;
+	$data .= pack "V", ~crc32 ($data);	# Append CRC
 
-    eval
-    {
-	my $t = $bmp->scp_cmd ($CMD_FLASH_ERASE,	# Erase sector
-			       arg1 => 0x1000,
-			       arg2 => 0x2000,
-			       unpack => "V");
-
-	$bmp->write ($t->[0], $data);	# Put updated data in buffer
-
-	$bmp->scp_cmd ($CMD_FLASH_WRITE,	# Write back to flash
-		       arg1 => 0x1000,
-		       arg2 => 4096);
+	die "Flash update failed!\n" unless update_flash_data ($data);
     };
 
     return $@;
@@ -234,21 +297,11 @@ sub cmd_xboot
 
     eval
     {
-	my $data = $bmp->read ($flash, 4092);	# Read existing data
+	my $data = read_flash_data ();		# Read existing data
 
 	substr $data, $offset, 128, $xboot;	# Replace XBoot data
-	$data .= pack "V", ~crc32 ($data);	# and append CRC
 
-	my $t = $bmp->scp_cmd ($CMD_FLASH_ERASE,	# Erase sector
-			       arg1 => 0x1000,
-			       arg2 => 0x2000,
-			       unpack => "V");
-
-	$bmp->write ($t->[0], $data);	# Put updated data in buffer
-
-	$bmp->scp_cmd ($CMD_FLASH_WRITE,	# Write back to flash
-		       arg1 => $flash,
-		       arg2 => 4096);
+	die "Flash update failed!\n" unless update_flash_data ($data);
     };
 
     return $@;
@@ -821,7 +874,12 @@ sub cmd_board_info
     eval
     {
 	my $buffer = board_info ($file);
-	$bmp->flash_write (0x2000, $buffer);
+
+	my $data = read_flash_data ();
+	substr $data, 0xe00, 256, chr (255) x 256;
+	substr $data, 0xe00, length ($buffer), $buffer;
+
+	die "Flash update failed!\n" unless update_flash_data ($data);
     };
 
     return $@;
@@ -961,39 +1019,11 @@ sub ip_init
 
     eval
     {
-	my $data = $bmp->read ($addr, 4092);	# Read existing data
+	my $data = read_flash_data ();	# Read existing data
 
 	substr $data, $offset, $len, $fl_dir;	# Replace IP data
-	$data .= pack "V", ~crc32 ($data);	# and append CRC
 
-	print "Erasing sector\n";
-	
-	my $t = $bmp->scp_cmd ($CMD_FLASH_ERASE,	# Erase sector
-			       arg1 => 0x1000,
-			       arg2 => 0x2000,
-			       unpack => "V");
-
-	$bmp->write ($t->[0], $data);	# Put updated data in buffer
-
-	print "Writing sector\n";
-
-	$bmp->scp_cmd ($CMD_FLASH_WRITE,	# Write back to flash
-		       arg1 => $addr,
-		       arg2 => 4096);
-
-	print "Reading sector\n";
-    
-	my $read = $bmp->read ($addr+$offset, $len);	# Read IP data back
-
-	if ($fl_dir ne $read)
-	{
-	    print "Oops! - try again?\n";
-	    print "Wrote\n", hex_dump ($fl_dir), "Read\n", hex_dump ($read);
-	}
-	else
-	{
-	    print "Looks OK!\n";
-	}
+	die "Flash update failed!\n" unless update_flash_data ($data);
     };
 
     return $@ ;

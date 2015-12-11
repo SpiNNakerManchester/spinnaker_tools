@@ -1,0 +1,29 @@
+#! armcc -E
+
+//
+// Scatter load file for BMP on LPC1768
+//
+
+// "BASE" is passed in from the linker command line
+
+IMAGE BASE
+{
+      	PROGRAM BASE 32768
+  	{   
+		bmp_init.o (.vectors, +FIRST)
+    		* (+RO)
+		bmp_init.o (.padding, +LAST)
+  	}
+
+// Allow 4K bytes for Flash buffer and 32 bytes for uninitialised data
+
+  	SRAM 0x10001020 0x00007800
+  	{
+    		* (+RW)
+		* (+ZI)
+  	}
+
+	STACK 0x10007800 EMPTY 0x7e0
+	{
+	}
+}
