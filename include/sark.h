@@ -651,6 +651,7 @@ typedef struct
   block_t *free;	//!< Root of free block chain
   block_t *first;	//!< First block
   block_t *last;	//!< Last block (zero size, never used for storage)
+  uint free_bytes;	//!< Number of free bytes left
   uchar buffer[];	//!< Buffer for blocks
 } heap_t;
 

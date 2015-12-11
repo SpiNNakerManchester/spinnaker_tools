@@ -143,7 +143,9 @@ enum alloc_cmd_e
   ALLOC_RTR,		 	//!< Allocate Router
   FREE_RTR,	 		//!< Free Router
   FREE_RTR_ID,		 	//!< Free Router by ID
-  ALLOC_MAX=FREE_RTR_ID	 	//!< Maximum command
+  SDRAM_SPACE,			//!< Total free space & largest free block
+  HEAP_TAG_PTR,			//!< Heap block from tag & ID
+  ALLOC_MAX=HEAP_TAG_PTR 	//!< Maximum command
 };
 
 //------------------------------------------------------------------------------

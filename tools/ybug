@@ -406,11 +406,12 @@ sub dump_heap
 {
     my ($heap, $name) = @_;
 
-    printf "\n$name\n%s\n", "-" x length $name;
-
-    my $data = $spin->read ($heap, 12, unpack => "VVV");
+    my $data = $spin->read ($heap, 16, unpack => "VVVV");
     my $heap_free = $data->[0];
     my $heap_first = $data->[1];
+    my $free_bytes = $data->[3];
+
+    printf "\n$name %u\n%s\n", $free_bytes, "-" x length $name;
 
     my $p = $heap_first;
 		 
