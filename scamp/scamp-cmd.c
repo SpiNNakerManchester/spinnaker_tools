@@ -427,11 +427,15 @@ uint cmd_info (sdp_msg_t *msg)
     {
       // A link is determined working if: a link read of the remote system
       // controller's chip ID returns and the chip ID matches this chip's ID
-      // (i.e. the remote chip is the same type of chip as this one!).
-      uint remote_chip_id;
-      uint rc = link_read_word ((uint)(sc + SC_CHIP_ID), link, &remote_chip_id, timeout);
-      if (rc == RC_OK && remote_chip_id == local_chip_id)
-        msg->arg1 |= 1 << (link + 8);
+      // (i.e. the remote chip is the same type of chip as this one!). Mark
+      // "disabled" links as not working.
+      if (link_en && (1 << link))
+        {
+          uint remote_chip_id;
+          uint rc = link_read_word ((uint)(sc + SC_CHIP_ID), link, &remote_chip_id, timeout);
+          if (rc == RC_OK && remote_chip_id == local_chip_id)
+            msg->arg1 |= 1 << (link + 8);
+        }
     }
 
   // Get largest free block in SDRAM

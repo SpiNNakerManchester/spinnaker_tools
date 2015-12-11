@@ -89,6 +89,9 @@ nn_desc_t nn_desc;
 pkt_buf_t peek_pkt;
 pkt_buf_t poke_pkt;
 
+// Should all BIFF packets have been sent at this point?
+uint biff_complete;
+
 
 //------------------------------------------------------------------------------
 
@@ -375,7 +378,6 @@ uint next_id (void)
 
 uint next_biff_id (void)
 {
-  // XXX: This hasn't yet been added to sv.
   uint t = sv->last_biff_id + 1;
   if (t > 127)
     t = 1;
@@ -435,7 +437,7 @@ void biff_nn_send (uint data)
 
   key |= chksum_64 (key, data);
 
-  uint forward = 0x03; // East, North-East, North only
+  uint forward = 0x07; // East, North-East, North only
   for (uint link = 0; link < NUM_LINKS; link++)
     {
       if (forward & (1 << link) & link_up & link_en)
@@ -478,6 +480,9 @@ const signed char ly[6] = { 0, -1, -1,  0, +1, +1};
 
 uint nn_cmd_p2pc (uint link, uint data)
 {
+  if (!biff_complete)
+    return 0;
+  
   uint addr = data & 0xffff;
 
   int addr_x = addr >> 8;
@@ -657,6 +662,9 @@ void nn_cmd_sig1 (uint data, uint key)
 
 uint nn_cmd_p2pb (uint id, uint data, uint link)
 {
+  if (!p2p_up)
+    return P2PB_STOP_BIT;
+  
   uint addr = data >> 16;
   uint hops = data & 0x3ff;	// Bottom 10 bits
 
@@ -960,15 +968,16 @@ void nn_cmd_biff(uint x, uint y, uint data)
           if (target_x != x || target_y != y)
             return;
           
-          // XXX: sv variable doesn't yet exist
-          sv->link_en = link_en = (data >> 18) & 0x3f;
+          // NB: *Dead* links are given as '1'
+          sv->link_en = link_en = ((~data) >> 18) & 0x3f;
+          sv->link_up &= link_up = ((~data) >> 18) & 0x3f;
           
           // Kill any cores noted as dead (note this may kill the core running
           // the monitor process, rendering the chip dead. This is the desired
           // effect in this instance since rebooting another core as monitor
           // would be difficult.
-          uint dead_cores = (~data) & 0x3ffff;
-          remap_phys_core(dead_cores);
+          uint dead_cores = data & 0x3ffff;
+          remap_phys_cores(dead_cores);
         }
         break;
       
@@ -989,7 +998,7 @@ void nn_rcv_biff_pct (uint link, uint data, uint key)
   
   // Fliter the packet if it came from another board
   if (x >= 8 || x < 0 || y >= 8 || y < 0 ||
-      eth_map[x][y] != ((x << 4) + y))
+      eth_map[y][x] != ((x << 4) + y))
     return;
   
   uint id = (key >> 1) & 127;
@@ -1019,7 +1028,7 @@ void nn_rcv_biff_pct (uint link, uint data, uint key)
   // Continue propagation:
   
   // Update coordinates in packet
-  key &= 0x3f;
+  key &= ~0x3f00;
   key |= x << 11;
   key |= y << 8;
   
@@ -1044,7 +1053,9 @@ void nn_rcv_biff_pct (uint link, uint data, uint key)
   pkt->pkt = tp;
     
   if (!timer_schedule_proc (proc_pkt_bc, (uint) pkt, 1, 8))
-    sw_error (SW_OPT);
+    {
+      sw_error (SW_OPT);
+    }
 }
 
 
@@ -1111,7 +1122,10 @@ void nn_rcv_pkt (uint link, uint data, uint key)
 
     case NN_CMD_P2PC:
       data = nn_cmd_p2pc (link, data);
-      break;
+      if (data == 0)
+        return;
+      else
+        break;
 
     case NN_CMD_FFS:
       nn_cmd_ffs (data, key);

@@ -234,6 +234,7 @@ extern void msg_queue_insert (sdp_msg_t *msg, uint srce_ip);
 extern void compute_level (uint p2p_addr);
 extern void ff_nn_send (uint key, uint data, uint fwd_rty, uint log);
 extern void biff_nn_send (uint data);
+extern void nn_cmd_biff(uint x, uint y, uint data);
 extern void nn_mark (uint key);
 extern uint probe_links (uint mask, uint timeout);
 extern uint link_read_word (uint addr, uint link, uint *buf, uint timeout);
@@ -281,6 +282,7 @@ extern void boot_nn (uint hw_ver);
 
 //------------------------------------------------------------------------------
 
+extern uint biff_complete;
 extern uint p2p_addr;
 extern uint p2p_dims;
 extern uint p2p_up;
