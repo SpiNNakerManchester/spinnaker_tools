@@ -60,19 +60,19 @@ boot_sig             V  0x5c  %08x  0           # Boot signature
 
 mem_ptr              V  0x60  %08x  0           # Memory pointer for NNP global ops.
 
-lock                 C  0x64  %02x  0           #
-lock1                C  0x65  %02x  0           #
-lock2                C  0x66  %02x  0           #
+lock                 C  0x64  %02x  0           # Lock variable
+link_en              C  0x65  %02x  0x3f        # Bit mask (6 bits) for link enabled
+__PAD1               C  0x66  %02x  0           #
 bt_flags             C  0x67  %02x  0           #
 
 shm_root.free        V  0x68  %08x  0           #
 shm_root.count       v  0x6c  %d    0           #
 shm_root.max         v  0x6e  %d    0           #
 
-__PAD1               V  0x70  %08x  0           # 
-__PAD2               V  0x74  %08x  0           #
-__PAD3               V  0x78  %08x  0           #
-__PAD4               V  0x7c  %08x  0           #
+utmp0                V  0x70  %08x  0           # 
+utmp1                V  0x74  %08x  0           #
+utmp2                V  0x78  %08x  0           #
+utmp3                V  0x7c  %08x  0           #
 
 status_map[20]       C  0x80  %02x  0           # Set during SC&MP ROM boot
 p2v_map[20]          C  0x94  %02x  0           # Phys to Virt core map
@@ -100,8 +100,8 @@ mbox_flags           V  0xec  %08x  0           # AP->MP communication flags
 
 ip_addr              V  0xf0  %08x  0           # IP address (or 0)
 fr_copy              V  0xf4  %08x  0           # (Virtual) copy of rtr FR reg
-utmp1                V  0xf8  %08x  0           #
-utmp2                V  0xfc  %08x  0           #
+board_info           V  0xf8  %08x  0           # Pointer to board_info area
+__PAD2               V  0xfc  %08x  0           #
 
 #-------------------------------------------------------------------------------
 

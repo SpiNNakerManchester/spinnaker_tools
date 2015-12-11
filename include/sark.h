@@ -651,6 +651,7 @@ typedef struct
   block_t *free;	//!< Root of free block chain
   block_t *first;	//!< First block
   block_t *last;	//!< Last block (zero size, never used for storage)
+  uint free_bytes;	//!< Number of free bytes left
   uchar buffer[];	//!< Buffer for blocks
 } heap_t;
 
@@ -1034,9 +1035,9 @@ typedef struct sv
 
   uint mem_ptr;			//!< 60 Memory pointer for NNBC memory setter
 
-  volatile uchar lock;		//!< 64 Four lock variables...
-  volatile uchar lock1;		//!< 65
-  volatile uchar lock2;		//!< 66
+  volatile uchar lock;		//!< 64 Lock variable
+  uchar link_en;		//!< 65 Bit map of enabled links
+  uchar __PAD1;			//!< 66
   uchar bt_flags;		//!< 67 Board Test flags
 
   mem_block_t shm_root; 	//!< 68 Control block for SHM bufs
@@ -1071,7 +1072,7 @@ typedef struct sv
 
   uchar ip_addr[4];		//!< f0 IP address (or 0)
   uint fr_copy;			//!< f4 (Virtual) copy of router FR reg
-  uint __PAD1;			//!< f8 Two spare...
+  uint *board_info;		//!< f8 Pointer to board_info area !!
   uint __PAD2;			//!< fc
 } sv_t;
 
@@ -1091,6 +1092,9 @@ static vcpu_t* const sv_vcpu    = (vcpu_t *) SV_VCPU;
 static uint*   const sv_srom    = (uint *)   SV_SROM;
 static uint*   const sv_random  = (uint *)   SV_RANDOM;
 static uint*   const sv_vectors = (uint *)   SV_VECTORS;
+
+// !!
+static uint*   const sv_board_info = (uint *)   SV_SPARE;
 
 
 //------------------------------------------------------------------------------

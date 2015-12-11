@@ -1,5 +1,0 @@
-#!/bin/bash
-(
-	cd "$(dirname "$0")"
-	rsync -rczva . glass:spinnaker_tools_134
-)
