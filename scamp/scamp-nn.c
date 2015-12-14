@@ -159,7 +159,7 @@ void compute_eth (int x, int y, int x_size, int y_size)
 //------------------------------------------------------------------------------
 
 // Given a P2P address, compute region addresses for each of the four
-// levels.
+// levels, updating the levels structure.
 
 void compute_level (uint p2p_addr)
 {
@@ -177,6 +177,8 @@ void compute_level (uint p2p_addr)
     }
 }
 
+// For all regions at all levels, find a working chip within each of the 16
+// subregions and record its coordinates.
 
 void level_config (void)
 {
@@ -184,7 +186,7 @@ void level_config (void)
     {
       uint base = (levels[level].level_addr >> 16) & 0xfcfc;
       uint shift = 6 - 2 * level;	// {6, 4, 2, 0};
-      uint width = (1 << shift) - 1;	// {63, 15, 3, 0};
+      uint width = (1 << shift);	// {64, 16, 4, 1};
 
       for (uint ix = 0; ix < 4; ix++)
 	{
@@ -193,14 +195,18 @@ void level_config (void)
 	      uint num = ix + 4 * iy;
 	      uint addr = ((ix << 8) + iy) << shift;
 
-	      // Now probe four chips at the corners of the region. Can optimise
-	      // this to a single chip for level=3
+	      // Now search for a working chip within the subregion.
 
-	      for (uint i = 0; i < 4; i++)
+	      for (uint i = 0; i < (width * width); i++)
 		{
-		  uint wx = (i & 1) * width;
-		  uint wy = (i >> 1) * width;
+		  uint wx = i & ((1 << shift) - 1);
+		  uint wy = i >> shift;
 		  uint a = base + addr + (wx << 8) + wy;
+		  
+		  // Don't bother trying outside the scope of the system
+		  if (a >= p2p_dims || (a & 0xFF) >= (p2p_dims & 0xFF))
+		    continue;
+		  
 		  uint link = rtr_p2p_get (a);
 
 		  if (link != 6)
@@ -209,9 +215,6 @@ void level_config (void)
 		      levels[level].valid[num] = 1;
 		      break;
 		    }
-
-		  if (level == 3)
-		    break;
 		}
 	    }
 	}

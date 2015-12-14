@@ -1134,13 +1134,6 @@ void proc_100hz (uint a1, uint a2)
       // Send P2PC packet
 
       send_p2pc ((sv->p2p_dims << 16) + sv->p2p_addr, p2pc_fwd);
-
-      // Send SIG0 - Level Config packet
-
-      ff_nn_send ((NN_CMD_SIG0 << 24) + (0x3f << 16),	//!! was 3e
-		  4 << 28,
-		  0x3f00,
-		  1);
     }
 
   // Process IPTag timeouts
@@ -1168,7 +1161,7 @@ void proc_100hz (uint a1, uint a2)
     }
     
   // Send P2PB packet if P2P is up, on the final iteration, compute the
-  // spanning tree, sending no more P2PBs
+  // spanning tree and update the level table, sending no more P2PBs
 
   if (p2p_up && run_timer (&p2pb_timer))
     {
@@ -1189,8 +1182,8 @@ void proc_100hz (uint a1, uint a2)
         }
       else
         {
-          // Compute minimum spanning tree
           compute_st ();
+          level_config ();
         }
     }
 
