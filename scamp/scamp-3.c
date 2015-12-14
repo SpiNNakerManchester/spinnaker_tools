@@ -1147,7 +1147,7 @@ void proc_100hz (uint a1, uint a2)
 
   // Flip LED0 every now and then
 
-  if (sv->led_period != 0 && ++led_timer.counter >= sv->led_period)
+  if (booted && sv->led_period != 0 && ++led_timer.counter >= sv->led_period)
     {
       led_timer.counter = 0;
       sark_led_set (LED_INV(0));	// !! assumes LED_0 always there
@@ -1184,6 +1184,7 @@ void proc_100hz (uint a1, uint a2)
         {
           compute_st ();
           level_config ();
+          booted = 1;
         }
     }
 
