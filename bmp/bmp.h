@@ -504,6 +504,8 @@ void refresh_wdt (void);
 
 void led_set (uint32_t leds);
 
+void ssp0_pins (uint32_t on);
+
 //## void die (uint32_t code) __attribute__((noreturn));
 
 //------------------------------------------------------------------------------
