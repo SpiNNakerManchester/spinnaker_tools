@@ -26,12 +26,15 @@ extern uint32_t reset_vec;
 
 static void fpga_boot (uint32_t base, uint32_t len, uint32_t mask)
 {
+  ssp0_pins (1);
+
   (void) fpga_init (mask);
 
   ssp0_copy (base, len);
 
   delay_ms (10);
 
+  ssp0_pins (0);
 }
 
 
@@ -236,21 +239,28 @@ static uint32_t cmd_sf (sdp_msg_t *msg)
       return 0;
     }
 
+  uint32_t r = 0;
+
+  ssp0_pins (1);
+
   if (op == 0)
     {
       sf_read (addr, len, (uint8_t *) &msg->arg1);
-      return len;
+      r =  len;
     }
   else if (op == 1)
     {
       sf_write (addr, len, msg->data);
-      return 0;
     }
   else
     {
       msg->arg1 = sf_crc32 (addr, len);
-      return 4;
+      r= 4;
     }
+
+  ssp0_pins (0);
+
+  return r;
 }
 
 

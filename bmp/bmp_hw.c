@@ -620,7 +620,7 @@ static void config_pin (uint32_t port, uint32_t pin, uint32_t func)
 
 //  PORT_0, pin 16 is Flash NCS
 
-static void ssp0_pins (uint32_t on)
+void ssp0_pins (uint32_t on)
 {
   if (on)
     {
@@ -642,6 +642,8 @@ static void ssp0_pins (uint32_t on)
 
       LPC_GPIO2->FIOCLR = IO_EN2;	// Enable Spin onto Flash
     }
+
+  delay_ms (1);
 }
 
 
@@ -778,12 +780,9 @@ void reset_spin (uint32_t code)
       ssp0_pins (0);		// Enable Spin->Flash
 
       LPC_GPIO2->FIOCLR = POR;	// Clear POR
+
       if (fpga)			// Set XRST
 	LPC_GPIO1->FIOSET = XIL_RST;
-
-      //!!      delay_ms (20);		// Wait for Flash read
-      delay_ms (100);		// Wait for Flash read
-      //!!      ssp0_pins (1);		// Disable Spin->Flash
     }
 }
 
