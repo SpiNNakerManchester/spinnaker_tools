@@ -72,7 +72,7 @@ shm_root.max         v  0x6e  %d    0           #
 utmp0                V  0x70  %08x  0           # 
 utmp1                V  0x74  %08x  0           #
 utmp2                V  0x78  %08x  0           #
-biff_timer           V  0x7c  %08x  0x02700301  # Boot-info flood-fill timer
+biff_timer           V  0x7c  %08x  0x01700201  # Boot-info flood-fill timer
 
 status_map[20]       C  0x80  %02x  0           # Set during SC&MP ROM boot
 p2v_map[20]          C  0x94  %02x  0           # Phys to Virt core map

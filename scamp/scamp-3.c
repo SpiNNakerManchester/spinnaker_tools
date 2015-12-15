@@ -1056,32 +1056,47 @@ void soft_wdog (uint max)
 
 //------------------------------------------------------------------------------
 
-// "proc_100hz" is put on the event queue every 10ms
-
-extern uint msst_route;
-extern uint msst_hops;
 uint booted;
 
-
-void compute_msst (void)
+// Produce a spanning tree of the system using the P2P routes constructed.
+void compute_st (void)
 {
+  // Definately route here
   uint route = MC_CORE_ROUTE (0);
 
-  uint x = sv->p2p_addr >> 8;
-  uint y = sv->p2p_addr & 255;
-
-  if (rtr_p2p_get (((x + 1) << 8) + (y + 1)) != 6)
-    route |= 1 << 1;
-
-  if (y == 0 && rtr_p2p_get ((x + 1) << 8) != 6)
-    route |= 1 << 0;
-
-  if (x == 0 && rtr_p2p_get (y + 1) != 6)
-    route |= 1 << 2;
+  // Compile the set of neighbours which route to (0, 0) via this chip and add
+  // them to the route, forming a spanning tree.
+  uint timeout = sv->peek_time;
+  for (uint link = 0; link < NUM_LINKS; link++)
+    {
+      if (!((1 << link) & link_up & link_en))
+        continue;
+      
+      // Try to read multiple times if required
+      uint attempts_remaining = 2;
+      uint remote_rtr_p2p_0;
+      uint rc;
+      do
+        rc = link_read_word ((uint)(rtr_p2p), link, &remote_rtr_p2p_0, timeout);
+      while (rc != RC_OK && (--attempts_remaining));
+      
+      // Flag an error if we could not get a p2p entry from a neighbour
+      if (rc != RC_OK)
+        {
+          sw_error (SW_OPT);
+          continue;
+        }
+      
+      // Check if (0, 0) route from neighbour points at this chip.
+      if ((remote_rtr_p2p_0 & 0x7) == ((link + 3) % 6))
+        route |= MC_LINK_ROUTE (link);
+    }
 
   rtr_mc_set (0, 0xffff5555, 0xffffffff, route);
 }
 
+
+// "proc_100hz" is put on the event queue every 10ms
 
 void proc_100hz (uint a1, uint a2)
 {
@@ -1119,13 +1134,6 @@ void proc_100hz (uint a1, uint a2)
       // Send P2PC packet
 
       send_p2pc ((sv->p2p_dims << 16) + sv->p2p_addr, p2pc_fwd);
-
-      // Send SIG0 - Level Config packet
-
-      ff_nn_send ((NN_CMD_SIG0 << 24) + (0x3f << 16),	//!! was 3e
-		  4 << 28,
-		  0x3f00,
-		  1);
     }
 
   // Process IPTag timeouts
@@ -1139,7 +1147,7 @@ void proc_100hz (uint a1, uint a2)
 
   // Flip LED0 every now and then
 
-  if (sv->led_period != 0 && ++led_timer.counter >= sv->led_period)
+  if (booted && sv->led_period != 0 && ++led_timer.counter >= sv->led_period)
     {
       led_timer.counter = 0;
       sark_led_set (LED_INV(0));	// !! assumes LED_0 always there
@@ -1152,44 +1160,32 @@ void proc_100hz (uint a1, uint a2)
       (void) probe_links (0x80 + 0x3f, sv->peek_time);
     }
     
-  if (!booted && ticks > 50)
-    {
-      uint max_chip = sv->p2p_dims - 0x0101;
-      uint route = rtr_p2p_get (max_chip);
-
-      if (route != 6)
-	{
-	  booted = 1;
-	  compute_msst ();
-/*
-	  if (sv->root_chip)
-	    {
-	      sv->utmp1 = msst_route = link_up;
-	      sv->utmp0 = msst_hops = 1;
-
-	      rtr_mc_set (0, 0xffff5555, 0xffffffff,
-			  MC_CORE_ROUTE (0) + msst_route);
-
-	      ff_nn_send (0x093e1800, 2, 0x0718, 1);
-	    }
-*/
-	}
-    }
-
-  // Send P2PB packet if P2P is up
+  // Send P2PB packet if P2P is up, on the final iteration, compute the
+  // spanning tree and update the level table, sending no more P2PBs
 
   if (p2p_up && run_timer (&p2pb_timer))
     {
-      hop_table[p2p_addr] = (p2pb_id >> 1) << 24;
+      // On all but the last iteration, broadcast P2P coordinates for P2P table
+      // construction
+      if (p2pb_timer.repeat != 255)
+        {
+          hop_table[p2p_addr] = (p2pb_id >> 1) << 24;
 
-      uint flags = 0; //!!
+          uint flags = 0; //!!
 
-      ff_nn_send ((NN_CMD_P2PB << 24) + (0x3e00 << 8) + p2pb_id,
-		  (p2p_addr << 16) + (flags << 12) + 1,
-		  0x3f00,
-		  0);
+          ff_nn_send ((NN_CMD_P2PB << 24) + (0x3e00 << 8) + p2pb_id,
+                      (p2p_addr << 16) + (flags << 12) + 1,
+                      0x3f00,
+                      0);
 
-      p2pb_id += 2; // Relies on p2pb_id being 8 bits
+          p2pb_id += 2; // Relies on p2pb_id being 8 bits
+        }
+      else
+        {
+          compute_st ();
+          level_config ();
+          booted = 1;
+        }
     }
 
   // Send LTPC packet (untested!)

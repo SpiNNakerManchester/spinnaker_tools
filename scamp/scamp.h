@@ -120,7 +120,7 @@
 #define NN_CMD_FFCS		7       // Flood fill core and region select
 
 #define NN_CMD_P2PB		8	// Hop count limited
-#define NN_CMD_MSST		9	// Self-limiting
+#define NN_CMD_SP_9		9	// Spare
 #define NN_CMD_SP_10 		10	// Spare
 #define NN_CMD_BIFF		11	// Board-info flood-fill (handled specially)
 
@@ -213,14 +213,14 @@ typedef struct pkt_buf_t	// Holds a NN packet awaiting transmission
 
 typedef struct		// 64 bytes
 {
-  uint   level_addr;	// 0
-  ushort sent;		// 4
-  ushort rcvd;		// 6
-  ushort parent;	// 8
+  uint   level_addr;	// 0: This chip's region at this level
+  ushort sent;		// 4: Number of requests sent out in this region
+  ushort rcvd;		// 6: Number of responses received
+  ushort parent;	// 8: P2P address of the chip which sent the last request
   ushort __PAD1;	// 10
-  uint result;		// 12
-  ushort addr[16];	// 16
-  uchar  valid[16];	// 48
+  uint result;		// 12: Result accumulated within this region
+  ushort addr[16];	// 16: A working chip p2p for each subregion, if valid
+  uchar  valid[16];	// 48: Is at least one chip in each sub-region known to be alive?
 } level_t;
 
 //------------------------------------------------------------------------------
@@ -232,6 +232,7 @@ extern void msg_queue_insert (sdp_msg_t *msg, uint srce_ip);
 // scamp-nn.c
 
 extern void compute_level (uint p2p_addr);
+extern void level_config (void);
 extern void ff_nn_send (uint key, uint data, uint fwd_rty, uint log);
 extern void biff_nn_send (uint data);
 extern void nn_cmd_biff(uint x, uint y, uint data);

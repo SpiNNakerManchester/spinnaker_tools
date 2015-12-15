@@ -429,7 +429,7 @@ uint cmd_info (sdp_msg_t *msg)
       // controller's chip ID returns and the chip ID matches this chip's ID
       // (i.e. the remote chip is the same type of chip as this one!). Mark
       // "disabled" links as not working.
-      if (link_en && (1 << link))
+      if (link_en & (1 << link))
         {
           uint remote_chip_id;
           uint rc = link_read_word ((uint)(sc + SC_CHIP_ID), link, &remote_chip_id, timeout);
