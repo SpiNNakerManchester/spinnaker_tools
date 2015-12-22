@@ -27,9 +27,8 @@ void __attribute__((weak)) schedule_sysmode (uchar event_id,
 
 //------------------------------------------------------------------------------
 
-#define SARK_VER_NUM  		134
-
 #define SARK_VER_STR		"SARK/SpiNNaker"
+#define SARK_VER_NUM		"2.0.0"
 
 sark_data_t sark;
 
@@ -514,12 +513,13 @@ uint sark_msg_send (sdp_msg_t *msg, uint timeout)
 uint sark_cmd_ver (sdp_msg_t *msg)
 {
   msg->arg1 = (sv->p2p_addr << 16) + (sark.phys_cpu << 8) + sark.virt_cpu;
-  msg->arg2 = (SARK_VER_NUM << 16) + SDP_BUF_SIZE;
+  msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
   msg->arg3 = (uint) build_date;
 
   sark_str_cpy ((char *) msg->data, SARK_VER_STR);
+  sark_str_cpy ((char *) msg->data + sizeof (SARK_VER_STR), SARK_VER_NUM);
 
-  return 12 + sizeof (SARK_VER_STR);
+  return 12 + sizeof (SARK_VER_STR) + sizeof (SARK_VER_NUM);
 }
 
 

@@ -26,9 +26,9 @@
 //------------------------------------------------------------------------------
 
 
-// Boot version number (* 100)
+// Boot version number
 
-#define BOOT_VERSION    102
+#define BOOT_VER_NUM    0x00020000
 
 // Linker generated symbols
 
@@ -246,7 +246,7 @@ static const boot_vec_t boot_data __attribute__ ((section (".boot_vec"))) =
   (proc4) 0,   			// 3:
   (proc4) 0,         		// 4:
   BUILD_DATE,  			// 5: Build date
-  BOOT_VERSION,        		// 6: Version
+  BOOT_VER_NUM,        		// 6: Version
   0				// 7: Checksum
 };
 

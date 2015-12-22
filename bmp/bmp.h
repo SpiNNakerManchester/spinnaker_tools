@@ -52,8 +52,6 @@
 
 //------------------------------------------------------------------------------
 
-#define BUF_SIZE		256
-
 #define CMD_VER			0
 #define CMD_RUN			1
 #define CMD_READ		2

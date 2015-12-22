@@ -27,7 +27,7 @@ SPINN_PATH=$SPINN_DIRS/boot
 
 # SPINN_STV is the version number of the low-level software tools
 
-SPINN_STV=134
+SPINN_STV=2.0.0
 
 #-------------------------------------------------------------------------------
 

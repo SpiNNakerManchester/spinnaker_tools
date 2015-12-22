@@ -20,7 +20,7 @@
 
 // Version number
 
-#define VER_NUM		138
+#define BMP_VER_NUM	0x0020000		// 2.0.0
 
 // Linker generated symbols
 
@@ -175,7 +175,7 @@ const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) =
     (handler) 0,			// 51: 
     (handler) 0,			// 52: 
     BUILD_DATE,				// 53: Build date
-    VER_NUM,				// 54: Version number
+    BMP_VER_NUM,			// 54: Version number
 
     (uint32_t) &RO_LENGTH,           	// 55: RO_length
     (uint32_t) &RW_LENGTH,           	// 56: RW_length

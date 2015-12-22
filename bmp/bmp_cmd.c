@@ -230,7 +230,7 @@ static uint32_t cmd_sf (sdp_msg_t *msg)
   uint32_t len = msg->arg2;
   uint32_t op = msg->arg3;
 
-  if ((op < 2 && len > BUF_SIZE) || op > 2)
+  if ((op < 2 && len > SDP_BUF_SIZE) || op > 2)
     {
       msg->cmd_rc = RC_ARG;
       return 0;
@@ -263,7 +263,7 @@ static uint32_t cmd_ee (sdp_msg_t *msg)
   int32_t len = msg->arg2;
   uint32_t op = msg->arg3;
 
-  if (len > BUF_SIZE || op > 1 || ! bp_ctrl)
+  if (len > SDP_BUF_SIZE || op > 1 || ! bp_ctrl)
     {
       msg->cmd_rc = RC_ARG;
       return 0;
@@ -423,13 +423,20 @@ static uint32_t cmd_ver (sdp_msg_t *msg)
   msg->arg1 = (cv << 24) + (ee_data.frame_ID << 16) +
               (can_ID << 8) + board_ID;
 
-  msg->arg2 = (cortex_vec->version << 16) + BUF_SIZE;
+  msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
 
   msg->arg3 = cortex_vec->build_date;
 
-  strcpy ((char *) msg->data, sver_string);
+  char ver_num[40];
+  uint32_t v = cortex_vec->version;
+  io_printf (ver_num, "%d.%d.%d", v >> 16, (v >> 8) & 255, v & 255);
 
-  return 12 + strlen (sver_string) + 1;
+  uint32_t len = 1 + strlen (sver_string);
+
+  strcpy ((char *) msg->data, sver_string);
+  strcpy ((char *) msg->data + len, ver_num);
+
+  return 12 + len + strlen (ver_num) + 1;
 }
 
 
@@ -524,7 +531,7 @@ static uint32_t cmd_read (sdp_msg_t *msg)
   uint32_t len = msg->arg2;	// Length
   uint32_t type = msg->arg3;	// Type
 
-  if (len > BUF_SIZE || type > TYPE_WORD)
+  if (len > SDP_BUF_SIZE || type > TYPE_WORD)
     {
       msg->cmd_rc = RC_ARG;
       return 0;
@@ -570,7 +577,7 @@ static uint32_t cmd_write (sdp_msg_t *msg)
   uint32_t len = msg->arg2;	// Length
   uint32_t type = msg->arg3;	// Type
 
-  if (len > BUF_SIZE || type > TYPE_WORD)
+  if (len > SDP_BUF_SIZE || type > TYPE_WORD)
     {
       msg->cmd_rc = RC_ARG;
       return 0;
@@ -657,7 +664,7 @@ static uint32_t cmd_iptag (sdp_msg_t *msg)
       iptag_t *tt = tag_table + tag;
       uint32_t size = msg->arg2 * sizeof (iptag_t);
 
-      if (size > BUF_SIZE)
+      if (size > SDP_BUF_SIZE)
 	{
 	  msg->cmd_rc = RC_ARG;
 	  return 0;
@@ -696,7 +703,7 @@ static uint32_t cmd_i2c (sdp_msg_t *msg)
 {
   uint32_t count = msg->arg3;
 
-  if (count > BUF_SIZE || ! bp_ctrl)
+  if (count > SDP_BUF_SIZE || ! bp_ctrl)
     {
       msg->cmd_rc = RC_ARG;
       return 0;
