@@ -408,8 +408,9 @@ uint cmd_rtr (sdp_msg_t *msg)
 //   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
 //                  Chip ID in system controller, 0 otherwise. This check is
 //                  performed on demand.
-//   * Bits 15,14 - Undefined
-//   * Bits 31:16 - Number of free multicast routing table entries
+//   * Bits 20-14 - Undefined
+//   * Bits 31:21 - The number of routing table entries in the
+//                  largest free block.
 // * arg2: The size (in bytes) of the largest free block in the SDRAM heap
 // * arg3: The size (in bytes) of the largest free block in the SysRAM heap
 // * The data payload which follows contains an 18-byte block which gives the
@@ -422,7 +423,7 @@ uint cmd_info (sdp_msg_t *msg)
   msg->arg1 = sv->num_cpus & 0x0000001F;
 
   // Get number of free multicast routing table entries
-  msg->arg1 |= sv->rtr_free << 16;
+  msg->arg1 |= TODO_GET_FREE_ENTRIES_FUNCTION << 21;
   
   // Get working link bitmap
   uint timeout = sv->peek_time;
