@@ -1952,6 +1952,26 @@ re-initialised. Returns number of blocks freed.
 
 uint rtr_free_id (uint app_id, uint clear);
 
+/*!
+Return the size of the largest free block in the router multicast table
+(or zero if table is full).
+
+\return number of entries in largest block
+*/
+
+uint rtr_alloc_max (void);
+
+/*!
+Get a pointer to a tagged allocation. If the "app_id" parameter is zero uses
+the core's app_id.
+
+\param tag The tag of the allocation to get a pointer to
+\param app_id AppID whose tagged allocation to read (or 0 to use the core's app ID)
+\return A pointer
+*/
+
+void *sark_tag_ptr (uint tag, uint app_id);
+
 //------------------------------------------------------------------------------
 
 // Routines exported by SARK - sark_hw.c
