@@ -81,15 +81,38 @@
 //------------------------------------------------------------------------------
 
 // NN opcodes
-// Codes < 7 have propagation limited by the ID field in the packet.
-// Codes >= 7 have various other ways of handling propagation.
-// Codes 0-3, 8-11 have explicit FwdRty in the packet.
-// Codes 4-7, 12-15 use stored FwdRty parameters
+//   Codes < 7 have propagation limited by the ID field in the packet.
+//   Codes >= 7 have various other ways of handling propagation.
+//   Codes 0-3, 8-11 have explicit FwdRty in the packet.
+//   Codes 4-7, 12-15 use stored FwdRty parameters
+// Contrary to the above, NN packets with code NN_CMD_BIFF are limited by ID
+// in a separate ID-space to other commands and their propagation is limited to
+// just the current board.
+
+// Nearest neighbour packet format for non NN_CMD_BIFF commands
+//   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64)
+//   key[27:24] NN command
+//   key[23:16] Forward (for packets with command bit 2 set)
+//   key[15:8] Retry (for packets with command bit 2 set)
+//   key[7:1] 7-bit packet ID, used for ignoring echos (for packets with
+//            commands < 7)
+//   key[1] Must be 0, differentiator between peek/poke responses and other
+//          NN packets
+// Format for NN_CMD_BIFF commands
+//   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64)
+//   key[27:24] NN command (== NN_CMD_BIFF)
+//   key[23:16] Unused
+//   key[13:11] X coordinate of packet within board (updated when forwarded)
+//   key[10:8] Y coordinate of packet within board (updated when forwarded)
+//   key[7:1] 7-bit packet ID, used for ignoring echos (in a different address
+//            space to other NN packets).
+//   key[1] Must be 0, differentiator between peek/poke responses and other
+//          NN packets
 
 #define NN_CMD_SIG0		0	// Misc (GTPC, Set FwdRty, LED, etc)
 #define NN_CMD_RTRC 		1	// Router Control Reg
 #define NN_CMD_LTPC		2	// Local Time Phase Ctrl (ID=0, Fwd=0)
-#define NN_CMD_SP_3		3
+#define NN_CMD_SP_3		3	// Spare
 
 #define NN_CMD_SIG1     	4	// Misc (MEM, etc)
 #define NN_CMD_P2PC 		5	// P2P Address setup
@@ -97,9 +120,9 @@
 #define NN_CMD_FFCS		7       // Flood fill core and region select
 
 #define NN_CMD_P2PB		8	// Hop count limited
-#define NN_CMD_MSST		9	// Self-limiting
+#define NN_CMD_SP_9		9	// Spare
 #define NN_CMD_SP_10 		10	// Spare
-#define NN_CMD_SP_11 		11	// Spare
+#define NN_CMD_BIFF		11	// Board-info flood-fill (handled specially)
 
 #define NN_CMD_FBS 		12	// Filtered in FF code
 #define NN_CMD_FBD 		13
@@ -143,7 +166,9 @@ enum alloc_cmd_e
   ALLOC_RTR,		 	//!< Allocate Router
   FREE_RTR,	 		//!< Free Router
   FREE_RTR_ID,		 	//!< Free Router by ID
-  ALLOC_MAX=FREE_RTR_ID	 	//!< Maximum command
+  SDRAM_SPACE,			//!< Total free space & largest free block
+  HEAP_TAG_PTR,			//!< Heap block from tag & ID
+  ALLOC_MAX=HEAP_TAG_PTR 	//!< Maximum command
 };
 
 //------------------------------------------------------------------------------
@@ -188,14 +213,14 @@ typedef struct pkt_buf_t	// Holds a NN packet awaiting transmission
 
 typedef struct		// 64 bytes
 {
-  uint   level_addr;	// 0
-  ushort sent;		// 4
-  ushort rcvd;		// 6
-  ushort parent;	// 8
+  uint   level_addr;	// 0: This chip's region at this level
+  ushort sent;		// 4: Number of requests sent out in this region
+  ushort rcvd;		// 6: Number of responses received
+  ushort parent;	// 8: P2P address of the chip which sent the last request
   ushort __PAD1;	// 10
-  uint result;		// 12
-  ushort addr[16];	// 16
-  uchar  valid[16];	// 48
+  uint result;		// 12: Result accumulated within this region
+  ushort addr[16];	// 16: A working chip p2p for each subregion, if valid
+  uchar  valid[16];	// 48: Is at least one chip in each sub-region known to be alive?
 } level_t;
 
 //------------------------------------------------------------------------------
@@ -207,7 +232,10 @@ extern void msg_queue_insert (sdp_msg_t *msg, uint srce_ip);
 // scamp-nn.c
 
 extern void compute_level (uint p2p_addr);
+extern void level_config (void);
 extern void ff_nn_send (uint key, uint data, uint fwd_rty, uint log);
+extern void biff_nn_send (uint data);
+extern void nn_cmd_biff(uint x, uint y, uint data);
 extern void nn_mark (uint key);
 extern uint probe_links (uint mask, uint timeout);
 extern uint link_read_word (uint addr, uint link, uint *buf, uint timeout);
@@ -221,6 +249,7 @@ extern void proc_ffe (uint aplx_addr, uint cpu_mask);
 
 extern uint iptag_new (void);
 extern void assign_virt_cpu (uint phys_cpu);
+extern void remap_phys_cores(uint phys_cores);
 
 // spinn_srom.c
 
@@ -254,11 +283,13 @@ extern void boot_nn (uint hw_ver);
 
 //------------------------------------------------------------------------------
 
+extern uint biff_complete;
 extern uint p2p_addr;
 extern uint p2p_dims;
 extern uint p2p_up;
 extern uint max_hops;
 extern uint link_up;
+extern uint link_en;
 extern uint num_cpus;
 extern uchar v2p_map[MAX_CPUS];
 

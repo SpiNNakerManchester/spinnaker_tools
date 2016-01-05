@@ -1,0 +1,18 @@
+;
+; Scatter load file for BMP Bootstrap on LPC1768
+;
+
+BOOT 0
+{
+      	BOOT 0 4096
+  	{   
+		bmp_boot.o (.boot_vec, +FIRST)
+		bmp_boot.o (.flash_copy)
+    		*.o (+RO)
+		bmp_boot.o (.padding, +LAST)
+  	}
+
+	STACK 0x10007800 EMPTY 0x7e0
+	{
+	}
+}

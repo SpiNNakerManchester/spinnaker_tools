@@ -432,11 +432,15 @@ uint cmd_info (sdp_msg_t *msg)
     {
       // A link is determined working if: a link read of the remote system
       // controller's chip ID returns and the chip ID matches this chip's ID
-      // (i.e. the remote chip is the same type of chip as this one!).
-      uint remote_chip_id;
-      uint rc = link_read_word ((uint)(sc + SC_CHIP_ID), link, &remote_chip_id, timeout);
-      if (rc == RC_OK && remote_chip_id == local_chip_id)
-        msg->arg1 |= 1 << (link + 8);
+      // (i.e. the remote chip is the same type of chip as this one!). Mark
+      // "disabled" links as not working.
+      if (link_en & (1 << link))
+        {
+          uint remote_chip_id;
+          uint rc = link_read_word ((uint)(sc + SC_CHIP_ID), link, &remote_chip_id, timeout);
+          if (rc == RC_OK && remote_chip_id == local_chip_id)
+            msg->arg1 |= 1 << (link + 8);
+        }
     }
 
   // Get largest free block in SDRAM
@@ -677,6 +681,8 @@ uint cmd_sig (sdp_msg_t *msg)
 // op 3 - allocate router - arg2 = count
 // op 4 - free router - arg2 = entry, arg3 = clear
 // op 5 - free router by ID - arg2 = clear
+// op 6 - return free bytes in SDRAM heap & largest block size
+// op 7 - return block point by AppID and Tag
 
 uint cmd_alloc (sdp_msg_t *msg)
 {
@@ -719,6 +725,15 @@ uint cmd_alloc (sdp_msg_t *msg)
     case FREE_RTR_ID:
       msg->arg1 = rtr_free_id (app_id, msg->arg2);
       break;
+
+    case SDRAM_SPACE:
+      msg->arg1 = sv->sdram_heap->free_bytes;
+      msg->arg2 = sark_heap_max (sv->sdram_heap, ALLOC_LOCK);
+      return 8;
+
+    case HEAP_TAG_PTR:
+      msg->arg1 = (uint) sark_tag_ptr (msg->arg2 & 255, app_id);
+      break;
     }
 
   return 4;
@@ -760,14 +775,8 @@ uint cmd_remap (sdp_msg_t *msg)
       return 0;
     }
 
-  sc[SC_CLR_OK] = 1 << phys_core;
+  remap_phys_cores(1 << phys_core);
 
-  assign_virt_cpu (sark.phys_cpu);
-
-  boot_ap ();
-
-  sark_word_set (sv_vcpu + num_cpus, 0, sizeof (vcpu_t));
-    
   return 0;
 }
 

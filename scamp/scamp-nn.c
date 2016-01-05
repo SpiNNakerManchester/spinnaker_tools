@@ -57,6 +57,7 @@ typedef struct nn_desc_t
   uint* aplx_addr;		// APLX block addr
   uint load_addr;		// Block load base
   uint id_set[4];		// ID bitmap (128 bits)
+  uint biff_id_set[4];		// Board-level flood-fill ID bitmap (128 bits)
   uint fbs_set[8];		// Block bitmap for FBS (must be >= 8 words)
   uint fbd_set[8];		// Word bitmap for FBD (must be >= 8 words)
   uint fbe_set[8];		// Block bitmap for FBE (must be >= 8 words)
@@ -87,6 +88,9 @@ nn_desc_t nn_desc;
 
 pkt_buf_t peek_pkt;
 pkt_buf_t poke_pkt;
+
+// Should all BIFF packets have been sent at this point?
+uint biff_complete;
 
 
 //------------------------------------------------------------------------------
@@ -155,7 +159,7 @@ void compute_eth (int x, int y, int x_size, int y_size)
 //------------------------------------------------------------------------------
 
 // Given a P2P address, compute region addresses for each of the four
-// levels.
+// levels, updating the levels structure.
 
 void compute_level (uint p2p_addr)
 {
@@ -173,6 +177,8 @@ void compute_level (uint p2p_addr)
     }
 }
 
+// For all regions at all levels, find a working chip within each of the 16
+// subregions and record its coordinates.
 
 void level_config (void)
 {
@@ -180,7 +186,7 @@ void level_config (void)
     {
       uint base = (levels[level].level_addr >> 16) & 0xfcfc;
       uint shift = 6 - 2 * level;	// {6, 4, 2, 0};
-      uint width = (1 << shift) - 1;	// {63, 15, 3, 0};
+      uint width = (1 << shift);	// {64, 16, 4, 1};
 
       for (uint ix = 0; ix < 4; ix++)
 	{
@@ -189,14 +195,18 @@ void level_config (void)
 	      uint num = ix + 4 * iy;
 	      uint addr = ((ix << 8) + iy) << shift;
 
-	      // Now probe four chips at the corners of the region. Can optimise
-	      // this to a single chip for level=3
+	      // Now search for a working chip within the subregion.
 
-	      for (uint i = 0; i < 4; i++)
+	      for (uint i = 0; i < (width * width); i++)
 		{
-		  uint wx = (i & 1) * width;
-		  uint wy = (i >> 1) * width;
+		  uint wx = i & ((1 << shift) - 1);
+		  uint wy = i >> shift;
 		  uint a = base + addr + (wx << 8) + wy;
+		  
+		  // Don't bother trying outside the scope of the system
+		  if (a >= p2p_dims || (a & 0xFF) >= (p2p_dims & 0xFF))
+		    continue;
+		  
 		  uint link = rtr_p2p_get (a);
 
 		  if (link != 6)
@@ -205,9 +215,6 @@ void level_config (void)
 		      levels[level].valid[num] = 1;
 		      break;
 		    }
-
-		  if (level == 3)
-		    break;
 		}
 	    }
 	}
@@ -372,6 +379,15 @@ uint next_id (void)
   return t << 1;
 }
 
+uint next_biff_id (void)
+{
+  uint t = sv->last_biff_id + 1;
+  if (t > 127)
+    t = 1;
+  sv->last_biff_id = t;
+  return t << 1;
+}
+
 
 void nn_mark (uint key)
 {
@@ -392,9 +408,9 @@ void ff_nn_send (uint key, uint data, uint fwd_rty, uint add_id)
   if (add_id)
     key |= next_id ();
 
-  uint count = fwd_rty & 7;
-  uint delay = fwd_rty & 0xf8;
-  uint forward = fwd_rty >> 8;
+  uint count = fwd_rty & 7;     // Number of times to send
+  uint delay = fwd_rty & 0xf8;  // Delay between transmissions
+  uint forward = fwd_rty >> 8;  // Set of links to forward to
 
   key |= chksum_64 (key, data);
 
@@ -402,7 +418,7 @@ void ff_nn_send (uint key, uint data, uint fwd_rty, uint add_id)
     {
       for (uint link = 0; link < NUM_LINKS; link++)
 	{
-	  if (forward & (1 << link) & link_up)
+	  if (forward & (1 << link) & link_up & link_en)
 	    {
 	      sark_delay_us (delay);
 	      (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
@@ -410,6 +426,29 @@ void ff_nn_send (uint key, uint data, uint fwd_rty, uint add_id)
 	}
     }
   while (count--);
+}
+
+
+void biff_nn_send (uint data)
+{
+  // Note: Should only be called on chips which are at position (0, 0) on their
+  // board.
+  
+  uint key = NN_CMD_BIFF << 24;
+  key |= next_biff_id ();
+  // NB: X = Y = 0
+
+  key |= chksum_64 (key, data);
+
+  uint forward = 0x07; // East, North-East, North only
+  for (uint link = 0; link < NUM_LINKS; link++)
+    {
+      if (forward & (1 << link) & link_up & link_en)
+        {
+          sark_delay_us (8);  // !! const
+          (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+        }
+    }
 }
 
 
@@ -444,6 +483,9 @@ const signed char ly[6] = { 0, -1, -1,  0, +1, +1};
 
 uint nn_cmd_p2pc (uint link, uint data)
 {
+  if (!biff_complete)
+    return 0;
+  
   uint addr = data & 0xffff;
 
   int addr_x = addr >> 8;
@@ -623,6 +665,9 @@ void nn_cmd_sig1 (uint data, uint key)
 
 uint nn_cmd_p2pb (uint id, uint data, uint link)
 {
+  if (!p2p_up)
+    return P2PB_STOP_BIT;
+  
   uint addr = data >> 16;
   uint hops = data & 0x3ff;	// Bottom 10 bits
 
@@ -841,7 +886,7 @@ void proc_pkt_bc (uint i_pkt, uint count)
 	  if (p >= NUM_LINKS)
 	    p -= NUM_LINKS;
 
-	  if ((1 << p) & link_up)
+	  if ((1 << p) & link_up & link_en)
 	    {
 	      if (! pkt_tx (pkt->pkt.ctrl + (p << 18), pkt->pkt.data, pkt->pkt.key))
 		sw_error (SW_OPT);
@@ -863,46 +908,118 @@ void proc_pkt_bc (uint i_pkt, uint count)
 }
 
 
-uint msst_hops;
-uint msst_route;
-uint msst_link;
-uint msst_count;
-
-uint nn_cmd_msst (uint data, uint link)
+void nn_cmd_biff(uint x, uint y, uint data)
 {
-  uint *p = sv->sysram_base;
-  p[msst_count++] = data + (link << 16);
-  p[msst_count] = 0;
-
-  uint hops = data & 0xffff;
-
-  sv->utmp2++;
-
-  if (msst_hops == 0)
+  // Board info data is formatted like so:
+  // data[31:30] - Data type identifier.
+  // For data type 00:
+  //   Defines which parts of a chip are known to be defective
+  //   data[29:27] - X coordinate of chip on board
+  //   data[26:24] - Y coordinate of chip on board
+  //   data[23:18] - Which links are working (bitmap)
+  //   data[17:0] - Which cores are working (bitmap)
+  uint type = data >> 30;
+  
+  switch (type)
     {
-      sv->utmp0 = msst_hops = hops;
-      sv->utmp1 = msst_route = link_up & ~(1 << link);
-      msst_link = link;
+      case 0:
+        {
+          uint target_x = (data >> 27) & 7;
+          uint target_y = (data >> 24) & 7;
+          
+          // Ignore if not targeted at this chip
+          if (target_x != x || target_y != y)
+            return;
+          
+          // NB: *Dead* links are given as '1'
+          sv->link_en = link_en = ((~data) >> 18) & 0x3f;
+          sv->link_up &= link_up = ((~data) >> 18) & 0x3f;
+          
+          // Kill any cores noted as dead (note this may kill the core running
+          // the monitor process, rendering the chip dead. This is the desired
+          // effect in this instance since rebooting another core as monitor
+          // would be difficult.
+          uint dead_cores = data & 0x3ffff;
+          remap_phys_cores(dead_cores);
+        }
+        break;
+      
+      default: // Ignore...
+        break;
     }
-  else if (msst_hops > hops)
-    {
-      sv->utmp0 = msst_hops = hops;
-      msst_route &= ~(1 << link);
-      sv->utmp1 = msst_route |= (1 << msst_link);
-      msst_link = link;
-    }
-  else
-    {
-      sv->utmp1 = msst_route &= ~(1 << link);
-      hops = BIT_31;
-    }
-
-  rtr_mc_set (0, 0xffff5555, 0xffffffff,
-	      MC_CORE_ROUTE (0) + msst_route);
-
-  return hops + 1;
 }
 
+void nn_rcv_biff_pct (uint link, uint data, uint key)
+{
+  // When this function has been called, the checksum has already been verified
+  // and the command checked as being NN_CMD_BIFF.
+  
+  // Work out the coordinate of this chip on its board given the link it
+  // arrived on and the coordinates in the packet.
+  int x = ((key >> 11) & 7) + lx[link];
+  int y = ((key >> 8) & 7) + ly[link];
+  
+  // Fliter the packet if it came from another board
+  if (x >= 8 || x < 0 || y >= 8 || y < 0 ||
+      eth_map[y][x] != ((x << 4) + y))
+    return;
+  
+  uint id = (key >> 1) & 127;
+  
+  // Packets must have an ID at present
+  if (id == 0)
+    return;
+  
+  // Filter out packets we've seen before (note that IDs are only unique within
+  // a board so this process must occur *after* filtering packets from other
+  // boards.
+  uint word = id >> 5;                   // Word in biff_id_set
+  uint bit = 1 << (id & 31);             // Bit in word
+  uint mask = nn_desc.biff_id_set[word]; // Get mask word from array
+  if (mask & bit)
+    return;
+
+  // Flag that this ID has been seen
+  nn_desc.biff_id_set[word] = mask | bit;
+  word = (word + 2) % 4;
+  nn_desc.biff_id_set[word] = 0;
+  
+  // Handle the command (passing in the coordinates of the chip within its
+  // board)
+  nn_cmd_biff(x, y, data);
+  
+  // Continue propagation:
+  
+  // Update coordinates in packet
+  key &= ~0x3f00;
+  key |= x << 11;
+  key |= y << 8;
+  
+  // Recompute checksum
+  key &= 0x0fffffff;
+  key |= chksum_64 (key, data);
+
+  // Schedule packet for forwarding
+  pkt_buf_t *pkt = pkt_buf_get ();
+
+  if (pkt == NULL) // !! ??
+    {
+      sw_error (SW_OPT);
+      return;
+    }
+
+  pkt->fwd = 0x3f ^ (1 << link); // Don't return to sender...
+  pkt->delay = 0; // Not sent more than once so no delay needed
+  pkt->link = link;
+
+  pkt_t tp = {PKT_NN + PKT_PL, data, key};
+  pkt->pkt = tp;
+    
+  if (!timer_schedule_proc (proc_pkt_bc, (uint) pkt, 1, 8))
+    {
+      sw_error (SW_OPT);
+    }
+}
 
 
 void nn_rcv_pkt (uint link, uint data, uint key)
@@ -917,6 +1034,13 @@ void nn_rcv_pkt (uint link, uint data, uint key)
 
   uint cmd = (key >> 24) & 15;
   uint id = (key >> 1) & 127;
+
+  // NN_CMD_BIFF is handled seperately
+  if (cmd == NN_CMD_BIFF)
+    {
+      nn_rcv_biff_pct (link, data, key);
+      return;
+    }
 
 #ifdef NN_STATS
   nn_desc.stats[cmd]++;
@@ -961,7 +1085,10 @@ void nn_rcv_pkt (uint link, uint data, uint key)
 
     case NN_CMD_P2PC:
       data = nn_cmd_p2pc (link, data);
-      break;
+      if (data == 0)
+        return;
+      else
+        break;
 
     case NN_CMD_FFS:
       nn_cmd_ffs (data, key);
@@ -975,12 +1102,6 @@ void nn_rcv_pkt (uint link, uint data, uint key)
     case NN_CMD_P2PB:
       data = nn_cmd_p2pb (id, data, link);
       if (data & P2PB_STOP_BIT)
-	return;
-      break;
-
-    case NN_CMD_MSST:
-      data = nn_cmd_msst (data, link);
-      if (data & BIT_31)
 	return;
       break;
 
@@ -1009,8 +1130,18 @@ void nn_rcv_pkt (uint link, uint data, uint key)
     }
 
   // Now forward the incoming packet
-
+  
+  // forward[5:0] Which links should the packet be sent down
+  // forward[6] If set, link numbers above will be treated relative to the
+  //            direction the incoming packet was travelling. E.g. if a
+  //            packet comes in on the south link, fwd[6]==1 then fwd[0]
+  //            means send north, fwd[1] means send west, etc. If fwd[6]==0
+  //            then fwd[0] means send east etc. as usual.
+  // retry[7:3] number of usec to wait between sending a copy of the packet
+  // retry[2:0] number of additional times to repeat the packet (i.e. sent
+  //            this many times + 1)
   uint forward, retry;
+  
 
   if (cmd & 4) //const 
     {

@@ -102,11 +102,13 @@ sw_timer_t led_timer;
 sw_timer_t probe_timer;
 sw_timer_t p2pb_timer;
 sw_timer_t p2pc_timer;
+sw_timer_t biff_timer;
 
 uint ltpc_timer;
 
 uint max_hops;		// Maximum packet hop count
 uint link_up;		// Bitmap of working links
+uint link_en = 0x3f;	// Bitmap of enabled links
 uint ticks;		// Counts 10ms ticks
 
 srom_data_t srom;	// Copy of SROM struct
@@ -759,13 +761,40 @@ void assign_virt_cpu (uint phys_cpu)
   while (virt < MAX_CPUS)
     sv->v2p_map[virt++] = 255;
 
-  // Turn off clocks of dead cores
-
+  // Turn off clocks of dead cores. If the monitor (this core) is marked as
+  // dead, turn off the LED to make deadness more obvious.
+  uint cpsr = cpu_int_disable ();
+  if (!(sc[SC_CPU_OK] & (1 << phys_cpu)))
+    sark_led_set (LED_OFF(0));
   sc[SC_CPU_DIS] = SC_CODE + (~sc[SC_CPU_OK] & ((1 << NUM_CPUS) - 1));
+  cpu_int_restore (cpsr);
 
   sark_word_cpy (v2p_map, sv->v2p_map, MAX_CPUS);
 }
 
+//------------------------------------------------------------------------------
+
+// Disables a specified core and recomputes the virtual core map accordingly.
+// This command has a number of dangerous effects:
+// * All application cores are rebooted (so that the new virtual core map takes
+//   effect)
+// * If the core to be disabled includes the monitor then the monitor is
+//   disabled without being remapped rendering the chip non-communicative.
+
+void remap_phys_cores(uint phys_cores)
+{
+  sc[SC_CLR_OK] = phys_cores;
+
+  // At the end of this function all CPUs which are not in the "OK" state
+  // (which is cleared above) have their clocks stopped. Thus, if the monitor
+  // core (which is executing this code) was flagged as bad, it will also be
+  // disabled.
+  assign_virt_cpu (sark.phys_cpu);
+
+  boot_ap ();
+
+  sark_word_set (sv_vcpu + num_cpus, 0, sizeof (vcpu_t));
+}
 
 //------------------------------------------------------------------------------
 
@@ -812,12 +841,31 @@ const uint rst_init[] = {0x45206e49, 0x79726576, 0x65724420, 0x48206d61,
 			 0x20656d6f, 0x65482061, 0x61747261, 0x00656863};
 
 
+void get_board_info (void)
+{
+  sdp_msg_t msg;
+
+  msg.arg1 = (256 << 16) + 32;	// 256 bytes, send 32 bit command
+  msg.arg2 = (3 << 24) + 0x100;	// READ, address 0x100
+
+  (void) cmd_srom (&msg);
+
+  sark_word_cpy (sv_board_info, &msg.arg1, 256);
+
+  if (sv_board_info[0] < 64)
+    sv->board_info = sv_board_info;
+}
+  
+
 void sv_init (void)
 {
   sark_word_cpy (sv_vectors, rst_init, SV_VSIZE); 	// Copy Reset vectors
   sark_word_cpy (&srom, sv_srom, sizeof (srom_data_t));	// Copy SROM block
 
   sark_word_set ((void *) 0xf5007fc0, 0, 64);		// Kludge...
+
+  if (srom.flags & SRF_PRESENT)				// Get board_info ??
+    get_board_info ();
 
   if (sv->hw_ver == 0 && srom.flags & SRF_PRESENT)	// Set hardware version
     sv->hw_ver = (srom.flags >> 4) & 15;
@@ -831,6 +879,7 @@ void sv_init (void)
 
   sv_vcpu[0].cpu_state = CPU_STATE_RUN;
   sv_vcpu[0].time = sv->unix_time;
+  sv_vcpu[0].phys_cpu = sark.phys_cpu;
   sark_str_cpy (sv_vcpu[0].app_name, build_name);
 
   // Set up SHM buffers
@@ -844,6 +893,7 @@ void sv_init (void)
 
   sark_block_init (sv->shm_buf, sv->num_buf, sizeof (sdp_msg_t));
 
+  init_timer (&biff_timer, sv->biff_timer);
   init_timer (&p2pc_timer, sv->p2pc_timer);
   init_timer (&p2pb_timer, sv->p2pb_timer);
   init_timer (&probe_timer, sv->probe_timer);
@@ -1006,38 +1056,77 @@ void soft_wdog (uint max)
 
 //------------------------------------------------------------------------------
 
-// "proc_100hz" is put on the event queue every 10ms
-
-extern uint msst_route;
-extern uint msst_hops;
 uint booted;
 
-
-void compute_msst (void)
+// Produce a spanning tree of the system using the P2P routes constructed.
+void compute_st (void)
 {
+  // Definately route here
   uint route = MC_CORE_ROUTE (0);
 
-  uint x = sv->p2p_addr >> 8;
-  uint y = sv->p2p_addr & 255;
-
-  if (rtr_p2p_get (((x + 1) << 8) + (y + 1)) != 6)
-    route |= 1 << 1;
-
-  if (y == 0 && rtr_p2p_get ((x + 1) << 8) != 6)
-    route |= 1 << 0;
-
-  if (x == 0 && rtr_p2p_get (y + 1) != 6)
-    route |= 1 << 2;
+  // Compile the set of neighbours which route to (0, 0) via this chip and add
+  // them to the route, forming a spanning tree.
+  uint timeout = sv->peek_time;
+  for (uint link = 0; link < NUM_LINKS; link++)
+    {
+      if (!((1 << link) & link_up & link_en))
+        continue;
+      
+      // Try to read multiple times if required
+      uint attempts_remaining = 2;
+      uint remote_rtr_p2p_0;
+      uint rc;
+      do
+        rc = link_read_word ((uint)(rtr_p2p), link, &remote_rtr_p2p_0, timeout);
+      while (rc != RC_OK && (--attempts_remaining));
+      
+      // Flag an error if we could not get a p2p entry from a neighbour
+      if (rc != RC_OK)
+        {
+          sw_error (SW_OPT);
+          continue;
+        }
+      
+      // Check if (0, 0) route from neighbour points at this chip.
+      if ((remote_rtr_p2p_0 & 0x7) == ((link + 3) % 6))
+        route |= MC_LINK_ROUTE (link);
+    }
 
   rtr_mc_set (0, 0xffff5555, 0xffffffff, route);
 }
 
 
+// "proc_100hz" is put on the event queue every 10ms
+
 void proc_100hz (uint a1, uint a2)
 {
   ticks++;
+  
+  // Flood-fill all board-info (allowing all dead cores, chips and links to get
+  // disabled before P2P tables are configured).
+  if (run_timer (&biff_timer))
+    {
+      if (sv->board_info)
+        {
+          uint num_info_words = sv->board_info[0];
+          uint *info_word = sv->board_info + 1;
+          while (num_info_words--)
+            {
+              // Handle command on this chip
+              nn_cmd_biff(0, 0, *(info_word));
+              // Also flood to other chips on this board
+              biff_nn_send(*(info_word++));
+            }
+        }
+      
+      // BIFF is complete when we've sent the BIFF info for the last time
+      biff_complete = biff_timer.repeat == 255;
+    }
 
-  if (sv->root_chip && run_timer (&p2pc_timer))
+  // Send out board coordinate information after the board-info flood-fill
+  // process has been allowed to complete
+
+  if (biff_complete && sv->root_chip && run_timer (&p2pc_timer))
     {
       // For board test only send on links 0-2
       uint p2pc_fwd = (sv->bt_flags & 1) ? 0x0700 : 0x3f00;
@@ -1045,13 +1134,6 @@ void proc_100hz (uint a1, uint a2)
       // Send P2PC packet
 
       send_p2pc ((sv->p2p_dims << 16) + sv->p2p_addr, p2pc_fwd);
-
-      // Send SIG0 - Level Config packet
-
-      ff_nn_send ((NN_CMD_SIG0 << 24) + (0x3f << 16),	//!! was 3e
-		  4 << 28,
-		  0x3f00,
-		  1);
     }
 
   // Process IPTag timeouts
@@ -1065,7 +1147,7 @@ void proc_100hz (uint a1, uint a2)
 
   // Flip LED0 every now and then
 
-  if (sv->led_period != 0 && ++led_timer.counter >= sv->led_period)
+  if (booted && sv->led_period != 0 && ++led_timer.counter >= sv->led_period)
     {
       led_timer.counter = 0;
       sark_led_set (LED_INV(0));	// !! assumes LED_0 always there
@@ -1078,44 +1160,32 @@ void proc_100hz (uint a1, uint a2)
       (void) probe_links (0x80 + 0x3f, sv->peek_time);
     }
     
-  if (!booted && ticks > 50)
-    {
-      uint max_chip = sv->p2p_dims - 0x0101;
-      uint route = rtr_p2p_get (max_chip);
-
-      if (route != 6)
-	{
-	  booted = 1;
-	  compute_msst ();
-/*
-	  if (sv->root_chip)
-	    {
-	      sv->utmp1 = msst_route = link_up;
-	      sv->utmp0 = msst_hops = 1;
-
-	      rtr_mc_set (0, 0xffff5555, 0xffffffff,
-			  MC_CORE_ROUTE (0) + msst_route);
-
-	      ff_nn_send (0x093e1800, 2, 0x0718, 1);
-	    }
-*/
-	}
-    }
-
-  // Send P2PB packet if P2P is up
+  // Send P2PB packet if P2P is up, on the final iteration, compute the
+  // spanning tree and update the level table, sending no more P2PBs
 
   if (p2p_up && run_timer (&p2pb_timer))
     {
-      hop_table[p2p_addr] = (p2pb_id >> 1) << 24;
+      // On all but the last iteration, broadcast P2P coordinates for P2P table
+      // construction
+      if (p2pb_timer.repeat != 255)
+        {
+          hop_table[p2p_addr] = (p2pb_id >> 1) << 24;
 
-      uint flags = 0; //!!
+          uint flags = 0; //!!
 
-      ff_nn_send ((NN_CMD_P2PB << 24) + (0x3e00 << 8) + p2pb_id,
-		  (p2p_addr << 16) + (flags << 12) + 1,
-		  0x3f00,
-		  0);
+          ff_nn_send ((NN_CMD_P2PB << 24) + (0x3e00 << 8) + p2pb_id,
+                      (p2p_addr << 16) + (flags << 12) + 1,
+                      0x3f00,
+                      0);
 
-      p2pb_id += 2; // Relies on p2pb_id being 8 bits
+          p2pb_id += 2; // Relies on p2pb_id being 8 bits
+        }
+      else
+        {
+          compute_st ();
+          level_config ();
+          booted = 1;
+        }
     }
 
   // Send LTPC packet (untested!)
