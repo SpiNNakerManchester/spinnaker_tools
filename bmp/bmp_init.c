@@ -17,11 +17,6 @@
 
 //------------------------------------------------------------------------------
 
-
-// Version number
-
-#define BMP_VER_NUM	0x0020000		// 2.0.0
-
 // Linker generated symbols
 
 #define RO_BASE    	Image$$PROGRAM$$RO$$Base
@@ -48,6 +43,7 @@ extern uint32_t STACK_LIMIT, STACK_BASE;
 
 const int pad __attribute__ ((section (".padding"))) = 0xdeaddead;
 
+const char sw_ver_str[] = SW_VER_STR;
 
 //------------------------------------------------------------------------------
 
@@ -175,7 +171,7 @@ const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) =
     (handler) 0,			// 51: 
     (handler) 0,			// 52: 
     BUILD_DATE,				// 53: Build date
-    BMP_VER_NUM,			// 54: Version number
+    SW_VER_NUM,				// 54: Version number
 
     (uint32_t) &RO_LENGTH,           	// 55: RO_length
     (uint32_t) &RW_LENGTH,           	// 56: RW_length

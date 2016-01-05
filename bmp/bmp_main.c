@@ -105,13 +105,13 @@ static void update_lcd (void)
 	    if (can_status[i])
 	      count++;
 
-	  uint32_t v = cortex_vec->version;
+	  uint32_t v = cortex_vec->sw_ver;
 	  if (v < 65535)
 	    io_printf (IO_LCD, "%qBMP %d.%02d  %4u slots\n",
 		       LCD_POS(0, 1), v / 100, v % 100, count);
 	  else
 	    io_printf (IO_LCD, "%qBMP %d.%d.%d %q%4u slots\n",
-		       LCD_POS(0, 1), v >> 16, (v >> 8) & 255, v & 255,
+		       LCD_POS(0, 1), (v >> 16) & 255 , (v >> 8) & 255, v & 255,
 		       LCD_POS(10, 1), count);
 	  break;
 	}

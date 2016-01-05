@@ -363,7 +363,7 @@ typedef struct
   handler Rsvd_52;
 
   uint32_t build_date;	// 53
-  uint32_t version;
+  uint32_t sw_ver;
 
   uint32_t RO_length;	// 55
   uint32_t RW_length;
@@ -385,7 +385,7 @@ typedef struct
   proc4 Rsvd_3;		// 3
   proc4 Rsvd_4;		// 4
   uint32_t build_date;	// 5
-  uint32_t version;	// 6
+  uint32_t sw_ver;	// 6
   uint32_t checksum;    // 7
 } boot_vec_t;
 
@@ -647,8 +647,7 @@ extern iptag_t tag_table[];
 
 extern const uint32_t hw_ver;
 
-extern const char sver_string[];
-extern const char ver_str[];
-extern const uint32_t ver_num;
+extern const char bmp_ver_str[];
+extern const char sw_ver_str[];
 
 //------------------------------------------------------------------------------

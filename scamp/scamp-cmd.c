@@ -192,9 +192,9 @@ uint cmd_ver (sdp_msg_t *msg)
   msg->arg3 = (uint) build_date;
 
   sark_str_cpy ((char *) msg->data, SCAMP_VER_STR);
-  sark_str_cpy ((char *) msg->data + sizeof (SCAMP_VER_STR), SCAMP_VER_NUM);
+  sark_str_cpy ((char *) msg->data + sizeof (SCAMP_VER_STR), sw_ver_str);
 
-  return 12 + sizeof (SCAMP_VER_STR) + sizeof (SCAMP_VER_NUM);
+  return 12 + sizeof (SCAMP_VER_STR) + 1 + sark_str_len (sw_ver_str);
 }
 
 //------------------------------------------------------------------------------

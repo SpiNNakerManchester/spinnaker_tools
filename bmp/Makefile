@@ -34,7 +34,7 @@ main: bmp_main.elf
 boot: bmp_boot.elf
 
 bmp_boot.elf: $(BOOT_OBJ) $(BOOT_SCT) bmp_boot.c
-	perl -pe "s/BUILD_DATE/time/e" bmp_boot.c > bmp_tmp.c
+	./bmp_ver bmp_boot.c > bmp_tmp.c
 	$(CC) $(CFLAGS) -o bmp_boot.o bmp_tmp.c
 	$(RM) bmp_tmp.c 
 
@@ -44,9 +44,9 @@ bmp_boot.elf: $(BOOT_OBJ) $(BOOT_SCT) bmp_boot.c
 	perl sum.pl bin/bmp_boot bin/BOOT
 
 bmp_main.elf: $(MAIN_OBJ) $(MAIN_SCT) bmp_init.c
-	perl -pe "s/BUILD_DATE/time/e" bmp_init.c > bmp_tmp.c
+	./bmp_ver bmp_init.c > bmp_tmp.c
 	$(CC) $(CFLAGS) -o bmp_init.o bmp_tmp.c
-	$(RM) bmp_tmp.c 
+#	$(RM) bmp_tmp.c 
 
 	$(LD) $(MAIN_LFLAGS_L) $(MAIN_OBJ) bmp_init.o -o bmp_main.elf
 	$(OBJDUMP) bmp_main.elf -o bmp_main.txt

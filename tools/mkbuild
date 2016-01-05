@@ -1,12 +1,33 @@
 #!/usr/bin/perl
 
 # Utility to create a small C file (on stdout) which contains
-# a string constant containing the first 15 characters of the
-# argument and an integer constant which is the Unix time.
+#
+#  - an integer constant which is the Unix time.
+#  - a string constant containing the first 15 characters of the argument
+#  - an integer constant which is the SW version number
+#  - a string constant containing the SW version string
+
+
+my $stv = $ENV{SPINN_STV};
 
 die "bad args" unless $#ARGV == 0;
+die "SPINN_STV not defined" unless $stv;
+die "SPINN_STV badly formatted" unless  $stv =~ /^(\d+)\.(\d+)\.(\d+)(-\w+)?$/;
+
+my ($x, $y, $z, $tag) = ($1, $2, $3, $4);
+
+$tag ||= "";
+
+for my $v ($x, $y, $z)
+{
+    die "Version out of range ($v)" if $v < 0 || $v > 255;
+}
+
+# warn "# $x, $y, $z, $tag\n"; 
 
 my $name = substr $ARGV[0], 0, 15;
 
 printf "const int  build_date   = %d;\n", time ();
 printf "const char build_name\[\] = \"%s\";\n", $name;
+printf "const int  sw_ver_num   = 0x%08x;\n", ($x << 16) + ($y << 8) + $z;
+printf "const char sw_ver_str\[\] = \"%d.%d.%d%s\";\n", $x, $y, $z, $tag;

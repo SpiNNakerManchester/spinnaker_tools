@@ -21,7 +21,7 @@ SARKLIB := $(LIB_DIR)/sark.a
 
 
 $(APP).boot: $(OBJS) $(SARKLIB) sark.aplx boot_aplx.bin $(APP).sct
-	mkbuild scamp-$(REL) > sark_build.c
+	mkbuild scamp > sark_build.c
 	$(CC) sark_build.c
 	armlink --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
 	  sark_build.o --output $(APP).elf 

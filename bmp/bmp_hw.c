@@ -233,7 +233,7 @@ const uint8_t *can2board;
 const uint8_t *board2can;
 
 const uint32_t hw_ver = 5;
-const char sver_string[] = "BC&MP/Spin5-BMP";
+const char bmp_ver_str[] = "BC&MP/Spin5-BMP";
 
 
 //------------------------------------------------------------------------------
