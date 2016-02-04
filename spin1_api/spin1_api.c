@@ -1832,8 +1832,16 @@ uint spin1_trigger_user_event(uint arg0, uint arg1)
 *
 * SOURCE
 */
+extern void (*__init_array_start)();
+extern void (*__init_array_end)();
 void sark_pre_main (void)
 {
+  // Loop through any C++ constructors that may be present and call them
+  for (void (**p)() = &__init_array_start; p < &__init_array_end; p++)
+  {
+    (*p)();
+  }
+  
   sark_cpu_state (CPU_STATE_SARK);
   sark_vec->api = 1;
 
