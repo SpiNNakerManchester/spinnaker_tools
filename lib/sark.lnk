@@ -36,6 +36,9 @@ SECTIONS
           * (_alib_reset);
           * (alib_*);
           * (.text*);
+          __init_array_start = .;
+          KEEP (*(.init_array*))
+          __init_array_end = .;
           * (.rodata*);
     } > ITCM
 
