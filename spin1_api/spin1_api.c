@@ -1,29 +1,3 @@
-/****a* spin1_api.c/spin1_api
-*
-* SUMMARY
-*  SpiNNaker API functions
-*
-* AUTHOR
-*  Thomas Sharp  - thomas.sharp@cs.man.ac.uk
-*  Luis Plana    - luis.plana@manchester.ac.uk
-*  Sergio Davies - sergio.davies@manchester.ac.uk
-*
-* DETAILS
-*  Created on       : 08 June 2011
-*  Version          : $$
-*  Last modified on : $Date: 2015-09-17 17:36:00$
-*  Last modified by : $Author: sergiodavies $
-*  $Id: $
-*  $HeadURL: $
-*
-* COPYRIGHT
-*  Copyright (c) The University of Manchester, 2011. All rights reserved.
-*  SpiNNaker Project
-*  Advanced Processor Technologies Group
-*  School of Computer Science
-*
-*******/
-
 #include <sark.h>
 
 #include <spin1_api.h>
@@ -39,7 +13,6 @@ uchar leadAp;                    	// lead appl. core has special functions
 static volatile uint run;           	// controls simulation start/stop
 uint ticks;              		// number of elapsed timer periods
 static uint timer_tick;  	        // timer tick period
-static uint exit_val = NO_ERROR;    	// simulation return value
 
 // default fiq handler -- restored after simulation
 isr_t old_vector;
@@ -53,7 +26,6 @@ int pkt_prio = -2;
 // ---------------
 /* dma transfer */
 // ---------------
-static uint dma_id = 1;
 dma_queue_t dma_queue;
 // ---------------
 
@@ -91,21 +63,6 @@ uint user_arg1;
 /* debug, warning and diagnostics support */
 // ----------------
 diagnostics_t diagnostics;
-
-#if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
-  volatile uint thrown; // keep track of thrown away packets
-#endif
-
-#if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-  static uint warnings;  // report warnings
-  static uint fullq;     // keep track of times task queue full
-  static uint pfull;     // keep track of times transmit queue full
-  static uint dfull;     // keep track of times DMA queue full
-  #if USE_WRITE_BUFFER == TRUE
-    uint wberrors; // keep track of write buffer errors
-  #endif
-#endif
-
 
 // ------------------------------------------------------------------------
 // functions
@@ -474,6 +431,7 @@ void dispatch()
         cback = tq->queue[tq->start].cback;
         uint arg0 = tq->queue[tq->start].arg0;
         uint arg1 = tq->queue[tq->start].arg1;
+        diagnostics.queue_full = 0;
 
         tq->start = (tq->start + 1) % TASK_QUEUE_SIZE;
 
@@ -481,7 +439,21 @@ void dispatch()
         {
           // run callback with interrupts enabled
           spin1_mode_restore (cpsr);
+
+          // check for if its a timer callback, if it is, update tracker values
+          if (cback == callback[TIMER_TICK].cback){
+              diagnostics.in_timer_callback = 1;
+          }
+
+          // execute callback
           cback (arg0, arg1);
+
+          // update queue size
+          if (cback == callback[TIMER_TICK].cback){
+               diagnostics.number_timer_tic_in_queue -= 1;
+               diagnostics.in_timer_callback = 0;
+          }
+
           cpsr = spin1_int_disable ();
 
           // re-start examining queues at highest priority
@@ -843,7 +815,7 @@ void spin1_exit (uint error)
   // Report back the return code and stop the simulation
 
   run = 0;
-  exit_val = error;
+  diagnostics.exit_code = error;
 }
 /*
 *******/
@@ -936,7 +908,8 @@ void report_debug ()
       io_delay (API_PRINT_DELAY);
     }
 
-    io_printf (IO_API, "\t\t[api_debug] ISR thrown packets: %d\n", thrown);
+    io_printf (IO_API, "\t\t[api_debug] ISR thrown packets: %d\n",
+               diagnostics.discarded_mc_packets);
     io_delay (API_PRINT_DELAY);
 
     // Report DMAC counters
@@ -945,6 +918,7 @@ void report_debug ()
     io_delay (API_PRINT_DELAY);
   #endif
 }
+
 /*
 *******/
 
@@ -964,30 +938,30 @@ void report_debug ()
 void report_warns ()
 {
 #if API_WARN == TRUE	    // report warnings
-  if (warnings & TASK_QUEUE_FULL)
+  if (diagnostics.warnings & TASK_QUEUE_FULL)
     {
       io_printf (IO_API, "\t\t[api_warn] warning: task queue full (%u)\n",
-                 fullq);
+                 diagnostics.task_queue_full);
       io_delay (API_PRINT_DELAY);
     }
-  if (warnings & DMA_QUEUE_FULL)
+  if (diagnostics.warnings & DMA_QUEUE_FULL)
     {
       io_printf (IO_API, "\t\t[api_warn] warning: DMA queue full (%u)\n",
-                 dfull);
+                 diagnostics.dma_queue_full);
       io_delay (API_PRINT_DELAY);
     }
-  if (warnings & PACKET_QUEUE_FULL)
+  if (diagnostics.warnings & PACKET_QUEUE_FULL)
     {
       io_printf (IO_API, "\t\t[api_warn] warning: packet queue full (%u)\n",
-                 pfull);
+                 diagnostics.tx_packet_queue_full);
       io_delay (API_PRINT_DELAY);
     }
 # if USE_WRITE_BUFFER == TRUE
-  if (warnings & WRITE_BUFFER_ERROR)
+  if (diagnostics.warnings & WRITE_BUFFER_ERROR)
     {
       io_printf (IO_API,
 		 "\t\t[api_warn] warning: write buffer errors (%u)\n",
-                   wberrors);
+             diagnostics.writeBack_errors);
       io_delay (API_PRINT_DELAY);
     }
 #endif
@@ -1022,12 +996,18 @@ uint spin1_start (sync_bool sync)
   configure_vic();
 
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-  warnings = NO_ERROR;
-  dfull = 0;
-  fullq = 0;
-  pfull = 0;
+  diagnostics.warnings = NO_ERROR;
+  diagnostics.dma_queue_full = 0;
+  diagnostics.task_queue_full = 0;
+  diagnostics.tx_packet_queue_full = 0;
+  diagnostics.dma_transfers = 1;
+  diagnostics.exit_code = NO_ERROR;    	// simulation return value
+  diagnostics.in_timer_callback = 0;
+  diagnostics.number_timer_tic_in_queue = 0;
+  diagnostics.total_times_tick_tic_callback_overran = 0;
+  diagnostics.largest_number_of_concurrent_timer_tic_overruns = 0;
 #if USE_WRITE_BUFFER == TRUE
-  wberrors = 0;
+  diagnostics.writeBack_errors = 0;
 #endif
 #endif
 
@@ -1055,23 +1035,6 @@ uint spin1_start (sync_bool sync)
   // only CPU_INT enabled in the VIC
   spin1_int_enable ();
 
-  // provide diagnostics data to application
-  #if (API_DIAGNOSTICS == TRUE)
-    diagnostics.exit_code            = exit_val;
-    diagnostics.warnings             = warnings;
-    diagnostics.total_mc_packets     = rtr[RTR_DGC0] + rtr[RTR_DGC1];
-    diagnostics.dumped_mc_packets    = rtr[RTR_DGC8];
-    diagnostics.discarded_mc_packets = thrown;
-    diagnostics.dma_transfers        = dma_id - 1;
-    diagnostics.dma_bursts           = dma[DMA_STAT0];
-    diagnostics.dma_queue_full       = dfull;
-    diagnostics.task_queue_full      = fullq;
-    diagnostics.tx_packet_queue_full = pfull;
-    #if USE_WRITE_BUFFER == TRUE
-      diagnostics.writeBack_errors     = wberrors;
-    #endif
-  #endif
-
   // report problems if requested!
   #if (API_DEBUG == TRUE) || (API_WARN == TRUE)
     // avoid sending output at the same time as other chips!
@@ -1086,7 +1049,7 @@ uint spin1_start (sync_bool sync)
     #endif
   #endif
 
-  return exit_val;
+  return diagnostics.exit_code;
 }
 /*
 *******/
@@ -1154,7 +1117,7 @@ uint spin1_dma_transfer (uint tag, void *system_address, void *tcm_address,
 
   if (new_end != dma_queue.start)
   {
-    id = dma_id++;
+    id = diagnostics.dma_transfers++;
 
     uint desc = DMA_WIDTH << 24 | DMA_BURST_SIZE << 21
       | direction << 19 | length;
@@ -1178,8 +1141,8 @@ uint spin1_dma_transfer (uint tag, void *system_address, void *tcm_address,
   else
   {
     #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-      warnings |= DMA_QUEUE_FULL;
-      dfull++;
+      diagnostics.warnings |= DMA_QUEUE_FULL;
+      diagnostics.dma_queue_full++;
     #endif
   }
 
@@ -1307,8 +1270,8 @@ uint spin1_send_mc_packet(uint key, uint data, uint load)
       /* if queue full cannot do anything -- report failure */
       rc = FAILURE;
       #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-        warnings |= PACKET_QUEUE_FULL;
-        pfull++;
+        diagnostics.warnings |= PACKET_QUEUE_FULL;
+        diagnostics.tx_packet_queue_full++;
       #endif
     }
     else
@@ -1814,12 +1777,16 @@ void schedule_sysmode (uchar event_id, uint arg0, uint arg1)
       tq->queue[tq->end].arg1 = arg1;
 
       tq->end = (tq->end + 1) % TASK_QUEUE_SIZE;
+
+      if (event_id == TIMER_TICK){
+           diagnostics.number_timer_tic_in_queue += 1;
+      }
     }
     else      // queue is full
     {
       #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-        warnings |= TASK_QUEUE_FULL;
-        fullq++;
+        diagnostics.warnings |= TASK_QUEUE_FULL;
+        diagnostics.task_queue_full++;
       #endif
     }
   }
@@ -1869,8 +1836,9 @@ uint spin1_schedule_callback (callback_t cback, uint arg0, uint arg1,
     // queue is full
     result = FAILURE;
     #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-      warnings |= TASK_QUEUE_FULL;
-      fullq++;
+      diagnostics.warnings |= TASK_QUEUE_FULL;
+      diagnostics.task_queue_full++;
+
     #endif
   }
 

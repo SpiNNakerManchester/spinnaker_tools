@@ -1,21 +1,3 @@
-/*
-*
-* SUMMARY
-*  SpiNNaker API interrupt handlers
-*
-* AUTHOR
-*  Thomas Sharp - thomas.sharp@cs.man.ac.uk
-*  Luis Plana   - luis.plana@manchester.ac.uk
-*
-* COPYRIGHT
-*  Copyright (c) The University of Manchester, 2011. All rights reserved.
-*  SpiNNaker Project
-*  Advanced Processor Technologies Group
-*  School of Computer Science
-*
-*/
-
-
 #include <sark.h>
 
 #include <spin1_api.h>
@@ -68,7 +50,7 @@ INT_HANDLER cc_rx_ready_isr (void)
 	schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-	thrown++;
+	diagnostics.discarded_mc_packets++;
 #endif
     }
   else
@@ -79,7 +61,7 @@ INT_HANDLER cc_rx_ready_isr (void)
 	schedule (MC_PACKET_RECEIVED, rx_key, 0);
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-	thrown++;
+	diagnostics.discarded_mc_packets++;
 #endif
     }
 
@@ -379,9 +361,23 @@ INT_HANDLER timer1_isr ()
   ticks++;
 
   // If application callback registered schedule it
+  if (callback[TIMER_TICK].cback != NULL){
 
-  if (callback[TIMER_TICK].cback != NULL)
-    schedule(TIMER_TICK, ticks, NULL);
+      // check for timer tic overload and store in diagnostics
+      if (diagnostics.in_timer_callback != 0){
+
+          // if in timer tic callback already, add to tracker for total failures
+          diagnostics.total_times_tick_tic_callback_overran += 1;
+
+          // if number of timer callbacks in queue is greater than previously seen
+          if (diagnostics.number_timer_tic_in_queue >
+                  diagnostics.largest_number_of_concurrent_timer_tic_overruns){
+              diagnostics.largest_number_of_concurrent_timer_tic_overruns =
+                  diagnostics.number_timer_tic_in_queue;
+          }
+      }
+      schedule(TIMER_TICK, ticks, NULL);
+  }
 
   // Ack VIC
 
