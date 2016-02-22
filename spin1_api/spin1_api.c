@@ -431,7 +431,6 @@ void dispatch()
         cback = tq->queue[tq->start].cback;
         uint arg0 = tq->queue[tq->start].arg0;
         uint arg1 = tq->queue[tq->start].arg1;
-        diagnostics.queue_full = 0;
 
         tq->start = (tq->start + 1) % TASK_QUEUE_SIZE;
 
