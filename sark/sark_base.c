@@ -365,6 +365,16 @@ void sark_shmsg_free (sdp_msg_t *msg)
 }
 
 
+extern void (*__init_array_start)();
+extern void (*__init_array_end)();
+void sark_call_cpp_constructors (void)
+{
+  // Loop through any C++ constructors that may be present and call them
+  for (void (**p)() = &__init_array_start; p < &__init_array_end; p++)
+  {
+    (*p)();
+  }
+}
 //------------------------------------------------------------------------------
 
 // "sark_init" sets up SARK stacks and some internal data structures.
@@ -449,6 +459,7 @@ uint __attribute__((weak)) sark_init (uint *stack)
 
 void __attribute__((weak)) sark_pre_main (void)
 {
+  sark_call_cpp_constructors();
   sark_cpu_state (CPU_STATE_SARK);
 }
 

@@ -1750,6 +1750,14 @@ for a relatively short time (1-5us ??)
 
 void sark_shmsg_free (sdp_msg_t *msg);
 
+/*!
+Calls the constructors for any C++ objects created at global scope.
+Should generally be called from any user-supplied sark_pre_main function
+*/
+
+void sark_call_cpp_constructors (void);
+
+
 //------------------------------------------------------------------------------
 
 // Routines exported by SARK - sark_io.c
@@ -2230,7 +2238,7 @@ before any of the pkt_tx_XXX routines are used.
 */
 
 uint pkt_tx_k (uint key);
-
+//
 /*!
 Transmit a packet which contains key and data fields. The packet is placed
 on a transmit queue and sent when it reaches the head of the queue. The
