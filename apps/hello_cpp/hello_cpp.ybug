@@ -1,0 +1,8 @@
+
+# make APP=hello_cpp
+# tubotron &
+
+app_load hello_cpp.aplx . 1 16
+sleep
+iobuf 1
+app_stop 16
