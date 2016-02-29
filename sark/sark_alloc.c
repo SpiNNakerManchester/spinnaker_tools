@@ -436,6 +436,37 @@ uint rtr_free_id (uint app_id, uint clear)
 
 //------------------------------------------------------------------------------
 
+// Return the size of the largest free block in the router heap
+
+uint rtr_alloc_max (void)
+{
+  rtr_entry_t *router = sv->rtr_copy;
+  uint block = sv->rtr_free;
+
+  uint max = 0;
+
+  uint cpsr = sark_lock_get (LOCK_HEAP);
+
+  while (block != 0)
+    {
+      if (router[block].next != 0)
+	{
+	  uint free = router[block].next - block;
+
+	  if (free > max)
+	    max = free;
+	}
+
+      block = router[block].free;
+    }
+
+  sark_lock_free (cpsr, LOCK_HEAP);
+
+  return max;
+}
+
+//------------------------------------------------------------------------------
+
 // Get a pointer to a tagged allocation. If the "app_id" parameter is zero
 // uses the core's app_id.
 

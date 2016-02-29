@@ -1965,6 +1965,15 @@ re-initialised. Returns number of blocks freed.
 uint rtr_free_id (uint app_id, uint clear);
 
 /*!
+Return the size of the largest free block in the router multicast table
+(or zero if table is full).
+
+\return number of entries in largest block
+*/
+
+uint rtr_alloc_max (void);
+
+/*!
 Get a pointer to a tagged allocation. If the "app_id" parameter is zero uses
 the core's app_id.
 
