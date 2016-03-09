@@ -10,6 +10,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <stdlib.h>
 
 #include "spinnaker.h"
 #include "sark.h"
@@ -92,6 +93,24 @@ pkt_buf_t poke_pkt;
 // Should all BIFF packets have been sent at this point?
 uint biff_complete;
 
+//------------------------------------------------------------------------------
+
+void nn_init ()
+{
+  nn_desc.forward = sv->forward; // V104 20jul12 (was 0x3e)
+
+  hop_table = sv->hop_table;
+
+  pkt_buf_t *pkt = (pkt_buf_t *) pkt_buf_table;
+
+  pkt_buf_list = pkt;
+
+  for (uint i = 0; i < BC_TABLE_SIZE; i++)
+    {
+      pkt->next = (i != (BC_TABLE_SIZE - 1)) ? pkt + 1 : NULL;
+      pkt++;
+    }
+}
 
 //------------------------------------------------------------------------------
 
@@ -155,6 +174,13 @@ void compute_eth (int x, int y, int x_size, int y_size)
   sv->eth_addr = sv->dbg_addr = (x << 8) + y;
 }
 
+//------------------------------------------------------------------------------
+
+// Given a packet arriving from a given direction which is labelled with an X
+// and Y coordinate, gives the dx, dy to get the current chip's coordinate.
+
+const signed char lx[6] = {-1, -1,  0, +1, +1,  0};
+const signed char ly[6] = { 0, -1, -1,  0, +1, +1};
 
 //------------------------------------------------------------------------------
 
@@ -182,6 +208,8 @@ void compute_level (uint p2p_addr)
 
 void level_config (void)
 {
+  compute_level(p2p_addr);
+  
   for (uint level = 0; level < 4; level++)
     {
       uint base = (levels[level].level_addr >> 16) & 0xfcfc;
@@ -315,33 +343,6 @@ uint link_write_word (uint addr, uint link, uint *buf, uint timeout)
 }
 
 
-uint probe_links (uint mask, uint timeout)
-{
-  uint link_ok = 0;
-
-  for (uint link = 0; link < NUM_LINKS; link++)
-    {
-      uint link_bit = 1 << link;
-
-      if ((mask & link_bit) &&
-	  link_read_word (SYSCTL_BASE, link, NULL, timeout)) // Does PEEK
-	{
-	  if (peek_pkt.pkt.key == (SYSCTL_BASE + 1) &&
-	      (peek_pkt.pkt.data & 0xfff00000) == PART_ID &&
-	      peek_pkt.pkt.ctrl == link)
-	    {
-	      link_ok |= link_bit;
-	    }
-	}
-    }
-
-  if (mask & 0x80) // const
-    sv->link_up = link_up = link_ok;
-
-  return link_ok;
-}
-
-
 //------------------------------------------------------------------------------
 
 
@@ -418,7 +419,7 @@ void ff_nn_send (uint key, uint data, uint fwd_rty, uint add_id)
     {
       for (uint link = 0; link < NUM_LINKS; link++)
 	{
-	  if (forward & (1 << link) & link_up & link_en)
+	  if (forward & (1 << link) & link_en)
 	    {
 	      sark_delay_us (delay);
 	      (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
@@ -443,7 +444,7 @@ void biff_nn_send (uint data)
   uint forward = 0x07; // East, North-East, North only
   for (uint link = 0; link < NUM_LINKS; link++)
     {
-      if (forward & (1 << link) & link_up & link_en)
+      if (forward & (1 << link) & link_en)
         {
           sark_delay_us (8);  // !! const
           (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
@@ -451,81 +452,200 @@ void biff_nn_send (uint data)
     }
 }
 
+//------------------------------------------------------------------------------
 
-void nn_init ()
+// Transmit our current best guess of coordinates to all neighbouring chips
+void p2pc_addr_nn_send(uint arg1, uint arg2)
 {
-  nn_desc.forward = sv->forward; // V104 20jul12 (was 0x3e)
+  uint key = (NN_CMD_P2PC << 24) | (P2PC_ADDR << 2);
+  uint data = ((p2p_addr_guess_x & 0xFFFF) << 16) |
+               (p2p_addr_guess_y & 0xFFFF);
 
-  hop_table = sv->hop_table;
+  key |= chksum_64 (key, data);
 
-  pkt_buf_t *pkt = (pkt_buf_t *) pkt_buf_table;
-
-  pkt_buf_list = pkt;
-
-  for (uint i = 0; i < BC_TABLE_SIZE; i++)
+  for (uint link = 0; link < NUM_LINKS; link++)
     {
-      pkt->next = (i != (BC_TABLE_SIZE - 1)) ? pkt + 1 : NULL;
-      pkt++;
+      sark_delay_us (8);  // !! const
+      (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    }
+}
+
+// Broadcast the existance of a new P2P coordinate having been discovered
+void p2pc_new_nn_send(uint x, uint y)
+{
+  uint key = (NN_CMD_P2PC << 24) | (P2PC_NEW << 2);
+  uint data = ((x & 0xFFFF) << 16) | (y & 0xFFFF);
+
+  key |= chksum_64 (key, data);
+
+  for (uint link = 0; link < NUM_LINKS; link++)
+    {
+      sark_delay_us (8);  // !! const
+      (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    }
+}
+
+// Transmit our current best guess of coordinates to all neighbouring chips.
+void p2pc_dims_nn_send(uint arg1, uint arg2)
+{
+  uint key = (NN_CMD_P2PC << 24) | (P2PC_DIMS << 2);
+  uint data = ((p2p_min_x & 0xFF) << 24) |
+              ((p2p_min_y & 0xFF) << 16) |
+              ((p2p_max_x & 0xFF) << 8) |
+              ((p2p_max_y & 0xFF) << 0);
+
+  key |= chksum_64 (key, data);
+
+  for (uint link = 0; link < NUM_LINKS; link++)
+    {
+      sark_delay_us (8);  // !! const
+      (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    }
+}
+
+// Transmit "P2PB" table generating packets
+void p2pb_nn_send(uint arg1, uint arg2)
+{
+  uint key = (NN_CMD_P2PB << 24);
+  uint data = p2p_addr;
+
+  key |= chksum_64 (key, data);
+
+  for (uint link = 0; link < NUM_LINKS; link++)
+    pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+}
+
+// Update our current best guess of our coordinates based on a packet from a
+// neighbour
+void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
+{
+  // Coordinates of neighbour
+  int nx = (int)(short)(data >> 16);
+  int ny = (int)(short)(data & 0xFFFF);
+  
+  // Work out our coordinates
+  int x = nx + lx[link];
+  int y = ny + ly[link];
+  
+  // Ignore if this address has wrapped around a few too many times...
+  if (x < -255 || x > 255 || y < -255 || y > 255)
+    return;
+  
+  // Update out current guess
+  int updated = 0;
+  if ((p2p_addr_guess_x < 0 && x >= 0) || // X has gone non-negative or
+      ((p2p_addr_guess_x < 0 == x < 0) && // Sign is the same and...
+       (abs(x) < abs(p2p_addr_guess_x)))) // ...magnitude reduced
+    {
+      p2p_addr_guess_x = x;
+      updated = 1;
+    }
+  if ((p2p_addr_guess_y < 0 && y >= 0) || // Y has gone non-negative or
+      ((p2p_addr_guess_y < 0 == y < 0) && // Sign is the same and...
+       (abs(y) < abs(p2p_addr_guess_y)))) // ...magnitude reduced
+    {
+      p2p_addr_guess_y = y;
+      updated = 1;
+    }
+  
+  // If guess was updated, broadcast this fact and update our initial guess of
+  // the system's bounds based only on knowing our own coordinates (these
+  // bounds are later expanded in the next phase)
+  if (updated)
+    {
+      timer_schedule_proc(p2pc_new_nn_send, p2p_addr_guess_x, p2p_addr_guess_y, 1);
+      
+      p2p_min_x = (x < 0) ? x : 0;
+      p2p_min_y = (y < 0) ? y : 0;
+      p2p_max_x = (x > 0) ? x : 0;
+      p2p_max_y = (y > 0) ? y : 0;
+    }
+}
+
+// A new P2P coordinate has been broadcast to us.
+void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
+{
+  // Coordinates of the new coordinate
+  int x = (int)(short)(data >> 16);
+  int y = (int)(short)(data & 0xFFFF);
+  
+  // Ignore if this address has wrapped around a few too many times (should not
+  // occur but here as a sanity check since we'll be indexing with this...)
+  if (x < -255 || x > 255 || y < -255 || y > 255)
+    return;
+  
+  // Update the bitmap of known coordinates
+  uint bit_offset = (((x + 256) << 9) | ((y + 256) << 0));
+  uchar byte = p2p_addr_table[bit_offset / 8];
+  uchar new_byte = byte | (1 << (bit_offset % 8));
+  p2p_addr_table[bit_offset / 8] = new_byte;
+  
+  // Re-broadcast only newly discovered coordinates
+  if (byte != new_byte)
+    {
+      last_netinit_broadcast = 0;
+      timer_schedule_proc(p2pc_new_nn_send, x, y, 1);
+    }
+}
+
+// A neighbour has reported their P2P coordinates to us
+void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
+{
+  // Bounds of the coordinates
+  int new_min_x = (int)(0xFFFFFF00 | ((data >> 24) & 0xFF));
+  int new_min_y = (int)(0xFFFFFF00 | ((data >> 16) & 0xFF));
+  int new_max_x = (int)(((data >> 8) & 0xFF));
+  int new_max_y = (int)(((data >> 0) & 0xFF));
+  
+  // Expand bounds as required
+  int changed = 0;
+  if (new_min_x < p2p_min_x)
+    {
+      p2p_min_x = p2p_min_x;
+      changed = 1;
+    }
+  if (new_min_y < p2p_min_y)
+    {
+      p2p_min_y = p2p_min_y;
+      changed = 1;
+    }
+  if (new_max_x > p2p_max_x)
+    {
+      p2p_max_x = p2p_max_x;
+      changed = 1;
+    }
+  if (new_max_y > p2p_max_y)
+    {
+      p2p_max_y = p2p_max_y;
+      changed = 1;
+    }
+  
+  // Re-broadcast immediately if bounds expanded to minimise propogation
+  // delay
+  if (changed)
+    {
+      last_netinit_broadcast = 0;
+      timer_schedule_proc(p2pc_dims_nn_send, 0, 0, 1);
     }
 }
 
 
-//------------------------------------------------------------------------------
-
-// Configure P2P address (also sets network dimensions and "max_hops")
-
-// Time of arrival of this packet is also used to 'improve' the
-// random seed.
-
-
-const signed char lx[6] = {-1, -1,  0, +1, +1,  0};
-const signed char ly[6] = { 0, -1, -1,  0, +1, +1};
-
-uint nn_cmd_p2pc (uint link, uint data)
+void nn_rcv_p2pc_pct (uint link, uint data, uint key)
 {
-  if (!biff_complete)
-    return 0;
+  int p2pc_cmd = (key >> 2) & 0x3;
   
-  uint addr = data & 0xffff;
-
-  int addr_x = addr >> 8;
-  int addr_y = addr & 255;
-
-  rtr_p2p_set (addr, link);
-
-  addr_x += lx[link];
-  addr_y += ly[link];
-
-  uint dims = data >> 16;
-  int dim_x = dims >> 8;
-  int dim_y = dims & 255;
-
-  max_hops = 2 * (dim_x + dim_y) - 5;
-
-  sv->p2p_dims = p2p_dims = dims;
-  sv->p2p_up = p2p_up = 1;
-
-  if (addr_x >= dim_x)
-    addr_x = 0;
-  else if (addr_x < 0)
-    addr_x += dim_x;
-
-  if (addr_y >= dim_y)
-    addr_y = 0;
-  else if (addr_y < 0)
-    addr_y += dim_y;
-
-  compute_eth (addr_x, addr_y, dim_x, dim_y);
-
-  sv->p2p_addr = p2p_addr = (addr_x << 8) + addr_y;
-  cc[CC_SAR] = 0x07000000 + p2p_addr;
-  
-  rtr_p2p_set (p2p_addr, 7);
-  compute_level (p2p_addr);
-
-  hop_table[p2p_addr] = 0x80000000;
-
-  return (dims << 16) + p2p_addr;
+  switch (p2pc_cmd)
+    {
+      case P2PC_ADDR:
+        nn_rcv_p2pc_addr_pct(link, data, key);
+        break;
+      case P2PC_NEW:
+        nn_rcv_p2pc_new_pct(link, data, key);
+        break;
+      case P2PC_DIMS:
+        nn_rcv_p2pc_dims_pct(link, data, key);
+        break;
+    }
 }
 
 
@@ -665,9 +785,6 @@ void nn_cmd_sig1 (uint data, uint key)
 
 uint nn_cmd_p2pb (uint id, uint data, uint link)
 {
-  if (!p2p_up)
-    return P2PB_STOP_BIT;
-  
   uint addr = data >> 16;
   uint hops = data & 0x3ff;	// Bottom 10 bits
 
@@ -677,14 +794,14 @@ uint nn_cmd_p2pb (uint id, uint data, uint link)
   if (addr != p2p_addr && (id != table_id || hops < table_hops))
     {
       if (table_hops == 0xffff)
-	sv->p2p_active++;
+        sv->p2p_active++;
 
       hop_table[addr] = (id << 24) + hops;
 
       rtr_p2p_set (addr, link);
 
-      if (hops >= max_hops)
-	data |= P2PB_STOP_BIT;
+      if (hops >= 0x3FF)
+        data |= P2PB_STOP_BIT;
     }
   else
     data |= P2PB_STOP_BIT;
@@ -886,7 +1003,7 @@ void proc_pkt_bc (uint i_pkt, uint count)
 	  if (p >= NUM_LINKS)
 	    p -= NUM_LINKS;
 
-	  if ((1 << p) & link_up & link_en)
+	  if ((1 << p) & link_en)
 	    {
 	      if (! pkt_tx (pkt->pkt.ctrl + (p << 18), pkt->pkt.data, pkt->pkt.key))
 		sw_error (SW_OPT);
@@ -933,7 +1050,6 @@ void nn_cmd_biff(uint x, uint y, uint data)
           
           // NB: *Dead* links are given as '1'
           sv->link_en = link_en = ((~data) >> 18) & 0x3f;
-          sv->link_up &= link_up = ((~data) >> 18) & 0x3f;
           
           // Kill any cores noted as dead (note this may kill the core running
           // the monitor process, rendering the chip dead. This is the desired
@@ -1035,10 +1151,15 @@ void nn_rcv_pkt (uint link, uint data, uint key)
   uint cmd = (key >> 24) & 15;
   uint id = (key >> 1) & 127;
 
-  // NN_CMD_BIFF is handled seperately
+  // NN_CMD_BIFF and NN_CMD_P2PC are handled seperately
   if (cmd == NN_CMD_BIFF)
     {
       nn_rcv_biff_pct (link, data, key);
+      return;
+    }
+  else if (cmd == NN_CMD_P2PC)
+    {
+      nn_rcv_p2pc_pct (link, data, key);
       return;
     }
 
@@ -1082,13 +1203,6 @@ void nn_rcv_pkt (uint link, uint data, uint key)
     case NN_CMD_SIG1:
       nn_cmd_sig1 (data, key);
       break;
-
-    case NN_CMD_P2PC:
-      data = nn_cmd_p2pc (link, data);
-      if (data == 0)
-        return;
-      else
-        break;
 
     case NN_CMD_FFS:
       nn_cmd_ffs (data, key);

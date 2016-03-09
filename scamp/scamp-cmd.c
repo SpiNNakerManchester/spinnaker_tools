@@ -276,46 +276,6 @@ uint cmd_link_write (sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-// arg1 = 00 : 00 : 00 : ID
-// arg2 = dim_x : dim_y : addr_x, addr_y;
-// arg3 = 00 : 00 : fwd : retry
-
-
-void send_p2pc (uint arg2, uint arg3)
-{
-  uint dims = arg2 >> 16;
-
-  uint dim_x = dims >> 8;
-  uint dim_y = dims & 255;
-
-  max_hops = 2 * (dim_x + dim_y) - 5;
-
-  sv->p2p_addr = p2p_addr = arg2 & 0xffff;
-  cc[CC_SAR] = 0x07000000 + p2p_addr;
-
-  sv->p2p_dims = p2p_dims = dims;
-  sv->p2p_up = p2p_up = 1;
-
-  rtr_p2p_set (p2p_addr, 7);
-  hop_table[p2p_addr] = 0x80000000;
-
-  compute_level (p2p_addr);
-
-  uint key = next_id ();
-  nn_mark (key);	// Force copies to be ignored
-
-  ff_nn_send ((NN_CMD_P2PC << 24) + key, arg2, arg3, 0);
-}
-
-
-uint cmd_p2pc (sdp_msg_t *msg)
-{
-  send_p2pc (msg->arg2, msg->arg3);
-  return 0;
-}
-
-//------------------------------------------------------------------------------
-
 
 uint cmd_as (sdp_msg_t *msg)
 {
@@ -633,6 +593,11 @@ uint cmd_sig (sdp_msg_t *msg)
 
   if (type == 0)
     {
+      if (p2p_addr != sv->p2p_root)
+        {
+          msg->cmd_rc = RC_ARG;
+          return 0;
+        }
       pkt_tx (PKT_MC_PL, data, 0xffff5555);
     }
   else if (type == 1)
@@ -829,9 +794,6 @@ uint scamp_debug (sdp_msg_t *msg, uint srce_ip)
 
     case CMD_IPTAG:
       return cmd_iptag (msg, srce_ip);
-
-    case CMD_P2PC:
-      return cmd_p2pc (msg);
 
     case CMD_NNP:
       return cmd_nnp (msg);
