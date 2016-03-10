@@ -200,7 +200,8 @@ enum rte_code_e
   RTE_NULL,			//!< Generic null pointer error
   RTE_PKT,			//!< Pkt startup failure
   RTE_TIMER,			//!< Timer startup failure
-  RTE_API			//!< API startup failure
+  RTE_API,			//!< API startup failure
+  RTE_VER			//!< SW version conflict
 };
 
 typedef enum rte_code_e rte_code;	//!< Typedef for enum rte_code_e
@@ -749,7 +750,8 @@ typedef struct vcpu		// 128 bytes
   uint time;			//!< 68 - Time of loading
   char app_name[16];		//!< 72 - Application name
   void *iobuf;			//!< 88 - IO buffer in SDRAM (or 0)
-  uint __PAD[5];		//!< 92 - (spare)
+  uint sw_ver;			//!< 92 - SW version
+  uint __PAD[4];		//!< 96 - (spare)
   uint user0;			//!< 112 - User word 0
   uint user1;			//!< 116 - User word 1
   uint user2;			//!< 120 - User word 2
@@ -1076,6 +1078,7 @@ typedef struct sv
   uint fr_copy;			//!< f4 (Virtual) copy of router FR reg
   uint *board_info;		//!< f8 Pointer to board_info area !!
   uint __PAD4;			//!< fc
+  uint sw_ver;			//!< fc Software version number
 } sv_t;
 
 
@@ -2545,6 +2548,12 @@ extern uint build_date;
 
 /*! Name of build */
 extern char build_name[];
+
+/*! Software version number */
+extern uint sw_ver_num;
+
+/*! Software version string */
+extern char sw_ver_str[];
 
 //------------------------------------------------------------------------------
 

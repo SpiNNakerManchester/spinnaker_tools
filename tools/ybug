@@ -28,7 +28,7 @@ use SpiNN::Cmd;
 #-------------------------------------------------------------------------------
 
 
-my $version = "1.34";
+my $version = "2.0.0";
 
 my $spin;		# SpiNN::Cmd object for SpiNNaker
 my $bmp;		# SpiNN::Cmd object for BMP (or undef)
@@ -1045,7 +1045,8 @@ sub cpu_dump
 	"ST_12", "ST_13", "ST_14", "IDLE");
 
     my @rte = qw/NONE RESET UNDEF SVC PABT DABT IRQ FIQ VIC 
-		 ABORT MALLOC DIVBY0 EVENT SWERR IOBUF/;
+		 ABORT MALLOC DIV0 EVENT SWERR IOBUF ENABLE
+                 NULL PKT TIMER API VER /;
 
     my @mon = qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
 
@@ -1126,9 +1127,9 @@ sub cpu_dump
 	    }
 	    else
 	    {
-		printf "PCore\n";
+		printf "PCore  SWver\n";
 		printf "---- -----  -----------       --   ";
-		printf "-----\n";
+		printf "-----  --------\n";
 	    }
 	}
 
@@ -1156,7 +1157,9 @@ sub cpu_dump
 	}
 	elsif ($fmt == 3)
 	{
-	    printf "  %2u\n", $sv->get_var ("vcpu.phys_cpu");
+	    printf "   %2u  ", $sv->get_var ("vcpu.phys_cpu");
+	    my $v = $sv->get_var ("vcpu.sw_ver");
+	    printf "  %d.%d.%d\n", ($v >> 16) & 255, ($v >> 8) & 255, $v & 255;
 	}
 	else
 	{

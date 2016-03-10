@@ -26,7 +26,7 @@ use SpiNN::Util qw/read_file hex_dump parse_bits/;
 #-------------------------------------------------------------------------------
 
 
-my $version = "1.38T";
+my $version = "2.0.0";
 
 my $bmp;		# SpiNN::Cmd object for BMP
 my $cli;		# SpiNN::CLI object
@@ -1175,6 +1175,14 @@ sub short_date
 }
 
 
+sub ver_num
+{
+    my $n = shift;
+    return sprintf "%0.2f", $n / 100 if $n < 65535;
+    return sprintf "%d.%d.%d", $n >> 16, ($n >> 8) & 255, $n & 255;
+}
+
+
 sub cmd_firmware
 {
     eval
@@ -1184,8 +1192,8 @@ sub cmd_firmware
 					addr => [0],
 					unpack => "C*");
 
-	print "Slot  Addr    Primary               Backup                Boot\n";
-	print "----  -----   -------------------   -------------------   -------------------\n";
+	print "Slot  Addr    Primary                 Backup                  Boot\n";
+	print "----  -----   ---------------------   ---------------------   ---------------------\n";
 
 	for (my $i = 0; $i < 24; $i++)
 	{
@@ -1198,18 +1206,18 @@ sub cmd_firmware
 	    my $vec = $info->[7];
 
 	    my $d1 = $bmp->read (0x10000, 256, unpack => "V*", addr => [$i]);
-	    my $v1 = $d1->[54] / 100;
+	    my $v1 = ver_num ($d1->[54]);
 	    my $t1 = short_date ($d1->[53]);
 
 	    my $d2 = $bmp->read (0x20000, 256, unpack => "V*", addr => [$i]);
-	    my $v2 = $d2->[54] / 100;
+	    my $v2 = ver_num ($d2->[54]);
 	    my $t2 = short_date ($d2->[53]);
 
 	    my $db = $bmp->read (0, 32, unpack => "V*", addr => [$i]);
-	    my $vb = $db->[6] / 100;
+	    my $vb = ver_num ($db->[6]);
 	    my $tb = short_date ($db->[5]);
 
-	    printf "%3d   %05x   %4.2f  %s   %4.2f  %s   %4.2f  %s\n",
+	    printf "%3d   %05x   %-6s  %s   %-6s  %s   %-6s  %s\n",
 	      $i, $vec, $v1, $t1, $v2, $t2, $vb, $tb;
 	}
     };
@@ -1288,8 +1296,16 @@ sub cmd_sver
 	my $data = $bmp->ver (raw => 1);
 	my ($vc, $pc, $cy, $cx, $size, $ver_num, $time, $ver_str) = @$data;
 	my ($name, $hw) = split /\//, $ver_str;
-	printf "$name %0.2f at $hw:$vc (built %s) [C=$pc, F=$cy, B=$cx]\n",
-	  $ver_num / 100, scalar localtime $time;
+	if ($ver_num < 65535)
+	{
+	    printf "$name %0.2f at $hw:$vc (built %s) [C=$pc, F=$cy, B=$cx]\n",
+	      $ver_num / 100, scalar localtime $time;
+	}
+	else
+	{
+	    printf "$name %d.%d.%d at $hw:$vc (built %s) [C=$pc, F=$cy, B=$cx]\n",
+	      $ver_num >> 16, ($ver_num >> 8) & 255, $ver_num & 255, scalar localtime $time;
+	}
     };
 
     return $@;

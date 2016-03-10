@@ -27,8 +27,6 @@ void __attribute__((weak)) schedule_sysmode (uchar event_id,
 
 //------------------------------------------------------------------------------
 
-#define SARK_VER_NUM  		134
-
 #define SARK_VER_STR		"SARK/SpiNNaker"
 
 sark_data_t sark;
@@ -420,10 +418,10 @@ uint __attribute__((weak)) sark_init (uint *stack)
   sark.msg_root.free = (mem_link_t *) msg_bufs;
   sark_block_init (msg_bufs, sark_vec->num_msgs, sizeof (sdp_msg_t));
 
-  // Initialise the "vcpu" fields for this virtual CPU. May be out
-  // of range (eg for SC&MP) if p2v_map is not set up yet.
+  // Initialise the "vcpu" fields for this virtual CPU. This is only
+  // done if we are not the Monitor processor
 
-  if (sark.virt_cpu < NUM_CPUS)
+  if (sark.phys_cpu != (sc[SC_MON_ID] & 31))
     {
       sark.vcpu = sv_vcpu + sark.virt_cpu;
       sark.sdram_buf = (void *) (sv->sdram_bufs +
@@ -435,7 +433,17 @@ uint __attribute__((weak)) sark_init (uint *stack)
 
       sark.vcpu->app_id = sark_vec->app_id;
       sark.vcpu->time = sv->unix_time;
+      sark.vcpu->sw_ver = sw_ver_num;
       sark_str_cpy (sark.vcpu->app_name, build_name);
+
+      // Check software version number
+      //   Major must match
+      //   Minor must be GE
+      //   Patch is ignored
+
+      if ((sw_ver_num & 0x00ff0000) != (sv->sw_ver & 0x00ff0000) ||
+	  (sw_ver_num & 0x0000ff00) < (sv->sw_ver & 0x0000ff00))
+	rt_error (RTE_VER);
     }
 
   // Set up VIC - disable everything
@@ -525,12 +533,13 @@ uint sark_msg_send (sdp_msg_t *msg, uint timeout)
 uint sark_cmd_ver (sdp_msg_t *msg)
 {
   msg->arg1 = (sv->p2p_addr << 16) + (sark.phys_cpu << 8) + sark.virt_cpu;
-  msg->arg2 = (SARK_VER_NUM << 16) + SDP_BUF_SIZE;
+  msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
   msg->arg3 = (uint) build_date;
 
   sark_str_cpy ((char *) msg->data, SARK_VER_STR);
+  sark_str_cpy ((char *) msg->data + sizeof (SARK_VER_STR), sw_ver_str);
 
-  return 12 + sizeof (SARK_VER_STR);
+  return 12 + sizeof (SARK_VER_STR) + 1 + sark_str_len (sw_ver_str);
 }
 
 

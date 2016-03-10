@@ -21,8 +21,8 @@
 
 // Version number for SC&MP
 
-#define VER_NUM  		134			// < 1024, please
-# define VER_STR  		"SC&MP/SpiNNaker"
+#define SCAMP_VER_STR  		"SC&MP/SpiNNaker"
+#define SCAMP_VER_NUM		"2.0.0"
 
 //------------------------------------------------------------------------------
 
@@ -188,12 +188,13 @@ uint cmd_iptag (sdp_msg_t *msg, uint srce_ip)
 uint cmd_ver (sdp_msg_t *msg)
 {
   msg->arg1 = (sv->p2p_addr << 16) + (sark.phys_cpu << 8) + sark.virt_cpu;
-  msg->arg2 = (VER_NUM << 16) + SDP_BUF_SIZE;
+  msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
   msg->arg3 = (uint) build_date;
 
-  sark_str_cpy ((char *) msg->data, VER_STR);
+  sark_str_cpy ((char *) msg->data, SCAMP_VER_STR);
+  sark_str_cpy ((char *) msg->data + sizeof (SCAMP_VER_STR), sw_ver_str);
 
-  return 12 + sizeof (VER_STR);
+  return 12 + sizeof (SCAMP_VER_STR) + 1 + sark_str_len (sw_ver_str);
 }
 
 //------------------------------------------------------------------------------
