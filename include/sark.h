@@ -1101,6 +1101,22 @@ static uint*   const sv_board_info = (uint *)   SV_SPARE;
 
 //------------------------------------------------------------------------------
 
+// Various bits of global data
+
+/*! Main SARK variables */
+extern sark_data_t sark;
+
+/*! SARK event variables */
+extern event_data_t event;
+
+/*! Date of build */
+extern uint build_date;
+
+/*! Name of build */
+extern char build_name[];
+
+//------------------------------------------------------------------------------
+
 // Routines exported by SARK - sark_alib.s
 
 /*!
@@ -1558,6 +1574,19 @@ to return sark_vec->app_id.
 */
 
 uint sark_app_id (void);
+
+/*!
+
+Returns a pointer to the name of the application running on this core.
+Implemented as an inline.
+
+\return pointer to application name
+*/
+
+static inline char *sark_app_name (void)
+{
+  return build_name;
+}
 
 /*!
 Get an SDP message buffer from the pool maintained by SARK. Applications
@@ -2512,28 +2541,6 @@ the timer left to terminate on the timer interrupt.
 */
 
 void timer_cancel (event_t *e, uint ID);
-
-//------------------------------------------------------------------------------
-
-// Various bits of global data
-
-/*! Main SARK variables */
-extern sark_data_t sark;
-
-/*! SARK event variables */
-extern event_data_t event;
-
-/*! Date of build */
-extern uint build_date;
-
-/*! Name of build */
-extern char build_name[];
-
-/*! Software version number */
-extern uint sw_ver_num;
-
-/*! Software version string */
-extern char sw_ver_str[];
 
 //------------------------------------------------------------------------------
 

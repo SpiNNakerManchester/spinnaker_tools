@@ -43,8 +43,6 @@ extern uint32_t STACK_LIMIT, STACK_BASE;
 
 const int pad __attribute__ ((section (".padding"))) = 0xdeaddead;
 
-const char sw_ver_str[] = SW_VER_STR;
-
 //------------------------------------------------------------------------------
 
 
@@ -168,20 +166,20 @@ const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) =
     USBActivity_IRQHandler,    	   // 49: USB Activity
     CANActivity_IRQHandler,        // 50: CAN Activity
 
-    (handler) 0,			// 51: 
-    (handler) 0,			// 52: 
-    BUILD_DATE,				// 53: Build date
-    SW_VER_NUM,				// 54: Version number
+    (handler) 0,		   // 51: 
+    (handler) 0,		   // 52: 
+    BUILD_DATE,			   // 53: Build date
+    BMP_VER_NUM,		   // 54: Version number
 
-    (uint32_t) &RO_LENGTH,           	// 55: RO_length
-    (uint32_t) &RW_LENGTH,           	// 56: RW_length
-    &RO_LIMIT,   		      	// 57: RO_limit
-    &RW_BASE,	 		        // 58: RW_base
-    &RW_LIMIT,	 		        // 59: RW_limit
-    &ZI_BASE,	 		        // 60: ZI_base
-    &ZI_LIMIT,	 		        // 61: ZI_limit
-    &STACK_BASE, 		      	// 62: stack_base
-    &STACK_LIMIT 		      	// 63: stack_limit
+    (uint32_t) &RO_LENGTH,         // 55: RO_length
+    (uint32_t) &RW_LENGTH,         // 56: RW_length
+    &RO_LIMIT,   		   // 57: RO_limit
+    &RW_BASE,	 		   // 58: RW_base
+    &RW_LIMIT,	 		   // 59: RW_limit
+    &ZI_BASE,	 		   // 60: ZI_base
+    &ZI_LIMIT,	 		   // 61: ZI_limit
+    &STACK_BASE, 		   // 62: stack_base
+    &STACK_LIMIT 		   // 63: stack_limit
   };
 
 

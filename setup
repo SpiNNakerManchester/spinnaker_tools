@@ -25,9 +25,9 @@ SPINN_PATH=$SPINN_DIRS/boot
 
 #-------------------------------------------------------------------------------
 
-# SPINN_STV is the version number of the low-level software tools
+# SPINN_REL is the release number of the low-level software tools
 
-SPINN_STV=2.0.0
+SPINN_REL=2016.03.0
 
 #-------------------------------------------------------------------------------
 
@@ -61,7 +61,7 @@ LM_LICENSE_FILE=PORT@SERVER.cs.man.ac.uk:$LM_LICENSE_FILE
 
 # *** EDIT HERE ***
 
-GNUTOOLS=/home/amulinks/spinnaker/tools/arm-2013.05
+GNUTOOLS=/local/temples/gcc-arm-none-eabi-4_9-2015q3
 
 GNUBIN=$GNUTOOLS/bin
 
@@ -72,5 +72,7 @@ GNUBIN=$GNUTOOLS/bin
 PATH=$GNUBIN:$ARMBIN:$PATH
 
 #-------------------------------------------------------------------------------
+
+echo "# SpiNNaker Tools $SPINN_REL"
 
 # The End

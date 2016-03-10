@@ -1,18 +1,25 @@
 
-README file for SpiNNaker Low-Level Software Tools - Release 1.30
-=================================================================
+README file for SpiNNaker Low-Level Software Tools - Release 2016.03.0
+======================================================================
 
 
 1) Edit the setup file so that it points to your installations of
-   ARM and/or GNU software development tools. Search for the
-   string "EDIT HERE" to find the two edit points.
+   ARM and/or GNU software development tools. You only need one of
+   these two tools installed to build standard applications.
 
-   The version of the GNU tools that is recommended is
+   Search for the string "EDIT HERE" to find the two edit points.
 
-     Sourcery CodeBench Lite - ARM EABI release 2013.05
+   The version of the GNU tools that was used to test this release is
 
-   This can be downloaded from the SpiNNaker Wiki or directly
-   from the Code Sourcery section of the Mentor Graphics site.
+     gcc version 4.9.3 20150529 (release) [ARM/embedded-4_9-branch revision 227977]
+
+   This (and more recent versions) can be downloaded from this web site
+
+     https://launchpad.net/gcc-arm-embedded
+
+   The version of the ARM tools that was used to test this release is
+
+     ARM C/C++ Compiler, RVCT4.0 [Build 400]
 
 
 2) Source the setup file in the directory in which it lives
@@ -20,11 +27,12 @@ README file for SpiNNaker Low-Level Software Tools - Release 1.30
    > source ./setup
 
 
-3) Go into the "sark" directory and make SARK for ARM and/or GNU
+3) Go into the "sark" directory and make SARK for ARM or GNU tools
+   (you will probably only want to do one of these)
 
    > cd sark
-   > ./make_arm
-   > ./make_gnu
+   > ./make_arm		# If you are using ARM tools
+   > ./make_gnu		# If you are using GNU tools
    > cd ..
 
    Note that you may see some compiler warnings during these builds.
@@ -37,11 +45,11 @@ README file for SpiNNaker Low-Level Software Tools - Release 1.30
 
 
 4) Go into the "spin1_api" directory and make "spin1_api" for ARM
-   and/or GNU
+   or GNU
 
    > cd spin1_api
-   > ./make_arm
-   > ./make_gnu
+   > ./make_arm		# If you are using ARM tools
+   > ./make_gnu		# If you are using GNU tools
    > cd ..
 
 
@@ -58,6 +66,8 @@ README file for SpiNNaker Low-Level Software Tools - Release 1.30
    GNU - to choose ARM or GNU tools (GNU=1)
 
    THUMB - to choose to generate ARM or Thumb code (THUMB=1)
+
+   DEBUG - to include debugging info in the ELF files (DEBUG=1)
 
    API - if you want link with "spin1_api" or not (API=1)
 
@@ -91,9 +101,9 @@ README file for SpiNNaker Low-Level Software Tools - Release 1.30
 8) Now start "ybug" to bootstrap your SpiNNaker board and load and run
    the "hello" application. You'll need to know the IP address of your
    board to do this - here we'll use 192.168.240.253. You'll also need
-   to know what type of board you are using - spin2, spin3 or spin4.
-   If you aren't sure what state your board is in you should reset it
-   by pressing the reset button.
+   to know what type of board you are using - spin2, spin3, spin4 or
+   spin5. If you aren't sure what state your board is in you should
+   reset it by pressing the reset button.
 
    > ybug 192.168.240.253
 
@@ -186,9 +196,13 @@ README file for SpiNNaker Low-Level Software Tools - Release 1.30
 
     heat_demo - a heat diffusion example (precompiled Linux visualiser)
 
+    gdb_test - shows how to use the GDB debugger with SpiNNaker. See
+    the "gdb-spin" document in the "docs" directory for instructions.
 
-11) There is documentation for SARK, "ybug" and the Spin1 API in the
-    "docs" directory.
+
+11) There is documentation for SARK, "ybug", "gdp-spin" and the Spin1
+    API in the "docs" directory.
+
 
 12) SpiNNaker systems mostly communicate using UDP/IP with port numbers
     in the range 17890-17899. Specifically, 17892 is used for Tubotron
@@ -201,3 +215,10 @@ README file for SpiNNaker Low-Level Software Tools - Release 1.30
     each port at any one time. So you may see a mesage to the effect
     that the port is in use if you try to start a visualiser when one
     is already running and using the same port.
+
+13) Some visualisers (tubotron/tubogrid) use the Perl-Tk library which
+    may not be installed by default on your machine. This can be
+    installed as follows
+
+      sudo apt-get install perl-tk		# Ubuntu, etc
+      sudo yum     install perl-Tk		# Fedora, etc

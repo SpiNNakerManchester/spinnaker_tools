@@ -17,6 +17,13 @@
 
 //------------------------------------------------------------------------------
 
+#define BMP_VER_STR		"2.0.0"
+#define BMP_VER_NUM		0x00020000
+
+#define BMP_ID_STR		"BC&MP/Spin5-BMP"
+
+//------------------------------------------------------------------------------
+
 #define CCLK			100000000	// CPU clock - 100 MHz
 
 #ifndef NULL
@@ -646,8 +653,5 @@ extern bool data_ok;
 extern iptag_t tag_table[];
 
 extern const uint32_t hw_ver;
-
-extern const char bmp_ver_str[];
-extern const char sw_ver_str[];
 
 //------------------------------------------------------------------------------

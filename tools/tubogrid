@@ -21,7 +21,7 @@ use IO::Socket::INET;
 
 
 my $program = "tubogrid";
-my $version = "0.01";
+my $version = "2.0.0";
 
 my $port = 17892;
 my $socket;

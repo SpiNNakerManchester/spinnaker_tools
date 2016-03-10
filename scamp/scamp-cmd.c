@@ -19,10 +19,9 @@
 
 //------------------------------------------------------------------------------
 
-// Version number for SC&MP
+// Version command string for SC&MP
 
-#define SCAMP_VER_STR  		"SC&MP/SpiNNaker"
-#define SCAMP_VER_NUM		"2.0.0"
+#define SCAMP_ID_STR  		"SC&MP/SpiNNaker"
 
 //------------------------------------------------------------------------------
 
@@ -191,10 +190,10 @@ uint cmd_ver (sdp_msg_t *msg)
   msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
   msg->arg3 = (uint) build_date;
 
-  sark_str_cpy ((char *) msg->data, SCAMP_VER_STR);
-  sark_str_cpy ((char *) msg->data + sizeof (SCAMP_VER_STR), sw_ver_str);
+  sark_str_cpy ((char *) msg->data, SCAMP_ID_STR);
+  sark_str_cpy ((char *) msg->data + sizeof (SCAMP_ID_STR), SCAMP_VER_STR);
 
-  return 12 + sizeof (SCAMP_VER_STR) + 1 + sark_str_len (sw_ver_str);
+  return 12 + sizeof (SCAMP_ID_STR) + sizeof (SCAMP_VER_STR);
 }
 
 //------------------------------------------------------------------------------

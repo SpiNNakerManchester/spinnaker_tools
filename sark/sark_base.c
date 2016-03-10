@@ -27,7 +27,9 @@ void __attribute__((weak)) schedule_sysmode (uchar event_id,
 
 //------------------------------------------------------------------------------
 
-#define SARK_VER_STR		"SARK/SpiNNaker"
+#define SARK_ID_STR		"SARK/SpiNNaker"
+#define SARK_VER_STR		"2.0.0"
+#define SARK_VER_NUM		0x00020000
 
 sark_data_t sark;
 
@@ -423,7 +425,7 @@ uint __attribute__((weak)) sark_init (uint *stack)
 
       sark.vcpu->app_id = sark_vec->app_id;
       sark.vcpu->time = sv->unix_time;
-      sark.vcpu->sw_ver = sw_ver_num;
+      sark.vcpu->sw_ver = SARK_VER_NUM;
       sark_str_cpy (sark.vcpu->app_name, build_name);
 
       // Check software version number
@@ -431,8 +433,8 @@ uint __attribute__((weak)) sark_init (uint *stack)
       //   Minor must be GE
       //   Patch is ignored
 
-      if ((sw_ver_num & 0x00ff0000) != (sv->sw_ver & 0x00ff0000) ||
-	  (sw_ver_num & 0x0000ff00) < (sv->sw_ver & 0x0000ff00))
+      if ((SARK_VER_NUM & 0x00ff0000) != (sv->sw_ver & 0x00ff0000) ||
+	  (SARK_VER_NUM & 0x0000ff00) < (sv->sw_ver & 0x0000ff00))
 	rt_error (RTE_VER);
     }
 
@@ -525,10 +527,10 @@ uint sark_cmd_ver (sdp_msg_t *msg)
   msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
   msg->arg3 = (uint) build_date;
 
-  sark_str_cpy ((char *) msg->data, SARK_VER_STR);
-  sark_str_cpy ((char *) msg->data + sizeof (SARK_VER_STR), sw_ver_str);
+  sark_str_cpy ((char *) msg->data, SARK_ID_STR);
+  sark_str_cpy ((char *) msg->data + sizeof (SARK_ID_STR), SARK_VER_STR);
 
-  return 12 + sizeof (SARK_VER_STR) + 1 + sark_str_len (sw_ver_str);
+  return 12 + sizeof (SARK_ID_STR) + sizeof (SARK_VER_STR);
 }
 
 

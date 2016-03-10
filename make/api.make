@@ -5,6 +5,7 @@ GNU := 0
 API := 0
 THUMB := 1
 LIB := 1
+DEBUG := 1
 
 INC_DIR := ../include
 LIB_DIR := ../lib
@@ -55,6 +56,11 @@ endif
 
 endif
 
+ifeq ($(DEBUG),1)
+  CFLAGS += -g
+  AFLAGS += -g
+endif
+
 ifeq ($(THUMB),1)
   CC := $(CT)
 else
@@ -90,8 +96,7 @@ $(APILIB): $(SARKOBJ) $(APIOBJ)
 # Install
 
 install: $(APILIB)
-	\cp -p $(APILIB) ../lib/$(LIBNAME)-$(SPINN_STV).a
-	\ln -sf $(LIBNAME)-$(SPINN_STV).a ../lib/$(APILIB)
+	\cp -p $(APILIB) ../lib/$(APILIB)
 
 #-------------------------------------------------------------------------------
 

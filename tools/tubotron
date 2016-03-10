@@ -19,7 +19,7 @@ use Tk;
 
 use IO::Socket::INET;
 
-my $version = "1.30";
+my $version = "2.0.0";
 
 my $dns = 1;
 

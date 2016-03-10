@@ -20,7 +20,7 @@ use Tk;
 
 use SpiNN::Cmd;
 
-my $version = "0.01";
+my $version = "2.0.0";
 
 my $bmp_target;		# BMP host name
 my $bmp;		# BMP handle

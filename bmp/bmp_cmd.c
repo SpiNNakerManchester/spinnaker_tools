@@ -427,12 +427,12 @@ static uint32_t cmd_ver (sdp_msg_t *msg)
 
   msg->arg3 = cortex_vec->build_date;
 
-  uint32_t len = 1 + strlen (bmp_ver_str);
+  uint32_t len = 1 + strlen (BMP_ID_STR);
 
-  strcpy ((char *) msg->data, bmp_ver_str);
-  strcpy ((char *) msg->data + len, sw_ver_str);
+  strcpy ((char *) msg->data, BMP_ID_STR);
+  strcpy ((char *) msg->data + len, BMP_VER_STR);
 
-  return 12 + len + strlen (sw_ver_str) + 1;
+  return 12 + len + strlen (BMP_VER_STR) + 1;
 }
 
 
