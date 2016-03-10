@@ -142,15 +142,25 @@ char eth_map[12][12] =
   };
 
 
-void compute_eth (int x, int y, int x_size, int y_size)
+void compute_eth (void)
 {
-  //  Compute x % 12, y % 12 the cheap way...
+  int x = p2p_addr >> 8;
+  int y = p2p_addr & 0xFF;
+  int x_size = p2p_dims >> 8;
+  int y_size = p2p_dims & 0xFF;
+  
+  // Compensate for the fact that '0, 0' may not actually lie in a legitemate
+  // place for a board corner then compute modulo 12 the cheap way.
 
-  int xm = x;
+  int xm = x - (p2p_root >> 8);
+  while (xm < 0)
+    xm += 12;
   while (xm >= 12)
     xm -= 12;
 
-  int ym = y;
+  int ym = y - (p2p_root & 0xFF);
+  while (ym < 0)
+    ym += 12;
   while (ym >= 12)
     ym -= 12;
 
@@ -457,6 +467,10 @@ void biff_nn_send (uint data)
 // Transmit our current best guess of coordinates to all neighbouring chips
 void p2pc_addr_nn_send(uint arg1, uint arg2)
 {
+  // Don't send anything if our address is actually unknown...
+  if (p2p_addr_guess_x == NO_IDEA || p2p_addr_guess_y == NO_IDEA)
+    return;
+  
   uint key = (NN_CMD_P2PC << 24) | (P2PC_ADDR << 2);
   uint data = ((p2p_addr_guess_x & 0xFFFF) << 16) |
                (p2p_addr_guess_y & 0xFFFF);
@@ -464,10 +478,7 @@ void p2pc_addr_nn_send(uint arg1, uint arg2)
   key |= chksum_64 (key, data);
 
   for (uint link = 0; link < NUM_LINKS; link++)
-    {
-      sark_delay_us (8);  // !! const
-      (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
-    }
+    pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
 }
 
 // Broadcast the existance of a new P2P coordinate having been discovered
@@ -479,10 +490,7 @@ void p2pc_new_nn_send(uint x, uint y)
   key |= chksum_64 (key, data);
 
   for (uint link = 0; link < NUM_LINKS; link++)
-    {
-      sark_delay_us (8);  // !! const
-      (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
-    }
+    pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
 }
 
 // Transmit our current best guess of coordinates to all neighbouring chips.
@@ -497,17 +505,16 @@ void p2pc_dims_nn_send(uint arg1, uint arg2)
   key |= chksum_64 (key, data);
 
   for (uint link = 0; link < NUM_LINKS; link++)
-    {
-      sark_delay_us (8);  // !! const
-      (void) pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
-    }
+    pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
 }
 
 // Transmit "P2PB" table generating packets
 void p2pb_nn_send(uint arg1, uint arg2)
 {
-  uint key = (NN_CMD_P2PB << 24);
-  uint data = p2p_addr;
+  static int id = 0;
+  
+  uint key = (NN_CMD_P2PB << 24) | (0x3f00 << 8) | ((id++ & 0x7F) << 1);
+  uint data = p2p_addr << 16;
 
   key |= chksum_64 (key, data);
 
@@ -520,45 +527,48 @@ void p2pb_nn_send(uint arg1, uint arg2)
 void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
 {
   // Coordinates of neighbour
-  int nx = (int)(short)(data >> 16);
-  int ny = (int)(short)(data & 0xFFFF);
+  int nx = data >> 16;
+  int ny = data & 0xFFFF;
+  if (nx & 0x8000) nx |= 0xFFFF0000;
+  if (ny & 0x8000) ny |= 0xFFFF0000;
   
   // Work out our coordinates
-  int x = nx + lx[link];
-  int y = ny + ly[link];
+  int x = nx + (int)lx[link];
+  int y = ny + (int)ly[link];
   
   // Ignore if this address has wrapped around a few too many times...
   if (x < -255 || x > 255 || y < -255 || y > 255)
     return;
   
+  // Ignore if in board-test mode and coordinate is not within a SpiNN-5 board
+  // boundary.
+  if ((sv->bt_flags & 1) &&
+      (x >= 8 || x < 0 || y >= 8 || y < 0 ||
+       eth_map[y][x] != ((x << 4) + y)))
+    return;
+  
   // Update out current guess
   int updated = 0;
   if ((p2p_addr_guess_x < 0 && x >= 0) || // X has gone non-negative or
-      ((p2p_addr_guess_x < 0 == x < 0) && // Sign is the same and...
+      (((x < 0) == (p2p_addr_guess_x < 0)) && // Sign is the same and...
        (abs(x) < abs(p2p_addr_guess_x)))) // ...magnitude reduced
     {
       p2p_addr_guess_x = x;
-      updated = 1;
+      updated |= 1;
     }
   if ((p2p_addr_guess_y < 0 && y >= 0) || // Y has gone non-negative or
-      ((p2p_addr_guess_y < 0 == y < 0) && // Sign is the same and...
+      (((y < 0) == (p2p_addr_guess_y < 0)) && // Sign is the same and...
        (abs(y) < abs(p2p_addr_guess_y)))) // ...magnitude reduced
     {
       p2p_addr_guess_y = y;
-      updated = 1;
+      updated |= 2;
     }
   
-  // If guess was updated, broadcast this fact and update our initial guess of
-  // the system's bounds based only on knowing our own coordinates (these
-  // bounds are later expanded in the next phase)
+  // If guess was updated, broadcast this fact
   if (updated)
     {
-      timer_schedule_proc(p2pc_new_nn_send, p2p_addr_guess_x, p2p_addr_guess_y, 1);
-      
-      p2p_min_x = (x < 0) ? x : 0;
-      p2p_min_y = (y < 0) ? y : 0;
-      p2p_max_x = (x > 0) ? x : 0;
-      p2p_max_y = (y > 0) ? y : 0;
+      last_netinit_broadcast = 0;
+      p2pc_new_nn_send(p2p_addr_guess_x, p2p_addr_guess_y);
     }
 }
 
@@ -566,8 +576,10 @@ void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
 void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
 {
   // Coordinates of the new coordinate
-  int x = (int)(short)(data >> 16);
-  int y = (int)(short)(data & 0xFFFF);
+  int x = data >> 16;
+  int y = data & 0xFFFF;
+  if (x & 0x8000) x |= 0xFFFF0000;
+  if (y & 0x8000) y |= 0xFFFF0000;
   
   // Ignore if this address has wrapped around a few too many times (should not
   // occur but here as a sanity check since we'll be indexing with this...)
@@ -584,7 +596,7 @@ void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
   if (byte != new_byte)
     {
       last_netinit_broadcast = 0;
-      timer_schedule_proc(p2pc_new_nn_send, x, y, 1);
+      p2pc_new_nn_send(x, y);
     }
 }
 
@@ -592,31 +604,34 @@ void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
 void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
 {
   // Bounds of the coordinates
-  int new_min_x = (int)(0xFFFFFF00 | ((data >> 24) & 0xFF));
-  int new_min_y = (int)(0xFFFFFF00 | ((data >> 16) & 0xFF));
-  int new_max_x = (int)(((data >> 8) & 0xFF));
-  int new_max_y = (int)(((data >> 0) & 0xFF));
+  int new_min_x = (data >> 24) & 0xFF;
+  int new_min_y = (data >> 16) & 0xFF;
+  if (new_min_x) new_min_x |= 0xFFFFFF00;
+  if (new_min_y) new_min_y |= 0xFFFFFF00;
+  
+  int new_max_x = (data >> 8) & 0xFF;
+  int new_max_y = (data >> 0) & 0xFF;
   
   // Expand bounds as required
   int changed = 0;
   if (new_min_x < p2p_min_x)
     {
-      p2p_min_x = p2p_min_x;
+      p2p_min_x = new_min_x;
       changed = 1;
     }
   if (new_min_y < p2p_min_y)
     {
-      p2p_min_y = p2p_min_y;
+      p2p_min_y = new_min_y;
       changed = 1;
     }
   if (new_max_x > p2p_max_x)
     {
-      p2p_max_x = p2p_max_x;
+      p2p_max_x = new_max_x;
       changed = 1;
     }
   if (new_max_y > p2p_max_y)
     {
-      p2p_max_y = p2p_max_y;
+      p2p_max_y = new_max_y;
       changed = 1;
     }
   
@@ -625,7 +640,7 @@ void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
   if (changed)
     {
       last_netinit_broadcast = 0;
-      timer_schedule_proc(p2pc_dims_nn_send, 0, 0, 1);
+      p2pc_dims_nn_send(0, 0);
     }
 }
 

@@ -140,7 +140,7 @@ sub new
 # Set the default chip/core address that the connection uses to talk to
 # SpiNNaker. Up to three arguments can be given with the following effects
 #
-# 0 args - chip_x = 0, chip_y = 0, core = 0
+# 0 args - chip_x = 255, chip_y = 255, core = 0
 # 1 arg  - core = arg1 (chip_x, chip_y unchanged)
 # 2 args - chip_x = arg1, chip_y = arg2, core = 0
 # 3 args - chip_x = arg1, chip_y = arg2, core = arg3
@@ -151,7 +151,8 @@ sub addr
 
     if ($#_ == 0) # root
     {
-	$self->{X} = $self->{Y} = $self->{C} = 0;
+	$self->{X} = $self->{Y} = 255;
+	$self->{C} = 0;
     }
     elsif ($#_ == 1)
     {
@@ -263,7 +264,7 @@ sub send_sdp
     {
 	if ($#$addr == -1)
 	{
-	    ($x, $y, $c) = (0, 0, 0);
+	    ($x, $y, $c) = (255, 255, 0);
 	}
 	elsif ($#$addr == 0)
 	{

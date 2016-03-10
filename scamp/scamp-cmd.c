@@ -187,7 +187,12 @@ uint cmd_iptag (sdp_msg_t *msg, uint srce_ip)
 
 uint cmd_ver (sdp_msg_t *msg)
 {
-  msg->arg1 = (sv->p2p_addr << 16) + (sark.phys_cpu << 8) + sark.virt_cpu;
+  // Report P2P address of 255,255 until boot completes (as an indication of
+  // system readiness)
+  uint p2p_addr = (netinit_phase == NETINIT_PHASE_DONE) ? sv->p2p_addr
+                                                        : 0xFFFF;
+
+  msg->arg1 = (p2p_addr << 16) + (sark.phys_cpu << 8) + sark.virt_cpu;
   msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
   msg->arg3 = (uint) build_date;
 

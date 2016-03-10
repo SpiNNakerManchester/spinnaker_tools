@@ -76,22 +76,53 @@ sub cmd_boot
 {
     my $cli = shift;
     my $ac = $cli->{arg_c};
-    my $file = $cli->{arg_v}->[0];
+    my $file = $cli->{arg_v}->[0] || "scamp.boot";
     my $conf = $cli->{arg_v}->[1];
 
-    return "bad args" unless $ac == 2;
+    return "bad args" unless $ac <= 2;
     
     eval
     {
+	# Warn if already booted
+	eval {
+	  $spin->ver (addr => [], timeout => 0.1);
+	  print "Warning: Already booted.\n"
+	};
+	
 	SpiNN::Boot->boot ($spin_target, $file, $conf, debug => $debug);
+	
+	# Wait for boot to complete
+	my $booted = 1;
+	my $have_waited = 0;
+	do
+	{
+	  if (!$booted)
+	  {
+	    print ".";
+	    select (undef, undef, undef, 0.5);
+	    $have_waited = 1;
+ 	  }
+	  my @version_info = @{$spin->ver (addr => [], raw => 1)};
+	  $booted = $version_info[3] != 0xFF && $version_info[2] != 0xFF;
+	} while (!$booted);
+	if ($have_waited)
+	{
+	  print "\n";
+	}
 
+	# Inform the user!
 	my $s = $spin->ver (addr => []);
 	$s =~ s/ at .*//;
+	
+	my $n = $sv->read_var ("sv.p2p_active", addr => []);
 
 	$spin->iptag_set (0, $TUBE_PORT, host => "0.0.0.0", addr => []);
 
-	print "Booted: $s\n";
+	print "Booted $s on $n chips\n";
     };
+
+    # Return to the chip we were on before booting
+    $spin->addr ($chip_x, $chip_y, $cpu);
 
     return $@;
 }
@@ -306,13 +337,20 @@ sub cmd_sp
     my $arg2 = $cli->{arg_v}->[1];
     my $arg3 = $cli->{arg_v}->[2];
 
-    return "" if $ac == 0;
 
     eval
     {
-	if ($ac == 1 && $arg1 eq "root")
+	if ($ac == 0 || ($ac == 1 && $arg1 eq "root"))
 	{
-	    ($chip_x, $chip_y, $cpu) = $spin->addr;
+	    # Try and determine the true coordinates of the root chip
+	    my $root_x = 0;
+	    my $root_y = 0;
+	    eval {
+	      my @version_info = @{$spin->ver (addr => [], raw => 1, timeout=> 0.1)};
+	      $root_x = $version_info[3];
+	      $root_y = $version_info[2];
+	    };
+	    ($chip_x, $chip_y, $cpu) = $spin->addr ($root_x, $root_y);
 	}
 	elsif ($ac == 1 && $arg1 =~ /^\d+$/)
 	{
@@ -1974,7 +2012,7 @@ my $spin_cmds =
 		 "<from_addr.X> <to_addr.X> <word.X>",
 		 "Fill Spinnaker memory (words)"],
     boot =>     [\&cmd_boot,
-		 "<boot_file.F> <conf_file.F>",
+		 "[<boot_file.F>] [<conf_file.F>]",
 		 "System bootstrap"],
     app_load => [\&cmd_app_load,
 		 "<file.F> .|@<X.D>,<Y.D>|<region> <cores> <app_id.D> [wait]",

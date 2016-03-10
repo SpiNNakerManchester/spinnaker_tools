@@ -363,6 +363,7 @@ void sark_shmsg_free (sdp_msg_t *msg)
 }
 
 
+#ifdef __cplusplus
 extern void (*__init_array_start)();
 extern void (*__init_array_end)();
 void sark_call_cpp_constructors (void)
@@ -373,6 +374,13 @@ void sark_call_cpp_constructors (void)
     (*p)();
   }
 }
+#else  // Not C++
+void sark_call_cpp_constructors (void)
+{
+  // Do nothing
+}
+#endif
+
 //------------------------------------------------------------------------------
 
 // "sark_init" sets up SARK stacks and some internal data structures.

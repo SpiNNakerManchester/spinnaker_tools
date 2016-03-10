@@ -80,10 +80,10 @@ uint ping_cpu = 1;
 
 uchar v2p_map[MAX_CPUS];
 
-uint p2p_addr;
+uint p2p_addr = 0;
 uint p2p_dims = 0;
-uint p2p_up;
-uchar p2pb_id;		// Must be 8 bits
+uint p2p_root = 0;
+uint p2p_up = 0;
 
 uint led_timer;
 
@@ -125,7 +125,7 @@ volatile int p2p_max_y;
 // A bitmap giving the coordinates of all P2P coordinates which have been seen
 // mentioned in a P2PC_NEW message. A 2D array of bits whose *bit* indexes are
 // ((bx<<9) | by) where bx and by are x + 256 and y + 256 respectively.
-uchar *p2p_addr_table;
+uchar *p2p_addr_table = NULL;
 
 //------------------------------------------------------------------------------
 
@@ -632,6 +632,12 @@ void proc_route_msg (uint arg1, uint srce_ip)
   uint dest_addr = msg->dest_addr;
   uint srce_addr = msg->srce_addr;
 
+  // Map (255, 255) to the root chip's coordinates
+  if (dest_addr == 0xFFFF)
+    dest_addr = p2p_root;
+  if (srce_addr == 0xFFFF)
+    srce_addr = p2p_root;
+
   // Off-chip via P2P
 
   if (dest_addr != srce_addr && dest_addr != p2p_addr &&
@@ -1008,7 +1014,7 @@ void soft_wdog (uint max)
 // once, before the nearest neighbour interrupt handler is enabled.
 void netinit_start(void)
 {
-  netinit_phase = NETINIT_PHASE_P2P_ADDR;
+  sv->netinit_phase = netinit_phase = NETINIT_PHASE_P2P_ADDR;
   
   // Initial P2P address guess
   if (sv->root_chip)
@@ -1029,7 +1035,7 @@ void netinit_start(void)
   p2p_max_y = 0;
   
   // Allocate and clear the P2P addr bitmap
-  p2p_addr_table = sark_xalloc (sv->sys_heap, P2P_ADDR_TABLE_BYTES, 0, ALLOC_LOCK);
+  p2p_addr_table = sark_xalloc (sv->sys_heap, P2P_ADDR_TABLE_BYTES, 0, 0);
   sark_word_set (p2p_addr_table, 0, P2P_ADDR_TABLE_BYTES);
   
   last_netinit_broadcast = 0;
@@ -1040,8 +1046,8 @@ void netinit_start(void)
 void compute_st (void)
 {
   // Work out the position of the p2p_root in the P2P routing table.
-  uint word = sv->p2p_root >> P2P_LOG_EPW;
-  uint offset = P2P_BPE * (sv->p2p_root & P2P_EMASK);
+  uint word = p2p_root >> P2P_LOG_EPW;
+  uint offset = P2P_BPE * (p2p_root & P2P_EMASK);
   
   // Definately route here
   uint route = MC_CORE_ROUTE (0);
@@ -1084,6 +1090,8 @@ void compute_st (void)
 void proc_100hz (uint a1, uint a2)
 {
   // Boot-up related packet sending and boot-phase advancing
+  static uint ticks = 0;
+  ticks++;
   
   switch (netinit_phase)
   {
@@ -1099,6 +1107,11 @@ void proc_100hz (uint a1, uint a2)
         {
           netinit_phase = NETINIT_PHASE_P2P_DIMS;
           last_netinit_broadcast = 0;
+          
+          p2p_min_x = (p2p_addr_guess_x < 0) ? p2p_addr_guess_x : 0;
+          p2p_min_y = (p2p_addr_guess_y < 0) ? p2p_addr_guess_y : 0;
+          p2p_max_x = (p2p_addr_guess_x > 0) ? p2p_addr_guess_x : 0;
+          p2p_max_y = (p2p_addr_guess_y > 0) ? p2p_addr_guess_y : 0;
         }
       break;
     
@@ -1111,11 +1124,27 @@ void proc_100hz (uint a1, uint a2)
       // current guess is accurate so its time to move onto the next phase
       if (last_netinit_broadcast++ > (uint)sv->netinit_bc_wait)
         {
+          // If no coordinate discovered, just shut down this chip
+          if (p2p_addr_guess_x == NO_IDEA || p2p_addr_guess_y == NO_IDEA)
+            remap_phys_cores(0x3ffff);
+          
+          // Record the coordinates/dimensions discovered
           sv->p2p_addr = p2p_addr = ((p2p_addr_guess_x - p2p_min_x) << 8) |
                                     ((p2p_addr_guess_y - p2p_min_y) << 0);
           sv->p2p_dims = p2p_dims = ((1 + p2p_max_x - p2p_min_x) << 8) |
                                     ((1 + p2p_max_y - p2p_min_y) << 0);
-          sv->p2p_root = p2p_dims = (-p2p_min_x << 8) | -p2p_min_y;
+          sv->p2p_root = p2p_root = (-p2p_min_x << 8) | -p2p_min_y;
+          
+          sv->p2p_active += 1;
+          
+          // Reseed uniquely for each chip
+          sark_srand (p2p_addr);
+          
+          // Set our P2P addr in the comms controller
+          cc[CC_SAR] = 0x07000000 + p2p_addr;
+          
+          // Work out the local Ethernet connected chip coordinates
+          compute_eth ();
           
           last_netinit_broadcast = 0;
           netinit_phase = NETINIT_PHASE_BIFF;
@@ -1127,40 +1156,50 @@ void proc_100hz (uint a1, uint a2)
       last_netinit_broadcast = 0;
       netinit_phase = NETINIT_PHASE_P2P_TABLE;
       
-      {
-        uint num_info_words = sv->board_info[0];
-        uint *info_word = sv->board_info + 1;
-        while (num_info_words--)
-          {
-            // Handle command on this chip
-            nn_cmd_biff(0, 0, *(info_word));
-            // Also flood to other chips on this board
-            biff_nn_send(*(info_word++));
-          }
-      }
+      if (sv->board_info)
+        {
+          uint num_info_words = sv->board_info[0];
+          uint *info_word = sv->board_info + 1;
+          while (num_info_words--)
+            {
+              // Handle command on this chip
+              nn_cmd_biff(0, 0, *(info_word));
+              // Also flood to other chips on this board
+              biff_nn_send(*(info_word++));
+            }
+        }
       break;
     
     case NETINIT_PHASE_P2P_TABLE:
-      // Broadcast P2P table generation packets, staggered by 100 usec per chip
-      // to reduce network load.
-      if (last_netinit_broadcast == 0)
-        {
-          hop_table[p2p_addr] = 0;
-          rtr_p2p_set (p2p_addr, 7);
-          timer_schedule_proc(p2pb_nn_send, 0, 0,
-                              100 * // Offset sending of P2PB by 100 uSec per chip
-                              (((p2p_dims >> 8) * p2p_addr >> 8) + p2p_addr & 0xFF));
-        }
-      
-      // Once all P2P messages have had ample time to send, compute the level
-      // config and signalling broadcast spanning tree.
-      if (last_netinit_broadcast++ >= ((((p2p_dims >> 8) * (p2p_dims & 0xFF)) / 100) + 2))
-        {
-          last_netinit_broadcast = 0;
-          netinit_phase = NETINIT_PHASE_DONE;
-          
-          level_config ();
-          compute_st ();
+      // Broadcast P2P table generation packets, staggered by chip to reduce
+      // network load.
+      {
+        uint p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
+        if (last_netinit_broadcast == 0)
+          {
+            hop_table[p2p_addr] = 0;
+            rtr_p2p_set (p2p_addr, 7);
+            timer_schedule_proc(p2pb_nn_send, 0, 0,
+                                (sark_rand() % p2pb_period) + 1);
+          }
+        
+        // Once all P2P messages have had ample time to send (and the required
+        // number of repeats have occurred), compute the level
+        // config and signalling broadcast spanning tree.
+        if (last_netinit_broadcast++ >=
+            ((p2pb_period / 10000) + 2))
+          {
+            last_netinit_broadcast = 0;
+            
+            if (sv->p2pb_repeats-- == 0)
+              {
+                netinit_phase = NETINIT_PHASE_DONE;
+                
+                level_config ();
+                compute_st ();
+                sv->p2p_up = p2p_up = 1;
+              }
+          }
         }
       break;
     
@@ -1169,6 +1208,7 @@ void proc_100hz (uint a1, uint a2)
       // Unrecognised or finished state? Do nothing.
       break;
   }
+  sv->netinit_phase = netinit_phase;
   
   // Process IPTag timeouts
 
@@ -1181,7 +1221,7 @@ void proc_100hz (uint a1, uint a2)
 
   // Flip LED0 every now and then once powered on
 
-  if (netinit_phase == NETINIT_PHASE_DONE &&
+  if (netinit_phase >= NETINIT_PHASE_DONE &&
       sv->led_period != 0 && ++led_timer >= sv->led_period)
     {
       led_timer = 0;

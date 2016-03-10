@@ -171,6 +171,12 @@
 
 //------------------------------------------------------------------------------
 
+// Number of microseconds to wait between sending P2PB packets on neighbouring
+// chips
+#define P2PB_OFFSET_USEC 100
+
+//------------------------------------------------------------------------------
+
 // Phases of the network initialisation process, in order
 enum netinit_phase_e
 {
@@ -187,7 +193,7 @@ enum netinit_phase_e
   // Construct the P2P routing tables
   NETINIT_PHASE_P2P_TABLE,
   // The boot process is complete and the system is ready for use
-  NETINIT_PHASE_DONE,
+  NETINIT_PHASE_DONE = 0xFF,
 };
 
 //------------------------------------------------------------------------------
@@ -265,13 +271,13 @@ extern void msg_queue_insert (sdp_msg_t *msg, uint srce_ip);
 
 // scamp-nn.c
 
+extern void compute_eth (void);
 extern void compute_level (uint p2p_addr);
 extern void level_config (void);
 extern void ff_nn_send (uint key, uint data, uint fwd_rty, uint log);
 extern void biff_nn_send (uint data);
 extern void nn_cmd_biff(uint x, uint y, uint data);
 extern void nn_mark (uint key);
-extern uint probe_links (uint mask, uint timeout);
 extern uint link_read_word (uint addr, uint link, uint *buf, uint timeout);
 extern uint link_write_word (uint addr, uint link, uint *buf, uint timeout);
 extern void proc_start_app (uint aplx_addr, uint id_mask);
@@ -323,6 +329,7 @@ extern void boot_nn (uint hw_ver);
 extern uint biff_complete;
 extern uint p2p_addr;
 extern uint p2p_dims;
+extern uint p2p_root;
 extern uint p2p_up;
 extern uint link_en;
 extern uint num_cpus;
@@ -348,7 +355,7 @@ extern volatile int p2p_max_y;
 extern uchar *p2p_addr_table;
 
 // Initial value of p2p_addr_guess_{x,y} when not the root chip
-#define NO_IDEA (-2147483648)
+#define NO_IDEA (-1024)
 
 // Size of p2p_addr_table in bytes.
 #define P2P_ADDR_TABLE_BYTES (512 * 512 / 8)

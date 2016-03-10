@@ -993,7 +993,7 @@ typedef struct sv
   uchar hw_ver;			//!< 0a Hardware version
   uchar eth_up;			//!< 0b Non-zero if Ethernet active
 
-  uchar __PAD0;			//!< 0c
+  uchar p2pb_repeats;		//!< 0c Number of times to send out P2PB packets
   uchar p2p_sql;		//!< 0d P2P sequence length (**)
   uchar clk_div;		//!< 0e Clock divisors for system & router bus
   uchar tp_scale;		//!< 0f Scale for router phase timer
@@ -1014,7 +1014,7 @@ typedef struct sv
   uchar led_period;		//!< 2b LED flash period (* 10 ms)
 
   uchar netinit_bc_wait;	//!< 2c Minimum time after last BC during netinit (*10 ms)
-  uchar __PAD1;			//!< 2d
+  uchar netinit_phase;		//!< 2d Phase of boot process
   ushort p2p_root;		//!< 2e The P2P address from which the system was booted
 
   uint led0; 			//!< 30 LED definition words (for up
@@ -1077,7 +1077,6 @@ typedef struct sv
   uchar ip_addr[4];		//!< f0 IP address (or 0)
   uint fr_copy;			//!< f4 (Virtual) copy of router FR reg
   uint *board_info;		//!< f8 Pointer to board_info area !!
-  uint __PAD4;			//!< fc
   uint sw_ver;			//!< fc Software version number
 } sv_t;
 

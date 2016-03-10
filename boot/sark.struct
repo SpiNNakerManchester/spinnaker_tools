@@ -15,7 +15,7 @@ eth_addr             v  0x08  %04x  0           # P2P address of nearest Etherne
 hw_ver               C  0x0a  %d    0           # Hardware version
 eth_up               C  0x0b  %d    0           # Set to 1 if Ethernet up
 
-__PAD0               C  0x0c  %d    0           # Spare
+p2pb_repeats         C  0x0c  %d    2           # Number of times to send out P2PB packets
 p2p_sql              C  0x0d  %d    4           # Logarithm of P2P sequence length
 clk_div              C  0x0e  %02x  0x33        # Clock divisors for Sys & Rtr clocks
 tp_scale             C  0x0f  %d    0           # (Time phase scale)
@@ -38,7 +38,7 @@ peek_time            C  0x2a  %d    100         # Link peek/poke timeout (us)
 led_period           C  0x2b  %d    50          # LED half-period (10ms units)
 
 netinit_bc_wait      C  0x2c  %d    50          # Time to wait after last BC during netinit (*10 ms)
-__PAD1               C  0x2d  %d    0           # Spare
+netinit_phase        C  0x2d  %d    0           # Phase of boot process (enum netinit_phase_e)
 p2p_root             v  0x2e  %02x  0           # P2P address from which the system was booted
 
 led0                 V  0x30  %08x  0x00000001  # LED definitions
@@ -71,10 +71,10 @@ shm_root.free        V  0x68  %08x  0           #
 shm_root.count       v  0x6c  %d    0           #
 shm_root.max         v  0x6e  %d    0           #
 
-utmp0                V  0x70  %08x  0           # 
+utmp0                V  0x70  %08x  0           #
 utmp1                V  0x74  %08x  0           #
 utmp2                V  0x78  %08x  0           #
-biff_timer           V  0x7c  %08x  0x01700201  # Boot-info flood-fill timer
+utmp3                V  0x7c  %08x  0           #
 
 status_map[20]       C  0x80  %02x  0           # Set during SC&MP ROM boot
 p2v_map[20]          C  0x94  %02x  0           # Phys to Virt core map
@@ -103,7 +103,7 @@ mbox_flags           V  0xec  %08x  0           # AP->MP communication flags
 ip_addr              V  0xf0  %08x  0           # IP address (or 0)
 fr_copy              V  0xf4  %08x  0           # (Virtual) copy of rtr FR reg
 board_info           V  0xf8  %08x  0           # Pointer to board_info area
-__PAD2               V  0xfc  %08x  0           #
+__PAD4               V  0xfc  %08x  0           #
 
 #-------------------------------------------------------------------------------
 
