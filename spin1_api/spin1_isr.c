@@ -47,10 +47,10 @@ INT_HANDLER cc_rx_ready_isr (void)
       // If application callback registered schedule it
 
       if (callback[MCPL_PACKET_RECEIVED].cback != NULL)
-	schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
+    schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-	diagnostics.discarded_mc_packets++;
+    diagnostics.discarded_mc_packets++;
 #endif
     }
   else
@@ -58,10 +58,10 @@ INT_HANDLER cc_rx_ready_isr (void)
       uint rx_key = cc[CC_RXKEY];  // also clears interrupt
 
       if(callback[MC_PACKET_RECEIVED].cback != NULL)
-	schedule (MC_PACKET_RECEIVED, rx_key, 0);
+    schedule (MC_PACKET_RECEIVED, rx_key, 0);
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-	diagnostics.discarded_mc_packets++;
+    diagnostics.discarded_mc_packets++;
 #endif
     }
 
@@ -344,7 +344,7 @@ INT_HANDLER dma_error_isr ()
 * SUMMARY
 *  This interrupt service routine is called upon countdown of the processor's
 *  primary timer to zero. In response, a callback is scheduled.
-* 
+*
 * SYNOPSIS
 *  INT_HANDLER timer1_isr()
 *
@@ -355,7 +355,7 @@ INT_HANDLER timer1_isr ()
   // Clear timer interrupt
 
   tc[T1_INT_CLR] = 1;
- 
+
   // Increment simulation "time"
 
   ticks++;

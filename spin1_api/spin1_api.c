@@ -11,6 +11,7 @@
 uchar leadAp;                    	// lead appl. core has special functions
 
 static volatile uint run;           	// controls simulation start/stop
+static volatile uint resume_sync;       // controls re-synchronisation
 uint ticks;              		// number of elapsed timer periods
 static uint timer_tick;  	        // timer tick period
 
@@ -278,11 +279,11 @@ void configure_timer1 (uint time)
 *  simple copy+paste operation). Finally, the interrupt sources are enabled.
 *
 * SYNOPSIS
-*  void configure_vic()
+*  void configure_vic(uint enable_timer)
 *
 * SOURCE
 */
-void configure_vic (void)
+void configure_vic (uint enable_timer)
 {
   uint fiq_select = 0;
   uint int_select = ((1 << TIMER1_INT)   |
@@ -357,6 +358,10 @@ void configure_vic (void)
 
   vic[VIC_SELECT] = fiq_select;
 
+  if (!enable_timer) {
+      int_select = int_select & ~(1 << TIMER1_INT);
+  }
+
   #if USE_WRITE_BUFFER == TRUE
     vic[VIC_ENABLE] = int_select;
   #else
@@ -409,6 +414,7 @@ void dispatch()
   uint cpsr;
   task_queue_t *tq;
   volatile callback_t cback;
+  resume_sync = 0;
 
   // dispatch callbacks from queues until spin1_stop () or
   // spin1_kill () are called (run = 0)
@@ -449,7 +455,9 @@ void dispatch()
 
           // update queue size
           if (cback == callback[TIMER_TICK].cback){
-               diagnostics.number_timer_tic_in_queue -= 1;
+               if (diagnostics.number_timer_tic_in_queue > 0) {
+                   diagnostics.number_timer_tic_in_queue -= 1;
+               }
                diagnostics.in_timer_callback = 0;
           }
 
@@ -458,6 +466,13 @@ void dispatch()
           // re-start examining queues at highest priority
           i = 0;
         }
+      }
+
+      // If we are performing resume synchronisation, wait
+      if (resume_sync == 1) {
+        resume_sync = 0;
+        event_wait();
+        spin1_resume(SYNC_NOWAIT);
       }
     }
 
@@ -513,7 +528,7 @@ void sdp_callback_handler(uint mailbox, uint port)
     if (handler_priority == port_priority)
     {
       sdp_callback[port].cback(mailbox, port);
-    } 
+    }
     else
     {
       spin1_schedule_callback (sdp_callback[port].cback, mailbox,
@@ -574,8 +589,8 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
   if (priority < 0)
   {
     if (fiq_event == -1 ||
-	(event_id == MC_PACKET_RECEIVED && fiq_event == MCPL_PACKET_RECEIVED) ||
-	(event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED))
+    (event_id == MC_PACKET_RECEIVED && fiq_event == MCPL_PACKET_RECEIVED) ||
+    (event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED))
       fiq_event = event_id;
     else
       rt_error (RTE_API);
@@ -586,9 +601,9 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
   if (event_id == MC_PACKET_RECEIVED || event_id == MCPL_PACKET_RECEIVED)
     {
       if (pkt_prio == -2)
-	pkt_prio = priority;
+    pkt_prio = priority;
       else if (pkt_prio != priority)
-	rt_error (RTE_API);
+    rt_error (RTE_API);
     }
 }
 /*
@@ -657,7 +672,7 @@ void spin1_sdp_callback_on (uint sdp_port, callback_t cback, int priority)
   if (callback[SDP_PACKET_RX].cback == NULL)
   {
     spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, priority);
-  } 
+  }
   else
   {
     //check priority
@@ -959,7 +974,7 @@ void report_warns ()
   if (diagnostics.warnings & WRITE_BUFFER_ERROR)
     {
       io_printf (IO_API,
-		 "\t\t[api_warn] warning: write buffer errors (%u)\n",
+        "\t\t[api_warn] warning: write buffer errors (%u)\n",
              diagnostics.writeBack_errors);
       io_delay (API_PRINT_DELAY);
     }
@@ -970,29 +985,46 @@ void report_warns ()
 *******/
 
 
+void spin1_pause() {
+    vic[VIC_DISABLE] = (1 << TIMER1_INT);
+    sark_cpu_state (CPU_STATE_PAUSE);
+}
 
-/****f* spin1_api.c/spin1_start
-*
-* SUMMARY
-*  This function begins a simulation by enabling the timer (if called for) and
-*  beginning the dispatcher loop.
-*
-* SYNOPSIS
-*  void spin1_start (sync_bool_t sync)
-*
-* SOURCE
-*/
+void spin1_resume(sync_bool sync) {
+    if (sync == SYNC_NOWAIT) {
+        tc[T1_CONTROL] = 0xe2;
+        vic[VIC_ENABLE] = (1 << TIMER1_INT);
+        sark_cpu_state (CPU_STATE_RUN);
+    } else {
+        resume_sync = 1;
+    }
+}
 
-uint spin1_start (sync_bool sync)
+void spin1_rte(rte_code code) {
+    // Don't actually shutdown, just set the CPU into an RTE code and
+    // stop the timer
+    clean_up();
+    sark_cpu_state(CPU_STATE_RTE);
+    register uint lr asm("lr");
+    sv_vcpu->lr = lr;
+    sv_vcpu->rt_code = code;
+    sv->led_period = 8;
+}
+
+uint start (sync_bool sync, uint paused)
 {
-  sark_cpu_state (CPU_STATE_RUN);
+  if (paused) {
+      sark_cpu_state (CPU_STATE_PAUSE);
+  } else {
+      sark_cpu_state (CPU_STATE_RUN);
+  }
 
   // Initialise hardware
 
   configure_communications_controller();
   configure_dma_controller();
   configure_timer1 (timer_tick);
-  configure_vic();
+  configure_vic(paused);
 
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
   diagnostics.warnings = NO_ERROR;
@@ -1000,7 +1032,7 @@ uint spin1_start (sync_bool sync)
   diagnostics.task_queue_full = 0;
   diagnostics.tx_packet_queue_full = 0;
   diagnostics.dma_transfers = 1;
-  diagnostics.exit_code = NO_ERROR;    	// simulation return value
+  diagnostics.exit_code = NO_ERROR;     // simulation return value
   diagnostics.in_timer_callback = 0;
   diagnostics.number_timer_tic_in_queue = 0;
   diagnostics.total_times_tick_tic_callback_overran = 0;
@@ -1018,7 +1050,7 @@ uint spin1_start (sync_bool sync)
   // initialise counter and ticks for simulation
   // 32-bit, periodic counter, interrupts enabled
 
-  if (timer_tick)
+  if (timer_tick && !paused)
     tc[T1_CONTROL] = 0xe2;
 
   ticks = 0;
@@ -1053,6 +1085,26 @@ uint spin1_start (sync_bool sync)
 /*
 *******/
 
+
+/****f* spin1_api.c/spin1_start
+*
+* SUMMARY
+*  This function begins a simulation by enabling the timer (if called for) and
+*  beginning the dispatcher loop.
+*
+* SYNOPSIS
+*  void spin1_start (sync_bool_t sync)
+*
+* SOURCE
+*/
+
+uint spin1_start (sync_bool sync) {
+    return start(sync, 0);
+}
+
+uint spin1_start_paused() {
+    return start(SYNC_NOWAIT, 1);
+}
 
 
 /****f* spin1_api.c/spin1_delay_us
@@ -1107,7 +1159,7 @@ void spin1_delay_us (uint n)
 * SOURCE
 */
 uint spin1_dma_transfer (uint tag, void *system_address, void *tcm_address,
-			 uint direction, uint length)
+            uint direction, uint length)
 {
   uint id = 0;
   uint cpsr = spin1_int_disable ();
@@ -1299,7 +1351,7 @@ uint spin1_send_mc_packet(uint key, uint data, uint load)
       tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
 
       if (hload)
-	cc[CC_TXDATA] = hdata;
+    cc[CC_TXDATA] = hdata;
 
       cc[CC_TXKEY]  = hkey;
     }
@@ -1308,7 +1360,7 @@ uint spin1_send_mc_packet(uint key, uint data, uint load)
     {
       // If queue empty send packet
       if (load)
-	cc[CC_TXDATA] = data;
+    cc[CC_TXDATA] = data;
 
       cc[CC_TXKEY]  = key;
 
@@ -1665,8 +1717,8 @@ uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 
 #if API_DEBUG == TRUE
   io_printf (IO_API,
-	     "\t\t[api_debug] MC entry %d: k 0x%8z m 0x%8z r 0x%8z\n",
-	     entry, key, mask, route);
+        "\t\t[api_debug] MC entry %d: k 0x%8z m 0x%8z r 0x%8z\n",
+        entry, key, mask, route);
   io_delay (API_PRINT_DLY);
 #endif
 
@@ -1813,7 +1865,7 @@ void schedule_sysmode (uchar event_id, uint arg0, uint arg1)
 * SOURCE
 */
 uint spin1_schedule_callback (callback_t cback, uint arg0, uint arg1,
-			      uint priority)
+                uint priority)
 {
   uchar result = SUCCESS;
 
