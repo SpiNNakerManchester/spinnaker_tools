@@ -5,7 +5,7 @@
 // Copyright (C)    The University of Manchester - 2009-2013
 //
 // Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
+// Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
 
@@ -14,9 +14,8 @@
 #ifndef __SARK_H__
 #define __SARK_H__
 
-#ifndef __SPINNAKER_H__
 #include <spinnaker.h>
-#endif
+#include <version.h>
 
 //------------------------------------------------------------------------------
 
@@ -34,9 +33,9 @@
 // length of 2048 and hence a SYS stack of 1152 bytes. All of these values
 // must be a multiple of 4!
 
-#define SVC_STACK 	       384	//!< Size in bytes of SVC stack
-#define IRQ_STACK 	       256	//!< Size in bytes of IRQ stack
-#define FIQ_STACK 	       256	//!< Size in bytes of FIQ stack
+#define SVC_STACK	       384	//!< Size in bytes of SVC stack
+#define IRQ_STACK	       256	//!< Size in bytes of IRQ stack
+#define FIQ_STACK	       256	//!< Size in bytes of FIQ stack
 
 // SARK configuration defaults - these can be modified at SARK
 // start-up using "sark_config"
@@ -113,15 +112,15 @@ The APLX buffer lives at the top of ITCM, starting at 0x7fc0
 
 // IPTAG definitions
 
-#define TAG_NONE  		255	//!< Invalid tag/transient request
-#define TAG_HOST 		0	//!< Reserved for host
+#define TAG_NONE		255	//!< Invalid tag/transient request
+#define TAG_HOST		0	//!< Reserved for host
 
 //------------------------------------------------------------------------------
 
 // Definition of range of router MC entries which may be allocated
 
 #define RTR_ALLOC_FIRST		1		//!< Must be > 0
-#define RTR_ALLOC_LAST  	MC_TABLE_SIZE	//!< Must be <= MC_TABLE_SIZE
+#define RTR_ALLOC_LAST		MC_TABLE_SIZE	//!< Must be <= MC_TABLE_SIZE
 
 /*!
 Largest allowable request (1023 entries)
@@ -131,8 +130,8 @@ Largest allowable request (1023 entries)
 
 // Flags to sark_xalloc (etc)
 
-#define ALLOC_LOCK 		1		//!< Lock this operation
-#define ALLOC_ID   		2		//!< Use supplied AppID
+#define ALLOC_LOCK		1		//!< Lock this operation
+#define ALLOC_ID		2		//!< Use supplied AppID
 
 //------------------------------------------------------------------------------
 
@@ -142,14 +141,14 @@ Allocations of SysCtl Test & Set registers (locks)
 
 enum spin_lock_e
 {
-  LOCK_MSG,		 	//!< Msg buffers in SysRAM
-  LOCK_MBOX,		 	//!< Mailbox flag variable
-  LOCK_ETHER,		 	//!< Ethernet Tx (unused...)
-  LOCK_GPIO,		 	//!< GPIO port (unused...)
-  LOCK_API_ROOT,	 	//!< Spin1 API
-  LOCK_SEMA,		 	//!< Sema access
-  LOCK_HEAP,		 	//!< Heap in System / SDRAM
-  LOCK_RTR		 	//!< Router
+  LOCK_MSG,			//!< Msg buffers in SysRAM
+  LOCK_MBOX,			//!< Mailbox flag variable
+  LOCK_ETHER,			//!< Ethernet Tx (unused...)
+  LOCK_GPIO,			//!< GPIO port (unused...)
+  LOCK_API_ROOT,		//!< Spin1 API
+  LOCK_SEMA,			//!< Sema access
+  LOCK_HEAP,			//!< Heap in System / SDRAM
+  LOCK_RTR			//!< Router
 };
 
 typedef enum spin_lock_e spin_lock;	//!< Typedef for enum spin_lock_e
@@ -248,7 +247,7 @@ enum cpu_state_e
 
   CPU_STATE_12,			//!< Spare
   CPU_STATE_13,			//!< Spare
-  CPU_STATE_14,  		//!< Spare
+  CPU_STATE_14,			//!< Spare
   CPU_STATE_IDLE		//!< Idle (SARK stub)
 };
 
@@ -275,7 +274,7 @@ enum event_type_e
   EVENT_MAX=EVENT_DMA		//!< Maximum event number
 };
 
-typedef enum event_type_e event_type;	//!< typedef for enum event_type_e 
+typedef enum event_type_e event_type;	//!< typedef for enum event_type_e
 
 /*!
 For "sark_alib.s" (maintain sync with enum event_type_e)
@@ -287,14 +286,14 @@ For "sark_alib.s" (maintain sync with enum event_type_e)
 State of event execution
 */
 
-enum event_state_e 		// RUN must be first (0)
+enum event_state_e		// RUN must be first (0)
 {
   EVENT_RUN,			//!< Running
   EVENT_PAUSE,			//!< Paused
   EVENT_STOP			//!< Stopped
 };
 
-typedef enum event_state_e event_state;	//!< typedef for enum event_state_e 
+typedef enum event_state_e event_state;	//!< typedef for enum event_state_e
 
 /*!
 Slots in the VIC interrupt controller
@@ -326,7 +325,7 @@ typedef enum event_priority_e event_priority;	//!< Typedef for enum event_priori
 /*!
 Mode for sw_error calls to decide if rt_error is to be called
 */
- 
+
 enum sw_err_mode_e
 {
   SW_OPT,		//!< Optional, controlled by sark.sw_rte
@@ -371,7 +370,7 @@ enum shm_cmd_e
   SHM_CMD		//!< Command to MP
 };
 
-typedef enum shm_cmd_e shm_cmd;	//!< Typedef for enum shm_cmd_e 
+typedef enum shm_cmd_e shm_cmd;	//!< Typedef for enum shm_cmd_e
 
 //------------------------------------------------------------------------------
 
@@ -400,44 +399,44 @@ enum signal_e
   SIG_USR3,		//!< Send user signal 3
 };
 
-typedef enum signal_e signal;	//!< Typedef for enum signal_e 
+typedef enum signal_e signal;	//!< Typedef for enum signal_e
 
 //------------------------------------------------------------------------------
 
 // SARK I/O stream identifiers
 
-# define IO_STD 	((char *) 0)	//!< Normal I/O via SDP
-# define IO_DBG   	((char *) 1)	//!< Low-level debug I/O
-# define IO_BUF   	((char *) 2)	//!< SDRAM buffer
-# define IO_NULL    	((char *) 3)	//!< Output > /dev/null
+# define IO_STD		((char *) 0)	//!< Normal I/O via SDP
+# define IO_DBG		((char *) 1)	//!< Low-level debug I/O
+# define IO_BUF		((char *) 2)	//!< SDRAM buffer
+# define IO_NULL	((char *) 3)	//!< Output > /dev/null
 
 //------------------------------------------------------------------------------
 
 // SCP Command and return codes
 
-#define CMD_VER    		0	//!< Return version/core info
-#define CMD_RUN   		1	//!< Run at PC (Deprecated)
-#define CMD_READ   		2	//!< Read memory
-#define CMD_WRITE  		3	//!< Write memory
-#define CMD_APLX  		4	//!< Run via APLX (Deprecated)
-#define CMD_FILL  		5	//!< Fill memory
+#define CMD_VER			0	//!< Return version/core info
+#define CMD_RUN			1	//!< Run at PC (Deprecated)
+#define CMD_READ		2	//!< Read memory
+#define CMD_WRITE		3	//!< Write memory
+#define CMD_APLX		4	//!< Run via APLX (Deprecated)
+#define CMD_FILL		5	//!< Fill memory
 
 // Following for monitors only
 
-#define CMD_REMAP 		16	//!< Remap application core
-#define CMD_LINK_READ  		17	//!< Read neighbour memory
-#define CMD_LINK_WRITE 		18	//!< Write neighbour memory
-#define CMD_AR 			19	//!< Application core reset
+#define CMD_REMAP		16	//!< Remap application core
+#define CMD_LINK_READ		17	//!< Read neighbour memory
+#define CMD_LINK_WRITE		18	//!< Write neighbour memory
+#define CMD_AR			19	//!< Application core reset
 
-#define CMD_NNP  		20	//!< Send broadcast NN packet
-#define CMD_P2PC 		21	//!< Start P2P address configuration
-#define CMD_SIG  		22	//!< Send signal to apps
-#define CMD_FFD 		23	//!< Send flood-fill data
+#define CMD_NNP			20	//!< Send broadcast NN packet
+#define CMD_P2PC		21	//!< Start P2P address configuration
+#define CMD_SIG			22	//!< Send signal to apps
+#define CMD_FFD			23	//!< Send flood-fill data
 
 #define CMD_AS			24	//!< Application core APLX start
-#define CMD_LED 		25	//!< Control LEDs
-#define CMD_IPTAG 		26	//!< Configure IPTags
-#define CMD_SROM  		27	//!< Read/write/erase serial ROM
+#define CMD_LED			25	//!< Control LEDs
+#define CMD_IPTAG		26	//!< Configure IPTags
+#define CMD_SROM		27	//!< Read/write/erase serial ROM
 
 #define CMD_ALLOC		28	//!< Memory allocation
 #define CMD_RTR			29	//!< Router control
@@ -445,20 +444,20 @@ typedef enum signal_e signal;	//!< Typedef for enum signal_e
 
 // 48-63 reserved for BMP
 
-#define CMD_TUBE  		64	//!< Tube output
+#define CMD_TUBE		64	//!< Tube output
 
 // Return codes
 
-#define RC_OK 			0x80	//!< Command completed OK
-#define RC_LEN 			0x81	//!< Bad packet length
-#define RC_SUM 			0x82	//!< Bad checksum
-#define RC_CMD 			0x83	//!< Bad/invalid command
-#define RC_ARG     		0x84	//!< Invalid arguments
-#define RC_PORT	 		0x85	//!< Bad port number
-#define RC_TIMEOUT 		0x86	//!< Timeout
-#define RC_ROUTE 		0x87	//!< No P2P route
-#define RC_CPU	 		0x88	//!< Bad CPU number
-#define RC_DEAD	 		0x89	//!< SHM dest dead
+#define RC_OK			0x80	//!< Command completed OK
+#define RC_LEN			0x81	//!< Bad packet length
+#define RC_SUM			0x82	//!< Bad checksum
+#define RC_CMD			0x83	//!< Bad/invalid command
+#define RC_ARG			0x84	//!< Invalid arguments
+#define RC_PORT			0x85	//!< Bad port number
+#define RC_TIMEOUT		0x86	//!< Timeout
+#define RC_ROUTE		0x87	//!< No P2P route
+#define RC_CPU			0x88	//!< Bad CPU number
+#define RC_DEAD			0x89	//!< SHM dest dead
 #define RC_BUF			0x8a	//!< No free SHM buffers
 #define RC_P2P_NOREPLY		0x8b	//!< No reply to open
 #define RC_P2P_REJECT		0x8c	//!< Open rejected
@@ -468,9 +467,9 @@ typedef enum signal_e signal;	//!< Typedef for enum signal_e
 
 // Memory size types
 
-#define TYPE_BYTE 		0	//!< Specifies byte access
-#define TYPE_HALF 		1	//!< Specifies short (16-bit) access
-#define TYPE_WORD 		2	//!< Specifies word (32-bit) access
+#define TYPE_BYTE		0	//!< Specifies byte access
+#define TYPE_HALF		1	//!< Specifies short (16-bit) access
+#define TYPE_WORD		2	//!< Specifies word (32-bit) access
 
 //------------------------------------------------------------------------------
 
@@ -560,9 +559,9 @@ typedef struct app_data
 #define PORT_MASK		0xe0    //!< Port is in top 3 bits
 #define CPU_MASK		0x1f	//!< CPU is in bottom 5 bits
 
-#define PORT_ETH 		255	//!< Special to indicate Ethernet
+#define PORT_ETH		255	//!< Special to indicate Ethernet
 
-#define SDP_BUF_SIZE 		256	//!< SDP data buffer capacity
+#define SDP_BUF_SIZE		256	//!< SDP data buffer capacity
 
 /*!
 SDP message definition
@@ -925,16 +924,16 @@ SV_SV		+-------------------------------+	f5007ee0
 		| 32 bytes			|
 SV_VECTORS	+-------------------------------+	f5007ee0
 		| 64 bytes			|
-SV_RANDOM 	+-------------------------------+	f5007ea0
+SV_RANDOM	+-------------------------------+	f5007ea0
 		| xxx bytes			|
-SV_SPARE  	+-------------------------------+	f5007900
+SV_SPARE	+-------------------------------+	f5007900
 		| NUM_CPUS * VCPU_SIZE		|
 SV_VCPU		+-------------------------------+	f5007000 sv->sysram_top
-		|                       	|
-             	~ "User" SysRAM                 ~
-		|                       	|
+		|				|
+		~ "User" SysRAM                 ~
+		|				|
 		+-------------------------------+	f5000100 sv->sysram_base
-		| 256 bytes           		|
+		| 256 bytes			|
 SYSRAM_BASE	+-------------------------------+	f5000000
 */
 
@@ -945,9 +944,9 @@ SYSRAM_BASE	+-------------------------------+	f5000000
 #define SV_RSIZE		64			//!< Random in SysRAM
 #define SV_SIZE			0x1000			//!< Everything fits in this!
 
-#define SV_SROM   		(SYSRAM_TOP - SV_SSIZE)	//!< e5007fe0
+#define SV_SROM			(SYSRAM_TOP - SV_SSIZE)	//!< e5007fe0
 #define SV_UBASE		(SV_SROM - SV_USIZE)	//!< e5007f80
-#define SV_IBASE    		(SV_UBASE - SV_ISIZE)	//!< e5007f00
+#define SV_IBASE		(SV_UBASE - SV_ISIZE)	//!< e5007f00
 #define SV_SV			SV_IBASE		//!< e5007f00
 
 #define SYS_BOOT		256			//!< Boot space size
@@ -962,8 +961,8 @@ SYSRAM_BASE	+-------------------------------+	f5000000
 #define SPARE_SIZE		(SV_RANDOM - SV_SPARE)	//!<
 
 #define SROM_FLAG_BASE		(SV_SROM)		//!< e5007fe0
-#define STATUS_MAP_BASE		(SV_UBASE) 		//!< e5007f80
-#define RST_BLOCK_BASE		(SV_VECTORS)         	//!< f5007ee0
+#define STATUS_MAP_BASE		(SV_UBASE)		//!< e5007f80
+#define RST_BLOCK_BASE		(SV_VECTORS)		//!< f5007ee0
 
 // Bits in srom_data->flags
 
@@ -972,8 +971,8 @@ SYSRAM_BASE	+-------------------------------+	f5000000
 #define SRF_PHY_INIT		0x0008			//!< Init PHY on startup
 #define SRF_PHY_RST		0x0004			//!< Reset PHY on startup
 #define SRF_PHY_WAIT		0x0002			//!< Wait for PHY up on startup
-#define SRF_ETH  		0x0001			//!< Ethernet present
-#define SRF_NONE  		0x0000			//!< None of the above
+#define SRF_ETH			0x0001			//!< Ethernet present
+#define SRF_NONE		0x0000			//!< None of the above
 
 /*!
 Struct holding the System Variables. Placed at the top of System
@@ -998,8 +997,8 @@ typedef struct sv
   uchar clk_div;		//!< 0e Clock divisors for system & router bus
   uchar tp_scale;		//!< 0f Scale for router phase timer
 
-  volatile uint64 clock_ms;  	//!< 10 Milliseconds since boot
-  volatile ushort time_ms; 	//!< 18 Milliseconds in second (0..999)
+  volatile uint64 clock_ms;	//!< 10 Milliseconds since boot
+  volatile ushort time_ms;	//!< 18 Milliseconds in second (0..999)
   ushort ltpc_period;		//!< 1a
 
   volatile uint unix_time;	//!< 1c Seconds since 1970
@@ -1015,7 +1014,7 @@ typedef struct sv
 
   uint p2pc_timer;		//!< 2c P2PC Timer
 
-  uint led0; 			//!< 30 LED definition words (for up
+  uint led0;			//!< 30 LED definition words (for up
   uint led1;			//!< 34 to 15 LEDs)
   uint p2pb_timer;		//!< 38 P2PB Timer
   uint random;			//!< 3c Random number seed
@@ -1030,7 +1029,7 @@ typedef struct sv
   heap_t *sysram_heap;		//!< 48 Heap in SysRAM
   heap_t *sdram_heap;		//!< 4c Heap in SDRAM
 
-  uint iobuf_size;    		//!< 50 Size of IO buffers (bytes)
+  uint iobuf_size;		//!< 50 Size of IO buffers (bytes)
   uint *sdram_bufs;		//!< 54 SDRAM buffers
   uint sysbuf_size;		//!< 58 Size of system buffers (words)
   uint boot_sig;		//!< 5c Boot signature word
@@ -1042,7 +1041,7 @@ typedef struct sv
   uchar last_biff_id;		//!< 66 Last ID used in BIFF
   uchar bt_flags;		//!< 67 Board Test flags
 
-  mem_block_t shm_root; 	//!< 68 Control block for SHM bufs
+  mem_block_t shm_root;		//!< 68 Control block for SHM bufs
 
   uint utmp0;			//!< 70 Three temps...
   uint utmp1;			//!< 74
@@ -1058,7 +1057,7 @@ typedef struct sv
   ushort board_addr;		//!< be Position of chip on PCB
 
   uint *sdram_base;		//!< c0 Base of user SDRAM
-  uint *sysram_base; 		//!< c4 Base of user SysRAM
+  uint *sysram_base;		//!< c4 Base of user SysRAM
   uint *sdram_sys;		//!< c8 System SDRAM
   vcpu_t *vcpu_base;		//!< cc Start of VCPU blocks
 
@@ -1067,7 +1066,7 @@ typedef struct sv
   uint *hop_table;		//!< d8 P2P hop table
   block_t** alloc_tag;		//!< dc Start of alloc_tag table
   ushort rtr_free;		//!< e0 Start of free router entry list
-  ushort p2p_active;  		//!< e2 Count of active P2P addresses
+  ushort p2p_active;		//!< e2 Count of active P2P addresses
   app_data_t *app_data;		//!< e4 Array of app_id structs
   sdp_msg_t *shm_buf;		//!< e8 SHM buffers
   uint mbox_flags;		//!< ec AP->MP communication flags
@@ -1169,7 +1168,7 @@ uint cpu_int_enable (void);
 /*!
 Disable the FIQ and IRQ interrupts in the core by setting the
 appropriate bits in the CPSR. Returns the previous CPSR so that the
-state prior to the call can be restored. 
+state prior to the call can be restored.
 
 \return previous state of CPSR
 */
@@ -1194,7 +1193,7 @@ to be needed by application code).
 
 uint *cpu_get_sp (void);
 
-/*! 
+/*!
 Returns the current value of the core's CPSR. (Unlikely to be needed
 by application code).
 
@@ -1212,7 +1211,7 @@ the new CPSR value. (Unlikely to be needed by application code)
 
 void cpu_set_cpsr (uint cpsr);
 
-/*! 
+/*!
 Returns the current value of the core's CP15 Control register.
 (Unlikely to be needed by application code)
 \return - current CP15 control register value
@@ -1221,7 +1220,7 @@ Returns the current value of the core's CP15 Control register.
 uint cpu_get_cp15_cr (void);
 
 /*!
-Set the core's CP15 Control Register to the supplied value. 
+Set the core's CP15 Control Register to the supplied value.
 (Unlikely to be needed by application code)
 \param value - new value of the CP15 control register
 */
@@ -1709,7 +1708,7 @@ called by application code).
 uint sark_cmd_write (sdp_msg_t *msg);
 
 /*!
-SCP handler for the Fill command which fills memory with a data word. 
+SCP handler for the Fill command which fills memory with a data word.
 (Unlikely to be called by application code).
 
 \param msg->arg1 first address to be written (must be word aligned)
@@ -1859,7 +1858,7 @@ void sark_free (void *ptr);
 /*!
 Allocate a memory block from the specified heap. The block will be
 tagged with the supplied "tag" which must be <= 255. Returns NULL on
-failure (not enough memory, bad tag or tag in use). 
+failure (not enough memory, bad tag or tag in use).
 
 The flag parameter contains two flags in the bottom two bits. If bit 0
 is set (ALLOC_LOCK), the heap manipulation is done behind a lock with
@@ -2267,7 +2266,7 @@ Transmit a packet which contains key and data fields. The packet is placed
 on a transmit queue and sent when it reaches the head of the queue. The
 transmit control register (TCR) which controls the type of packet which
 is sent is not modified by this routine so the previous value will be
-used. 
+used.
 
 \param key the key field to be placed in the packet
 \param data the data field to be placed in the packet

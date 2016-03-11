@@ -25,12 +25,6 @@ SPINN_PATH=$SPINN_DIRS/boot
 
 #-------------------------------------------------------------------------------
 
-# SPINN_REL is the release number of the low-level software tools
-
-SPINN_REL=2016.03.0
-
-#-------------------------------------------------------------------------------
-
 # Add the "tools" directory to the Unix PATH and to the Perl library
 # search path.
 
@@ -73,6 +67,3 @@ PATH=$GNUBIN:$ARMBIN:$PATH
 
 #-------------------------------------------------------------------------------
 
-echo "# SpiNNaker Tools $SPINN_REL"
-
-# The End

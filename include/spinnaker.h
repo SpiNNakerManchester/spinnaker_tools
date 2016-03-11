@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // spinnaker.h	    Header file describing SpiNNaker hardware
@@ -6,7 +5,7 @@
 // Copyright (C)    The University of Manchester - 2009-2013
 //
 // Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
+// Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
 
@@ -74,13 +73,13 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #define SYSRAM_BASE_BUF		0xe5000000
 
 #ifdef BUF_WRITE
-#define SYSRAM_BASE 		SYSRAM_BASE_BUF
+#define SYSRAM_BASE		SYSRAM_BASE_BUF
 #else
-#define SYSRAM_BASE 		SYSRAM_BASE_UNBUF
+#define SYSRAM_BASE		SYSRAM_BASE_UNBUF
 #endif
 
-#define SYSRAM_SIZE 		0x00008000	// 32 KB
-#define SYSRAM_TOP 		(SYSRAM_BASE + SYSRAM_SIZE)
+#define SYSRAM_SIZE		0x00008000	// 32 KB
+#define SYSRAM_TOP		(SYSRAM_BASE + SYSRAM_SIZE)
 
 #define ROM_BASE		0xf6000000
 #define ROM_SIZE		0x00008000	// 32 KB
@@ -105,8 +104,8 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #define CC_RSR			INT_AT(0x0c)
 #define CC_RXDATA		INT_AT(0x10)
 #define CC_RXKEY		INT_AT(0x14)
-#define CC_SAR 			INT_AT(0x18)
-#define CC_TEST 		INT_AT(0x1c)
+#define CC_SAR			INT_AT(0x18)
+#define CC_TEST			INT_AT(0x1c)
 
 //------------------------------------------------------------------------------
 
@@ -171,7 +170,7 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #define VIC_DISABLE		INT_AT(0x14)
 #define VIC_SOFT_SET		INT_AT(0x18)
 #define VIC_SOFT_CLR		INT_AT(0x1c)
-#define VIC_PROTECT 		INT_AT(0x20)
+#define VIC_PROTECT		INT_AT(0x20)
 #define VIC_VADDR		INT_AT(0x30)
 #define VIC_DEFADDR		INT_AT(0x34)
 
@@ -259,25 +258,25 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #define DMA_BASE		DMA_BASE_UNBUF
 #endif
 
-#define DMA_ADRS 		INT_AT(0x04)
-#define DMA_ADRT 		INT_AT(0x08)
-#define DMA_DESC 		INT_AT(0x0c)
-#define DMA_CTRL 		INT_AT(0x10)
-#define DMA_STAT 		INT_AT(0x14)
-#define DMA_GCTL 		INT_AT(0x18)
-#define DMA_CRCC 		INT_AT(0x1c)
-#define DMA_CRCR 		INT_AT(0x20)
-#define DMA_TMTV 		INT_AT(0x24)
-#define DMA_SCTL 		INT_AT(0x28)
+#define DMA_ADRS		INT_AT(0x04)
+#define DMA_ADRT		INT_AT(0x08)
+#define DMA_DESC		INT_AT(0x0c)
+#define DMA_CTRL		INT_AT(0x10)
+#define DMA_STAT		INT_AT(0x14)
+#define DMA_GCTL		INT_AT(0x18)
+#define DMA_CRCC		INT_AT(0x1c)
+#define DMA_CRCR		INT_AT(0x20)
+#define DMA_TMTV		INT_AT(0x24)
+#define DMA_SCTL		INT_AT(0x28)
 
-#define DMA_STAT0 		INT_AT(0x40)
-#define DMA_STAT1 		INT_AT(0x44)
-#define DMA_STAT2 		INT_AT(0x48)
-#define DMA_STAT3 		INT_AT(0x4c)
-#define DMA_STAT4 		INT_AT(0x50)
-#define DMA_STAT5 		INT_AT(0x54)
-#define DMA_STAT6 		INT_AT(0x58)
-#define DMA_STAT7 		INT_AT(0x5c)
+#define DMA_STAT0		INT_AT(0x40)
+#define DMA_STAT1		INT_AT(0x44)
+#define DMA_STAT2		INT_AT(0x48)
+#define DMA_STAT3		INT_AT(0x4c)
+#define DMA_STAT4		INT_AT(0x50)
+#define DMA_STAT5		INT_AT(0x54)
+#define DMA_STAT6		INT_AT(0x58)
+#define DMA_STAT7		INT_AT(0x5c)
 
 #define DMA_AD2S		INT_AT(0x104)
 #define DMA_AD2T		INT_AT(0x108)
@@ -299,13 +298,13 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #endif
 
 #define MC_STAT			INT_AT(0x00)
-#define MC_CMD 			INT_AT(0x04)
-#define MC_DIRC 		INT_AT(0x08)
-#define MC_MCFG 		INT_AT(0x0c)
+#define MC_CMD			INT_AT(0x04)
+#define MC_DIRC			INT_AT(0x08)
+#define MC_MCFG			INT_AT(0x0c)
 
-#define MC_REFP 		INT_AT(0x10)
-#define MC_CASL 		INT_AT(0x14)
-#define MC_DQSS 		INT_AT(0x18)
+#define MC_REFP			INT_AT(0x10)
+#define MC_CASL			INT_AT(0x14)
+#define MC_DQSS			INT_AT(0x18)
 #define MC_MRD			INT_AT(0x1c)
 #define MC_RAS			INT_AT(0x20)
 #define MC_RC			INT_AT(0x24)
@@ -352,13 +351,13 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 
 // Router definitions
 
-#define RTR_BASE_UNBUF 		0xf1000000
-#define RTR_BASE_BUF 		0xe1000000
+#define RTR_BASE_UNBUF		0xf1000000
+#define RTR_BASE_BUF		0xe1000000
 
 #ifdef BUF_WRITE
-#define RTR_BASE 		RTR_BASE_BUF
+#define RTR_BASE		RTR_BASE_BUF
 #else
-#define RTR_BASE 		RTR_BASE_UNBUF
+#define RTR_BASE		RTR_BASE_UNBUF
 #endif
 
 #define RTR_CONTROL		INT_AT(0x00)
@@ -414,10 +413,10 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #define RTR_TST1		INT_AT(0xf00)
 #define RTR_TST2		INT_AT(0xf04)
 
-#define P2P_TABLE_SIZE 		8192
-#define MC_TABLE_SIZE     	1024
+#define P2P_TABLE_SIZE		8192
+#define MC_TABLE_SIZE		1024
 
-#define MC_RAM_WIDTH    	(NUM_CPUS + NUM_LINKS)
+#define MC_RAM_WIDTH		(NUM_CPUS + NUM_LINKS)
 #define MC_RAM_MASK		((1 << MC_RAM_WIDTH) - 1)
 
 # define MC_CORE_ROUTE(x)	(1 << ((x) + NUM_LINKS))
@@ -429,21 +428,21 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #define P2P_BPE			3		// Bits per entry
 #define P2P_BMASK		7		// Mask for entry bits
 
-#define P2P_INIT 		0x00db6db6	// All thrown away!
+#define P2P_INIT		0x00db6db6	// All thrown away!
 
-#define RTR_MCRAM_BASE 		(RTR_BASE + 0x00004000)
-#define RTR_MCRAM_TOP 		(RTR_MCRAM_BASE + MC_TABLE_SIZE * 4)
+#define RTR_MCRAM_BASE		(RTR_BASE + 0x00004000)
+#define RTR_MCRAM_TOP		(RTR_MCRAM_BASE + MC_TABLE_SIZE * 4)
 
-#define RTR_MCKEY_BASE 		(RTR_BASE + 0x00008000)
+#define RTR_MCKEY_BASE		(RTR_BASE + 0x00008000)
 #define RTR_MCKEY_TOP		(RTR_MCKEY_BASE + MC_TABLE_SIZE * 4)
 
 #define RTR_MCMASK_BASE		(RTR_BASE + 0x0000c000)
 #define RTR_MCMASK_TOP		(RTR_MCMASK_BASE + MC_TABLE_SIZE * 4)
 
-#define RTR_P2P_BASE 		(RTR_BASE + 0x00010000)
-#define RTR_P2P_TOP 		(RTR_P2P_BASE + P2P_TABLE_SIZE * 4)
+#define RTR_P2P_BASE		(RTR_BASE + 0x00010000)
+#define RTR_P2P_TOP		(RTR_P2P_BASE + P2P_TABLE_SIZE * 4)
 
-#define MC_CAM_WIDTH    	32
+#define MC_CAM_WIDTH		32
 
 //------------------------------------------------------------------------------
 
@@ -471,17 +470,17 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #define SC_CLR_OK		INT_AT(0x14)
 
 #define SC_SOFT_RST_L		INT_AT(0x18)
-#define SC_HARD_RST_L     	INT_AT(0x1c)
-#define SC_SUBS_RST_L     	INT_AT(0x20)
+#define SC_HARD_RST_L		INT_AT(0x1c)
+#define SC_SUBS_RST_L		INT_AT(0x20)
 
 #define SC_SOFT_RST_P		INT_AT(0x24)
-#define SC_HARD_RST_P     	INT_AT(0x28)
-#define SC_SUBS_RST_P     	INT_AT(0x2c)
+#define SC_HARD_RST_P		INT_AT(0x28)
+#define SC_SUBS_RST_P		INT_AT(0x2c)
 
 #define SC_RST_CODE		INT_AT(0x30)
 #define SC_MON_ID		INT_AT(0x34)
 
-#define SC_MISC_CTRL    	INT_AT(0x38)
+#define SC_MISC_CTRL		INT_AT(0x38)
 
 #define GPIO_RES		INT_AT(0x3c)
 
@@ -530,18 +529,18 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #define WDOG_BASE		WDOG_BASE_UNBUF
 #endif
 
-#define WD_LOAD   		INT_AT(0x00)
-#define WD_COUNT  		INT_AT(0x04)
-#define WD_CTRL   		INT_AT(0x08)
-#define WD_INTCLR 		INT_AT(0x0c)
-#define WD_RAWINT 		INT_AT(0x10)
-#define WD_MSKINT 		INT_AT(0x14)
-#define WD_LOCK   		INT_AT(0xc00)
+#define WD_LOAD			INT_AT(0x00)
+#define WD_COUNT		INT_AT(0x04)
+#define WD_CTRL			INT_AT(0x08)
+#define WD_INTCLR		INT_AT(0x0c)
+#define WD_RAWINT		INT_AT(0x10)
+#define WD_MSKINT		INT_AT(0x14)
+#define WD_LOCK			INT_AT(0xc00)
 
-#define WD_CODE   		0x1acce551
+#define WD_CODE			0x1acce551
 
-#define WD_INT_B  		1
-#define WD_RST_B  		2
+#define WD_INT_B		1
+#define WD_RST_B		2
 
 //------------------------------------------------------------------------------
 
@@ -568,13 +567,13 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 #define ETH_REGS		(ETH_BASE + 0xc000)
 
 #define	ETH_CONTROL		INT_AT(0x00)
-#define ETH_STATUS    		INT_AT(0x04)
-#define	ETH_TX_LEN    		INT_AT(0x08)
-#define	ETH_TX_CMD     		INT_AT(0x0c)
-#define	ETH_RX_CMD     		INT_AT(0x10)
-#define	ETH_MAC_LO  		INT_AT(0x14)
-#define	ETH_MAC_HI   		INT_AT(0x18)
-#define ETH_PHY_CTRL    	INT_AT(0x1c)
+#define ETH_STATUS		INT_AT(0x04)
+#define	ETH_TX_LEN		INT_AT(0x08)
+#define	ETH_TX_CMD		INT_AT(0x0c)
+#define	ETH_RX_CMD		INT_AT(0x10)
+#define	ETH_MAC_LO		INT_AT(0x14)
+#define	ETH_MAC_HI		INT_AT(0x18)
+#define ETH_PHY_CTRL		INT_AT(0x1c)
 #define ETH_INT_CLR		INT_AT(0x20)
 #define	ETH_RX_BUF_RP		INT_AT(0x24)
 #define	ETH_RX_DESC_RP		INT_AT(0x2c)
@@ -584,11 +583,11 @@ typedef unsigned long long uint64;	//!< Unsigned integer - 64 bits
 
 // Bits in ETH_PHY_CTRL
 
-#define PHY_CTRL_NRST 		1
-#define PHY_CTRL_DIN  		2
-#define PHY_CTRL_DOUT 		4
-#define PHY_CTRL_OE   		8
-#define PHY_CTRL_CLK  		16
+#define PHY_CTRL_NRST		1
+#define PHY_CTRL_DIN		2
+#define PHY_CTRL_DOUT		4
+#define PHY_CTRL_OE		8
+#define PHY_CTRL_CLK		16
 
 //------------------------------------------------------------------------------
 
@@ -629,7 +628,7 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 #define PKT_NND			0x00a00000	// Peek/poke NN
 #define PKT_FR			0x00c00000
 
-#define PKT_PL	 		0x00020000	// Payload bit
+#define PKT_PL			0x00020000	// Payload bit
 
 #define PKT_MC_PL		(PKT_MC + PKT_PL)
 #define PKT_P2P_PL		(PKT_P2P + PKT_PL)

@@ -19,8 +19,10 @@ use IO::Socket::INET;
 use IO::Select;
 
 use SpiNN::Cmd;
+use SpiNN::Util qw/sllt_version/;
 
-my $version = "2.0.0";
+
+my $version = sllt_version ();
 my $gdb_port = 17899;
 
 my $spin;

@@ -6,12 +6,11 @@
 // Copyright (C)    The University of Manchester - 2009-2011
 //
 // Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
+// Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
 
 
-#include "spinnaker.h"
 #include "sark.h"
 #include "scamp.h"
 
@@ -191,9 +190,9 @@ uint cmd_ver (sdp_msg_t *msg)
   msg->arg3 = (uint) build_date;
 
   sark_str_cpy ((char *) msg->data, SCAMP_ID_STR);
-  sark_str_cpy ((char *) msg->data + sizeof (SCAMP_ID_STR), SCAMP_VER_STR);
+  sark_str_cpy ((char *) msg->data + sizeof (SCAMP_ID_STR), SLLT_VER_STR);
 
-  return 12 + sizeof (SCAMP_ID_STR) + sizeof (SCAMP_VER_STR);
+  return 12 + sizeof (SCAMP_ID_STR) + sizeof (SLLT_VER_STR);
 }
 
 //------------------------------------------------------------------------------

@@ -3,10 +3,10 @@
 //
 // scamp.c	    SC&MP - Spinnaker Control & Monitor Program
 //
-// Copyright (C)    The University of Manchester - 2009, 2010
+// Copyright (C)    The University of Manchester - 2009-2013
 //
 // Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
+// Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
 
@@ -870,7 +870,7 @@ void sv_init (void)
   if (sv->hw_ver == 0 && srom.flags & SRF_PRESENT)	// Set hardware version
     sv->hw_ver = (srom.flags >> 4) & 15;
 
-  sv->sw_ver = SCAMP_VER_NUM;				// Set software version
+  sv->sw_ver = SLLT_VER_NUM;				// Set software version
 
   sv->sysram_base = (uint *) SYS_USER_BASE;
   uint *sysram_top = sv->sysram_base + (uint) sv->sysram_heap;
@@ -880,7 +880,7 @@ void sv_init (void)
   sv->vcpu_base = sv_vcpu;
 
   sv_vcpu[0].cpu_state = CPU_STATE_RUN;
-  sv_vcpu[0].sw_ver = SCAMP_VER_NUM;
+  sv_vcpu[0].sw_ver = SLLT_VER_NUM;
   sv_vcpu[0].time = sv->unix_time;
   sv_vcpu[0].phys_cpu = sark.phys_cpu;
   sark_str_cpy (sv_vcpu[0].app_name, build_name);

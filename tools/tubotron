@@ -19,7 +19,10 @@ use Tk;
 
 use IO::Socket::INET;
 
-my $version = "2.0.0";
+use SpiNN::Util qw/sllt_version/;
+
+
+my $version = sllt_version ();
 
 my $dns = 1;
 

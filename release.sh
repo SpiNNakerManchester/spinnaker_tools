@@ -1,7 +1,8 @@
 #!/bin/sh
 
 DIR=/tmp
-NAME=spinnaker_tools_$SPINN_REL
+VER=`grep SLLT_VER_STR include/version.h | cut -f3 | sed s/\"//g`
+NAME=spinnaker_tools_$VER
 
 RELEASE=$DIR/$NAME
 
@@ -17,7 +18,7 @@ copy ()
   cd - > /dev/null
 }
 
-echo "# Making $RELEASE"
+echo "# Making $RELEASE.tgz"
 
 mkdir -p $RELEASE
 
