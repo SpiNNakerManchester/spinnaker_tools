@@ -15,7 +15,6 @@
 \usepackage{xspace}
 \usepackage{listings}
 \usepackage{enumitem}
-\usepackage{chngpage}
 \usepackage{alltt}
 \renewcommand{\ttdefault}{txtt}
 %\usepackage[compact]{titlesec}
@@ -71,15 +70,20 @@
   \end{figure}
 }
 
+% A substitute for changepage/chngpage's adjustwidth: provides a changemargin
+% environment.
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
+\let\endchangemargin=\endlist 
+
 \newenvironment{shell}
 {
-  \begin{adjustwidth}{2em}{}
+  \begin{changemargin}{2em}{0em}
   \begin{alltt}
   \small
 }
 {
   \end{alltt}
-  \end{adjustwidth}
+  \end{changemargin}
 }
 
 \setcounter{secnumdepth}{-1} 
