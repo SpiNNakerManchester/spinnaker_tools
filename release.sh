@@ -1,60 +1,94 @@
 #!/bin/sh
 
-DIR=/tmp
-VER=`grep SLLT_VER_STR include/version.h | cut -f3 | sed s/\"//g`
-NAME=spinnaker_tools_$VER
+# Build and package up a release of the SpiNNaker low-level tools. Builds SC&MP
+# and all documentation in a clean check-out of the repository and packages
+# a subset of build artefacts (e.g. PDFs and SC&MP binary).
 
-RELEASE=$DIR/$NAME
-
-copy ()
-{
-  dir=$1
-  shift 1
-  args=$*
-
-  mkdir -p $RELEASE/$dir
-  cd $dir
-  cp -pP $args $RELEASE/$dir
-  cd - > /dev/null
-}
-
-echo "# Making $RELEASE.tgz"
-
-mkdir -p $RELEASE
-
-if [ ! -d $RELEASE ]
-then
-  echo "Not a directory"
+if [ -z "$SPINN_DIRS" ]; then
+  echo "ERROR: \$SPINN_DIRS not defined. Did you source setup?"
   exit 1
 fi
+cd "$SPINN_DIRS"
 
-rm -rf $RELEASE/*
+# Version low-level tools version number
+VER=`grep SLLT_VER_STR include/version.h | cut -f3 | sed s/\"//g`
 
-copy .         setup README
+# Release name
+NAME=spinnaker_tools_$VER
 
-copy make      *.make
-copy include   *.h
-copy sark      *.c *.s make_arm make_gnu Makefile
-copy spin1_api *.c make_arm make_gnu Makefile
-copy lib       sark.sct sark.lnk
-copy boot      sark.struct spin[1-5].conf scamp.boot
+# Location of released file
+RELEASE_DIR=/tmp
+RELEASE_FILE="$RELEASE_DIR/$NAME.tar.gz"
 
-copy docs      ybug/ybug.pdf gdb-spin/gdb-spin.pdf spin1_api/spin1_api.pdf sark/sark.pdf
 
-copy tools     ybug bmpc bmpstat tubotron tubogrid gdb-spin
-copy tools     arm2gas h2asm mkaplx mkbuild mkbin
+# Warn if there are uncommitted changes
+if [ -n "$(git status --porcelain | grep -vx " M setup")" ]; then
+  echo "WARNING: There are some uncommitted changes."
+  git status --short
+  echo "Press <return> to build anyway or Ctrl+C to stop."
+  read
+fi
 
-copy tools/SpiNN *.pm
+# Warn if we're not in the master branch
+if [ -z "$(git branch | grep -x "* master")" ]; then
+  echo "WARNING: Not in master branch."
+  git branch
+  echo "Press <return> to build anyway or Ctrl+C to stop."
+  read
+fi
 
-copy apps/sdping    sdping.c sdping.ybug sdp_ping.pl sdp_recv.pl Makefile
-copy apps/pt_demo   *.c pt_demo.ybug README pt_trig drawer.linux Makefile
-copy apps/heat_demo heat_demo.c heat_demo.ybug visualiser.linux Makefile
+# Use a temporary working directory to produce the build
+WORKING_DIR="$(mktemp -d)"
+echo "Building in temporary dir: $WORKING_DIR"
+cd "$WORKING_DIR"
+git clone --quiet --depth 1 "file://$SPINN_DIRS" .
 
-for APP in hello interrupt simple ring life random data_abort gdb-test
-do
-  copy apps/$APP *.c *.ybug Makefile
+# Build SARK
+echo "Building SARK"
+(cd "$WORKING_DIR/sark" && ./make_arm) || exit 2
+
+# Build SC&MP
+echo "Building SC&MP"
+(cd "$WORKING_DIR/scamp" && make install) || exit 3
+
+# Build documentation
+for document_makefile in $(find docs/ -name Makefile); do
+  document_dir="$(dirname "$document_makefile")"
+  echo "Building $document_dir"
+  (cd "$document_dir" && make < /dev/null) || exit 4
 done
 
-cd $DIR
-tar czf $NAME.tgz $NAME
-cd - > /dev/null
+# Package just the git-tracked files for the release
+echo "Building release"
+git archive --output "$NAME.tar" --prefix "$NAME/" HEAD \
+  README setup \
+  make include sark spin1_api lib boot tools apps \
+  || exit 5
+
+# Add selected build artefacts
+echo "Adding build artefacts"
+(
+	# Directories for documentation
+	find docs -type d
+	
+	# Documentation (excluding PDFs of figures)
+	for document_makefile in $(find docs/ -name Makefile); do
+		document_dir="$(dirname "$document_makefile")"
+		echo "$document_dir/$(basename "$document_dir").pdf"
+	done
+	
+	# SC&MP binary
+	echo "boot/scamp.boot"
+) | xargs tar fr "$NAME.tar" --transform='s:.*:'"$NAME"'/\0:' --no-recursion \
+  || exit 6
+
+
+# Gzip the tar file and place this in the output directory
+echo "Compressing archive"
+mkdir -p "$RELEASE_DIR"
+gzip -c "$NAME.tar" > "$RELEASE_FILE" || exit 7
+
+echo "Removing temporary files"
+rm -rf "$WORKING_DIR" || exit 8
+
+echo "Release created: $RELEASE_FILE"

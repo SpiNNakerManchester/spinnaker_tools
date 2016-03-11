@@ -8,12 +8,19 @@ set -a
 
 #-------------------------------------------------------------------------------
 
+# This file should be sourced, not executed!
+if [ "$0" == "${BASH_SOURCE[0]}" ]; then
+  echo "WARNING: $0 should be sourced, not executed. Try: source $0"
+fi
+
+#-------------------------------------------------------------------------------
+
 # SPINN_DIRS should point to the directory containing subdirs "tools",
 # "lib", "include", etc. It's used by many tools to locate resources.
 # used during the building of SpiNNaker applications. The subdirectory
 # "tools" contains locally developed tools for building applications.
 
-SPINN_DIRS=$PWD
+SPINN_DIRS="$(readlink -e "$(dirname "${BASH_SOURCE[0]}")")"
 
 #-------------------------------------------------------------------------------
 
