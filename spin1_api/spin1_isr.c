@@ -11,11 +11,9 @@ extern uint user_arg0;
 extern uint user_arg1;
 
 extern uint ticks;
-extern uint thrown;
 
 extern dma_queue_t dma_queue;
 extern tx_packet_queue_t tx_packet_queue;
-extern uint wberrors;
 
 
 /****f* spin1_isr.c/cc_rx_ready_isr
@@ -409,8 +407,6 @@ INT_HANDLER timer1_fiqsr ()
   ticks++;
 
   // Execute preeminent callback
-
-  callback[TIMER_TICK].cback(ticks, NULL);
 }
 /*
 *******/

@@ -375,6 +375,7 @@ void configure_vic (uint enable_timer)
 
 void spin1_pause() {
     vic[VIC_DISABLE] = (1 << TIMER1_INT);
+    configure_timer1(timer_tick);
     sark_cpu_state (CPU_STATE_PAUSE);
 }
 
@@ -384,9 +385,9 @@ void resume() {
         resume_sync = 0;
         event.wait ^= 1;
     }
-    tc[T1_CONTROL] = 0xe2;
-    vic[VIC_ENABLE] = (1 << TIMER1_INT);
     sark_cpu_state (CPU_STATE_RUN);
+    vic[VIC_ENABLE] = (1 << TIMER1_INT);
+    tc[T1_CONTROL] = 0xe2;
 }
 
 
