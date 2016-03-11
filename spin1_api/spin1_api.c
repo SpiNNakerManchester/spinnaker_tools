@@ -358,8 +358,9 @@ void configure_vic (uint enable_timer)
 
   vic[VIC_SELECT] = fiq_select;
 
-  if (!enable_timer) {
-      int_select = int_select & ~(1 << TIMER1_INT);
+  if (!enable_timer) 
+  {
+    int_select = int_select & ~(1 << TIMER1_INT);
   }
 
   #if USE_WRITE_BUFFER == TRUE
@@ -373,45 +374,57 @@ void configure_vic (uint enable_timer)
 *******/
 
 
-void spin1_pause() {
-    vic[VIC_DISABLE] = (1 << TIMER1_INT);
-    configure_timer1(timer_tick);
-    sark_cpu_state (CPU_STATE_PAUSE);
+void spin1_pause() 
+{
+  vic[VIC_DISABLE] = (1 << TIMER1_INT);
+  configure_timer1(timer_tick);
+  sark_cpu_state (CPU_STATE_PAUSE);
 }
 
 
-void resume() {
-    if (resume_sync == 1) {
-        resume_sync = 0;
-        event.wait ^= 1;
-    }
-    sark_cpu_state (CPU_STATE_RUN);
-    vic[VIC_ENABLE] = (1 << TIMER1_INT);
-    tc[T1_CONTROL] = 0xe2;
+void resume() 
+{
+  if (resume_sync == 1) 
+  {
+    resume_sync = 0;
+    event.wait ^= 1;
+  }
+  sark_cpu_state (CPU_STATE_RUN);
+  vic[VIC_ENABLE] = (1 << TIMER1_INT);
+  tc[T1_CONTROL] = 0xe2;
 }
 
 
-void spin1_resume(sync_bool sync) {
-    if (sync == SYNC_NOWAIT) {
-        resume();
-    } else {
-        resume_sync = 1;
-        if (event.wait) {
-            sark_cpu_state(CPU_STATE_SYNC1);
-        } else {
-            sark_cpu_state(CPU_STATE_SYNC0);
-        }
+void spin1_resume(sync_bool sync) 
+{
+  if (sync == SYNC_NOWAIT) 
+  {
+    resume();
+  } 
+  else 
+  {
+    resume_sync = 1;
+    if (event.wait) 
+    {
+      sark_cpu_state(CPU_STATE_SYNC1);
+    } 
+    else 
+    {
+      sark_cpu_state(CPU_STATE_SYNC0);
     }
+  }
 }
 
 
-uint resume_wait() {
-    uint bit = 1 << sark.virt_cpu;
+uint resume_wait() 
+{
+  uint bit = 1 << sark.virt_cpu;
 
-    if (event.wait) {
-        return (~sc[SC_FLAG] & bit);    // Wait 1
-    }
-    return (sc[SC_FLAG] & bit);     // Wait 0
+  if (event.wait) 
+  {
+    return (~sc[SC_FLAG] & bit);    // Wait 1
+  }
+  return (sc[SC_FLAG] & bit);     // Wait 0
 }
 
 
@@ -488,19 +501,22 @@ void dispatch()
           spin1_mode_restore (cpsr);
 
           // check for if its a timer callback, if it is, update tracker values
-          if (cback == callback[TIMER_TICK].cback){
-              diagnostics.in_timer_callback = 1;
+          if (cback == callback[TIMER_TICK].cback)
+          {
+            diagnostics.in_timer_callback = 1;
           }
 
           // execute callback
           cback (arg0, arg1);
 
           // update queue size
-          if (cback == callback[TIMER_TICK].cback){
-               if (diagnostics.number_timer_tic_in_queue > 0) {
-                   diagnostics.number_timer_tic_in_queue -= 1;
-               }
-               diagnostics.in_timer_callback = 0;
+          if (cback == callback[TIMER_TICK].cback)
+          {
+            if (diagnostics.number_timer_tic_in_queue > 0) 
+            {
+              diagnostics.number_timer_tic_in_queue -= 1;
+            }
+            diagnostics.in_timer_callback = 0;
           }
 
           cpsr = spin1_int_disable ();
@@ -644,9 +660,9 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
   if (event_id == MC_PACKET_RECEIVED || event_id == MCPL_PACKET_RECEIVED)
     {
       if (pkt_prio == -2)
-    pkt_prio = priority;
+        pkt_prio = priority;
       else if (pkt_prio != priority)
-    rt_error (RTE_API);
+        rt_error (RTE_API);
     }
 }
 /*
@@ -975,7 +991,6 @@ void report_debug ()
     io_delay (API_PRINT_DELAY);
   #endif
 }
-
 /*
 *******/
 
@@ -1028,23 +1043,28 @@ void report_warns ()
 *******/
 
 
-void spin1_rte(rte_code code) {
-    // Don't actually shutdown, just set the CPU into an RTE code and
-    // stop the timer
-    clean_up();
-    sark_cpu_state(CPU_STATE_RTE);
-    register uint lr asm("lr");
-    sv_vcpu->lr = lr;
-    sv_vcpu->rt_code = code;
-    sv->led_period = 8;
+void spin1_rte(rte_code code) 
+{
+
+  // Don't actually shutdown, just set the CPU into an RTE code and
+  // stop the timer
+  clean_up();
+  sark_cpu_state(CPU_STATE_RTE);
+  register uint lr asm("lr");
+  sv_vcpu->lr = lr;
+  sv_vcpu->rt_code = code;
+  sv->led_period = 8;
 }
 
 uint start (sync_bool sync, uint paused)
 {
-  if (paused) {
-      sark_cpu_state (CPU_STATE_PAUSE);
-  } else {
-      sark_cpu_state (CPU_STATE_RUN);
+  if (paused) 
+  {
+    sark_cpu_state (CPU_STATE_PAUSE);
+  } 
+  else 
+  {
+    sark_cpu_state (CPU_STATE_RUN);
   }
 
   // Initialise hardware
@@ -1126,12 +1146,14 @@ uint start (sync_bool sync, uint paused)
 * SOURCE
 */
 
-uint spin1_start (sync_bool sync) {
-    return start(sync, 0);
+uint spin1_start (sync_bool sync) 
+{
+  return start(sync, 0);
 }
 
-uint spin1_start_paused() {
-    return start(SYNC_NOWAIT, 1);
+uint spin1_start_paused() 
+{
+  return start(SYNC_NOWAIT, 1);
 }
 
 
@@ -1379,7 +1401,7 @@ uint spin1_send_mc_packet(uint key, uint data, uint load)
       tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
 
       if (hload)
-    cc[CC_TXDATA] = hdata;
+        cc[CC_TXDATA] = hdata;
 
       cc[CC_TXKEY]  = hkey;
     }
@@ -1388,7 +1410,7 @@ uint spin1_send_mc_packet(uint key, uint data, uint load)
     {
       // If queue empty send packet
       if (load)
-    cc[CC_TXDATA] = data;
+        cc[CC_TXDATA] = data;
 
       cc[CC_TXKEY]  = key;
 
@@ -1857,8 +1879,9 @@ void schedule_sysmode (uchar event_id, uint arg0, uint arg1)
 
       tq->end = (tq->end + 1) % TASK_QUEUE_SIZE;
 
-      if (event_id == TIMER_TICK){
-           diagnostics.number_timer_tic_in_queue += 1;
+      if (event_id == TIMER_TICK)
+      {
+        diagnostics.number_timer_tic_in_queue += 1;
       }
     }
     else      // queue is full
@@ -1917,7 +1940,6 @@ uint spin1_schedule_callback (callback_t cback, uint arg0, uint arg1,
     #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
       diagnostics.warnings |= TASK_QUEUE_FULL;
       diagnostics.task_queue_full++;
-
     #endif
   }
 

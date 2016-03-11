@@ -45,10 +45,10 @@ INT_HANDLER cc_rx_ready_isr (void)
       // If application callback registered schedule it
 
       if (callback[MCPL_PACKET_RECEIVED].cback != NULL)
-    schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
+        schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-    diagnostics.discarded_mc_packets++;
+        diagnostics.discarded_mc_packets++;
 #endif
     }
   else
@@ -359,22 +359,25 @@ INT_HANDLER timer1_isr ()
   ticks++;
 
   // If application callback registered schedule it
-  if (callback[TIMER_TICK].cback != NULL){
+  if (callback[TIMER_TICK].cback != NULL)
+  {
 
-      // check for timer tic overload and store in diagnostics
-      if (diagnostics.in_timer_callback != 0){
+    // check for timer tic overload and store in diagnostics
+    if (diagnostics.in_timer_callback != 0)
+    {
 
-          // if in timer tic callback already, add to tracker for total failures
-          diagnostics.total_times_tick_tic_callback_overran += 1;
+      // if in timer tic callback already, add to tracker for total failures
+      diagnostics.total_times_tick_tic_callback_overran += 1;
 
-          // if number of timer callbacks in queue is greater than previously seen
-          if (diagnostics.number_timer_tic_in_queue >
-                  diagnostics.largest_number_of_concurrent_timer_tic_overruns){
-              diagnostics.largest_number_of_concurrent_timer_tic_overruns =
-                  diagnostics.number_timer_tic_in_queue;
-          }
+      // if number of timer callbacks in queue is greater than previously seen
+      if (diagnostics.number_timer_tic_in_queue >
+          diagnostics.largest_number_of_concurrent_timer_tic_overruns)
+      {
+        diagnostics.largest_number_of_concurrent_timer_tic_overruns =
+        diagnostics.number_timer_tic_in_queue;
       }
-      schedule(TIMER_TICK, ticks, NULL);
+    }
+    schedule(TIMER_TICK, ticks, NULL);
   }
 
   // Ack VIC
@@ -407,6 +410,8 @@ INT_HANDLER timer1_fiqsr ()
   ticks++;
 
   // Execute preeminent callback
+  
+  callback[TIMER_TICK].cback(ticks, NULL);
 }
 /*
 *******/
