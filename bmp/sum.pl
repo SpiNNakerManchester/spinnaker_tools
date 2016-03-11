@@ -13,7 +13,7 @@ my ($SIZE, $in, $out) = (65536, @ARGV);
 
 # Read program binary into buffer
 
-open $fh, "<", $in or die "Can't open $in\n";
+open my $fh, "<", $in or die "Can't open $in\n";
 my $len = sysread $fh, my ($buffer), $SIZE;
 close $fh;
 
