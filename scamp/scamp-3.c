@@ -85,8 +85,6 @@ uint p2p_dims = 0;
 uint p2p_root = 0;
 uint p2p_up = 0;
 
-uint led_timer;
-
 uint ltpc_timer;
 
 uint link_en = 0x3f;	// Bitmap of enabled links
@@ -100,6 +98,10 @@ uchar watchdog[20]; // !! const - needs to be multiple of 4?
 iptag_t tag_table[TAG_TABLE_SIZE];
 
 uint tag_tto = 9;	// 2.56s = 10ms * (1 << (9-1))
+
+//------------------------------------------------------------------------------
+
+// Network initialisation state variables
 
 // The network initialisation process phase currently in progress
 volatile enum netinit_phase_e netinit_phase;
@@ -127,8 +129,36 @@ volatile int p2p_max_y;
 // ((bx<<9) | by) where bx and by are x + 256 and y + 256 respectively.
 uchar *p2p_addr_table = NULL;
 
+
 //------------------------------------------------------------------------------
 
+// LED control status variables/definitions
+
+// The current system load, the LED brightness smoothly will track this value.
+// 0 = idle, 255 = saturated.
+volatile uchar load = 0;
+
+// Interval between flashing the LEDs when displaying load to indicate chip
+// liveness in 10ms units
+#define LIVENESS_FLASH_INTERVAL 256
+
+// Spacing between flashing adjacent chips when indicating liveness in 10ms
+// units
+#define LIVENESS_FLASH_SPACING 5
+
+// The number of fractional bits to use for the internal representation of the
+// load. The more bits, the longer the displayed load will take to catch up
+// with the actual load.
+#define LOAD_FRAC_BITS 1
+
+// The number of bits to use for the PWM generator. The larger this is, the
+// greater the resolution of the brightness but the more flicker-y it will
+// look.
+#define PWM_BITS 4
+
+// The actual, displayed load value (fixed point). This value tracks the 'load'
+// value above, transitioning smoothly towards it over time.
+volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 
 //------------------------------------------------------------------------------
 
@@ -965,6 +995,41 @@ void random_init (void)
 
 //------------------------------------------------------------------------------
 
+// Update the 'load' variable with an estimate of the system's load
+void update_load(uint arg1, uint arg2)
+{
+  uint num_working = 0;
+  uint num_with_apps = 0;
+  uint num_awake = 0;
+  
+  uint sleeping_cpus = sc[SC_SLEEP];
+  
+  for (uint cpu = 1; cpu < NUM_CPUS; cpu++)
+    {
+      vcpu_t *vcpu = sv_vcpu + cpu;
+      
+      if (vcpu->cpu_state != CPU_STATE_DEAD)
+        num_working++;
+      
+      // NB: Ignores cores not running apps
+      if (vcpu->app_id > 0)
+        {
+          num_with_apps++;
+          if (!(sleeping_cpus & (1 << vcpu->phys_cpu)))
+            num_awake++;
+        }
+    }
+  
+  // Load is simply the proportion of application processors which are awake
+  // with the load clamped at a minimum of zero if any applications are loaded.
+  uint new_load = (num_awake * 255) / (num_working);
+  if (num_with_apps > 0 && new_load == 0)
+    new_load = 1;
+  load = new_load;
+}
+
+//------------------------------------------------------------------------------
+
 // "proc_1hz" is put on the event queue every second
 
 void proc_1hz (uint a1, uint a2)
@@ -1090,9 +1155,6 @@ void compute_st (void)
 void proc_100hz (uint a1, uint a2)
 {
   // Boot-up related packet sending and boot-phase advancing
-  static uint ticks = 0;
-  ticks++;
-  
   switch (netinit_phase)
   {
     case NETINIT_PHASE_P2P_ADDR:
@@ -1210,6 +1272,26 @@ void proc_100hz (uint a1, uint a2)
   }
   sv->netinit_phase = netinit_phase;
   
+  // Light the LED every-so-often to make it clear that this chip is alive
+  if (netinit_phase == NETINIT_PHASE_DONE)
+    {
+      static uint ticks = 0;
+      if (++ticks >= LIVENESS_FLASH_INTERVAL)
+        ticks = 0;
+      
+      uint p2p_x = p2p_addr >> 8;
+      uint p2p_y = p2p_addr & 0xFF;
+      uint p2p_dist = p2p_x + p2p_y;
+      uint flash_time = ((p2p_dist * LIVENESS_FLASH_SPACING) % LIVENESS_FLASH_INTERVAL);
+      if (ticks == flash_time)
+        disp_load = ((load < 128) ? 255 : 0) << LOAD_FRAC_BITS;
+    }
+  
+  
+  // Sample core sleep states at a random interval to estimate chip load.
+  timer_schedule_proc(update_load, 0, 0,
+                      (sark_rand() % 9999) + 1);
+  
   // Process IPTag timeouts
 
   iptag_timer ();
@@ -1218,15 +1300,6 @@ void proc_100hz (uint a1, uint a2)
 
   if (sv->soft_wdog)
     soft_wdog (sv->soft_wdog);
-
-  // Flip LED0 every now and then once powered on
-
-  if (netinit_phase >= NETINIT_PHASE_DONE &&
-      sv->led_period != 0 && ++led_timer >= sv->led_period)
-    {
-      led_timer = 0;
-      sark_led_set (LED_INV(0));	// !! assumes LED_0 always there
-    }
     
   // Send LTPC packet (untested!)
 
@@ -1238,6 +1311,56 @@ void proc_100hz (uint a1, uint a2)
 		  sv->tp_timer,
 		  0x3f00,
 		  0);
+    }
+}
+
+//------------------------------------------------------------------------------
+
+// "proc_1khz" is put on the event queue every millisecond and is used to PWM
+// the LEDs
+
+void proc_1khz (uint a1, uint a2)
+{
+  // Display status on LED0 except when booting
+  if (netinit_phase >= NETINIT_PHASE_DONE)
+    {
+      if (sv->led_period == 1)
+        {
+          // sv->led_period == 1: Display current load using PWM
+          
+          // Slowly track the actual load value
+          uint fractional_load = ((uint)load) << LOAD_FRAC_BITS;
+          if (disp_load < fractional_load)
+            disp_load++;
+          else if (disp_load > fractional_load)
+            disp_load--;
+          
+          // PWM generation
+          static uint period = 0;
+          uint duty = disp_load >> (LOAD_FRAC_BITS + PWM_BITS);
+          
+          // If there is *any* load, keep the LED on a little bit.
+          if (disp_load > 0 && duty == 0)
+            duty = 1;
+          
+          if (period >= duty)
+            sark_led_set (LED_OFF(0));
+          else
+            sark_led_set (LED_ON(0));
+          
+          if (++period >= (1 << PWM_BITS))
+            period = 0;
+        }
+      else if (sv->led_period >= 2)
+        {
+          // sv->led_period >= 2: Blink at a given frequency
+          static uint last_toggle = 0;
+          if (last_toggle++ > (sv->led_period * 10))
+            {
+              last_toggle = 0;
+              sark_led_set (LED_INV(0));	// !! assumes LED_0 always there
+            }
+        }
     }
 }
 
