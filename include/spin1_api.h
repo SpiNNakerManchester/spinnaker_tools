@@ -1,27 +1,3 @@
-/****a* spin1_api.h/spin1_api_header
-*
-* SUMMARY
-*  SpiNNaker API main header file
-*
-* AUTHOR
-*  Luis Plana - lap@cs.man.ac.uk
-*
-* DETAILS
-*  Created on       : 03 May 2011
-*  Version          : $Revision: 2011 $
-*  Last modified on : $Date: 2012-10-24 14:50:54 +0100 (Wed, 24 Oct 2012) $
-*  Last modified by : $Author: plana $
-*  $Id: spin1_api.h 2011 2012-10-24 13:50:54Z plana $
-*  $HeadURL: https://solem.cs.man.ac.uk/svn/spin1_api/trunk/src/spin1_api.h $
-*
-* COPYRIGHT
-*  Copyright (c) The University of Manchester, 2011. All rights reserved.
-*  SpiNNaker Project
-*  Advanced Processor Technologies Group
-*  School of Computer Science
-*
-*******/
-
 #ifndef __SPIN1_API_H__
 #define __SPIN1_API_H__
 
@@ -93,10 +69,14 @@ typedef void (*callback_t) (uint, uint);  // callbacks
 // simulation control functions
 // ------------------------------------------------------------------------
 uint spin1_start (sync_bool sync);
+uint spin1_start_paused ();
 void spin1_exit (uint error);
 void spin1_set_timer_tick(uint time);
 uint spin1_get_simulation_time(void);
 void spin1_delay_us (uint n);
+void spin1_pause ();
+void spin1_resume (sync_bool sync);
+void spin1_rte (rte_code code);
 // ------------------------------------------------------------------------
 
 
@@ -172,17 +152,21 @@ uint  spin1_rand  (void);
 // ------------------------------------------------------------------------
 typedef struct
 {
-  uint exit_code;               // simulation exit code
-  uint warnings;                // warnings type bit map
-  uint total_mc_packets;        // total routed MC packets during simulation
-  uint dumped_mc_packets;       // total dumped MC packets by the router
-  uint discarded_mc_packets;    // total discarded MC packets by API
-  uint dma_transfers;           // total DMA transfers requested
-  uint dma_bursts;              // total DMA bursts completed
-  uint dma_queue_full;          // dma queue full count
-  uint task_queue_full;         // task queue full count
-  uint tx_packet_queue_full;    // transmitter packet queue full count
-  uint writeBack_errors;        // write-back buffer errror count
+  uint exit_code;                                       // simulation exit code
+  uint warnings;                                        // warnings type bit map
+  uint total_mc_packets;                                // total routed MC packets during simulation
+  uint dumped_mc_packets;                               // total dumped MC packets by the router
+  volatile uint discarded_mc_packets;                   // total discarded MC packets by API
+  uint dma_transfers;                                   // total DMA transfers requested
+  uint dma_bursts;                                      // total DMA bursts completed
+  uint dma_queue_full;                                  // dma queue full count
+  uint task_queue_full;                                 // task queue full count
+  uint tx_packet_queue_full;                            // transmitter packet queue full count
+  uint writeBack_errors;                                // write-back buffer error count
+  uint in_timer_callback;                               // bool which states if currently in timer callback
+  uint number_timer_tic_in_queue;                       // the number of timer tic callbacks in the queue
+  uint largest_number_of_concurrent_timer_tic_overruns; // the max number of timer tics callbacks being queued at any time
+  uint total_times_tick_tic_callback_overran;           // the total number of times the timer tic callback overran
 } diagnostics_t;
 
 extern diagnostics_t diagnostics;

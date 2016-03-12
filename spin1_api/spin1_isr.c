@@ -1,21 +1,3 @@
-/*
-*
-* SUMMARY
-*  SpiNNaker API interrupt handlers
-*
-* AUTHOR
-*  Thomas Sharp - thomas.sharp@cs.man.ac.uk
-*  Luis Plana   - luis.plana@manchester.ac.uk
-*
-* COPYRIGHT
-*  Copyright (c) The University of Manchester, 2011. All rights reserved.
-*  SpiNNaker Project
-*  Advanced Processor Technologies Group
-*  School of Computer Science
-*
-*/
-
-
 #include <sark.h>
 
 #include <spin1_api.h>
@@ -29,11 +11,9 @@ extern uint user_arg0;
 extern uint user_arg1;
 
 extern uint ticks;
-extern uint thrown;
 
 extern dma_queue_t dma_queue;
 extern tx_packet_queue_t tx_packet_queue;
-extern uint wberrors;
 
 
 /****f* spin1_isr.c/cc_rx_ready_isr
@@ -65,10 +45,10 @@ INT_HANDLER cc_rx_ready_isr (void)
       // If application callback registered schedule it
 
       if (callback[MCPL_PACKET_RECEIVED].cback != NULL)
-	schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
+        schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-	thrown++;
+        diagnostics.discarded_mc_packets++;
 #endif
     }
   else
@@ -76,10 +56,10 @@ INT_HANDLER cc_rx_ready_isr (void)
       uint rx_key = cc[CC_RXKEY];  // also clears interrupt
 
       if(callback[MC_PACKET_RECEIVED].cback != NULL)
-	schedule (MC_PACKET_RECEIVED, rx_key, 0);
+    schedule (MC_PACKET_RECEIVED, rx_key, 0);
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-	thrown++;
+    diagnostics.discarded_mc_packets++;
 #endif
     }
 
@@ -362,7 +342,7 @@ INT_HANDLER dma_error_isr ()
 * SUMMARY
 *  This interrupt service routine is called upon countdown of the processor's
 *  primary timer to zero. In response, a callback is scheduled.
-* 
+*
 * SYNOPSIS
 *  INT_HANDLER timer1_isr()
 *
@@ -373,15 +353,32 @@ INT_HANDLER timer1_isr ()
   // Clear timer interrupt
 
   tc[T1_INT_CLR] = 1;
- 
+
   // Increment simulation "time"
 
   ticks++;
 
   // If application callback registered schedule it
-
   if (callback[TIMER_TICK].cback != NULL)
+  {
+
+    // check for timer tic overload and store in diagnostics
+    if (diagnostics.in_timer_callback != 0)
+    {
+
+      // if in timer tic callback already, add to tracker for total failures
+      diagnostics.total_times_tick_tic_callback_overran += 1;
+
+      // if number of timer callbacks in queue is greater than previously seen
+      if (diagnostics.number_timer_tic_in_queue >
+          diagnostics.largest_number_of_concurrent_timer_tic_overruns)
+      {
+        diagnostics.largest_number_of_concurrent_timer_tic_overruns =
+        diagnostics.number_timer_tic_in_queue;
+      }
+    }
     schedule(TIMER_TICK, ticks, NULL);
+  }
 
   // Ack VIC
 
@@ -413,7 +410,7 @@ INT_HANDLER timer1_fiqsr ()
   ticks++;
 
   // Execute preeminent callback
-
+  
   callback[TIMER_TICK].cback(ticks, NULL);
 }
 /*
