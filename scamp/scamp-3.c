@@ -1276,8 +1276,6 @@ void proc_100hz (uint a1, uint a2)
   if (netinit_phase == NETINIT_PHASE_DONE)
     {
       static uint ticks = 0;
-      if (++ticks >= LIVENESS_FLASH_INTERVAL)
-        ticks = 0;
       
       uint p2p_x = p2p_addr >> 8;
       uint p2p_y = p2p_addr & 0xFF;
@@ -1285,6 +1283,9 @@ void proc_100hz (uint a1, uint a2)
       uint flash_time = ((p2p_dist * LIVENESS_FLASH_SPACING) % LIVENESS_FLASH_INTERVAL);
       if (ticks == flash_time)
         disp_load = ((load < 128) ? 255 : 0) << LOAD_FRAC_BITS;
+      
+      if (++ticks >= LIVENESS_FLASH_INTERVAL)
+        ticks = 0;
     }
   
   
