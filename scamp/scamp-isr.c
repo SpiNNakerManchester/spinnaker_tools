@@ -29,6 +29,7 @@ extern void nn_rcv_pkt (uint link, uint data, uint key);
 extern void peek_ack_pkt (uint link, uint data, uint key);
 extern void poke_ack_pkt (uint link, uint data, uint key);
 
+extern void proc_1khz (uint a1, uint a2);
 extern void proc_100hz (uint a1, uint a2);
 extern void proc_1hz (uint a1, uint a2);
 
@@ -241,6 +242,9 @@ INT_HANDLER ms_timer_int ()
       if (!event_queue_proc (proc_100hz, 0, 0, PRIO_1)) // !!const
 	sw_error (SW_OPT);
     }
+  
+  if (!event_queue_proc (proc_1khz, 0, 0, PRIO_1)) // !!const
+    sw_error (SW_OPT);
 
   centi_ms = cs;
 

@@ -144,7 +144,10 @@ sub boot
     my $sv = SpiNN::Struct->new;
     die "failed to process \"sv\" struct file\n" unless $sv;
 
-    $sv->update ("sv", find_path ($conf));
+    if ($conf)
+    {
+      $sv->update ("sv", find_path ($conf));
+    }
 
     my $buf = read_path ($file, 32768);
     die "failed to load \"$file\"\n" unless defined $buf;

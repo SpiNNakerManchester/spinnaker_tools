@@ -73,19 +73,6 @@
 //------------------------------------------------------------------------------
 
 
-typedef struct sw_timer
-{
-  ushort counter;	// Tick counter
-  ushort increment;	// Loaded into counter when counter == 0
-  uchar multiplier;	// Increases multiplier mult_rep times
-  uchar repeat;		// Number of repeats (0 = infinite, 255 = stop)
-  uchar mult_rep;	// Number of times multiplier applied to increment
-} sw_timer_t;
-
-
-//------------------------------------------------------------------------------
-
-
 // VARS
 
 uint num_cpus;
@@ -93,23 +80,14 @@ uint ping_cpu = 1;
 
 uchar v2p_map[MAX_CPUS];
 
-uint p2p_addr;
-uint p2p_dims;
-uint p2p_up;
-uchar p2pb_id;		// Must be 8 bits
-
-sw_timer_t led_timer;
-sw_timer_t probe_timer;
-sw_timer_t p2pb_timer;
-sw_timer_t p2pc_timer;
-sw_timer_t biff_timer;
+uint p2p_addr = 0;
+uint p2p_dims = 0;
+uint p2p_root = 0;
+uint p2p_up = 0;
 
 uint ltpc_timer;
 
-uint max_hops;		// Maximum packet hop count
-uint link_up;		// Bitmap of working links
 uint link_en = 0x3f;	// Bitmap of enabled links
-uint ticks;		// Counts 10ms ticks
 
 srom_data_t srom;	// Copy of SROM struct
 
@@ -121,48 +99,66 @@ iptag_t tag_table[TAG_TABLE_SIZE];
 
 uint tag_tto = 9;	// 2.56s = 10ms * (1 << (9-1))
 
+//------------------------------------------------------------------------------
+
+// Network initialisation state variables
+
+// The network initialisation process phase currently in progress
+volatile enum netinit_phase_e netinit_phase;
+
+// Number of 10ms ticks ellapsed since a network initialisation broadcast
+// message was receieved
+volatile uint last_netinit_broadcast;
+
+// During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address. Note
+// that this value may be negative and may be much larger than realistic
+// machines as the first P2P address assigned may be the result of a packet
+// taking a very spirally route.
+volatile int p2p_addr_guess_x;
+volatile int p2p_addr_guess_y;
+
+// During NETINIT_PHASE_P2P_DIMS, records the current best guess of the systems
+// dimensions.
+volatile int p2p_min_x;
+volatile int p2p_max_x;
+volatile int p2p_min_y;
+volatile int p2p_max_y;
+
+// A bitmap giving the coordinates of all P2P coordinates which have been seen
+// mentioned in a P2PC_NEW message. A 2D array of bits whose *bit* indexes are
+// ((bx<<9) | by) where bx and by are x + 256 and y + 256 respectively.
+uchar *p2p_addr_table = NULL;
+
 
 //------------------------------------------------------------------------------
 
+// LED control status variables/definitions
 
-static void init_timer (sw_timer_t *timer, uint data)
-{
-  timer->counter = data >> 24;
-  timer->increment = (data >> 16) & 255;
-  timer->repeat = (data >> 8) & 255;
-  timer->mult_rep = (data >> 4) & 15;
-  timer->multiplier = data & 15;
-}
+// The current system load, the LED brightness smoothly will track this value.
+// 0 = idle, 255 = saturated.
+volatile uchar load = 0;
 
+// Interval between flashing the LEDs when displaying load to indicate chip
+// liveness in 10ms units
+#define LIVENESS_FLASH_INTERVAL 256
 
-static uint run_timer (sw_timer_t *timer)
-{
-  if (timer->repeat == 255)	// Stopped
-    return 0;
+// Spacing between flashing adjacent chips when indicating liveness in 10ms
+// units
+#define LIVENESS_FLASH_SPACING 5
 
-  if (--timer->counter != 0)	// Decrementing counter
-    return 0;
+// The number of fractional bits to use for the internal representation of the
+// load. The more bits, the longer the displayed load will take to catch up
+// with the actual load.
+#define LOAD_FRAC_BITS 1
 
-  // counter gone to zero...
+// The number of bits to use for the PWM generator. The larger this is, the
+// greater the resolution of the brightness but the more flicker-y it will
+// look.
+#define PWM_BITS 4
 
-  if (timer->repeat != 0 && --timer->repeat == 0) // Last repetition
-    {
-      timer->repeat = 255;
-      return 1;
-    }
-
-  timer->counter = timer->increment; // Reload counter
-
-  // Multiplier reverts to 1 after repetitions
-
-  if (timer->mult_rep != 0 && --timer->mult_rep == 0)
-    timer->multiplier = 1;
-
-  timer->increment *= timer->multiplier; // Scale by multiplier
-
-  return 1;
-}
-
+// The actual, displayed load value (fixed point). This value tracks the 'load'
+// value above, transitioning smoothly towards it over time.
+volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 
 //------------------------------------------------------------------------------
 
@@ -666,6 +662,12 @@ void proc_route_msg (uint arg1, uint srce_ip)
   uint dest_addr = msg->dest_addr;
   uint srce_addr = msg->srce_addr;
 
+  // Map (255, 255) to the root chip's coordinates
+  if (dest_addr == 0xFFFF)
+    dest_addr = p2p_root;
+  if (srce_addr == 0xFFFF)
+    srce_addr = p2p_root;
+
   // Off-chip via P2P
 
   if (dest_addr != srce_addr && dest_addr != p2p_addr &&
@@ -896,31 +898,6 @@ void sv_init (void)
 
   sark_block_init (sv->shm_buf, sv->num_buf, sizeof (sdp_msg_t));
 
-  init_timer (&biff_timer, sv->biff_timer);
-  init_timer (&p2pc_timer, sv->p2pc_timer);
-  init_timer (&p2pb_timer, sv->p2pb_timer);
-  init_timer (&probe_timer, sv->probe_timer);
-
-  p2pb_timer.counter += sark_rand () & 7;
-
-  //  p2pb_timer.increment = 50;	// 500ms
-  //  p2pb_timer.multiplier = 1;
-  //  p2pb_timer.counter = 1 + (sark_rand () & 7);
-
-  //  probe_timer.counter = 1;
-  //  probe_timer.increment = 10;
-  //  probe_timer.multiplier = 1;
-  //  probe_timer.mult_rep = 0;
-
-  //  p2pc_timer.counter = 2;
-  //  p2pc_timer.increment = 2;
-  //  p2pc_timer.repeat = 10;
-  //  p2pc_timer.mult_rep = 5;
-  //  p2pc_timer.multiplier = 2;
-
-  //  led_timer.increment = sv->led_period;
-  //  led_timer.counter = led_timer.multiplier = 1;
-
   if (sv->boot_delay == 0 && sv->rom_cpus == 0)
     sv->root_chip = 1;
 }
@@ -1018,6 +995,41 @@ void random_init (void)
 
 //------------------------------------------------------------------------------
 
+// Update the 'load' variable with an estimate of the system's load
+void update_load(uint arg1, uint arg2)
+{
+  uint num_working = 0;
+  uint num_with_apps = 0;
+  uint num_awake = 0;
+  
+  uint sleeping_cpus = sc[SC_SLEEP];
+  
+  for (uint cpu = 1; cpu < NUM_CPUS; cpu++)
+    {
+      vcpu_t *vcpu = sv_vcpu + cpu;
+      
+      if (vcpu->cpu_state != CPU_STATE_DEAD)
+        num_working++;
+      
+      // NB: Ignores cores not running apps
+      if (vcpu->app_id > 0)
+        {
+          num_with_apps++;
+          if (!(sleeping_cpus & (1 << vcpu->phys_cpu)))
+            num_awake++;
+        }
+    }
+  
+  // Load is simply the proportion of application processors which are awake
+  // with the load clamped at a minimum of zero if any applications are loaded.
+  uint new_load = (num_awake * 255) / (num_working);
+  if (num_with_apps > 0 && new_load == 0)
+    new_load = 1;
+  load = new_load;
+}
+
+//------------------------------------------------------------------------------
+
 // "proc_1hz" is put on the event queue every second
 
 void proc_1hz (uint a1, uint a2)
@@ -1059,28 +1071,66 @@ void soft_wdog (uint max)
 
 //------------------------------------------------------------------------------
 
-uint booted;
+// Late-stage boot related functions which initialise higher-level network
+// functionality, e.g. P2P tables and addresses
 
-// Produce a spanning tree of the system using the P2P routes constructed.
+
+// Start the higher-level network initialisation process. Must be called only
+// once, before the nearest neighbour interrupt handler is enabled.
+void netinit_start(void)
+{
+  sv->netinit_phase = netinit_phase = NETINIT_PHASE_P2P_ADDR;
+  
+  // Initial P2P address guess
+  if (sv->root_chip)
+    {
+      p2p_addr_guess_x = 0;
+      p2p_addr_guess_y = 0;
+    }
+  else
+    {
+      p2p_addr_guess_x = NO_IDEA;
+      p2p_addr_guess_y = NO_IDEA;
+    }
+  
+  // Initial P2P dimension range, initially empty
+  p2p_min_x = 0;
+  p2p_max_x = 0;
+  p2p_min_y = 0;
+  p2p_max_y = 0;
+  
+  // Allocate and clear the P2P addr bitmap
+  p2p_addr_table = sark_xalloc (sv->sys_heap, P2P_ADDR_TABLE_BYTES, 0, 0);
+  sark_word_set (p2p_addr_table, 0, P2P_ADDR_TABLE_BYTES);
+  
+  last_netinit_broadcast = 0;
+}
+
+// Sets up a broadcast MC route by constructing a spanning tree of the  P2P
+// routes constructed routing back to chip used to boot the machine (p2p_root).
 void compute_st (void)
 {
+  // Work out the position of the p2p_root in the P2P routing table.
+  uint word = p2p_root >> P2P_LOG_EPW;
+  uint offset = P2P_BPE * (p2p_root & P2P_EMASK);
+  
   // Definately route here
   uint route = MC_CORE_ROUTE (0);
 
-  // Compile the set of neighbours which route to (0, 0) via this chip and add
+  // Compile the set of neighbours which route to the root via this chip and add
   // them to the route, forming a spanning tree.
   uint timeout = sv->peek_time;
   for (uint link = 0; link < NUM_LINKS; link++)
     {
-      if (!((1 << link) & link_up & link_en))
+      if (!((1 << link) & link_en))
         continue;
       
       // Try to read multiple times if required
       uint attempts_remaining = 2;
-      uint remote_rtr_p2p_0;
+      uint remote_rtr_p2p;
       uint rc;
       do
-        rc = link_read_word ((uint)(rtr_p2p), link, &remote_rtr_p2p_0, timeout);
+        rc = link_read_word ((uint)(rtr_p2p + word), link, &remote_rtr_p2p, timeout);
       while (rc != RC_OK && (--attempts_remaining));
       
       // Flag an error if we could not get a p2p entry from a neighbour
@@ -1090,8 +1140,8 @@ void compute_st (void)
           continue;
         }
       
-      // Check if (0, 0) route from neighbour points at this chip.
-      if ((remote_rtr_p2p_0 & 0x7) == ((link + 3) % 6))
+      // Check if p2p_root route from neighbour points at this chip.
+      if (((remote_rtr_p2p >> offset) & 0x7) == ((link + 3) % 6))
         route |= MC_LINK_ROUTE (link);
     }
 
@@ -1099,16 +1149,75 @@ void compute_st (void)
 }
 
 
-// "proc_100hz" is put on the event queue every 10ms
+//------------------------------------------------------------------------------
 
+// "proc_100hz" is put on the event queue every 10ms
 void proc_100hz (uint a1, uint a2)
 {
-  ticks++;
-  
-  // Flood-fill all board-info (allowing all dead cores, chips and links to get
-  // disabled before P2P tables are configured).
-  if (run_timer (&biff_timer))
-    {
+  // Boot-up related packet sending and boot-phase advancing
+  switch (netinit_phase)
+  {
+    case NETINIT_PHASE_P2P_ADDR:
+      // Periodically re-send the neighbours their P2P address as
+      // neighbouring chips may take some time to come online.
+      p2pc_addr_nn_send(0, 0);
+      
+      // If no new P2P addresses have been broadcast for a while we can assume
+      // all chips are have a valid P2P address so it is now time to determine
+      // the system's dimensions.
+      if (last_netinit_broadcast++ > (uint)sv->netinit_bc_wait)
+        {
+          netinit_phase = NETINIT_PHASE_P2P_DIMS;
+          last_netinit_broadcast = 0;
+          
+          p2p_min_x = (p2p_addr_guess_x < 0) ? p2p_addr_guess_x : 0;
+          p2p_min_y = (p2p_addr_guess_y < 0) ? p2p_addr_guess_y : 0;
+          p2p_max_x = (p2p_addr_guess_x > 0) ? p2p_addr_guess_x : 0;
+          p2p_max_y = (p2p_addr_guess_y > 0) ? p2p_addr_guess_y : 0;
+        }
+      break;
+    
+    case NETINIT_PHASE_P2P_DIMS:
+      // Periodically re-broadcast the local best guess of system dimensions as
+      // a safety net in the event of packet loss.
+      p2pc_dims_nn_send(0, 0);
+      
+      // If no new guesses have been broadcast for a while we can assume the
+      // current guess is accurate so its time to move onto the next phase
+      if (last_netinit_broadcast++ > (uint)sv->netinit_bc_wait)
+        {
+          // If no coordinate discovered, just shut down this chip
+          if (p2p_addr_guess_x == NO_IDEA || p2p_addr_guess_y == NO_IDEA)
+            remap_phys_cores(0x3ffff);
+          
+          // Record the coordinates/dimensions discovered
+          sv->p2p_addr = p2p_addr = ((p2p_addr_guess_x - p2p_min_x) << 8) |
+                                    ((p2p_addr_guess_y - p2p_min_y) << 0);
+          sv->p2p_dims = p2p_dims = ((1 + p2p_max_x - p2p_min_x) << 8) |
+                                    ((1 + p2p_max_y - p2p_min_y) << 0);
+          sv->p2p_root = p2p_root = (-p2p_min_x << 8) | -p2p_min_y;
+          
+          sv->p2p_active += 1;
+          
+          // Reseed uniquely for each chip
+          sark_srand (p2p_addr);
+          
+          // Set our P2P addr in the comms controller
+          cc[CC_SAR] = 0x07000000 + p2p_addr;
+          
+          // Work out the local Ethernet connected chip coordinates
+          compute_eth ();
+          
+          last_netinit_broadcast = 0;
+          netinit_phase = NETINIT_PHASE_BIFF;
+        }
+      break;
+    
+    case NETINIT_PHASE_BIFF:
+      // Send the BIFFs and consider the job done!
+      last_netinit_broadcast = 0;
+      netinit_phase = NETINIT_PHASE_P2P_TABLE;
+      
       if (sv->board_info)
         {
           uint num_info_words = sv->board_info[0];
@@ -1121,24 +1230,69 @@ void proc_100hz (uint a1, uint a2)
               biff_nn_send(*(info_word++));
             }
         }
-      
-      // BIFF is complete when we've sent the BIFF info for the last time
-      biff_complete = biff_timer.repeat == 255;
-    }
-
-  // Send out board coordinate information after the board-info flood-fill
-  // process has been allowed to complete
-
-  if (biff_complete && sv->root_chip && run_timer (&p2pc_timer))
+      break;
+    
+    case NETINIT_PHASE_P2P_TABLE:
+      // Broadcast P2P table generation packets, staggered by chip to reduce
+      // network load.
+      {
+        uint p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
+        if (last_netinit_broadcast == 0)
+          {
+            hop_table[p2p_addr] = 0;
+            rtr_p2p_set (p2p_addr, 7);
+            timer_schedule_proc(p2pb_nn_send, 0, 0,
+                                (sark_rand() % p2pb_period) + 1);
+          }
+        
+        // Once all P2P messages have had ample time to send (and the required
+        // number of repeats have occurred), compute the level
+        // config and signalling broadcast spanning tree.
+        if (last_netinit_broadcast++ >=
+            ((p2pb_period / 10000) + 2))
+          {
+            last_netinit_broadcast = 0;
+            
+            if (sv->p2pb_repeats-- == 0)
+              {
+                netinit_phase = NETINIT_PHASE_DONE;
+                
+                level_config ();
+                compute_st ();
+                sv->p2p_up = p2p_up = 1;
+              }
+          }
+        }
+      break;
+    
+    case NETINIT_PHASE_DONE:
+    default:
+      // Unrecognised or finished state? Do nothing.
+      break;
+  }
+  sv->netinit_phase = netinit_phase;
+  
+  // Light the LED every-so-often to make it clear that this chip is alive
+  if (netinit_phase == NETINIT_PHASE_DONE)
     {
-      // For board test only send on links 0-2
-      uint p2pc_fwd = (sv->bt_flags & 1) ? 0x0700 : 0x3f00;
-
-      // Send P2PC packet
-
-      send_p2pc ((sv->p2p_dims << 16) + sv->p2p_addr, p2pc_fwd);
+      static uint ticks = 0;
+      
+      uint p2p_x = p2p_addr >> 8;
+      uint p2p_y = p2p_addr & 0xFF;
+      uint p2p_dist = p2p_x + p2p_y;
+      uint flash_time = ((p2p_dist * LIVENESS_FLASH_SPACING) % LIVENESS_FLASH_INTERVAL);
+      if (ticks == flash_time)
+        disp_load = ((load < 128) ? 255 : 0) << LOAD_FRAC_BITS;
+      
+      if (++ticks >= LIVENESS_FLASH_INTERVAL)
+        ticks = 0;
     }
-
+  
+  
+  // Sample core sleep states at a random interval to estimate chip load.
+  timer_schedule_proc(update_load, 0, 0,
+                      (sark_rand() % 9999) + 1);
+  
   // Process IPTag timeouts
 
   iptag_timer ();
@@ -1147,50 +1301,7 @@ void proc_100hz (uint a1, uint a2)
 
   if (sv->soft_wdog)
     soft_wdog (sv->soft_wdog);
-
-  // Flip LED0 every now and then
-
-  if (booted && sv->led_period != 0 && ++led_timer.counter >= sv->led_period)
-    {
-      led_timer.counter = 0;
-      sark_led_set (LED_INV(0));	// !! assumes LED_0 always there
-    }
-
-  // Probe external links
-
-  if (run_timer (&probe_timer))
-    {
-      (void) probe_links (0x80 + 0x3f, sv->peek_time);
-    }
     
-  // Send P2PB packet if P2P is up, on the final iteration, compute the
-  // spanning tree and update the level table, sending no more P2PBs
-
-  if (p2p_up && run_timer (&p2pb_timer))
-    {
-      // On all but the last iteration, broadcast P2P coordinates for P2P table
-      // construction
-      if (p2pb_timer.repeat != 255)
-        {
-          hop_table[p2p_addr] = (p2pb_id >> 1) << 24;
-
-          uint flags = 0; //!!
-
-          ff_nn_send ((NN_CMD_P2PB << 24) + (0x3e00 << 8) + p2pb_id,
-                      (p2p_addr << 16) + (flags << 12) + 1,
-                      0x3f00,
-                      0);
-
-          p2pb_id += 2; // Relies on p2pb_id being 8 bits
-        }
-      else
-        {
-          compute_st ();
-          level_config ();
-          booted = 1;
-        }
-    }
-
   // Send LTPC packet (untested!)
 
   if (sv->ltpc_period > 0 && ++ltpc_timer >= sv->ltpc_period)
@@ -1201,6 +1312,56 @@ void proc_100hz (uint a1, uint a2)
 		  sv->tp_timer,
 		  0x3f00,
 		  0);
+    }
+}
+
+//------------------------------------------------------------------------------
+
+// "proc_1khz" is put on the event queue every millisecond and is used to PWM
+// the LEDs
+
+void proc_1khz (uint a1, uint a2)
+{
+  // Display status on LED0 except when booting
+  if (netinit_phase >= NETINIT_PHASE_DONE)
+    {
+      if (sv->led_period == 1)
+        {
+          // sv->led_period == 1: Display current load using PWM
+          
+          // Slowly track the actual load value
+          uint fractional_load = ((uint)load) << LOAD_FRAC_BITS;
+          if (disp_load < fractional_load)
+            disp_load++;
+          else if (disp_load > fractional_load)
+            disp_load--;
+          
+          // PWM generation
+          static uint period = 0;
+          uint duty = disp_load >> (LOAD_FRAC_BITS + PWM_BITS);
+          
+          // If there is *any* load, keep the LED on a little bit.
+          if (disp_load > 0 && duty == 0)
+            duty = 1;
+          
+          if (period >= duty)
+            sark_led_set (LED_OFF(0));
+          else
+            sark_led_set (LED_ON(0));
+          
+          if (++period >= (1 << PWM_BITS))
+            period = 0;
+        }
+      else if (sv->led_period >= 2)
+        {
+          // sv->led_period >= 2: Blink at a given frequency
+          static uint last_toggle = 0;
+          if (last_toggle++ > (sv->led_period * 10))
+            {
+              last_toggle = 0;
+              sark_led_set (LED_INV(0));	// !! assumes LED_0 always there
+            }
+        }
     }
 }
 
@@ -1353,7 +1514,7 @@ void c_main (void)
 
   nn_init ();				// Initialise NN package
 
-  //  link_up = 0x3f; //##
+  netinit_start ();			// Initialise late-stage boot process datastructures
 
   vic_setup ();				// Set VIC, interrupts on
 

@@ -428,10 +428,10 @@ typedef enum signal_e signal;	//!< Typedef for enum signal_e
 #define CMD_LINK_WRITE		18	//!< Write neighbour memory
 #define CMD_AR			19	//!< Application core reset
 
-#define CMD_NNP			20	//!< Send broadcast NN packet
-#define CMD_P2PC		21	//!< Start P2P address configuration
-#define CMD_SIG			22	//!< Send signal to apps
-#define CMD_FFD			23	//!< Send flood-fill data
+#define CMD_NNP  		20	//!< Send broadcast NN packet
+
+#define CMD_SIG  		22	//!< Send signal to apps
+#define CMD_FFD 		23	//!< Send flood-fill data
 
 #define CMD_AS			24	//!< Application core APLX start
 #define CMD_LED			25	//!< Control LEDs
@@ -992,7 +992,7 @@ typedef struct sv
   uchar hw_ver;			//!< 0a Hardware version
   uchar eth_up;			//!< 0b Non-zero if Ethernet active
 
-  uchar link_up;		//!< 0c Bit map of active links
+  uchar p2pb_repeats;		//!< 0c Number of times to send out P2PB packets
   uchar p2p_sql;		//!< 0d P2P sequence length (**)
   uchar clk_div;		//!< 0e Clock divisors for system & router bus
   uchar tp_scale;		//!< 0f Scale for router phase timer
@@ -1012,11 +1012,13 @@ typedef struct sv
   uchar peek_time;		//!< 2a Timeout for link read/write (us)
   uchar led_period;		//!< 2b LED flash period (* 10 ms)
 
-  uint p2pc_timer;		//!< 2c P2PC Timer
+  uchar netinit_bc_wait;	//!< 2c Minimum time after last BC during netinit (*10 ms)
+  uchar netinit_phase;		//!< 2d Phase of boot process
+  ushort p2p_root;		//!< 2e The P2P address from which the system was booted
 
   uint led0;			//!< 30 LED definition words (for up
   uint led1;			//!< 34 to 15 LEDs)
-  uint p2pb_timer;		//!< 38 P2PB Timer
+  uint __PAD2;			//!< 38
   uint random;			//!< 3c Random number seed
 
   uchar root_chip;		//!< 40 Set if we are the root chip
@@ -1024,7 +1026,7 @@ typedef struct sv
   uchar boot_delay;		//!< 42 Delay between boot NN pkts (us)
   uchar soft_wdog;		//!< 43 Soft watchdog control
 
-  uint probe_timer;		//!< 44 Probe timer
+  uint __PAD3;			//!< 44
 
   heap_t *sysram_heap;		//!< 48 Heap in SysRAM
   heap_t *sdram_heap;		//!< 4c Heap in SDRAM
@@ -1043,10 +1045,10 @@ typedef struct sv
 
   mem_block_t shm_root;		//!< 68 Control block for SHM bufs
 
-  uint utmp0;			//!< 70 Three temps...
+  uint utmp0;			//!< 70 Four temps...
   uint utmp1;			//!< 74
   uint utmp2;			//!< 78
-  uint biff_timer;		//!< 7c
+  uint utmp3;			//!< 7c
 
   uchar status_map[20];		//!< 80 Set during SC&MP ROM boot
   uchar p2v_map[20];		//!< 94 Phys to Virt core map

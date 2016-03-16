@@ -95,17 +95,16 @@
 //   Codes >= 7 have various other ways of handling propagation.
 //   Codes 0-3, 8-11 have explicit FwdRty in the packet.
 //   Codes 4-7, 12-15 use stored FwdRty parameters
-// Contrary to the above, NN packets with code NN_CMD_BIFF are limited by ID
-// in a separate ID-space to other commands and their propagation is limited to
-// just the current board.
+// Contrary to the above:
+//   NN_CMD_P2PC are limited to only forward packets containing new information
+//   NN_CMD_BIFF are limited by ID in a separate ID-space to other commands and
+//   their propagation is limited to just the current board.
 
-// Nearest neighbour packet format for non NN_CMD_BIFF commands
+// Format for NN_CMD_P2PC commands
 //   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64)
-//   key[27:24] NN command
-//   key[23:16] Forward (for packets with command bit 2 set)
-//   key[15:8] Retry (for packets with command bit 2 set)
-//   key[7:1] 7-bit packet ID, used for ignoring echos (for packets with
-//            commands < 7)
+//   key[27:24] NN command (== NN_CMD_P2PC)
+//   key[23:4] Unused
+//   key[3:2] Type: P2PC_ADDR, P2PC_NEW or P2PC_DIMS
 //   key[1] Must be 0, differentiator between peek/poke responses and other
 //          NN packets
 // Format for NN_CMD_BIFF commands
@@ -118,6 +117,15 @@
 //            space to other NN packets).
 //   key[1] Must be 0, differentiator between peek/poke responses and other
 //          NN packets
+// Nearest neighbour packet format all other commands
+//   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64)
+//   key[27:24] NN command
+//   key[23:16] Forward (for packets with command bit 2 set)
+//   key[15:8] Retry (for packets with command bit 2 set)
+//   key[7:1] 7-bit packet ID, used for ignoring echos (for packets with
+//            commands < 7)
+//   key[1] Must be 0, differentiator between peek/poke responses and other
+//          NN packets
 
 #define NN_CMD_SIG0		0	// Misc (GTPC, Set FwdRty, LED, etc)
 #define NN_CMD_RTRC 		1	// Router Control Reg
@@ -125,7 +133,7 @@
 #define NN_CMD_SP_3		3	// Spare
 
 #define NN_CMD_SIG1     	4	// Misc (MEM, etc)
-#define NN_CMD_P2PC 		5	// P2P Address setup
+#define NN_CMD_P2PC 		5	// P2P Address setup (Handled specially)
 #define NN_CMD_FFS   		6	// Flood fill start
 #define NN_CMD_FFCS		7       // Flood fill core and region select
 
@@ -138,6 +146,11 @@
 #define NN_CMD_FBD 		13
 #define NN_CMD_FBE 		14
 #define NN_CMD_FFE 		15
+
+// NN_CMD_P2PC sub-command codes
+#define P2PC_ADDR 0  // Your P2P address is...
+#define P2PC_NEW  1  // (Broadcast) I/somebody just discovered/updated my/their P2P address
+#define P2PC_DIMS 2  // (Broadcast) The current best guess of P2P coordinates is...
 
 //------------------------------------------------------------------------------
 
@@ -165,6 +178,33 @@
 #define NN_HOP_MASK 		0x3ff		// !! Allows hops <= 1023
 
 #define HOP_TABLE_SIZE		65536
+
+//------------------------------------------------------------------------------
+
+// Number of microseconds to wait between sending P2PB packets on neighbouring
+// chips
+#define P2PB_OFFSET_USEC 100
+
+//------------------------------------------------------------------------------
+
+// Phases of the network initialisation process, in order
+enum netinit_phase_e
+{
+  // Configure P2P addresses for all chips while waiting for all chips to come
+  // online.
+  NETINIT_PHASE_P2P_ADDR,
+  // Determine the dimensions of the system and kill off all chips outside this
+  // range (ensuring incorrectly guessed dimensions do not result in address
+  // aliasing).
+  NETINIT_PHASE_P2P_DIMS,
+  // Send Board-info flood-fill messages to disable all known iffy links, cores
+  // and chips.
+  NETINIT_PHASE_BIFF,
+  // Construct the P2P routing tables
+  NETINIT_PHASE_P2P_TABLE,
+  // The boot process is complete and the system is ready for use
+  NETINIT_PHASE_DONE = 0xFF,
+};
 
 //------------------------------------------------------------------------------
 
@@ -241,13 +281,13 @@ extern void msg_queue_insert (sdp_msg_t *msg, uint srce_ip);
 
 // scamp-nn.c
 
+extern void compute_eth (void);
 extern void compute_level (uint p2p_addr);
 extern void level_config (void);
 extern void ff_nn_send (uint key, uint data, uint fwd_rty, uint log);
 extern void biff_nn_send (uint data);
 extern void nn_cmd_biff(uint x, uint y, uint data);
 extern void nn_mark (uint key);
-extern uint probe_links (uint mask, uint timeout);
 extern uint link_read_word (uint addr, uint link, uint *buf, uint timeout);
 extern uint link_write_word (uint addr, uint link, uint *buf, uint timeout);
 extern void proc_start_app (uint aplx_addr, uint id_mask);
@@ -281,6 +321,9 @@ extern void reset_ap (uint virt_mask);
 extern uint p2p_send_msg (uint addr, sdp_msg_t *msg);
 
 // scamp-nn.c
+extern void p2pc_addr_nn_send(uint arg1, uint arg2);
+extern void p2pc_dims_nn_send(uint arg1, uint arg2);
+extern void p2pb_nn_send(uint arg1, uint arg2);
 
 // scamp-cmd.c
 
@@ -296,9 +339,8 @@ extern void boot_nn (uint hw_ver);
 extern uint biff_complete;
 extern uint p2p_addr;
 extern uint p2p_dims;
+extern uint p2p_root;
 extern uint p2p_up;
-extern uint max_hops;
-extern uint link_up;
 extern uint link_en;
 extern uint num_cpus;
 extern uchar v2p_map[MAX_CPUS];
@@ -311,6 +353,22 @@ extern uint tag_tto;
 extern uchar v2p_map[MAX_CPUS];
 extern uchar core_app[MAX_CPUS];
 extern uint app_mask[256];
+
+extern volatile enum netinit_phase_e netinit_phase;
+extern volatile uint last_netinit_broadcast;
+extern volatile int p2p_addr_guess_x;
+extern volatile int p2p_addr_guess_y;
+extern volatile int p2p_min_x;
+extern volatile int p2p_max_x;
+extern volatile int p2p_min_y;
+extern volatile int p2p_max_y;
+extern uchar *p2p_addr_table;
+
+// Initial value of p2p_addr_guess_{x,y} when not the root chip
+#define NO_IDEA (-1024)
+
+// Size of p2p_addr_table in bytes.
+#define P2P_ADDR_TABLE_BYTES (512 * 512 / 8)
 
 //------------------------------------------------------------------------------
 
