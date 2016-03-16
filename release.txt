@@ -97,6 +97,12 @@ SARK changes:
   Versioning scheme. If it is not, the core immediately goes into the RTE_VER
   state.
 
+SpiNN1 API changes:
+
+* spin1_callback_on now supports setting of both MC_PACKET_RECEIVED and
+  MCPL_PACKET_RECEIVED or FR_PACKET_RECEIVED and FRPL_PACKET_RECEIVED as FIQ
+  (priority = -1) interrupts.
+
 ybug changes:
 
 * The 'boot' command now uses sensible default values for its two arguments.
