@@ -29,7 +29,7 @@ ltpc_period          v  0x1a  %d    0           # (??)
 unix_time            V  0x1c  %08x  0           # Time in secs since 1970
 tp_timer             V  0x20  %d    0           # (Time phase timer)
 
-cpu_clk              v  0x24  %d    150         # CPU clock frequency (MHz)
+cpu_clk              v  0x24  %d    200         # CPU clock frequency (MHz)
 mem_clk              v  0x26  %d    130         # SDRAM clock frequency (MHz)
 
 forward              C  0x28  %02x  0x3f        # NNP forward parameter
