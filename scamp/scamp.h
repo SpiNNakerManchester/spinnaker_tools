@@ -1,3 +1,13 @@
+//------------------------------------------------------------------------------
+//
+// scamp.h	    Header file for SC&MP
+//
+// Copyright (C)    The University of Manchester - 2009-2013
+//
+// Author           Steve Temple, APT Group, School of Computer Science
+// Email            steven.temple@manchester.ac.uk
+//
+//------------------------------------------------------------------------------
 
 #ifndef SCAMP_H
 #define SCAMP_H

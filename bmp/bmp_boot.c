@@ -25,11 +25,6 @@
 
 //------------------------------------------------------------------------------
 
-
-// Boot version number (* 100)
-
-#define BOOT_VERSION    102
-
 // Linker generated symbols
 
 #define RO_LENGTH 	Image$$BOOT$$RO$$Length
@@ -246,7 +241,7 @@ static const boot_vec_t boot_data __attribute__ ((section (".boot_vec"))) =
   (proc4) 0,   			// 3:
   (proc4) 0,         		// 4:
   BUILD_DATE,  			// 5: Build date
-  BOOT_VERSION,        		// 6: Version
+  BMP_VER_NUM,        		// 6: Version
   0				// 7: Checksum
 };
 

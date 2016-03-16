@@ -17,6 +17,13 @@
 
 //------------------------------------------------------------------------------
 
+#define BMP_VER_STR		"2.0.0"
+#define BMP_VER_NUM		0x00020000
+
+#define BMP_ID_STR		"BC&MP/Spin5-BMP"
+
+//------------------------------------------------------------------------------
+
 #define CCLK			100000000	// CPU clock - 100 MHz
 
 #ifndef NULL
@@ -51,8 +58,6 @@
 #define FPGA_WRITE		1
 
 //------------------------------------------------------------------------------
-
-#define BUF_SIZE		256
 
 #define CMD_VER			0
 #define CMD_RUN			1
@@ -365,7 +370,7 @@ typedef struct
   handler Rsvd_52;
 
   uint32_t build_date;	// 53
-  uint32_t version;
+  uint32_t sw_ver;
 
   uint32_t RO_length;	// 55
   uint32_t RW_length;
@@ -387,7 +392,7 @@ typedef struct
   proc4 Rsvd_3;		// 3
   proc4 Rsvd_4;		// 4
   uint32_t build_date;	// 5
-  uint32_t version;	// 6
+  uint32_t sw_ver;	// 6
   uint32_t checksum;    // 7
 } boot_vec_t;
 
@@ -650,9 +655,5 @@ extern bool data_ok;
 extern iptag_t tag_table[];
 
 extern const uint32_t hw_ver;
-
-extern const char sver_string[];
-extern const char ver_str[];
-extern const uint32_t ver_num;
 
 //------------------------------------------------------------------------------

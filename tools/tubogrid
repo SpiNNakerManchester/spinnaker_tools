@@ -7,7 +7,7 @@
 ## Copyright (C)    The University of Manchester - 2009-2013
 ##
 ## Author           Steve Temple, APT Group, School of Computer Science
-## Email            temples@cs.man.ac.uk
+## Email            steven.temple@manchester.ac.uk
 ##
 ##------------------------------------------------------------------------------
 
@@ -19,9 +19,11 @@ use Tk;
 
 use IO::Socket::INET;
 
+use SpiNN::Util qw/sllt_version/;
 
+
+my $version = sllt_version ();
 my $program = "tubogrid";
-my $version = "0.01";
 
 my $port = 17892;
 my $socket;

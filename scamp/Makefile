@@ -1,6 +1,5 @@
 
 APP := scamp-3
-REL := $(SPINN_STV)
 INC_DIR := ../include
 LIB_DIR := ../lib
 
@@ -21,7 +20,7 @@ SARKLIB := $(LIB_DIR)/sark.a
 
 
 $(APP).boot: $(OBJS) $(SARKLIB) sark.aplx boot_aplx.bin $(APP).sct
-	mkbuild scamp-$(REL) > sark_build.c
+	mkbuild scamp > sark_build.c
 	$(CC) sark_build.c
 	armlink --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
 	  sark_build.o --output $(APP).elf 
@@ -30,22 +29,20 @@ $(APP).boot: $(OBJS) $(SARKLIB) sark.aplx boot_aplx.bin $(APP).sct
 	fromelf $(APP).elf --bin --output $(APP).bin
 	fromelf $(APP).elf -cds --output $(APP).txt
 
-	mkaplx -scamp $(APP).elf > scamp.tab
-	cat scamp.tab boot_aplx.bin boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > scamp-3.aplx
+#	mkaplx -scamp $(APP).elf > scamp.tab
+#	cat scamp.tab boot_aplx.bin boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > $(APP).aplx
 
 	mkaplx -boot $(APP).elf > boot.tab
-	cat boot_aplx.bin boot.tab boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > scamp-3.boot
+	cat boot_aplx.bin boot.tab boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > $(APP).boot
 
 	$(RM) boot.tab scamp.tab scamp-3.bin scamp-3.sv sark_pad.aplx
 	$(RM) sark_build.c sark_build.o
-	$(LS) $(APP).aplx
+#	$(LS) $(APP).aplx
 	$(LS) $(APP).boot
 
-install: $(APP).boot $(APP).aplx
-	$(MV) $(APP).boot ../boot/scamp-$(REL).boot
-	$(MV) $(APP).aplx ../boot/scamp-$(REL).aplx
-	\ln -sf scamp-$(REL).boot ../boot/scamp.boot
-	\ln -sf scamp-$(REL).aplx ../boot/scamp.aplx
+install: $(APP).boot # $(APP).aplx
+	$(MV) $(APP).boot ../boot/scamp.boot
+#	$(MV) $(APP).aplx ../boot/scamp.aplx
 
 boot_aplx.bin: boot_aplx.s spinnaker.s sark.s
 	$(AS) boot_aplx.s
@@ -103,7 +100,7 @@ $(APP).o: $(APP).c spinn_net.h spinn_phy.h $(INC_DIR)/spinnaker.h \
 	$(CC) $(APP).c
 
 tar:
-	tar -C .. -czf /tmp/scamp-$(REL).tgz scamp/spinn_phy.c \
+	tar -C .. -czf /tmp/scamp.tgz scamp/spinn_phy.c \
 	scamp/spinn_srom.c scamp/spinn_net.c scamp/scamp-app.c \
 	scamp/scamp-p2p.c scamp/scamp-nn.c scamp/scamp-cmd.c \
 	scamp/scamp-boot.c scamp/scamp-isr.c scamp/spinn_phy.h \

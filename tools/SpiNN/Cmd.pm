@@ -116,14 +116,31 @@ sub ver
     my ($vc, $pc, $cy, $cx, $size, $ver_num, $time, $ver_str) = 
 	unpack "C4 v2 V! a*", $data;
 
-    chop $ver_str; # remove trailing null
+    if ($ver_num != 0xffff)
+    {
+	chop $ver_str; # remove trailing null
 
-    return [$vc, $pc, $cy, $cx, $size, $ver_num, $time, $ver_str] if $raw;
+	return [$vc, $pc, $cy, $cx, $size, $ver_num, $time, $ver_str] if $raw;
 
-    my ($name, $hw) = split /\//, $ver_str;
+	my ($name, $hw) = split /\//, $ver_str;
 
-    return sprintf "$name %0.2f at $hw:$cx,$cy,$vc (built %s) \[$pc]",
-      $ver_num / 100, scalar localtime $time;
+	return sprintf "$name %0.2f at $hw:$cx,$cy,$vc (built %s) \[$pc]",
+	$ver_num / 100, scalar localtime $time;
+    }
+    else
+    {
+	($ver_str, $ver_num) = unpack "(Z*)2", $ver_str;
+
+	my ($d1, $d2, $d3) = $ver_num =~ /(\d+)\.(\d+)\.(\d+)/;
+	my $vn = ($d1 << 16) + ($d2 << 8) + $d3;
+
+	return [$vc, $pc, $cy, $cx, $size, $vn, $time, $ver_str] if $raw;
+
+	my ($name, $hw) = split /\//, $ver_str;
+
+	return sprintf "$name $ver_num at $hw:$cx,$cy,$vc (built %s) \[$pc]",
+	  scalar localtime $time;
+    }
 }
 
 

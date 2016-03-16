@@ -1,7 +1,6 @@
 .*
 *~
 *.swp
-
 *.a
 *.o
 *.gas
@@ -11,3 +10,7 @@
 *.aplx
 *.boot
 *.txt
+*.dvi
+*.aux
+*.log
+*.pdf

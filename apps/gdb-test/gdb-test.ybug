@@ -1,0 +1,5 @@
+
+# make APP=gdb-test
+# tubotron &
+
+app_load gdb-test.aplx . 1 16

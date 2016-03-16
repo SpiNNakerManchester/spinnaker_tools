@@ -6,7 +6,7 @@
 ##
 ## Author          Steve Temple, APT Group, School of Computer Science
 ##
-## Email           temples@cs.man.ac.uk
+## Email           steven.temple@manchester.ac.uk
 ##
 ##------------------------------------------------------------------------------
 
@@ -38,6 +38,10 @@ API := 1
 # Set to 1 to make Thumb code (0 for ARM)
 
 THUMB := 1
+
+# Set to 1 to include debug info in ELF file
+
+DEBUG := 1
 
 # Prefix for GNU tool binaries
 
@@ -120,6 +124,11 @@ endif
   OC := fromelf
   OD := fromelf -cds --output $(APP).txt
 
+endif
+
+ifeq ($(DEBUG),1)
+  CFLAGS += -g
+  AFLAGS += -g
 endif
 
 ifeq ($(THUMB),1)

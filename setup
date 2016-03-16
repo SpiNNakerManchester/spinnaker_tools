@@ -8,12 +8,19 @@ set -a
 
 #-------------------------------------------------------------------------------
 
+# This file should be sourced, not executed!
+if [ "$0" == "${BASH_SOURCE[0]}" ]; then
+  echo "WARNING: $0 should be sourced, not executed. Try: source $0"
+fi
+
+#-------------------------------------------------------------------------------
+
 # SPINN_DIRS should point to the directory containing subdirs "tools",
 # "lib", "include", etc. It's used by many tools to locate resources.
 # used during the building of SpiNNaker applications. The subdirectory
 # "tools" contains locally developed tools for building applications.
 
-SPINN_DIRS=$PWD
+SPINN_DIRS="$(readlink -e "$(dirname "${BASH_SOURCE[0]}")")"
 
 #-------------------------------------------------------------------------------
 
@@ -22,12 +29,6 @@ SPINN_DIRS=$PWD
 # should always contain at least the "boot" directory of $SPINN_DIRS
 
 SPINN_PATH=$SPINN_DIRS/boot
-
-#-------------------------------------------------------------------------------
-
-# SPINN_STV is the version number of the low-level software tools
-
-SPINN_STV=134
 
 #-------------------------------------------------------------------------------
 
@@ -61,7 +62,7 @@ LM_LICENSE_FILE=PORT@SERVER.cs.man.ac.uk:$LM_LICENSE_FILE
 
 # *** EDIT HERE ***
 
-GNUTOOLS=/home/amulinks/spinnaker/tools/arm-2013.05
+GNUTOOLS=/local/temples/gcc-arm-none-eabi-4_9-2015q3
 
 GNUBIN=$GNUTOOLS/bin
 
@@ -73,4 +74,3 @@ PATH=$GNUBIN:$ARMBIN:$PATH
 
 #-------------------------------------------------------------------------------
 
-# The End

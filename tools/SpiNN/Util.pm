@@ -19,7 +19,7 @@ use Exporter;
 @ISA = qw/Exporter/;
 
 @EXPORT = qw/find_path read_path read_file hex_dump parse_cores parse_region
-             parse_apps parse_bits/;
+             parse_apps parse_bits sllt_version/;
 
 
 sub parse_apps
@@ -145,6 +145,29 @@ sub parse_cores
     my ($mask) = @_;
 
     return parse_bits ($mask, 1, 17);
+}
+
+
+sub sllt_version
+{
+    my $version = "[unknown]";
+    return $version unless defined $ENV{SPINN_DIRS};
+
+    my $vf = "$ENV{SPINN_DIRS}/include/version.h";
+    return $version unless -r $vf;
+
+    open my $vh, "<", $vf or die;
+
+    while (<$vh>)
+    {
+	next unless /^#define\s+SLLT_VER_STR\s+(\S+)/;
+	$version = $1;
+	$version =~ s/"//g;
+	last;
+    }
+
+    close $vh;
+    return $version;
 }
 
 
