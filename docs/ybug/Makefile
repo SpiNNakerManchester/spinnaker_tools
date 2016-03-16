@@ -1,5 +1,5 @@
 
-ybug.pdf: ybug.tex
+ybug.pdf: ybug.tex appnote.tex
 	pdflatex $<
 
 clean:
