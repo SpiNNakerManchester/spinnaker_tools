@@ -4,6 +4,121 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 2.0.0 - Semantic versioning, robust boot, CMD_INFO, more efficient
+app-load and more. (Breaking change)
+
+Packaging/build changes:
+
+* The version numbers of SC&MP, SARK, SpiNN1 API, ybug, bmpc and friends will
+  use 'Semantic Versioning' going forward. In brief, versions are now
+  of the form major.minor.patch. A change in major version indicates a
+  non-backward compatible change. A change in minor version indicates a new
+  (but backward-compatible) feature release. A patch change indicates minor or
+  bug fix style changes. See semver.org for full details.
+
+* Applications check their compatibility with the running version of SC&MP
+  before starting, producing an RTE_VER error if an incompatible software
+  version is discovered.
+
+* C++ is now supported for writing SpiNNaker applications. An example C++
+  application and Makefile is included in apps/hello_cpp.
+
+SCP command changes:
+
+* Any SCP commands addressed to chip (255, 255) will be routed to the chip used
+  to boot the machine. During machine boot, this is the only P2P address which
+  should be used to communicate with the machine.
+
+* Any SCP command which takes system-wide action (e.g. signalling) should be
+  sent to the chip used to boot the system which may not be chip (0, 0).
+  Commands should instead be addressed to chip (255, 255) which are routed to
+  the chip used to boot the machine.
+
+* The CMD_VER command format has changed to accommodate the new version
+  numbering scheme:
+    - The top 16 bits of arg2 of SCP response now contains 0xFFFF.
+    - The software name string in the SCP data field is now followed by a
+      second string defining the software version. Both strings are terminated
+      by a null byte.
+
+* The P2P address returned by CMD_VER in the top 16 bits of arg1 in SCP
+  response will be 0xFFFF during machine boot but, once booted, will contain
+  the P2P address of the responding chip. (NB: only applies when communicating
+  with monitor processors.)
+
+* The flood-fill mechanism used when loading applications now supports the
+  sending of multiple regions which will be ORed together enabling more
+  efficient loading of irregularly shaped regions of a machine.
+
+* A new SCP command, CMD_INFO, has been added which compactly returns a summary
+  of the state of a chip. Includes: the states of all cores, list of working
+  links, sizes of the largest free SDRAM, SysRAM and MC routing entry blocks.
+
+
+SC&MP changes:
+
+* Links, cores or whole chips may be blacklisted and automatically mapped out
+  on boot based on configuration data stored in Serial-ROM on SpiNN-5 boards.
+
+* The MC-packet-based signalling and the signal 'count' (and similar)
+  mechanisms can now function on machines with arbitrary dead chips and links.
+
+* A new, more robust, boot mechanism has been introduced.
+  - The dimensions of the machine no longer need to be known when booting.
+  - Any Ethernet-connected board may be used to boot the machine.
+  - Chip (0, 0) need not exist, e.g. in strangely-shaped machines produced by
+    future versions of 'spalloc'.
+  - The boot process no longer relies on hand-tuned delay parameters and should
+    function reliably and as-fast-as-possible on any size of machine.
+  - It is possible to determine when a machine has completely booted by polling
+    with a CMD_VER command addressed to (255, 255) and waiting for the P2P
+    address to resolve to something other than (255, 255).
+
+* LED0 now shows (more) useful information by default:
+  - During boot, all LEDs are turned off.
+  - Once the whole machine has completely booted, a sweeping pattern is
+    displayed indicating that the system is alive.
+  - LEDs indicate approximate load: brighter means heavier load. Note that if
+    any application core is in use on a chip, the LED will be dimly lit, even
+    if that core is sleeping.
+  - Rapid flashing indicates that a core has encountered a runtime-error.
+  - To allow application control of the LEDs, the sv->led_period variable may
+    be used as in previous versions of SC&MP.
+
+SARK changes:
+
+* Added sark_tag_ptr which looks up the addresses of tagged blocks of SDRAM.
+
+* Added rtr_alloc_max which gives the largest contiguous block of free MC
+  routing table entries.
+
+* Before a SARK/SpiNN1 API based application runs, it checks that the version
+  of SC&MP the machine is booted with is compatible, according to the Semantic
+  Versioning scheme. If it is not, the core immediately goes into the RTE_VER
+  state.
+
+ybug changes:
+
+* The 'boot' command now uses sensible default values for its two arguments.
+  For most users, typing 'boot' should be sufficient for any size of machine.
+* The 'sp' command given without arguments now switches to the 'root-chip',
+  i.e. the one used to boot the machine.
+
+bmpc changes:
+
+* A new 'board_info' command and example 'board.info' file are provided which
+  allow cores, links and whole chips to be blacklisted on a SpiNN-5 board.
+
+Bug-fixes:
+
+* phys_cpu is now correctly set for the monitor in the VCPU struct.
+
+* The stop signal now reliably frees resources allocated on chips with no cores
+  loaded.
+
+
+#-------------------------------------------------------------------------------
+
 Version 1.34 - Added fixed-route packet handling
 
 Routines to deal with fixed route packets added to SARK and spin1_api.
