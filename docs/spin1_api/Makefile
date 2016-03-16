@@ -1,5 +1,5 @@
 
-spin1_api.pdf: spin1_api.tex appnote.tex threads.eps
+spin1_api.pdf: spin1_api.tex threads.eps
 	latex spin1_api.tex
 	dvipdf spin1_api.dvi
 
