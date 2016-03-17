@@ -14,42 +14,48 @@
 # a single C source file into an APLX file which can be loaded onto
 # SpiNNaker. It will link with either a 'bare' SARK library or a
 # combined SARK/API library.
-
-# The options below can be overridden from the command line or via
-# environment variables. For example, to compile and link "my_example.c"
-# with the ARM tools and generate ARM (as opposed to Thumb) code
+#
+# For a trivial application with a single 'my_example.c' file, the two-line
+# makefile as follows is sufficient:
+#
+#    APP := my_app_name
+#    include $(SPINN_DIRS)/make/app.make
+#
+# The options below can be overridden in an including makefile, from the
+# command line or via environment variables. For example, to compile and link
+# "my_example.c" with the ARM tools and generate ARM (as opposed to Thumb) code
 #
 # make APP=my_example GNU=0 THUMB=0
 
 # Name of app (derived from C source - eg sark.c)
 
-APP := sark
+APP ?= sark
 
 # Configuration options
 
 # Set to 1 for GNU tools, 0 for ARM
 
-GNU := 1
+GNU ?= 1
 
 # Set to 1 if using SARK/API (0 for SARK)
 
-API := 1
+API ?= 1
 
 # Set to 1 to make Thumb code (0 for ARM)
 
-THUMB := 1
+THUMB ?= 1
 
 # Set to 1 to include debug info in ELF file
 
-DEBUG := 1
+DEBUG ?= 1
 
 # Prefix for GNU tool binaries
 
-GP  := arm-none-eabi
+GP  ?= arm-none-eabi
 
 # Set to 1 if making a library (advanced!)
 
-LIB := 0
+LIB ?= 0
 
 # If SPINN_DIRS is defined, use that to find include and lib directories
 # otherwise look two levels up
@@ -148,7 +154,7 @@ LS  := \ls -l
 # List of objects making up the application. If there are other files
 # in the application, add their object file names to this variable.
 
-OBJECTS := $(APP).o
+OBJECTS ?= $(APP).o
 
 
 # Primary target is an APLX file - built from the ELF

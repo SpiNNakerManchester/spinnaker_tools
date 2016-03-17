@@ -1,5 +1,4 @@
-
-# make APP=random
+# make
 # tubogrid &
 
 app_load random.aplx all 1-16 16

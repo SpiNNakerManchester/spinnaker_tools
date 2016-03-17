@@ -1,5 +1,4 @@
-
-# make APP=interrupt THUMB=0
+# make
 # tubotron &
 
 app_load interrupt.aplx . 7 16

@@ -1,5 +1,4 @@
-
-# make APP=ring
+# make
 # tubogrid &
 
 app_load ring.aplx @0,0 1-16 16
