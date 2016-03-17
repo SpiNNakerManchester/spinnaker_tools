@@ -1039,7 +1039,6 @@ void proc_1hz (uint a1, uint a2)
       uint s = phy_read (PHY_STATUS);
       sv->eth_up = (s & 4) >> 2;
     }
-
 }
 
 
@@ -1260,6 +1259,12 @@ void proc_100hz (uint a1, uint a2)
                 level_config ();
                 compute_st ();
                 sv->p2p_up = p2p_up = 1;
+                
+                if (srom.flags & SRF_ETH)
+                  {
+                    uint s = phy_read (PHY_STATUS);
+                    sv->eth_up = (s & 4) >> 2;
+                  }
               }
           }
         }
