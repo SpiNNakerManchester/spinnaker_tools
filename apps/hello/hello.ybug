@@ -1,5 +1,4 @@
-
-# make APP=hello
+# make
 # tubotron &
 
 app_load hello.aplx . 1 16

@@ -1,1 +1,2 @@
-../../make/app.make
+APP := simple
+include $(SPINN_DIRS)/make/app.make

@@ -1,5 +1,4 @@
-
-# make APP=life
+# make
 # tubogrid &
 
 app_load life.aplx all 1-16 16

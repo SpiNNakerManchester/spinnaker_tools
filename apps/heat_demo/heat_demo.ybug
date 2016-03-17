@@ -1,5 +1,4 @@
-
-# make APP=heat_demo
+# make
 # tubotron &
 # visualiser &
 

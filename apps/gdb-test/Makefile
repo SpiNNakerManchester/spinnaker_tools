@@ -1,1 +1,2 @@
-../../make/app.make
+APP := gdb-test
+include $(SPINN_DIRS)/make/app.make

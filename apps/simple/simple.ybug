@@ -1,5 +1,4 @@
-
-# make APP=simple
+# make
 # tubotron &
 
 app_load simple.aplx all 1 16

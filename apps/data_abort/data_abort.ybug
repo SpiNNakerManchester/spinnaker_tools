@@ -1,4 +1,4 @@
-# make APP=data_abort
+# make
 # tubotron &
 
 app_load data_abort.aplx . 1 16
