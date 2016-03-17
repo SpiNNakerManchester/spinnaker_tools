@@ -15,7 +15,7 @@ eth_addr             v  0x08  %04x  0           # P2P address of nearest Etherne
 hw_ver               C  0x0a  %d    0           # Hardware version
 eth_up               C  0x0b  %d    0           # Set to 1 if Ethernet up
 
-p2pb_repeats         C  0x0c  %d    2           # Number of times to send out P2PB packets
+p2pb_repeats         C  0x0c  %d    4           # Number of times to send out P2PB packets
 p2p_sql              C  0x0d  %d    4           # Logarithm of P2P sequence length
 clk_div              C  0x0e  %02x  0x33        # Clock divisors for Sys & Rtr clocks
 tp_scale             C  0x0f  %d    0           # (Time phase scale)
@@ -29,7 +29,7 @@ ltpc_period          v  0x1a  %d    0           # (??)
 unix_time            V  0x1c  %08x  0           # Time in secs since 1970
 tp_timer             V  0x20  %d    0           # (Time phase timer)
 
-cpu_clk              v  0x24  %d    150         # CPU clock frequency (MHz)
+cpu_clk              v  0x24  %d    200         # CPU clock frequency (MHz)
 mem_clk              v  0x26  %d    130         # SDRAM clock frequency (MHz)
 
 forward              C  0x28  %02x  0x3f        # NNP forward parameter
