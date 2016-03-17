@@ -41,9 +41,9 @@
 // ------------------------------------------------------------------------
 // core map choice
 // ------------------------------------------------------------------------
-//#define MAP_2x2_on_4       TRUE
+#define MAP_2x2_on_4       TRUE		// Spin3 board
 //#define MAP_5x4_on_48      TRUE
-#define MAP_7x7_on_48      TRUE
+//#define MAP_8x8_on_48      TRUE	// Spin5 board
 //#define MAP_12x12_on_144   TRUE
 //#define MAP_24x12_on_288   TRUE
 //#define MAP_24x24_on_576   TRUE
@@ -183,7 +183,7 @@ uint board_loc;
   };
 #endif
 
-#ifdef MAP_7x7_on_48
+#ifdef MAP_8x8_on_48
   #define NUMBER_OF_XCHIPS 8
   #define NUMBER_OF_YCHIPS 8
   uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
@@ -828,6 +828,15 @@ void routing_table_init ()
 		  ((loc_route & 0x02222) << 6 | off_route) // route
 		  );
     }
+    else
+    {
+      // send only to other chips
+      rtr_mc_set (e+3,                         	// entry
+		  TEMP_SOUTH_KEY,               // key
+		  0xffffffff,                   // mask
+		  off_route                     // route
+		  );
+    }
 
     // western border temperature
     // NOTE: currently temperatures never travel west!
@@ -838,6 +847,15 @@ void routing_table_init ()
 		  TEMP_WEST_KEY,                // key
 		  0xffffffff,                   // mask
 		  ((loc_route & 0x0001e) << 6 | off_route) // route
+		  );
+    }
+    else
+    {
+      // send only to other chips
+      rtr_mc_set (e+4,                         	// entry
+		  TEMP_WEST_KEY,                // key
+		  0xffffffff,                   // mask
+		  off_route                     // route
 		  );
     }
 
