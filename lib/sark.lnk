@@ -40,6 +40,7 @@ SECTIONS
           KEEP (*(.init_array*))
           __init_array_end = .;
           * (.rodata*);
+          * (.fini*);
     } > ITCM
 
     . = ALIGN (4);
