@@ -3,12 +3,10 @@
 ##
 ## SpiNN/Cmd.pm	    A Perl package for communicating with SpiNNaker systems
 ##
-## Copyright (C)    The University of Manchester - 2012-2013
+## Copyright (C)    The University of Manchester - 2012-2016
 ##
 ## Author           Steve Temple, APT Group, School of Computer Science
-## Email            temples@cs.man.ac.uk
-##
-## Status	    Experimental software - liable to change at any time !!
+## Email            steven.temple@manchester.ac.uk
 ##
 ##------------------------------------------------------------------------------
 
@@ -53,6 +51,8 @@ my $CMD_SROM = 27;
 my $CMD_FLASH_COPY = 49;
 my $CMD_FLASH_ERASE = 50;
 my $CMD_FLASH_WRITE = 51;
+my $CMD_BMP_SF = 53;
+my $CMD_BMP_EE = 54;
 my $CMD_RESET = 55;
 my $CMD_POWER = 57;
 
@@ -390,6 +390,65 @@ sub srom_erase
 		    arg1 => 0xc8, # len=0, bits=8, sent WREN, wait
 		    arg2 => 0xc7000000, # cmd=c7, addr=0
 		    %opts);
+}
+
+
+#------------------------------------------------------------------------------
+
+
+sub sf_read
+{
+    my ($self, $base, $length, %opts) = @_;
+
+    my $data = "";
+    my $buf_size = $self->{buf_size};
+
+    while ($length > 0)
+    {
+	my $l = ($length > $buf_size) ? $buf_size : $length;
+
+	$data .= $self->scp_cmd ($CMD_BMP_SF,
+				 arg1 => $base,
+				 arg2 => $l,
+				 arg3 => 0,
+				 %opts);
+
+	$length -= $l;
+	$base += $l;
+    }
+
+    return $data;
+}
+
+
+#------------------------------------------------------------------------------
+
+
+# Note that SF will only auto-erase on 4K boundaries
+
+sub sf_write
+{
+    my ($self, $base, $length, $data, %opts) = @_;
+
+    my $offset = 0;
+    my $buf_size = $self->{buf_size};
+
+    while ($length > 0)
+    {
+	my $l = ($length > $buf_size) ? $buf_size : $length;
+	my $buf = substr $data, $offset, $l;
+
+	$self->scp_cmd ($CMD_BMP_SF,
+			arg1 => $base,
+			arg2 => $l,
+			arg3 => 1,
+			data => $buf,
+			%opts);
+
+	$length -= $l;
+	$base += $l;
+	$offset += $l;
+    }
 }
 
 
