@@ -374,7 +374,8 @@ uint cmd_rtr (sdp_msg_t *msg)
 //                  performed on demand.
 //   * Bits 24-14 - The number of routing table entries in the
 //                  largest free block.
-//   * Bits 31:25 - Undefined
+//   * Bit 25     - 1 if Ethernet is up, 0 otherwise.
+//   * Bits 31:26 - Undefined
 // * arg2: The size (in bytes) of the largest free block in the SDRAM heap
 // * arg3: The size (in bytes) of the largest free block in the SysRAM heap
 // * The data payload which follows contains an 18-byte block which gives the
@@ -388,7 +389,10 @@ uint cmd_info (sdp_msg_t *msg)
 
   // Get number of free multicast routing table entries
   msg->arg1 |= rtr_alloc_max() << 14;
-  
+
+  // Is this chip's Ethernet connection up?
+  msg->arg1 |= (!!(sv->eth_up)) << 25;
+
   // Get working link bitmap
   uint timeout = sv->peek_time;
   uint local_chip_id = sc[SC_CHIP_ID];
