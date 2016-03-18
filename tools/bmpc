@@ -4,10 +4,10 @@
 ##
 ## bmpc		    An application for controlling BMPs
 ##
-## Copyright (C)    The University of Manchester - 2012-2014
+## Copyright (C)    The University of Manchester - 2012-2016
 ##
 ## Author           Steve Temple, APT Group, School of Computer Science
-## Email            temples@cs.man.ac.uk
+## Email            steven.temple@manchester.ac.uk
 ##
 ##------------------------------------------------------------------------------
 
@@ -655,16 +655,13 @@ sub cmd_sf_read
 
     eval
     {
-	my $data = $bmp->scp_cmd ($CMD_BMP_SF,
-				  arg1 => $addr,
-				  arg2 => 256,
-				  arg3 => 0);
+	my $data = $bmp->sf_read ($addr, 256);
 
 	print hex_dump ($data, addr => $addr);
     };
 
 
-    return '';
+    return $@;
 }
 
 
@@ -690,11 +687,7 @@ sub cmd_sf_write
 
 	    last if $len <= 0;
 
-	    $bmp->scp_cmd ($CMD_BMP_SF,
-			   arg1 => $addr,
-			   arg2 => $len,
-			   arg3 => 1,
-			   data => $buf);
+	    $bmp->sf_write ($addr, $len, $buf);
 
 	    $addr += $len;
 	    $count += $len;
@@ -708,7 +701,7 @@ sub cmd_sf_write
 
     print "\rSent $count bytes\n";
 
-    return 0;
+    return $@;
 }
 
 
@@ -875,11 +868,32 @@ sub cmd_board_info
     {
 	my $buffer = board_info ($file);
 
+	print "# Updating BMP Flash\n";
+
 	my $data = read_flash_data ();
+
 	substr $data, 0xe00, 256, chr (255) x 256;
 	substr $data, 0xe00, length ($buffer), $buffer;
 
-	die "Flash update failed!\n" unless update_flash_data ($data);
+	die "BMP Flash update failed!\n" unless update_flash_data ($data);
+
+	print "# Updating Serial Flash\n";
+
+	# Read first 256 bytes of SF
+
+	my $read = $bmp->sf_read (0, 256);
+
+	# Append data to be added and write
+
+	my $write = $read . substr $data, 0xe00, 256;
+
+	$bmp->sf_write (0, 512, $write);
+
+	# Read back to check
+
+	$read = $bmp->sf_read (0, 512);
+
+	die "Serial Flash update failed!\n" unless $read eq $write;
     };
 
     return $@;
