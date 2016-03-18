@@ -251,12 +251,16 @@ void sdp_packet_callback(uint msg, uint port)
 	      // The antialiasing factor
 	    case 13: antialiasing = var; break;
 	      // The width and height of the grid of chips to try to recruit
-	    case 14: xChips = var; break;
-	    case 15: yChips = var; break;
+	      // Now worked out locally
+	    case 14: break; //xChips = var; break;
+	    case 15: break; //yChips = var; break;
 	      // The number of cores on each chip to try to recruit
 	    case 16: cores = var; break;
             }
         }
+
+      xChips = (sv->p2p_dims >> 8) & 0xFF;
+      yChips = (sv->p2p_dims >> 0) & 0xFF;
 
       traceMessage.data[14*4+2] = 0;
       traceMessage.data[14*4+3] = 0;
