@@ -1,6 +1,6 @@
-# Boot the board (may need to adjust the config file name)
+# Boot the board
 
-boot scamp.boot spin3.conf
+boot
 
 # Go to root chip and set up IPTag on port 17894
 

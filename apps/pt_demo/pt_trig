@@ -14,10 +14,10 @@ use SpiNN::SCP;
 # Process args
 
 die "usage: pt_trig <host> <image height> <antialiasing> " .
-    "<chip_x> <chip_y> <cores>\n" unless $#ARGV == 5;
+    "<cores>\n" unless $#ARGV == 3;
 
 
-my ($host, $frameHeight, $antialiasing, $xChips, $yChips, $cores) = @ARGV;
+my ($host, $frameHeight, $antialiasing, $cores) = @ARGV;
 
 
 # Open connection to SpiNNaker
@@ -58,7 +58,7 @@ my $data = pack "V*",
     $upx, $upy, $upz,
     $frameWidth, $frameHeight,
     int ($horizontalFieldOfView * 65536), int ($verticalFieldOfView * 65536),
-    $antialiasing, $xChips, $yChips, $cores;
+    $antialiasing, 0, 0, $cores;
 
 # Send to Port 1 on Core 1 of Chip (0, 0)
 

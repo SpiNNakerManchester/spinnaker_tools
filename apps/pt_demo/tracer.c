@@ -1281,24 +1281,22 @@ void load_mc_routing_tables()
 
   uint destination;    
 
-  // Routing table entry for sending pixel packets to 0, 0, 1
-
-  if (x>0 && y>0)
-    destination = (1<<4); // south-west
-  else if (x>0 && y==0)
-    destination = (1<<3); // west
-  else if (x==0 && y>0)
-    destination = (1 << 5); // south
-  else
-    destination = (1<<7); // core 1
-
   uint e = rtr_alloc (1);
   if (e == 0)
     rt_error (RTE_ABORT);
 
-  rtr_mc_set (e, proc001Key, multicastControlMask, destination);
+  // Routing table entry for sending pixel packets to core 1 of the root chip
+  // We basically use the same route used by the P2P tables to route back to to
+  // (0, 0) since this route will avoid dead links and chips etc.
+  uint route;
+  uint p2p_route = rtr_p2p[0] & P2P_BMASK;
+  switch (p2p_route) {
+    case 6:  rt_error (RTE_ABORT); return;
+    case 7:  route = MC_CORE_ROUTE(1); break;
+    default: route = MC_LINK_ROUTE(p2p_route); break;
+  }
+  rtr_mc_set (e, proc001Key, multicastControlMask, route);
 }
-
 
 void timer_callback (uint time, uint none)
 {
