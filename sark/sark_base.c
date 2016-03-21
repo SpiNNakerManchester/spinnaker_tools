@@ -363,7 +363,7 @@ void sark_shmsg_free (sdp_msg_t *msg)
 }
 
 
-#ifdef __cplusplus
+#ifdef __GNUC__
 extern void (*__init_array_start)();
 extern void (*__init_array_end)();
 void sark_call_cpp_constructors (void)
@@ -374,7 +374,7 @@ void sark_call_cpp_constructors (void)
     (*p)();
   }
 }
-#else  // Not C++
+#else  // Not GCC: No C++ support
 void sark_call_cpp_constructors (void)
 {
   // Do nothing
