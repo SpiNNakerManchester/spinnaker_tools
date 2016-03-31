@@ -11,6 +11,7 @@
 uchar leadAp;                    	// lead appl. core has special functions
 
 static volatile uint run;           	// controls simulation start/stop
+static volatile uint paused;            // indicates when paused
 static volatile uint resume_sync;       // controls re-synchronisation
 uint ticks;              		// number of elapsed timer periods
 static uint timer_tick;  	        // timer tick period
@@ -358,7 +359,7 @@ void configure_vic (uint enable_timer)
 
   vic[VIC_SELECT] = fiq_select;
 
-  if (!enable_timer) 
+  if (!enable_timer)
   {
     int_select = int_select & ~(1 << TIMER1_INT);
   }
@@ -374,41 +375,43 @@ void configure_vic (uint enable_timer)
 *******/
 
 
-void spin1_pause() 
+void spin1_pause()
 {
   vic[VIC_DISABLE] = (1 << TIMER1_INT);
   configure_timer1(timer_tick);
   sark_cpu_state (CPU_STATE_PAUSE);
+  paused = 1;
 }
 
 
-void resume() 
+void resume()
 {
-  if (resume_sync == 1) 
+  if (resume_sync == 1)
   {
     resume_sync = 0;
     event.wait ^= 1;
   }
+  paused = 0;
   sark_cpu_state (CPU_STATE_RUN);
   vic[VIC_ENABLE] = (1 << TIMER1_INT);
   tc[T1_CONTROL] = 0xe2;
 }
 
 
-void spin1_resume(sync_bool sync) 
+void spin1_resume(sync_bool sync)
 {
-  if (sync == SYNC_NOWAIT) 
+  if (sync == SYNC_NOWAIT)
   {
     resume();
-  } 
-  else 
+  }
+  else
   {
     resume_sync = 1;
-    if (event.wait) 
+    if (event.wait)
     {
       sark_cpu_state(CPU_STATE_SYNC1);
-    } 
-    else 
+    }
+    else
     {
       sark_cpu_state(CPU_STATE_SYNC0);
     }
@@ -416,11 +419,11 @@ void spin1_resume(sync_bool sync)
 }
 
 
-uint resume_wait() 
+uint resume_wait()
 {
   uint bit = 1 << sark.virt_cpu;
 
-  if (event.wait) 
+  if (event.wait)
   {
     return (~sc[SC_FLAG] & bit);    // Wait 1
   }
@@ -507,12 +510,14 @@ void dispatch()
           }
 
           // execute callback
-          cback (arg0, arg1);
+          if (cback != callback[TIMER_TICK].cback || !paused) {
+              cback (arg0, arg1);
+          }
 
           // update queue size
           if (cback == callback[TIMER_TICK].cback)
           {
-            if (diagnostics.number_timer_tic_in_queue > 0) 
+            if (diagnostics.number_timer_tic_in_queue > 0)
             {
               diagnostics.number_timer_tic_in_queue -= 1;
             }
@@ -1043,7 +1048,7 @@ void report_warns ()
 *******/
 
 
-void spin1_rte(rte_code code) 
+void spin1_rte(rte_code code)
 {
 
   // Don't actually shutdown, just set the CPU into an RTE code and
@@ -1058,11 +1063,11 @@ void spin1_rte(rte_code code)
 
 uint start (sync_bool sync, uint paused)
 {
-  if (paused) 
+  if (paused)
   {
     sark_cpu_state (CPU_STATE_PAUSE);
-  } 
-  else 
+  }
+  else
   {
     sark_cpu_state (CPU_STATE_RUN);
   }
@@ -1146,12 +1151,12 @@ uint start (sync_bool sync, uint paused)
 * SOURCE
 */
 
-uint spin1_start (sync_bool sync) 
+uint spin1_start (sync_bool sync)
 {
   return start(sync, 0);
 }
 
-uint spin1_start_paused() 
+uint spin1_start_paused()
 {
   return start(SYNC_NOWAIT, 1);
 }
