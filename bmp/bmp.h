@@ -3,7 +3,7 @@
 //
 // bmp.h	    Low-level hardware interface code for BMP LPC1768
 //
-// Copyright (C)    The University of Manchester - 2012-2015
+// Copyright (C)    The University of Manchester - 2012-2016
 //
 // Author           Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
@@ -17,8 +17,8 @@
 
 //------------------------------------------------------------------------------
 
-#define BMP_VER_STR		"2.0.0"
-#define BMP_VER_NUM		0x00020000
+#define BMP_VER_STR		"2.0.1"
+#define BMP_VER_NUM		0x00020001
 
 #define BMP_ID_STR		"BC&MP/Spin5-BMP"
 
@@ -222,6 +222,7 @@ typedef struct sdp_msg		// SDP message (=292 bytes)
 #define FL_BMP_IP	1
 #define FL_SPIN_IP 	2
 #define FL_FPGA      	3
+#define FL_XREG      	4
 
 typedef struct	// 128 bytes
 {

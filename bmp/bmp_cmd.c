@@ -3,7 +3,7 @@
 //
 // bmp_cmd.c	    Command handling for BC&MP
 //
-// Copyright (C)    The University of Manchester - 2012-2015
+// Copyright (C)    The University of Manchester - 2012-2016
 //
 // Author           Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
@@ -41,6 +41,35 @@ static void fpga_boot (uint32_t base, uint32_t len, uint32_t mask)
 //------------------------------------------------------------------------------
 
 
+static void fpga_xreg (uint32_t count, uint8_t *data)
+{
+  uint32_t *words = (uint32_t *) data;
+
+  ssp0_pins (1);
+
+  for (uint32_t i = 0; i < count; i++)
+    {
+      uint32_t addr = words[2 * i];
+      uint32_t *data = words + 2 * i + 1;
+      uint32_t fpga = addr & 3;
+
+      fpga = (fpga == 3) ? 7 : 1 << fpga;
+
+      for (uint32_t f = 0; f < 3; f++)
+	{
+	  if (fpga & (1 << f))
+	    fpga_word (addr, f, data, FPGA_WRITE);
+	}
+
+    }
+
+  ssp0_pins (0);
+}
+
+
+//------------------------------------------------------------------------------
+
+
 static void sf_scan (void)
 {
   if (! data_ok)
@@ -55,6 +84,10 @@ static void sf_scan (void)
       if (e->type == FL_FPGA && e->length != 0 && (e->flags & 0x8000) != 0)
 	{
 	  fpga_boot (e->base, e->length, e->flags);
+	}
+      else if (e->type == FL_XREG && e->size > 0)
+	{
+	  fpga_xreg (e->size, e->data);
 	}
     }
 

@@ -26,7 +26,7 @@ use SpiNN::Util qw/read_file hex_dump parse_bits/;
 #-------------------------------------------------------------------------------
 
 
-my $version = "2.0.0";
+my $version = "2.0.1";
 
 my $bmp;		# SpiNN::Cmd object for BMP
 my $cli;		# SpiNN::CLI object
@@ -170,6 +170,82 @@ sub cmd_xslot
 
 	substr $data, 256 + 128 * $slot, 4, pack "C2 v", $type, $size, $flags;
 	$data .= pack "V", ~crc32 ($data);	# Append CRC
+
+	die "Flash update failed!\n" unless update_flash_data ($data);
+    };
+
+    return $@;
+}
+
+
+
+sub cmd_xreg
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+
+    return "bad args" unless $ac % 3 == 0;
+    return "too many args" if $ac > 12 * 3;
+
+    my @fpga_map = ("0  ", "1  ", "2  ", "0-2");
+    my @fpga_ok = (4, 0, 1, 4, 2, 4, 4, 3); # 4 is bad!
+
+    if ($ac == 0)
+    {
+	my $data;
+	eval { $data = $bmp->read (0x1000, 2048); };
+	return $@ if $@;
+
+	for (my $i = 0; $i < 16; $i++)
+	{
+	    my ($type, $size, $flags, $time, $crc, $base, $length,
+		$p0, $p1, $p2, @data) =
+		    unpack "C2 v V7 V*", substr $data, 128*$i, 128;
+
+	    next unless $type == 4;
+
+	    for (my $i = 0; $i < $size; $i++)
+	    {
+		my ($addr, $data) = ($data[2*$i], $data[2*$i+1]);
+		printf "%s %08x %08x\n", $fpga_map[$addr & 3], $addr & ~3, $data;
+	    }
+	}
+
+	return "";
+    }
+
+    my @data;
+
+    for (my $i = 0; $i < $ac; $i += 3)
+    {
+	my $fpga = parse_bits ($cli->{arg_v}->[$i], 0, 2);
+	return "bad FPGA list" unless $fpga;
+	$fpga = $fpga_ok[$fpga];
+	return "bad FPGA list" if $fpga > 3;
+
+	my $addr = $cli->{arg_x}->[$i+1];
+	return "bad address" if $addr & 3;
+	$addr |= $fpga;
+
+	my $data = $cli->{arg_x}->[$i+2];
+
+	push @data, $addr, $data;
+    }
+
+    for (my $i = $ac; $i < 12 * 3; $i += 3)
+    {
+	push @data, 0xffffffff, 0xffffffff;
+    }
+
+    my $buf = pack "C2 v V7 V24", 4, $ac / 3, 0, 0, 0, 0, 0, 0, 0, 0, @data;
+
+    print "Updating Flash Data sector\n";
+
+    eval
+    {
+	my $data = read_flash_data ();		# Read existing data
+
+	substr $data, 6 * 128, 128, $buf;	# Update xreg data
 
 	die "Flash update failed!\n" unless update_flash_data ($data);
     };
@@ -1531,7 +1607,7 @@ sub cmd_fstat
 
     eval
     {
-	my $d = $bmp->link_read ($fpga, 0x40000, 16, unpack => "V*");
+	my $d = $bmp->link_read ($fpga, 0x40000, 32, unpack => "V*");
 
 	printf "%-8s %10s\n", "Register", "Global";
 	printf "%-8s %10s\n", "--------", "------";
@@ -1539,6 +1615,9 @@ sub cmd_fstat
 	printf "%-8s 0b%08b\n", "FLAG", $d->[1];
 	printf "%-8s 0x%08x\n", "PKEY", $d->[2];
 	printf "%-8s 0x%08x\n", "PMSK", $d->[3];
+	printf "%-8s 0x%08x\n", "SCRM", $d->[4];
+	printf "%-8s 0x%08x\n", "SLEN", $d->[5];
+	printf "%-8s 0x%08x\n", "LEDO", $d->[6];
 	printf "\n";
     };
 
@@ -1872,6 +1951,9 @@ my $bmp_cmds =
     flash_erase => [\&cmd_flash_erase,
 		 '<from.X> <to.X>',
 		 'erase BMP flash memory'],
+    xreg =>     [\&cmd_xreg,
+		 '[<fpga_list> <addr.X> <data.X>]*',
+		 'set FPGA register preloads'],
     xload =>    [\&cmd_xload,
 		 '<file.F> [<chipmask.D>]',
 		 'load FPGAs from file'],
