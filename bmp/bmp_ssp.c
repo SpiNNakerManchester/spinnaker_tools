@@ -130,7 +130,8 @@ void fpga_word (uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
       data |= LPC_SSP1->DR;
     }
 
-  *buf = data;		// NB corrupts "buf" if writing
+  if (dir == FPGA_READ)
+    *buf = data;
 
   delay (30);
 

@@ -85,13 +85,23 @@ static void sf_scan (void)
 	{
 	  fpga_boot (e->base, e->length, e->flags);
 	}
-      else if (e->type == FL_XREG && e->size > 0)
+    }
+
+  // Reset line high, wait a while then process "xreg" blocks
+
+  fpga_reset (1);			
+
+  delay_ms (5);
+
+  for (uint32_t i = 0; i < FL_DIR_SIZE; i++)
+    {
+      fl_dir_t *e = fl_dir + i;
+
+      if (e->type == FL_XREG && e->size > 0)
 	{
 	  fpga_xreg (e->size, e->data);
 	}
     }
-
-  fpga_reset (1);			// Reset line high
 }
 
 
