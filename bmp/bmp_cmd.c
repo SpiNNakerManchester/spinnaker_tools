@@ -45,8 +45,6 @@ static void fpga_xreg (uint32_t count, uint8_t *data)
 {
   uint32_t *words = (uint32_t *) data;
 
-  ssp0_pins (1);
-
   for (uint32_t i = 0; i < count; i++)
     {
       uint32_t addr = words[2 * i];
@@ -62,8 +60,6 @@ static void fpga_xreg (uint32_t count, uint8_t *data)
 	}
 
     }
-
-  ssp0_pins (0);
 }
 
 
@@ -90,6 +86,8 @@ static void sf_scan (void)
   // Reset line high, wait a while then process "xreg" blocks
 
   fpga_reset (1);			
+
+  ssp1_slow ();
 
   delay_ms (5);
 
