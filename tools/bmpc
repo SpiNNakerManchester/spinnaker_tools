@@ -20,13 +20,11 @@ use String::CRC32;
 
 use SpiNN::CLI;
 use SpiNN::Cmd;
-use SpiNN::Util qw/read_file hex_dump parse_bits/;
+use SpiNN::Util qw/read_file hex_dump parse_bits sllt_version/;
 
 
 #-------------------------------------------------------------------------------
 
-
-my $version = "2.0.1";
 
 my $bmp;		# SpiNN::Cmd object for BMP
 my $cli;		# SpiNN::CLI object
@@ -1905,7 +1903,7 @@ sub cmd_cmd
 
 sub cmd_version
 {
-    print "# bmpc - version $version\n";
+    print "# bmpc - version ", sllt_version (), "\n";
 
     return "";
 }
@@ -2088,7 +2086,8 @@ sub process_args
 
 	if ($arg eq "-version")
 	{
-	    die "bmpc - v$version\n";
+	    cmd_version ();
+	    exit 0;
 	}
 	elsif ($arg eq "-debug")
 	{

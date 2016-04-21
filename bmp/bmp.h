@@ -15,10 +15,12 @@
 
 #include <stdbool.h>
 
+#include <version.h>
+
 //------------------------------------------------------------------------------
 
-#define BMP_VER_STR		"2.0.1"
-#define BMP_VER_NUM		0x00020001
+#define BMP_VER_STR		SLLT_VER_STR
+#define BMP_VER_NUM		SLLT_VER_NUM
 
 #define BMP_ID_STR		"BC&MP/Spin5-BMP"
 

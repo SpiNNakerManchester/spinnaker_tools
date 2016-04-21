@@ -15,7 +15,7 @@ SOURCES  = bmp_init.c bmp_can.c bmp_net.c bmp_cmd.c bmp_event.c \
 BOOT_SCT = bmp_boot.sct
 MAIN_SCT = bmp_main.sct
 
-CFLAGS = -c --c99 --cpu=Cortex-M3
+CFLAGS = -c --c99 --cpu=Cortex-M3 -I ../include
 
 BOOT_LFLAGS = --entry=boot_proc --scatter=$(BOOT_SCT)
 MAIN_LFLAGS_L = --entry=c_main --scatter=$(MAIN_SCT) --predefine="-DBASE=0x10000"
