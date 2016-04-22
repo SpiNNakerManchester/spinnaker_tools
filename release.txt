@@ -4,6 +4,13 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 2.0.1 - Fix C++ constructor calling.
+
+Fixed a bug in 2.0.0 which prevented C++ constructors being called on
+application startup. NB: C++ only supported under GCC.
+
+#-------------------------------------------------------------------------------
+
 Version 2.0.0 - Semantic versioning, robust boot, CMD_INFO, more efficient
 app-load and more. (Breaking change)
 
