@@ -1625,9 +1625,9 @@ sub cmd_fstat
 		  SFRM TFRM DFRM RFRM EMPT FULL CFCL CFCR IDSO IDSI
                   HAND RECO/;
 
-    my @fmt = qw/0x%08x %10d %10d %10d %10d %10d %10d %10d %10d %10d %10d
-		 %10d %10d %10d %10d 0b%08b 0b%08b 0b%08b 0b%08b 0x%04x 0x%04x
-                 0b%08b %10d/;
+    my @fmt = qw/0x%08x %10u %10u %10u %10u %10u %10u %10u %10u %10u %10u
+		 %10u %10u %10u %10u 0b%08b 0b%08b 0b%08b 0b%08b 0x%04x 0x%04x
+                 0b%08b %10u/;
 
     my @names = qw/East South Periph-0 SouthWest West Periph-1 North
 	           NorthEast Periph-2/;
@@ -1721,7 +1721,7 @@ sub cmd_iptag
 		{
 		    $ip = join ".", unpack "C*", $ip;
 
-		    printf "%3d  %-15s  %5d  %-4s  %04x  %10d\n",
+		    printf "%3d  %-15s  %5d  %-4s  %04x  %10u\n",
 		    $i, $ip, $port, $timeout / 100, $flags, $count;
 		}
 	    }

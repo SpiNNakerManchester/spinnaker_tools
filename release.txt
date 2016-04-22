@@ -4,6 +4,13 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 2.0.2 - Implement FPGA "xreg" facility
+
+This allows a set of writes to FPGA control registers to be performed
+after bitfile loading. Specialised facility not needed by most people!
+
+#-------------------------------------------------------------------------------
+
 Version 2.0.1 - Fix C++ constructor calling.
 
 Fixed a bug in 2.0.0 which prevented C++ constructors being called on

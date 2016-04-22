@@ -29,9 +29,7 @@ RM = /bin/rm -f
 MV = /bin/mv
 
 
-main: bmp_main.elf
-
-boot: bmp_boot.elf
+all: bmp_main.elf bmp_boot.elf
 
 bmp_boot.elf: $(BOOT_OBJ) $(BOOT_SCT) bmp_boot.c
 	perl -pe "s/BUILD_DATE/time/e" bmp_boot.c > bmp_tmp.c
