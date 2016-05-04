@@ -1,0 +1,8 @@
+# make
+# tubogrid &
+
+app_load random.aplx all 1-16 16
+sleep 5
+iobuf 1
+sleep 15
+app_stop 16

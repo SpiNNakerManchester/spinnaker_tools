@@ -36,7 +36,7 @@ INT_HANDLER sark_fiq_han (void)
 INT_HANDLER txpkt_int_han ()
 {
   event.pkt_remove = (event.pkt_remove + 1) & (event.pkt_size - 1);
-  
+
   pkt_t *pkt = event.pkt_queue + event.pkt_remove;
 
   if (pkt->ctrl & 1)
@@ -74,7 +74,7 @@ INT_HANDLER user_irq (void)
 {
   vic[VIC_SOFT_CLR] = 1 << SOFTWARE_INT;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_USER].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_USER].proc;
 
   event.user = 0;
   proc (event.arg1, event.arg2);
@@ -87,7 +87,7 @@ INT_HANDLER user_fiq (void)
 {
   vic[VIC_SOFT_CLR] = 1 << SOFTWARE_INT;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_USER].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_USER].proc;
 
   event.user = 0;
   proc (event.arg1, event.arg2);
@@ -98,7 +98,7 @@ INT_HANDLER user_queue (void)
 {
   vic[VIC_SOFT_CLR] = 1 << SOFTWARE_INT;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_USER].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_USER].proc;
   event_priority priority = (event_priority) sark_vec->event[EVENT_USER].priority;
 
   event.user = 0;
@@ -128,7 +128,7 @@ INT_HANDLER sdp_irq (void)
   sdp_msg_t *msg = event.msg;
   uint port = msg->dest_port >> PORT_SHIFT;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_SDP].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_SDP].proc;
 
   proc ((uint) msg, port);
 
@@ -143,7 +143,7 @@ INT_HANDLER sdp_fiq (void)
   sdp_msg_t *msg = event.msg;
   uint port = msg->dest_port >> PORT_SHIFT;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_SDP].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_SDP].proc;
 
   proc ((uint) msg, port);
 }
@@ -156,7 +156,7 @@ INT_HANDLER sdp_queue (void)
   sdp_msg_t *msg = event.msg;
   uint port = msg->dest_port >> PORT_SHIFT;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_SDP].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_SDP].proc;
   event_priority priority = (event_priority) sark_vec->event[EVENT_SDP].priority;
 
   event_queue_proc (proc, (uint) msg, port, priority);
@@ -184,7 +184,7 @@ INT_HANDLER rxpkt_irq (void)
   uint data = cc[CC_RXDATA];
   uint key = cc[CC_RXKEY];
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_RXPKT].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_RXPKT].proc;
 
   proc (key, data);
 
@@ -197,7 +197,7 @@ INT_HANDLER rxpkt_fiq (void)
   uint data = cc[CC_RXDATA];
   uint key = cc[CC_RXKEY];
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_RXPKT].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_RXPKT].proc;
 
   proc (key, data);
 }
@@ -208,7 +208,7 @@ INT_HANDLER rxpkt_queue (void)
   uint data = cc[CC_RXDATA];
   uint key = cc[CC_RXKEY];
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_RXPKT].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_RXPKT].proc;
   event_priority priority = (event_priority) sark_vec->event[EVENT_RXPKT].priority;
 
   event_queue_proc (proc, key, data, priority);
@@ -239,7 +239,7 @@ INT_HANDLER timer_irq (void)
 
   event.ticks++;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_TIMER].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_TIMER].proc;
 
   proc (event.ticks, 0);
 
@@ -254,7 +254,7 @@ INT_HANDLER timer_fiq (void)
 
   event.ticks++;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_TIMER].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_TIMER].proc;
 
   proc (event.ticks, 0);
 }
@@ -267,7 +267,7 @@ INT_HANDLER timer_queue (void)
 
   event.ticks++;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_TIMER].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_TIMER].proc;
   event_priority priority = (event_priority) sark_vec->event[EVENT_TIMER].priority;
 
   event_queue_proc (proc, event.ticks, 0, priority);
@@ -294,7 +294,7 @@ INT_HANDLER sig_irq (void)
 {
   vic[VIC_SOFT_CLR] = 1 << SARK_SIG_INT;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_SIG].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_SIG].proc;
 
   proc (event.signal, 0);
 
@@ -306,7 +306,7 @@ INT_HANDLER sig_fiq (void)
 {
   vic[VIC_SOFT_CLR] = 1 << SARK_SIG_INT;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_SIG].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_SIG].proc;
 
   proc (event.signal, 0);
 }
@@ -316,7 +316,7 @@ INT_HANDLER sig_queue (void)
 {
   vic[VIC_SOFT_CLR] = 1 << SARK_SIG_INT;
 
-  event_proc proc = (event_proc) sark_vec->event[EVENT_SIG].proc;
+  event_proc proc = (event_proc) (uint) sark_vec->event[EVENT_SIG].proc;
   event_priority priority = (event_priority) sark_vec->event[EVENT_SIG].priority;
 
   event_queue_proc (proc, event.signal, 0, priority);

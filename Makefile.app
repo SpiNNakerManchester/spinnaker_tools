@@ -15,9 +15,6 @@ LIBRARIES = -lspin1_api
 include $(SPINN_DIRS)/Makefile.common
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx
-
-$(APP).o: $(APP).c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h $(SPINN_INC_DIR)/spin1_api.h
-	$(CC) $(CFLAGS) $(APP).c
 	
 clean:
 	$(RM) $(OBJECTS) $(BUILD_DIR)$(APP).elf $(BUILD_DIR)$(APP).txt $(APP_OUTPUT_DIR)$(APP).aplx

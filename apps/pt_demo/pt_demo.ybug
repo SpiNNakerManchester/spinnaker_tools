@@ -1,0 +1,17 @@
+# Boot the board
+
+boot
+
+# Go to root chip and set up IPTag on port 17894
+
+sp root
+iptag 1 set . 17894
+
+# Load the "tracer" to all chips on cores 1-16
+
+app_load tracer.aplx all 1-16 16
+
+# Wait a while then load the "aggregator" to core 1 on (0, 0)
+
+sleep 0.1
+app_load aggregator.aplx . 1 17

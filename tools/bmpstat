@@ -1,0 +1,525 @@
+#!/usr/bin/perl
+
+##------------------------------------------------------------------------------
+##
+## 
+##
+## Copyright (C)    The University of Manchester - 2013
+##
+## Author           Steve Temple, APT Group, School of Computer Science
+## Email            temples@cs.man.ac.uk
+##
+##------------------------------------------------------------------------------
+
+package Status;
+
+use strict;
+use warnings;
+
+use Tk;
+
+use SpiNN::Cmd;
+
+my $version = "2.0.0";
+
+my $bmp_target;		# BMP host name
+my $bmp;		# BMP handle
+my $bmp_port  = 17893;	# UDP port for BMP
+
+my $debug = 0;
+
+my $can_status;
+my @board_stat;
+
+my ($main, $label1, $label2, $frame, $title, $canvas);
+my ($board_menu, $mode_menu);
+
+my $mode = "T_int";
+my ($g_all, $g_temp, $g_text, $g_fan, $g_vpwr, $g_v33, $g_v18, $g_v12);
+
+my $CMD_BMP_INFO = 48;
+
+my $size = 24;
+my $width = 40;
+
+my $lm = 50;	# Left margin
+my $rm = 10;	# Right margin
+my $bm = 30;	# Bottom margin
+my $tm = 24;	# Top margin
+
+my $cw = $lm + $rm + $size * $width;
+my $ch = 400;
+
+my $yb = $ch - $bm;	# Y base (X=0)
+my $yh = $yb - $tm;	# Y height
+
+
+my $scale = {"T_int" => [10, 80, 10, 2, 0, \&mode, "T_int", "TN", "TS"],
+	     "T_ext" => [10, 80, 10, 2, 150, \&mode, "T_ext", "T0", "T1"],
+	     "Fan" =>  [500, 4500, 500, 2, 300, \&mode, "Fan", "Fan0", "Fan1"],
+	     "VPWR" => [12, "V", "10%", 1, 450, \&mode, "VPWR", "VPWR"],
+	     "V33" =>  [3.3, "V", "5%", 1, 550, \&mode, "V33", "V33"],
+	     "V18" =>  [1.8, "V", "5%", 1, 650, \&mode, "V18", "V18"],
+	     "V12" =>  [1.24, "V", "5%", 3, 750, \&mode, "V12", "V12a",
+			"V12b", "V12c"]};
+
+sub quit
+{
+    $main->destroy;
+}
+
+
+sub new_grid
+{
+    my ($class, $min, $max, $step, $size, $xb, $proc, $arg, @xn) = @_;
+
+    my $self = {};
+    $self->{x_base} = $xb;
+    $self->{size} = $size;
+    $self->{text} = [];
+    my $pc = 0;
+    my $sub = "";
+
+    if ($step =~ /^(\d+)%$/)
+    {
+	$sub = $max;
+	$pc = $1 / 100;
+
+	$step = $min * $pc;
+	$self->{max} = $max = $min * (1 + 3 * $pc);
+	$min *= 1 - 3 * $pc;
+	$self->{min} = $min;
+    }
+    else
+    {
+	$self->{min} = $min;
+	$self->{max} = $max;
+    }
+
+    my $cw = $lm + $rm + $size * $width;
+
+    my $c = $canvas->createRectangle ($xb+$lm, $yb+1, $xb+$cw-$rm, $tm,
+				      -fill => "gray70", -outline => "black",
+				      -width => 2);
+
+    $canvas->bind ($c, "<1>", [$proc, $arg]);
+
+    my @pc = qw/3 2 1 0 1 2 3/;
+    my $i = 0;
+
+    for (my $y = $min; $y <= $max + 0.001; $y += $step)
+    {
+	my $yy = $yb - ($y - $min) * ($yh / ($max - $min));
+	my $text = (!$pc || $i == 3) ? $y.$sub : ($pc[$i] * 100 * $pc) . "%";
+	my $font = (!$pc || $i == 3) ? 'Helvetica 11 bold' : 'Helvetica 10 bold';
+	$i++;
+
+	$canvas->createText ($xb+$lm-5, $yy, -text => $text, -anchor => "e",
+			     -font => $font);
+	$canvas->createLine ($xb+$lm, $yy, $xb+$cw-$rm, $yy);
+    }
+
+    for (my $i = 0; $i < $size; $i++)
+    {
+	my $x = $lm + $width / 2 + $width * $i;
+	my $y = $yb + 5;
+	my $t = $canvas->createText ($xb+$x, $y, -text => $xn[$i],
+				     -anchor => "n",
+				     -font => 'Helvetica 11 bold');
+	$self->{text}->[$i] = $t;
+    }
+
+    return bless $self, $class;
+}
+
+
+sub bar
+{
+    my ($self, $id, $value, %opts) = @_;
+
+    my $type = $opts{type} || "";
+    my $colour = $opts{colour} || "blue";
+
+    $id = $self->{size} - $id - 1;
+
+    my $x = $self->{x_base} + $lm + $width / 2 + $id * $width;
+
+    $value = ($value - $self->{min}) / ($self->{max} - $self->{min});
+
+    my $yt = $tm + $yh * (1 - $value);
+
+    # Assumes width = 40!
+
+#    my ($a, $b) = (18, 6);
+    my ($a, $b, $c) = (14, 5, 8);
+
+    my ($xl, $xr) = ($x-$a, $x+$a);
+    ($xl, $xr) = ($x-$a, $x-$b) if $type eq "3l";
+    ($xl, $xr) = ($x-$b, $x+$b) if $type eq "3c";
+    ($xl, $xr) = ($x+$b, $x+$a) if $type eq "3r";
+    ($xl, $xr) = ($x-$a, $x) if $type eq "2l";
+    ($xl, $xr) = ($x, $x+$a) if $type eq "2r";
+    ($xl, $xr) = ($x-$c, $x+$c) if $type eq "thin";
+
+    if ($value >= 0)
+    {
+	$canvas->createRectangle ($xl, $yb, $xr, $yt,
+				  -outline => $colour, -fill => $colour,
+				  -width => 0,
+				  -tag => "bar");
+    }
+    else
+    {
+	my $d = ($xr - $xl) * 0.75;
+	$canvas->createPolygon ($xl, $yb-$d, $xr, $yb-$d, $x, $yb,
+				-fill => "red", -width => 0, -tag => "bar");
+    }
+}
+
+
+sub colour
+{
+    my ($self, $id, $colour) = @_;
+    $id = $self->{size} - $id - 1;
+    $canvas->itemconfigure ($self->{text}->[$id], -fill => $colour)
+}
+
+
+sub compute_board
+{
+    my $a = shift;
+    my $e = $a->XEvent;
+    my ($x, $y) = ($e->x, $e->y);
+
+    $x = $canvas->canvasx ($x);
+    $y = $canvas->canvasy ($y);
+
+    $x = int (($x - $lm) / $width);
+    $x = $size - $x - 1;
+
+    mode (0, "$x") if $can_status->[$x];
+}
+
+
+sub mode
+{
+#    warn "Mode @_\n";
+
+    $mode = $_[1];
+    $canvas->delete ("all");
+
+    if ($mode =~ /^\d+$/)
+    {
+	$label1->configure (-text => "Board $mode");
+
+	$g_temp = Status->new_grid (@{$scale->{T_int}});
+	$g_text = Status->new_grid (@{$scale->{T_ext}});
+	$g_fan = Status->new_grid (@{$scale->{Fan}});
+	$g_vpwr = Status->new_grid (@{$scale->{VPWR}});
+	$g_v33 = Status->new_grid (@{$scale->{V33}});
+	$g_v18 = Status->new_grid (@{$scale->{V18}});
+	$g_v12 = Status->new_grid (@{$scale->{V12}});
+    }
+    else
+    {
+	$label1->configure (-text => "Mode $mode");
+
+	my @scale = @{$scale->{$mode}};
+	splice @scale, 7, $scale[3];
+	$scale[3] = $size;
+	$scale[4] = 0;
+	$scale[5] = \&compute_board;
+	$scale[6] = 0;
+	push @scale, $size-$_ for (1..$size);
+
+	$g_all = Status->new_grid (@scale);
+    }
+
+    display ()
+}
+
+
+sub DESTROY
+{
+    my $self = shift;
+#    warn "DESTROY $self\n";
+}
+
+
+sub main_window
+{
+    my ($cw, $ch) = @_;
+
+    $main = MainWindow->new (-title => "BMP Status $version");
+
+    $frame = $main->Frame (-border => 2, -relief => "groove");
+
+    $canvas = $main->Canvas (-width => $cw, -height => $ch);
+
+    my $board_but = $frame->Menubutton (-text => "Board", -border => 2,
+					-relief => "raised", -width => 6);
+
+    my $mode_but = $frame->Menubutton (-text => "Mode", -border => 2,
+				       -relief => "raised", -width => 6);
+
+    my $quit_but = $frame->Button (-text => "Quit", -command => \&quit);
+
+    $label1 = $frame->Label (-fg => "blue", -width => 24,
+			     -anchor => "w", -font => "Helvetica 14 bold");
+    $label2 = $frame->Label (-fg => "blue",
+			     -anchor => "e", -font => "Helvetica 14 bold");
+ 
+ 
+    $board_but->pack (-side => "left");
+    $mode_but->pack  (-side => "left");
+
+    $label1->pack (-side => "left", -fill => "x", -padx => 30);
+    $quit_but->pack  (-side => "right");
+    $label2->pack (-side => "right", -fill => "x", -padx => 30);
+
+    $board_menu = $board_but->Menu (-tearoff => 0);
+    $mode_menu  = $mode_but->Menu  (-tearoff => 0);
+
+    for (my $i = 0; $i < $size; $i++)
+    {
+	$board_menu->command (-label => "Board $i",
+			      -command => [\&mode, 0, $i]);
+    }
+
+    $mode_menu->command (-label => "Int Temp",
+			 -command => [\&mode, 0, "T_int"]);
+
+    $mode_menu->command (-label => "Ext Temp",
+			 -command => [\&mode, 0, "T_ext"]);
+
+    $mode_menu->command (-label => "Fan Speed",
+			 -command => [\&mode, 0, "Fan"]);
+
+    $mode_menu->command (-label => "V PWR",
+			 -command => [\&mode, 0, "VPWR"]);
+
+    $mode_menu->command (-label => "V 3.3",
+			 -command => [\&mode, 0, "V33"]);
+
+    $mode_menu->command (-label => "V 1.8",
+			 -command => [\&mode, 0, "V18"]);
+
+    $mode_menu->command (-label => "V 1.2",
+			 -command => [\&mode, 0, "V12"]);
+
+    $board_but->configure (-menu => $board_menu);
+    $mode_but->configure  (-menu => $mode_menu);
+
+    $frame->pack (-fill => "x", -side => "top");
+    $canvas->pack (-fill => "x", -side => "top");
+
+    mode (0, "T_int");
+
+    query_status ();
+}
+
+
+
+sub display
+{
+    $canvas->delete ("bar");
+
+    if ($mode =~ /^(\d+)$/)
+    {
+	my $data = [unpack "s<16v4V2", $board_stat[$1]];
+
+#       my @adc_n = ("", "V12c", "V12b", "V12a", "V18", "", "V33", "VPWR");
+	my @adc_t = (2400, 2400, 2400, 2400, 2400, 3020, 3600, 14400);
+
+	my ($v_vpwr, $v_v33, $v_v18, $v_v12a, $v_v12b, $v_v12c);
+	my ($t_north, $t_south, $sense_0, $sense_1, $fan_0, $fan_1);
+
+	for (my $i = 0; $i < 8; $i++)
+	{
+	    $data->[$i] = $data->[$i] * 2500 / 4096;
+	    $data->[$i] = $data->[$i] * $adc_t[$i] / 2400000;
+	}
+
+	$v_vpwr = $data->[7];
+	$v_v33 = $data->[6];
+	$v_v18 = $data->[4];
+	$v_v12a = $data->[3];
+	$v_v12b = $data->[2];
+	$v_v12c = $data->[1];
+
+	$t_north = $data->[8];
+	$t_south = $data->[9];
+	$sense_0 = $data->[12];
+	$sense_1 = $data->[13];
+	$fan_0 = $data->[16];
+	$fan_1 = $data->[17];
+
+	$g_temp->bar (0, $t_south / 256) unless $t_south == 0x8000;
+	$g_temp->bar (1, $t_north / 256) unless $t_north == 0x8000;
+	
+	$g_text->bar (0, $sense_0 / 256) unless $sense_0 == 0x8000;
+	$g_text->bar (1, $sense_1 / 256) unless $sense_1 == 0x8000;
+
+	$g_fan->bar (0, $fan_1) unless $fan_1 == 0xffff;
+	$g_fan->bar (1, $fan_0) unless $fan_0 == 0xffff;
+
+	$g_vpwr->bar (0, $v_vpwr);
+	$g_v33->bar (0, $v_v33);
+	$g_v18->bar (0, $v_v18);
+	$g_v12->bar (0, $v_v12a);
+	$g_v12->bar (1, $v_v12b);
+	$g_v12->bar (2, $v_v12c);
+    }
+    else
+    {
+	for (my $id = 0; $id < $size; $id++)
+	{
+	    $g_all->colour ($id, ($can_status->[$id]) ? "red" : "black");
+	    next unless $can_status->[$id];
+
+	    my $data = [unpack "s<16v4V2", $board_stat[$id]];
+
+	    if ($mode eq "T_int")
+	    {
+		my $t_north = $data->[8];
+		my $t_south = $data->[9];
+
+		$g_all->bar ($id, $t_north / 256, type => "2l", colour => "red")
+		    unless $t_north == 0x8000;
+		$g_all->bar ($id, $t_south / 256, type => "2r", colour => "blue")
+		    unless $t_south == 0x8000;
+	    }
+	    elsif ($mode eq "Fan")
+	    {
+		my $fan_0 = $data->[16];
+		my $fan_1 = $data->[17];
+
+		$g_all->bar ($id, $fan_0, type => "2l", colour => "red")
+		    unless $fan_0 == 0xffff;
+		$g_all->bar ($id, $fan_1, type => "2r", colour => "blue")
+		    unless $fan_1 == 0xffff;
+	    }
+	    elsif ($mode eq "T_ext")
+	    {
+		my $et_0 = $data->[12];
+		my $et_1 = $data->[13];
+
+		$g_all->bar ($id, $et_0 / 256, type => "2l", colour => "red")
+		    unless $et_0 == 0x8000;
+		$g_all->bar ($id, $et_1 / 256, type => "2r", colour => "blue")
+		    unless $et_1 == 0x8000;
+	    }
+	    else
+	    {
+		my @adc_t = (2400, 2400, 2400, 2400, 2400, 3020, 3600, 14400);
+		my ($v_vpwr, $v_v33, $v_v18, $v_v12a, $v_v12b, $v_v12c);
+
+		for (my $i = 0; $i < 8; $i++)
+		{
+		    $data->[$i] = $data->[$i] * 2500 / 4096;
+		    $data->[$i] = $data->[$i] * $adc_t[$i] / 2400000;
+		}
+
+		$v_vpwr = $data->[7];
+		$v_v33 = $data->[6];
+		$v_v18 = $data->[4];
+		$v_v12a = $data->[3];
+		$v_v12b = $data->[2];
+		$v_v12c = $data->[1];
+
+		$g_all->bar ($id, $v_vpwr) if $mode eq "VPWR";
+		$g_all->bar ($id, $v_v33) if $mode eq "V33";
+		$g_all->bar ($id, $v_v18) if $mode eq "V18";
+
+		if ($mode eq "V12")
+		{
+		    $g_all->bar ($id, $v_v12a, type => "3l", colour => "red");
+		    $g_all->bar ($id, $v_v12b, type => "3c", colour => "gold");
+		    $g_all->bar ($id, $v_v12c, type => "3r", colour => "blue");
+		}
+	    }
+	}
+    }
+}
+
+
+sub query_status
+{
+    $main->after (1000, \&query_status);
+
+    my $t = localtime time;
+    $label2->configure (-text => $t);
+
+    eval
+    {
+	$can_status = $bmp->scp_cmd ($CMD_BMP_INFO,
+				     arg1 => 2,
+				     addr => [0],
+				     unpack => "C*");
+
+	for (my $i = 0; $i < $size; $i++)
+	{
+	    next unless $can_status->[$i];
+	    $board_stat[$i] = $bmp->scp_cmd ($CMD_BMP_INFO,
+					     arg1 => 3,
+					     addr => [$i]);
+	    select (undef, undef, undef, 0.01);
+	}
+    };
+
+    warn $@ if $@;
+
+    display ();
+}
+
+
+sub usage
+{
+    warn "usage: status <options> <hostname>\n";
+    warn "  -version                 - print version number\n";
+    die  "  -debug <num.D>           - set debug variable\n";
+}
+
+
+sub process_args
+{
+    while ($#ARGV >= 0)
+    {
+	my $arg = shift @ARGV;
+
+	if ($arg eq "-version")
+	{
+	    die "status - v$version\n";
+	}
+	elsif ($arg eq "-debug")
+	{
+	    $debug = shift @ARGV;
+	    die "debug not specified\n" unless defined $debug &&
+		$debug =~ /^\d+$/;
+	}
+	elsif ($arg !~ /^-/)
+	{
+	    $bmp_target = $arg;
+	}
+	else
+	{
+	    usage ();
+	}
+    }
+
+    die "target not specified\n" unless defined $bmp_target;
+
+    $bmp = SpiNN::Cmd->new (target => $bmp_target,
+			    port => $bmp_port,
+			    timeout => 1.0,
+			    debug => $debug);
+
+    die "Failed to open \"$bmp_target\"\n" unless $bmp;
+}
+
+
+process_args ();
+
+main_window ($lm + $rm + $size * $width, $ch);
+
+Tk::MainLoop ();

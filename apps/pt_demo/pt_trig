@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+
+# Simple program to send an SCP trigger message to the Path Tracer
+#
+# Steve Temple - 3 Apr 2014
+#
+# Adapted from a python script originally written by Andrew Webb.
+
+use strict;
+use warnings;
+
+use SpiNN::SCP;
+
+# Process args
+
+die "usage: pt_trig <host> <image height> <antialiasing> " .
+    "<cores>\n" unless $#ARGV == 3;
+
+
+my ($host, $frameHeight, $antialiasing, $cores) = @ARGV;
+
+
+# Open connection to SpiNNaker
+
+my $spin = SpiNN::SCP->new (target => $host, debug => 0);
+die unless $spin;
+
+
+# Set up viewing position parameters, etc.
+
+my @position = (-220.0, 50.0, 0.0);
+my @look = (1.0, 0.0, 0.0);
+my @up = (0.0, 1.0, 0.0);
+
+my $horizontalFieldOfView = 60.0;
+my $verticalFieldOfView = 50.0;
+
+my ($camx, $camy, $camz) = (int ($position[0] * 512),
+			    int ($position[1] * 512),
+			    int ($position[2] * 512));
+
+my ($lookx, $looky, $lookz) = (int ($look[0] * 65536),
+			       int ($look[1] * 65536),
+			       int ($look[2] * 65536));
+
+my ($upx, $upy, $upz) = (int ($up[0] * 65536),
+			 int ($up[1] * 65536),
+			 int ($up[2] * 65536));
+
+my $frameWidth = int ($frameHeight * $horizontalFieldOfView / $verticalFieldOfView);
+
+
+# Pack them up...
+
+my $data = pack "V*",
+    $camx, $camy, $camz,
+    $lookx, $looky, $lookz,
+    $upx, $upy, $upz,
+    $frameWidth, $frameHeight,
+    int ($horizontalFieldOfView * 65536), int ($verticalFieldOfView * 65536),
+    $antialiasing, 0, 0, $cores;
+
+# Send to Port 1 on Core 1 of Chip (0, 0)
+
+$spin->send_scp (4, 0, 0, 0, $data, addr => [0, 0, 1], port => 1);

@@ -33,13 +33,15 @@
 // event definitions
 // ------------------------------------------------------------------------
 // event-related parameters
-#define NUM_EVENTS            6
+#define NUM_EVENTS            8
 #define MC_PACKET_RECEIVED    0
 #define DMA_TRANSFER_DONE     1
 #define TIMER_TICK            2
 #define SDP_PACKET_RX         3
 #define USER_EVENT            4
 #define MCPL_PACKET_RECEIVED  5
+#define FR_PACKET_RECEIVED    6
+#define FRPL_PACKET_RECEIVED  7
 
 // ------------------------------------------------------------------------
 // DMA transfer parameters
@@ -104,6 +106,7 @@ void spin1_memcpy(void *dst, void const *src, uint len);
 //  communications functions
 // ------------------------------------------------------------------------
 uint spin1_send_mc_packet(uint key, uint data, uint load);
+uint spin1_send_fr_packet(uint key, uint data, uint load);
 void spin1_flush_rx_packet_queue(void);
 void spin1_flush_tx_packet_queue(void);
 // ------------------------------------------------------------------------
@@ -129,7 +132,7 @@ void spin1_mode_restore(uint sr);
 
 
 // ------------------------------------------------------------------------
-//  system resources access funtions
+//  system resources access functions
 // ------------------------------------------------------------------------
 uint  spin1_get_id(void);
 uint  spin1_get_core_id(void);
@@ -163,6 +166,9 @@ typedef struct
   uint task_queue_full;                                 // task queue full count
   uint tx_packet_queue_full;                            // transmitter packet queue full count
   uint writeBack_errors;                                // write-back buffer error count
+  uint total_fr_packets;                                // total routed FR packets during simulation
+  uint dumped_fr_packets;                               // total dumped FR packets by the router
+  uint discarded_fr_packets;                            // total discarded FR packets by API
   uint in_timer_callback;                               // bool which states if currently in timer callback
   uint number_timer_tic_in_queue;                       // the number of timer tic callbacks in the queue
   uint largest_number_of_concurrent_timer_tic_overruns; // the max number of timer tics callbacks being queued at any time

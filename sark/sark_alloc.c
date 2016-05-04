@@ -81,6 +81,8 @@ void *sark_xalloc (heap_t *heap, uint size, uint tag, uint flag)
       else
 	heap->free = free->free;
 
+      heap->free_bytes -= size;
+
       if (flag & ALLOC_LOCK)
 	sark_lock_free (cpsr, LOCK_HEAP);
 
@@ -134,6 +136,8 @@ void sark_xfree (heap_t *heap, void *ptr, uint flag)
 
   if ((entry & 255) != 0)
     sv->alloc_tag[entry] = NULL;
+
+  heap->free_bytes += (uchar *) block->next - (uchar *) block;
 
   // Scan free list to find free block higher than us
 
@@ -251,7 +255,7 @@ uint sark_heap_max (heap_t *heap, uint flag)
 // Initialise an area of memory as a heap. Arguments are (uint)
 // pointers to base and top of the area. Returns a pointer to the heap
 // (same address as the base). Assumes the area is large enough to
-// hold a minimal heap (needs minimum 28 bytes for zero size heap!).
+// hold a minimal heap (needs minimum 32 bytes for zero size heap!).
 
 heap_t *sark_heap_init (uint *base, uint *top)
 {
@@ -262,6 +266,7 @@ heap_t *sark_heap_init (uint *base, uint *top)
 
   heap->free = heap->first = first;
   heap->last = first->next = last;
+  heap->free_bytes = (uchar *) last - (uchar *) first - sizeof (block_t);
 
   last->next = NULL;
   first->free = NULL;
@@ -427,6 +432,50 @@ uint rtr_free_id (uint app_id, uint clear)
     }
 
   return count;
+}
+
+//------------------------------------------------------------------------------
+
+// Return the size of the largest free block in the router heap
+
+uint rtr_alloc_max (void)
+{
+  rtr_entry_t *router = sv->rtr_copy;
+  uint block = sv->rtr_free;
+
+  uint max = 0;
+
+  uint cpsr = sark_lock_get (LOCK_HEAP);
+
+  while (block != 0)
+    {
+      if (router[block].next != 0)
+	{
+	  uint free = router[block].next - block;
+
+	  if (free > max)
+	    max = free;
+	}
+
+      block = router[block].free;
+    }
+
+  sark_lock_free (cpsr, LOCK_HEAP);
+
+  return max;
+}
+
+//------------------------------------------------------------------------------
+
+// Get a pointer to a tagged allocation. If the "app_id" parameter is zero
+// uses the core's app_id.
+
+void *sark_tag_ptr (uint tag, uint app_id)
+{
+  if (app_id == 0)
+    app_id = sark_vec->app_id;
+  
+  return (void *) sv->alloc_tag[(app_id << 8) + tag];
 }
 
 //------------------------------------------------------------------------------

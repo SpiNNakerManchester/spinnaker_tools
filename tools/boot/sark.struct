@@ -1,0 +1,144 @@
+#-------------------------------------------------------------------------------
+
+name = sv
+size = 256
+base = 0xf5007f00
+
+p2p_addr             v  0x00  %04x  0           # P2P address (x * 256 + y)
+p2p_dims             v  0x02  %04x  0           # P2P dimensions (x * 256 + y)
+
+dbg_addr             v  0x04  %04x  0           # P2P address for Tubotron output
+p2p_up               C  0x06  %d    0           # Set to 1 when P2P addressing up
+last_id              C  0x07  %d    0           # Last ID used in NNP transaction
+
+eth_addr             v  0x08  %04x  0           # P2P address of nearest Ethernet node
+hw_ver               C  0x0a  %d    0           # Hardware version
+eth_up               C  0x0b  %d    0           # Set to 1 if Ethernet up
+
+p2pb_repeats         C  0x0c  %d    4           # Number of times to send out P2PB packets
+p2p_sql              C  0x0d  %d    4           # Logarithm of P2P sequence length
+clk_div              C  0x0e  %02x  0x33        # Clock divisors for Sys & Rtr clocks
+tp_scale             C  0x0f  %d    0           # (Time phase scale)
+
+clock_ms             V  0x10  %d    0           # Time since startup in ms
+clock_ms_h           V  0x14  %d    0           # (high part of above)
+
+time_ms              v  0x18  %d    0           # Fractional ms in sec (0..999)
+ltpc_period          v  0x1a  %d    0           # (??)
+
+unix_time            V  0x1c  %08x  0           # Time in secs since 1970
+tp_timer             V  0x20  %d    0           # (Time phase timer)
+
+cpu_clk              v  0x24  %d    200         # CPU clock frequency (MHz)
+mem_clk              v  0x26  %d    130         # SDRAM clock frequency (MHz)
+
+forward              C  0x28  %02x  0x3f        # NNP forward parameter
+retry                C  0x29  %02x  0           # NNP retry parameter
+peek_time            C  0x2a  %d    100         # Link peek/poke timeout (us)
+led_period           C  0x2b  %d    1           # LED half-period (10ms units) or 1 to show load
+
+netinit_bc_wait      C  0x2c  %d    50          # Time to wait after last BC during netinit (*10 ms)
+netinit_phase        C  0x2d  %d    0           # Phase of boot process (enum netinit_phase_e)
+p2p_root             v  0x2e  %02x  0           # P2P address from which the system was booted
+
+led0                 V  0x30  %08x  0x00000001  # LED definitions
+led1                 V  0x34  %08x  0x00000000  # LED definitions
+__PAD2               V  0x38  %d    0           # Spare
+random               V  0x3c  %08x  0           # Random seed
+
+root_chip            C  0x40  %d    0           # Set to 1 if "root chip"
+num_buf              C  0x41  %d    7           # Number of SHM buffers
+boot_delay           C  0x42  %d    10          # Delay between boot NN pkts (us)
+soft_wdog            C  0x43  %d    3           # Watchdog count (0 disables)
+
+__PAD3               V  0x44  %d    0           # Spare
+sysram_heap          V  0x48  %08x  1024        # User SysRAM size (words)
+sdram_heap           V  0x4c  %08x  1048576     # User SDRAM size (words)
+
+iobuf_size           V  0x50  %d    16384       # IO buffer size (bytes)
+sys_bufs             V  0x54  %d    8388608     # System SDRAM (bytes)
+sysbuf_size          V  0x58  %d    32768       # SysBuf size (words)
+boot_sig             V  0x5c  %08x  0           # Boot signature
+
+mem_ptr              V  0x60  %08x  0           # Memory pointer for NNP global ops.
+
+lock                 C  0x64  %02x  0           # Lock variable
+link_en              C  0x65  %02x  0x3f        # Bit mask (6 bits) for link enabled
+last_biff_id         C  0x66  %02x  0           # Last ID used in BIFF packet
+bt_flags             C  0x67  %02x  0           #
+
+shm_root.free        V  0x68  %08x  0           #
+shm_root.count       v  0x6c  %d    0           #
+shm_root.max         v  0x6e  %d    0           #
+
+utmp0                V  0x70  %08x  0           #
+utmp1                V  0x74  %08x  0           #
+utmp2                V  0x78  %08x  0           #
+utmp3                V  0x7c  %08x  0           #
+
+status_map[20]       C  0x80  %02x  0           # Set during SC&MP ROM boot
+p2v_map[20]          C  0x94  %02x  0           # Phys to Virt core map
+v2p_map[20]          C  0xa8  %02x  0           # Virt to Phys core map
+
+num_cpus             C  0xbc  %d    0           # Number of good cores
+rom_cpus             C  0xbd  %d    0           # Num. cores (ROM SC&MP)
+__PAD4               v  0xbe  %d    0           #
+
+sdram_base           V  0xc0  %08x  0           # Base of user SDRAM
+sysram_base          V  0xc4  %08x  0           # Base of user SysRAM
+sdram_sys            V  0xc8  %08x  0           # 
+vcpu_base            V  0xcc  %08x  0           # Start of VCPU blocks
+
+sys_heap             V  0xd0  %08x  0           # System heap in SDRAM
+rtr_copy             V  0xd4  %08x  0           # Copy of router MC tables
+hop_table            V  0xd8  %08x  0           # P2P hop table
+alloc_tag            V  0xdc  %08x  0           # Start of alloc_tag table
+
+rtr_free             v  0xe0  %d    0           # Start of free router entry list
+p2p_active           v  0xe2  %d    0           # Count of active P2P addresses
+app_data             V  0xe4  %08x  0           # Array of app_data_t
+shm_buf              V  0xe8  %08x  0           # Shared memory SDP buffers
+mbox_flags           V  0xec  %08x  0           # AP->MP communication flags
+
+ip_addr              V  0xf0  %08x  0           # IP address (or 0)
+fr_copy              V  0xf4  %08x  0           # (Virtual) copy of rtr FR reg
+board_info           V  0xf8  %08x  0           # Pointer to board_info area
+__PAD4               V  0xfc  %08x  0           #
+
+#-------------------------------------------------------------------------------
+
+name = vcpu
+size = 128
+base = 0
+
+r0                   V  0x00  %08x  0           # Register dump - r0
+r1                   V  0x04  %08x  0           # r1
+r2                   V  0x08  %08x  0           # r2
+r3                   V  0x0c  %08x  0           # r3
+r4                   V  0x10  %08x  0           # r4
+r5                   V  0x14  %08x  0           # r5
+r6                   V  0x18  %08x  0           # r6
+r7                   V  0x1c  %08x  0           # r7
+psr                  V  0x20  %08x  0           # psr
+sp                   V  0x24  %08x  0           # sp
+lr                   V  0x28  %08x  0           # lr
+rt_code              C  0x2c  %d    0           # RTE code
+phys_cpu             C  0x2d  %d    0           # Physical CPU
+cpu_state            C  0x2e  %02x  0           # CPU state
+app_id               C  0x2f  %d    0           # App ID
+mbox_ap_msg          V  0x30  %08x  0           # mbox msg MP->AP
+mbox_mp_msg          V  0x34  %08x  0           # mbox msg AP->MP
+mbox_ap_cmd          C  0x38  %02x  0           # mbox command MP->AP
+mbox_mp_cmd          C  0x39  %02x  0           # mbox command AP->MP
+sw_count             v  0x3a  %d    0           # SW error count (saturating)
+sw_file              V  0x3c  %08x  0           # SW source file name
+sw_line              V  0x40  %d    0           # SW source line
+time                 V  0x44  %08x  0           # Time of loading
+app_name[16]         A16 0x48  %s   0           # Application name 
+iobuf                V  0x58  %08x  0           # IO buffer
+sw_ver               V  0x5c  %08x  0           # SW version
+__PAD[4]             V  0x60  %08x  0           # PAD
+user0                V  0x70  %08x  0           # User word 0
+user1                V  0x74  %08x  0           # User word 1
+user2                V  0x78  %08x  0           # User word 2
+user3                V  0x7c  %08x  0           # User word 3

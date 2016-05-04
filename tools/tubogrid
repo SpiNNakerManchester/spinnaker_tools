@@ -1,0 +1,585 @@
+#!/usr/bin/perl
+
+##------------------------------------------------------------------------------
+##
+## tubogrid	    An application for displaying output from SpiNNaker systems
+##
+## Copyright (C)    The University of Manchester - 2009-2013
+##
+## Author           Steve Temple, APT Group, School of Computer Science
+## Email            steven.temple@manchester.ac.uk
+##
+##------------------------------------------------------------------------------
+
+
+use strict;
+use warnings;
+
+use Tk;
+
+use IO::Socket::INET;
+
+use SpiNN::Util qw/sllt_version/;
+
+
+my $version = sllt_version ();
+my $program = "tubogrid";
+
+my $port = 17892;
+my $socket;
+my $socket_fd;
+
+my ($main, $label1, $label2, $label3, $frame, $title, $canvas);
+
+my $off_x = 4;
+my $off_y = 4;
+
+my $grid = 40;
+
+my $lw = 4;
+my $lw2 = $lw / 2;
+
+my $mw = 2;
+
+my $start = time ();
+my $colour = "white";
+my $clear_id;
+my $repeat_text = "OFF";
+
+my $pkt_count = 0;
+my $last_count = 0;
+
+my $spin3_map = [[1, 1], [1, 1]];
+
+my $spin4_map =
+[
+# X  0  1  2  3  4  5  6  7
+    [1, 1, 2, 2, 3, 0, 0, 0], # Y = 0
+    [1, 1, 2, 2, 3, 3, 0, 0], # Y = 1
+    [1, 1, 2, 2, 3, 3, 3, 0], # Y = 2
+    [1, 1, 1, 2, 2, 2, 3, 3], # Y = 3
+    [0, 1, 1, 2, 2, 2, 3, 3], # Y = 4
+    [0, 0, 1, 1, 1, 2, 3, 3], # Y = 5
+    [0, 0, 0, 1, 2, 2, 3, 3], # Y = 6
+    [0, 0, 0, 0, 1, 2, 3, 3]  # Y = 7
+];
+
+my $toroid_map = # Hacked together!
+[
+    [(1) x 12], # Y = 0
+    [(1) x 12], # Y = 1
+    [(1) x 12], # Y = 2
+    [(1) x 12], # Y = 3
+    [(1) x 12], # Y = 4
+    [(1) x 12], # Y = 5
+    [(1) x 12], # Y = 6
+    [(1) x 12], # Y = 7
+    [(1) x 12], # Y = 8
+    [(1) x 12], # Y = 9
+    [(1) x 12], # Y = 10
+    [(1) x 12]  # Y = 11
+];
+
+my ($chip_x, $chip_y, $spin_map) = (2, 2, $spin3_map);
+# my ($chip_x, $chip_y, $spin_map) = (8, 8, $spin4_map);
+
+my ($xw, $yw, $nc) = (4, 4, 16);
+# my ($xw, $yw, $nc) = (5, 4, 18);
+
+my ($width, $height, $cw, $ch);
+
+my $all_cores = 0;
+
+
+sub usage
+{
+    warn "usage: $program <args>\n";
+    warn "  -port    <num>      - set UDP port number (default $port)\n";
+    warn "  -grid  <num>        - set grid size (range 4-80, default 40)\n";
+    warn "  -48chip             - set up for 48 chip board\n";
+    warn "  -12x12              - set up for 12x12 toroid\n";
+    warn "  -allcores           - display all cores, not 1-16\n";
+    die  "  -version            - print version number\n";
+}
+
+
+sub process_args
+{
+    while ($#ARGV >= 0)
+    {
+	my $arg = shift @ARGV;
+
+	if ($arg eq '-48chip')
+	{
+	    ($chip_x, $chip_y, $spin_map) = (8, 8, $spin4_map);
+	    $grid = 24;
+	}
+	elsif ($arg eq '-12x12')
+	{
+	    ($chip_x, $chip_y, $spin_map) = (12, 12, $toroid_map);
+	    $grid = 16;
+	}
+	elsif ($arg eq '-allcores')
+	{
+	    ($xw, $yw, $nc) = (5, 4, 18);
+	    $all_cores = 1;
+	}
+	elsif ($arg eq '-version')
+	{
+	    die "$program - v$version\n";
+	}
+	elsif ($arg eq '-grid')
+	{
+	    die "bad grid\n" unless defined $ARGV[0] && $ARGV[0] =~ /^\d+$/
+		&& $ARGV[0] >= 4 && $ARGV[0] <= 80;
+	    $grid = shift @ARGV;
+
+	}
+	elsif ($arg eq '-port')
+	{
+	    die "port not specified\n" unless defined $ARGV[0] &&
+		$ARGV[0] =~ /^\d+$/;
+	    $port = shift @ARGV;
+	}
+	else
+	{
+	    usage ();
+	}
+    }
+
+    $cw = $grid * $xw + $mw * ($xw-1);
+    $ch = $grid * $yw + $mw * ($yw-1);
+	    
+    $width = 2 * $off_x + $chip_x * ($cw + $lw);
+    $height = 2 * $off_x + $chip_y * ($ch + $lw);
+}
+
+
+sub open_input
+{
+    $socket = new IO::Socket::INET (LocalPort => $port,
+				    Proto => 'udp',
+				    Blocking => 0);
+
+    die "failed to create socket: $!\n" unless $socket;
+
+    $socket_fd = fileno ($socket);
+}
+
+
+sub quit
+{
+    $main->destroy;
+}
+
+
+sub coord
+{
+    my ($x, $y, $c) = @_;
+    my ($cx, $cy) = ($c % $xw, int $c / $xw);
+    my $xx = $off_x + $lw + $x * ($cw + $lw) + $cx * ($grid + $mw);
+    my $yy = $height - ($off_y + $lw + $y * ($ch + $lw) + $cy * ($grid + $mw));
+    return ($xx-1, $yy);
+}
+
+
+sub subgrid
+{
+    my ($x, $y, $t) = @_;
+
+    my $bank = $spin_map->[$y]->[$x] - 1;
+    my @bc = qw/pink lightblue yellow/;
+    my $col = $bc[$bank];
+
+    # Compute bottom left corner
+
+    $x = $off_x + $x * ($cw + $lw) + $lw2;
+    $y = $height - ($off_y + $y * ($ch + $lw) + $lw2);
+
+    for (my $j = 1; $j < $yw; $j++)
+    {
+	my $yy = $y - $j * ($grid + $mw);
+	$canvas->createLine ($x, $yy, $x + $cw + $lw2, $yy,
+			     -width => $mw, -fill => 'gray60');
+    }
+
+    for (my $j = 1; $j < $xw; $j++)
+    {
+	my $xx = $x + $j * ($grid + $mw);
+	$canvas->createLine ($xx, $y, $xx, $y - $ch - $lw2,
+			     -width => $mw, -fill => 'gray60');
+    }
+
+    my $x1 = $x + $cw + $lw;
+    my $y1 = $y - $ch - $lw;
+
+    $canvas->createRectangle ($x, $y, $x1, $y1, -width => $lw);
+
+    my $xx = $x + $lw2 + 3 * ($grid + $mw);
+    my $yy = $y - $lw2 - 3 * ($grid + $mw);
+
+    if ($all_cores)
+    {
+	$canvas->createRectangle ($xx-1, $yy+1,
+				  $xx + 2 * $grid + $mw, $yy - $grid,
+				  -width => 0, -fill => $col);
+
+	$canvas->createText ($xx + $grid, $yy - $grid / 2, -anchor => 'center',
+			     -text => $t, -font => 'Helvetica 12 bold');
+    }
+}
+
+
+sub draw_grid
+{
+    for (my $x = 0; $x < $chip_x; $x++)
+    {
+	for (my $y = 0; $y < $chip_y; $y++)
+	{
+	    next unless $spin_map->[$y]->[$x];
+	    subgrid ($x, $y, "$x, $y");
+	}
+    }
+
+    if ($chip_x == 8) # Yuk!
+    {
+	subgrid (0, 7, "Cores");
+	process (0, 7, $_, $_) for (0..17);
+    }
+}
+
+
+sub status
+{
+    my $col = ucfirst $colour;
+    $label1->configure (-text => "Clear $repeat_text - Colour $col");
+}
+
+
+sub fill
+{
+    my $mask = shift;
+
+    for (my $x = 0; $x < $chip_x; $x++)
+    {
+	for (my $y = 0; $y < $chip_y; $y++)
+	{
+	    next unless $spin_map->[$y]->[$x];
+
+	    for (my $c = 0; $c < $nc; $c++)
+	    {
+		my $tag = "F-$x-$y-$c";
+
+		if ($mask == 0)
+		{
+		    $canvas->delete ($tag);
+		}
+		elsif ($mask & (1 << $c))
+		{
+		    $canvas->delete ($tag);
+
+		    my ($xx, $yy) = coord ($x, $y, $c);
+		    $canvas->createRectangle ($xx, $yy, $xx+$grid, $yy-$grid,
+					      -width => 1, -fill => $colour,
+					      -outline => "gray60", -tag => $tag);
+		}
+	    }
+	}
+    }
+}
+
+
+sub pre_fill
+{
+    my ($mask, $col) = @_;
+    $colour = $col;
+    fill ($mask);
+}
+
+    
+sub colour
+{
+    $colour = shift;
+    status ();
+}
+
+
+sub clear
+{
+    my $repeat = shift;
+
+    if ($repeat == -1)
+    {
+	$clear_id->cancel if defined $clear_id;
+	$clear_id = undef;
+	$repeat_text = "OFF";
+	status ();
+	return;
+    }
+
+    if ($repeat != 0)
+    {
+	$clear_id->cancel if defined $clear_id;
+	$clear_id = $main->repeat ($repeat, [\&clear, 0]);
+	$repeat_text = $repeat / 1000;
+	status ();
+	return;
+    }
+
+    for (my $x = 0; $x < $chip_x; $x++)
+    {
+	for (my $y = 0; $y < $chip_y; $y++)
+	{
+	    next unless $spin_map->[$y]->[$x];
+
+	    for (my $c = 0; $c < $nc; $c++)
+	    {
+		$canvas->delete ("P-$x-$y-$c");
+	    }
+	}
+    }
+}
+
+
+sub point
+{
+    my $a = shift;
+    my $e = $a->XEvent;
+    my ($x, $y) = ($e->x, $e->y);
+
+    $x = $canvas->canvasx ($x);
+    $y = $canvas->canvasy ($y);
+    warn "# click $x $y\n";
+}
+
+
+sub reset
+{
+    $start = time ();
+    $pkt_count = 0;
+    $last_count = 0;
+}
+
+
+sub main_window
+{
+    $main = MainWindow->new (-title => ucfirst $program);
+
+    $frame = $main->Frame (-border => 2, -relief => 'groove');
+
+    $canvas = $main->Canvas (-width => $width, -height => $height);
+
+    my $clear_but = $frame->Menubutton (-text => 'Clear', -border => 2,
+	-relief => 'raised', -width => 6);
+
+    my $colour_but = $frame->Menubutton (-text => 'Colour', -border => 2,
+	-relief => 'raised', -width => 6);
+
+    my $fill_but = $frame->Menubutton (-text => 'Fill', -border => 2,
+	-relief => 'raised', -width => 6);
+
+    my $quit_but = $frame->Button (-text => 'Quit', -command => \&quit);
+    my $reset_but = $frame->Button (-text => 'Reset', -command => \&reset);
+
+    $label1 = $frame->Label (-width => 20, -fg => "blue",
+			     -font => 'Helvetica 12 bold');
+    $label2 = $frame->Label (-width => 28, -font => 'Helvetica 12 bold');
+    $label3 = $frame->Label (-width => 8, -font => 'Helvetica 14 bold');
+ 
+    $clear_but->pack (-side => 'left');
+    $colour_but->pack (-side => 'left');
+    $fill_but->pack (-side => 'left');
+    $label1->pack (-side => 'left', -fill => 'x', -padx => 10);
+
+    $quit_but->pack (-side => 'right');
+    $reset_but->pack (-side => 'right');
+    $label3->pack (-side => 'right', -fill => 'x', -padx => 10);
+    $label2->pack (-side => 'right', -fill => 'x', -padx => 10);
+
+    my $clear_menu = $clear_but->Menu  (-tearoff => 0);
+    my $colour_menu = $colour_but->Menu  (-tearoff => 0);
+    my $fill_menu = $fill_but->Menu  (-tearoff => 0);
+
+    $clear_but->configure  (-menu => $clear_menu);
+    $colour_but->configure  (-menu => $colour_menu);
+    $fill_but->configure  (-menu => $fill_menu);
+
+    $clear_menu->command  (-label => '--- NOW ---', -command => [\&clear, 0]);
+    $clear_menu->command  (-label => '0.5 sec', -command => [\&clear, 500]);
+    $clear_menu->command  (-label => '1 sec', -command => [\&clear, 1000]);
+    $clear_menu->command  (-label => '5 secs', -command => [\&clear, 5000]);
+    $clear_menu->command  (-label => '10 secs', -command => [\&clear, 10000]);
+    $clear_menu->command  (-label => '--- OFF ---', -command => [\&clear, -1]);
+
+    $colour_menu->command  (-label => 'White', -command => [\&colour, "white"]);
+    $colour_menu->command  (-label => 'Black', -command => [\&colour, "black"]);
+    $colour_menu->command  (-label => 'Gray', -command => [\&colour, "gray90"]);
+    $colour_menu->command  (-label => 'Red', -command => [\&colour, "red"]);
+    $colour_menu->command  (-label => 'Green', -command => [\&colour, "green"]);
+    $colour_menu->command  (-label => 'Blue', -command => [\&colour, "blue"]);
+
+    $fill_menu->command  (-label => '--- ALL ---',
+			  -command => [\&fill, 0x3ffff]);
+    if ($all_cores)
+    {
+	$fill_menu->command  (-label => 'CPU 0',
+			      -command => [\&fill, 0x00001]);
+	$fill_menu->command  (-label => 'CPU 1-16',
+			      -command => [\&fill, 0x1fffe]);
+	$fill_menu->command  (-label => 'CPU 1-17',
+			      -command => [\&fill, 0x3fffe]);
+	$fill_menu->command  (-label => 'CPU 17',
+			      -command => [\&fill, 0x20000]);
+	$fill_menu->command  (-label => '-- CLEAR --',
+			      -command => [\&fill, 0x00000]);
+    }
+
+    $frame->pack (-fill => 'x');
+    $canvas->pack ();
+
+    $canvas->Tk::bind ('<1>' => \&point);
+
+    $main->repeat (5, \&poll_net);
+    $main->repeat (1000, \&count_pkts);
+
+    if ($all_cores)
+    {
+	pre_fill (0x00001, "green");
+	pre_fill (0x1fffe, "gray90");
+	pre_fill (0x20000, "gray90");
+    }
+
+    pre_fill (0x1fffe, "gray90"); ##
+
+    colour ("white");
+}
+
+
+sub hms
+{
+    my $t = shift;
+    my $h = int $t / 3600;
+    my $m = int (($t % 3600) / 60);
+    my $s = $t % 60;
+	
+    return sprintf "%d:%02d:%02d", $h, $m, $s;
+}
+
+
+sub count_pkts
+{
+    my $rate = $pkt_count - $last_count;
+    $last_count = $pkt_count;
+    my $t = hms (time () - $start);
+    $label2->configure (-text => "$pkt_count packets - $rate pkts/sec");
+    $label3->configure (-text => $t);
+}
+
+
+my %colour = (red => 1, green => 1, blue => 1, white => 1, black => 1);
+
+
+sub process
+{
+    my ($x, $y, $c, $text) = @_;
+
+    return if ! $all_cores && ($c < 1 || $c > 16);
+
+    $c-- unless $all_cores;
+
+    my $colour = 'black';
+    my $tag = "P-$x-$y-$c";
+
+    $canvas->delete ($tag);
+
+    my ($xx, $yy) = coord ($x, $y, $c);
+
+    while ($text ne "")
+    {
+	if ($text =~ s/^\#(\w+);//)
+	{
+	    my $op = $1;
+
+	    if (exists $colour{$op})
+	    {
+		$colour = $op;
+	    }
+	    elsif ($op eq "fill")
+	    {
+		$canvas->createRectangle ($xx, $yy, $xx+$grid, $yy-$grid,
+					  -width => 1, -fill => $colour,
+					  -outline => "gray60", -tag => $tag);
+	    }
+	    elsif ($op eq "square")
+	    {
+		$canvas->createRectangle ($xx+$grid/4, $yy-$grid/4,
+					  $xx+3*$grid/4, $yy-3*$grid/4,
+					  -width => 0, -fill => $colour,
+					  -tag => $tag);
+	    }
+	    elsif ($op eq "circle")
+	    {
+		$canvas->createOval ($xx+$grid/4, $yy-$grid/4,
+				     $xx+3*$grid/4, $yy-3*$grid/4,
+				     -width => 0, -fill => $colour,
+				     -tag => $tag);
+	    }
+	}
+	else
+	{
+	    $text =~ s/(.[^#]*)//;
+
+	    $canvas->createText ($xx+$grid/2, $yy-$grid/2,
+				 -text => "$1", -fill => $colour,
+				 -tag => $tag);
+	}
+    }		
+}
+
+
+sub poll_net
+{
+    while (1)
+    {
+	my $rm = '';
+	vec ($rm, $socket_fd, 1) = 1;
+	my $n = select ($rm, undef, undef, 0);
+	return if $n == 0;
+
+	my $addr = recv ($socket, my $buf, 65536, 0);
+
+	unless (defined $addr)
+	{
+	    warn "!! recv failed\n";
+	    next;
+	}
+
+	my ($pad, $flags, $tag, $dp, $sp, $da, $sa, $cmd, $seq, $text) =
+	    unpack 'v C4 v4 a*', $buf;
+
+	my $x = $sa >> 8;
+	my $y = $sa & 255;
+
+	if ($cmd == 64) # tube
+	{
+	    $pkt_count++;
+	    chomp $text;
+	    process ($x, $y, $sp, $text);
+	}
+	else
+	{
+	    warn "!! bad command ($cmd)\n";
+	}
+    }
+}
+
+
+process_args ();
+
+open_input ();
+
+main_window ();
+
+draw_grid ();
+
+Tk::MainLoop ();

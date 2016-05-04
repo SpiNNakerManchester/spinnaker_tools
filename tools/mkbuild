@@ -1,8 +1,9 @@
 #!/usr/bin/perl
 
 # Utility to create a small C file (on stdout) which contains
-# a string constant containing the first 15 characters of the
-# argument and an integer constant which is the Unix time.
+#
+#  - an integer constant which is the Unix time.
+#  - a string constant containing the first 15 characters of the argument
 
 die "bad args" unless $#ARGV == 0;
 

@@ -1,0 +1,6 @@
+# make
+# tubogrid &
+
+app_load life.aplx all 1-16 16
+sleep 30
+app_stop 16

@@ -1,0 +1,254 @@
+#-------------------------------------------------------------------------------
+#
+#	SpiNNaker Software Tools - Release Notes
+#
+#-------------------------------------------------------------------------------
+
+Version 2.1.0 - Implement FPGA "xreg" facility
+
+This allows a set of writes to FPGA control registers to be performed
+after bitfile loading. Specialised facility not needed by most people!
+
+#-------------------------------------------------------------------------------
+
+Version 2.0.1 - Fix C++ constructor calling.
+
+Fixed a bug in 2.0.0 which prevented C++ constructors being called on
+application startup. NB: C++ only supported under GCC.
+
+#-------------------------------------------------------------------------------
+
+Version 2.0.0 - Semantic versioning, robust boot, CMD_INFO, more efficient
+app-load and more. (Breaking change)
+
+Packaging/build changes:
+
+* The version numbers of SC&MP, SARK, SpiNN1 API, ybug, bmpc and friends will
+  use 'Semantic Versioning' going forward. In brief, versions are now
+  of the form major.minor.patch. A change in major version indicates a
+  non-backward compatible change. A change in minor version indicates a new
+  (but backward-compatible) feature release. A patch change indicates minor or
+  bug fix style changes. See semver.org for full details.
+
+* Applications check their compatibility with the running version of SC&MP
+  before starting, producing an RTE_VER error if an incompatible software
+  version is discovered.
+
+* C++ is now supported for writing SpiNNaker applications. An example C++
+  application and Makefile is included in apps/hello_cpp.
+
+SCP command changes:
+
+* Any SCP commands addressed to chip (255, 255) will be routed to the chip used
+  to boot the machine. During machine boot, this is the only P2P address which
+  should be used to communicate with the machine.
+
+* Any SCP command which takes system-wide action (e.g. signalling) should be
+  sent to the chip used to boot the system which may not be chip (0, 0).
+  Commands should instead be addressed to chip (255, 255) which are routed to
+  the chip used to boot the machine.
+
+* The CMD_VER command format has changed to accommodate the new version
+  numbering scheme:
+    - The top 16 bits of arg2 of SCP response now contains 0xFFFF.
+    - The software name string in the SCP data field is now followed by a
+      second string defining the software version. Both strings are terminated
+      by a null byte.
+
+* The P2P address returned by CMD_VER in the top 16 bits of arg1 in SCP
+  response will be 0xFFFF during machine boot but, once booted, will contain
+  the P2P address of the responding chip. (NB: only applies when communicating
+  with monitor processors.)
+
+* The flood-fill mechanism used when loading applications now supports the
+  sending of multiple regions which will be ORed together enabling more
+  efficient loading of irregularly shaped regions of a machine.
+
+* A new SCP command, CMD_INFO, has been added which compactly returns a summary
+  of the state of a chip. Includes: the states of all cores, list of working
+  links, sizes of the largest free SDRAM, SysRAM and MC routing entry blocks.
+
+
+SC&MP changes:
+
+* Links, cores or whole chips may be blacklisted and automatically mapped out
+  on boot based on configuration data stored in Serial-ROM on SpiNN-5 boards.
+
+* The MC-packet-based signalling and the signal 'count' (and similar)
+  mechanisms can now function on machines with arbitrary dead chips and links.
+
+* A new, more robust, boot mechanism has been introduced.
+  - The dimensions of the machine no longer need to be known when booting.
+  - Any Ethernet-connected board may be used to boot the machine.
+  - Chip (0, 0) need not exist, e.g. in strangely-shaped machines produced by
+    future versions of 'spalloc'.
+  - The boot process no longer relies on hand-tuned delay parameters and should
+    function reliably and as-fast-as-possible on any size of machine.
+  - It is possible to determine when a machine has completely booted by polling
+    with a CMD_VER command addressed to (255, 255) and waiting for the P2P
+    address to resolve to something other than (255, 255).
+
+* LED0 now shows (more) useful information by default:
+  - During boot, all LEDs are turned off.
+  - Once the whole machine has completely booted, a sweeping pattern is
+    displayed indicating that the system is alive.
+  - LEDs indicate approximate load: brighter means heavier load. Note that if
+    any application core is in use on a chip, the LED will be dimly lit, even
+    if that core is sleeping.
+  - Rapid flashing indicates that a core has encountered a runtime-error.
+  - To allow application control of the LEDs, the sv->led_period variable may
+    be used as in previous versions of SC&MP.
+
+SARK changes:
+
+* Added sark_tag_ptr which looks up the addresses of tagged blocks of SDRAM.
+
+* Added rtr_alloc_max which gives the largest contiguous block of free MC
+  routing table entries.
+
+* Before a SARK/SpiNN1 API based application runs, it checks that the version
+  of SC&MP the machine is booted with is compatible, according to the Semantic
+  Versioning scheme. If it is not, the core immediately goes into the RTE_VER
+  state.
+
+SpiNN1 API changes:
+
+* spin1_callback_on now supports setting of both MC_PACKET_RECEIVED and
+  MCPL_PACKET_RECEIVED or FR_PACKET_RECEIVED and FRPL_PACKET_RECEIVED as FIQ
+  (priority = -1) interrupts.
+
+ybug changes:
+
+* The 'boot' command now uses sensible default values for its two arguments.
+  For most users, typing 'boot' should be sufficient for any size of machine.
+* The 'sp' command given without arguments now switches to the 'root-chip',
+  i.e. the one used to boot the machine.
+
+bmpc changes:
+
+* A new 'board_info' command and example 'board.info' file are provided which
+  allow cores, links and whole chips to be blacklisted on a SpiNN-5 board.
+
+Bug-fixes:
+
+* phys_cpu is now correctly set for the monitor in the VCPU struct.
+
+* The stop signal now reliably frees resources allocated on chips with no cores
+  loaded.
+
+
+#-------------------------------------------------------------------------------
+
+Version 1.34 - Added fixed-route packet handling
+
+Routines to deal with fixed route packets added to SARK and spin1_api.
+SARK gets two routines to set and get the fixed routing register in
+the router
+
+	void rtr_fr_set (uint route);   // Sets route (using virtual cores)
+	uint rtr_fr_get (void);		// Gets route (actually a copy of)
+
+spin1_api gets two new events FR_PACKET_RECEIVED, FRPL_PACKET_RECEIVED
+and adds a routine to send a FR packet (which has similar args to the
+MC packet send routine).
+
+	uint spin1_send_fr_packet (uint key, uint data, uint load);
+
+#-------------------------------------------------------------------------------
+
+Version 1.33 - Writes to VIC are unbuffered
+
+A bug which was caused by the ARM968 cores buffering writes to the VIC
+has been fixed by forcing all writes to the VIC to be unbuffered. This
+will slow applications very slightly.
+
+#-------------------------------------------------------------------------------
+
+Version 1.33 - Reverse IPTags
+
+A new type of IPTag is available which is used to receive UDP packets
+and forward them to a specific core on a specific SpiNNaker chip. Three
+parameters are needed to set this up
+
+Port number   the UDP port in incoming packets
+P2P address   of the destination chip. A 16 bit value.
+Core port     on the destination chip. An 8 bit value with core number
+     	      in the lower 5 bits and "port" number in the upper 3. The
+	      port should not normally be zero
+
+When a UDP packet is received, the IPTag table is searched to see if
+a reverse IPTag exists for the given port number. If it does and the
+UDP payload is small enough to fit in an SDP packet, then an SDP packet
+containing the UDP payload is sent to the specified chip and core. The
+IPTag table is also updated with the reply information (IP address and
+port) so that replies from the SpiNNaker core using the same IPTag will
+be routed back to the original sender.
+
+#-------------------------------------------------------------------------------
+
+Version 1.33 - "ybug" Changes
+
+The syntax of the "iptag" command has been changed to be slightly more
+logical and expandable. This is incompatible with earlier syntax so
+scripts will need to be changed.
+
+#-------------------------------------------------------------------------------
+
+Version 1.32 - SDP non-routing flag
+
+If bit 5 of the flag byte of an SDP packet is set, then the packet is
+not routed via P2P but goes to a local core. This is useful to talk to
+an Ethernet-connected chip via the Ethernet interface without having
+to know its point-to-point address.
+
+#-------------------------------------------------------------------------------
+
+Version 1.32 - SARK Router Routines
+
+A minor change has been made to two routines for router control. The
+function "rtr_mc_load" now has a fourth argument which is an AppID.
+If this is non-zero it is used to set the AppID field in the router
+table copy (which is primarily a debugging feature). If this field is
+zero them the AppID of the core calling "rtr_mc_load" is used instead.
+
+The function "rtr_mc_set" now has an AppID passed in as the top 8 bits
+of the "route" parameter. As above, if non-zero this sets the AppID
+in the router table copy, otherwise the AppID of the calling core is
+used.
+
+These changes have been made so that when a router table is loaded
+from a host via SC&MP, the AppID can be correctly set by the host.
+
+#-------------------------------------------------------------------------------
+
+Version 1.31 - Ethernet output
+
+To allow SpiNNaker chips in multiboard systems to send output to their
+'nearest' Ethernet connected chip, some new system variables are
+available. In this case 'nearest' is defined as the chip on the same
+board which has an Ethernet interface. For example, all chips on the
+same board as P2P address (8,4) (which has an Ethernet interface),
+have a variable set to (8,4). The new variables are all shorts (16
+bits) with X coordinate in the high byte and Y coordinate in the low
+byte.
+
+sv->eth_addr    P2P address of 'nearest' Ethernet chip. If you make your
+		own SDP packets to send to the outside world via
+		Ethernet you should set the "dest_addr" field to this
+		value.
+
+sv->dbg_addr    Initialised to be the same as "sv->eth_addr". This is
+		used by "io_printf" (to IO_STD) to send printing to a
+		host. You can set it (eg to (0,0)) to change the route
+		that "io_printf" uses.
+
+sv->board_addr  The address of this chip relative to the bottom
+		left chip on this board (ie goes up to (7,7) on a
+		48-chip board.
+
+Note that, after booting in "ybug", the default IPTag for Tubotron output
+will only be set on the root chip (0,0). IPTags for other Ethernet-attached
+chips will have to be set up manually. It may be possible to automate this
+in future...
+
+#-------------------------------------------------------------------------------

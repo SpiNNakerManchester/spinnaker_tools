@@ -22,12 +22,14 @@ uint old_select;
 uint old_enable;
 
 int fiq_event = -1;
-int pkt_prio = -2;
+int mc_pkt_prio = -2;
+int fr_pkt_prio = -2;
 
 
 // ---------------
 /* dma transfer */
 // ---------------
+static uint dma_id = 1;
 dma_queue_t dma_queue;
 // ---------------
 
@@ -75,6 +77,7 @@ diagnostics_t diagnostics;
 
 extern INT_HANDLER cc_rx_error_isr (void);
 extern INT_HANDLER cc_rx_ready_isr (void);
+extern INT_HANDLER cc_fr_ready_isr (void);
 extern INT_HANDLER cc_tx_empty_isr (void);
 extern INT_HANDLER dma_done_isr (void);
 extern INT_HANDLER dma_error_isr (void);
@@ -82,6 +85,7 @@ extern INT_HANDLER timer1_isr (void);
 extern INT_HANDLER sys_controller_isr (void);
 extern INT_HANDLER soft_int_isr (void);
 extern INT_HANDLER cc_rx_ready_fiqsr (void);
+extern INT_HANDLER cc_fr_ready_fiqsr (void);
 extern INT_HANDLER dma_done_fiqsr (void);
 extern INT_HANDLER timer1_fiqsr (void);
 extern INT_HANDLER soft_int_fiqsr (void);
@@ -289,7 +293,8 @@ void configure_vic (uint enable_timer)
   uint fiq_select = 0;
   uint int_select = ((1 << TIMER1_INT)   |
                      (1 << SOFTWARE_INT) |
-                     (1 << CC_RDY_INT) |
+                     (1 << CC_MC_INT) |
+                     (1 << CC_FR_INT) |
                      (1 << DMA_ERR_INT)  |
                      (1 << DMA_DONE_INT)
                     );
@@ -310,7 +315,12 @@ void configure_vic (uint enable_timer)
     case MC_PACKET_RECEIVED:
     case MCPL_PACKET_RECEIVED:
       sark_vec->fiq_vec = cc_rx_ready_fiqsr;
-      fiq_select = (1 << CC_RDY_INT);
+      fiq_select = (1 << CC_MC_INT);
+      break;
+    case FR_PACKET_RECEIVED:
+    case FRPL_PACKET_RECEIVED:
+      sark_vec->fiq_vec = cc_fr_ready_fiqsr;
+      fiq_select = (1 << CC_FR_INT);
       break;
     case DMA_TRANSFER_DONE:
       sark_vec->fiq_vec = dma_done_fiqsr;
@@ -335,7 +345,10 @@ void configure_vic (uint enable_timer)
 
   // Configure API callback interrupts
   vic_vectors[RX_READY_PRIORITY] = cc_rx_ready_isr;
-  vic_controls[RX_READY_PRIORITY] = 0x20 | CC_RDY_INT;
+  vic_controls[RX_READY_PRIORITY] = 0x20 | CC_MC_INT;
+
+  vic_vectors[FR_READY_PRIORITY] = cc_fr_ready_isr;
+  vic_controls[FR_READY_PRIORITY] = 0x20 | CC_FR_INT;
 
   vic_vectors[DMA_DONE_PRIORITY]  = dma_done_isr;
   vic_controls[DMA_DONE_PRIORITY] = 0x20 | DMA_DONE_INT;
@@ -654,7 +667,9 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
   {
     if (fiq_event == -1 ||
     (event_id == MC_PACKET_RECEIVED && fiq_event == MCPL_PACKET_RECEIVED) ||
-    (event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED))
+	(event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED) ||
+	(event_id == FR_PACKET_RECEIVED && fiq_event == FRPL_PACKET_RECEIVED) ||
+	(event_id == FRPL_PACKET_RECEIVED && fiq_event == FR_PACKET_RECEIVED))
       fiq_event = event_id;
     else
       rt_error (RTE_API);
@@ -664,11 +679,19 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
 
   if (event_id == MC_PACKET_RECEIVED || event_id == MCPL_PACKET_RECEIVED)
     {
-      if (pkt_prio == -2)
-        pkt_prio = priority;
-      else if (pkt_prio != priority)
+      if (mc_pkt_prio == -2)
+	mc_pkt_prio = priority;
+      else if (mc_pkt_prio == -1 && priority != -1)
         rt_error (RTE_API);
     }
+  else if (event_id == FR_PACKET_RECEIVED || event_id == FRPL_PACKET_RECEIVED)
+    {
+      if (fr_pkt_prio == -2)
+	fr_pkt_prio = priority;
+      else if (fr_pkt_prio == -1 && priority != -1)
+	rt_error (RTE_API);
+    }
+
 }
 /*
 *******/
@@ -880,7 +903,8 @@ void spin1_exit (uint error)
 {
   // Disable API-enabled interrupts to allow simulation to stop,
 
-  vic[VIC_DISABLE] = (1 << CC_RDY_INT)   |
+  vic[VIC_DISABLE] = (1 << CC_MC_INT)   |
+                     (1 << CC_FR_INT)   |
                      (1 << TIMER1_INT)   |
                      (1 << SOFTWARE_INT) |
                      (1 << DMA_ERR_INT)  |
@@ -988,6 +1012,10 @@ void report_debug ()
 
     io_printf (IO_API, "\t\t[api_debug] ISR thrown packets: %d\n",
                diagnostics.discarded_mc_packets);
+    io_delay (API_PRINT_DELAY);
+    
+    io_printf (IO_API, "\t\t[api_debug] ISR thrown FR packets: %d\n",
+               diagnostics.discarded_fr_packets);
     io_delay (API_PRINT_DELAY);
 
     // Report DMAC counters
@@ -1118,6 +1146,15 @@ uint start (sync_bool sync, uint paused)
   // re-enable interrupts for sark
   // only CPU_INT enabled in the VIC
   spin1_int_enable ();
+  
+  // provide diagnostics data to application
+  #if (API_DIAGNOSTICS == TRUE)
+    diagnostics.total_mc_packets     = rtr[RTR_DGC0] + rtr[RTR_DGC1];
+    diagnostics.dumped_mc_packets    = rtr[RTR_DGC8];
+    diagnostics.dma_bursts           = dma[DMA_STAT0];
+    diagnostics.total_fr_packets     = rtr[RTR_DGC6] + rtr[RTR_DGC7];
+    diagnostics.dumped_fr_packets    = rtr[RTR_DGC11];
+  #endif
 
   // report problems if requested!
   #if (API_DEBUG == TRUE) || (API_WARN == TRUE)
@@ -1307,6 +1344,8 @@ void spin1_flush_rx_packet_queue()
 {
   deschedule(MC_PACKET_RECEIVED);
   deschedule(MCPL_PACKET_RECEIVED);
+  deschedule(FR_PACKET_RECEIVED);
+  deschedule(FRPL_PACKET_RECEIVED);
 }
 /*
 *******/
@@ -1334,30 +1373,7 @@ void spin1_flush_tx_packet_queue()
 /*
 *******/
 
-
-/****f* spin1_api.c/spin1_send_mc_packet
-*
-* SUMMARY
-*  This function enqueues a request to send a multicast packet. If
-*  the software buffer is full then a failure code is returned. If the comms
-*  controller hardware buffer and the software buffer are empty then the
-*  the packet is sent immediately, otherwise it is placed in a queue to be
-*  consumed later by cc_tx_empty interrupt service routine.
-*
-* SYNOPSIS
-*  uint spin1_send_mc_packet(uint key, uint data, uint load)
-*
-* INPUTS
-*  uint key: packet routining key
-*  uint data: packet payload
-*  uint load: 0 = no payload (ignore data param), 1 = send payload
-*
-* OUTPUTS
-*  1 if packet is enqueued or sent successfully, 0 otherwise
-*
-* SOURCE
-*/
-uint spin1_send_mc_packet(uint key, uint data, uint load)
+uint spin1_send_packet(uint key, uint data, uint TCR)
 {
   // TODO: This need to be re-written for SpiNNaker using the
   // TX_nof_full flag instead -- much more efficient!
@@ -1385,7 +1401,7 @@ uint spin1_send_mc_packet(uint key, uint data, uint load)
       /* if not full queue packet */
       tx_packet_queue.queue[tx_packet_queue.end].key = key;
       tx_packet_queue.queue[tx_packet_queue.end].data = data;
-      tx_packet_queue.queue[tx_packet_queue.end].load = load;
+      tx_packet_queue.queue[tx_packet_queue.end].TCR = TCR;
 
       tx_packet_queue.end = (tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE;
 
@@ -1401,11 +1417,13 @@ uint spin1_send_mc_packet(uint key, uint data, uint load)
       /* head of the queue to make room for new packet */
       uint hkey  = tx_packet_queue.queue[tx_packet_queue.start].key;
       uint hdata = tx_packet_queue.queue[tx_packet_queue.start].data;
-      uint hload = tx_packet_queue.queue[tx_packet_queue.start].load;
+      uint hTCR = tx_packet_queue.queue[tx_packet_queue.start].TCR;
 
       tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
 
-      if (hload)
+      cc[CC_TCR] = hTCR;
+
+      if (hTCR & PKT_PL)
         cc[CC_TXDATA] = hdata;
 
       cc[CC_TXKEY]  = hkey;
@@ -1414,30 +1432,95 @@ uint spin1_send_mc_packet(uint key, uint data, uint load)
     if(tx_packet_queue.start == tx_packet_queue.end)
     {
       // If queue empty send packet
-      if (load)
+
+      cc[CC_TCR] = TCR;
+
+      if (TCR & PKT_PL)
         cc[CC_TXDATA] = data;
 
       cc[CC_TXKEY]  = key;
 
       // turn off tx_empty interrupt (in case it was on)
-      vic[VIC_DISABLE] = 0x1 << CC_TMT_INT;
+      vic[VIC_DISABLE] = 1 << CC_TMT_INT;
     }
     else
     {
       /* if not empty queue packet */
       tx_packet_queue.queue[tx_packet_queue.end].key = key;
       tx_packet_queue.queue[tx_packet_queue.end].data = data;
-      tx_packet_queue.queue[tx_packet_queue.end].load = load;
+      tx_packet_queue.queue[tx_packet_queue.end].TCR = TCR;
 
       tx_packet_queue.end = (tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE;
     }
-
   }
 
   spin1_mode_restore(cpsr);
 
   return rc;
 }
+
+/****f* spin1_api.c/spin1_send_mc_packet
+*
+* SUMMARY
+*  This function enqueues a request to send a multicast packet. If
+*  the software buffer is full then a failure code is returned. If the comms
+*  controller hardware buffer and the software buffer are empty then the
+*  the packet is sent immediately, otherwise it is placed in a queue to be
+*  consumed later by cc_tx_empty interrupt service routine.
+*
+* SYNOPSIS
+*  uint spin1_send_mc_packet(uint key, uint data, uint load)
+*
+* INPUTS
+*  uint key: packet routining key
+*  uint data: packet payload
+*  uint load: 0 = no payload (ignore data param), 1 = send payload
+*
+* OUTPUTS
+*  1 if packet is enqueued or sent successfully, 0 otherwise
+*
+* SOURCE
+*/
+
+uint spin1_send_mc_packet(uint key, uint data, uint load)
+{
+  uint tcr = (load) ? PKT_MC_PL : PKT_MC;
+
+  return spin1_send_packet (key, data, tcr);
+}
+/*
+*******/
+
+/****f* spin1_api.c/spin1_send_ft_packet
+*
+* SUMMARY
+*  This function enqueues a request to send a fixed-route packet. If
+*  the software buffer is full then a failure code is returned. If the comms
+*  controller hardware buffer and the software buffer are empty then the
+*  the packet is sent immediately, otherwise it is placed in a queue to be
+*  consumed later by cc_tx_empty interrupt service routine.
+*
+* SYNOPSIS
+*  uint spin1_send_fr_packet(uint key, uint data, uint load)
+*
+* INPUTS
+*  uint key: packet routining key
+*  uint data: packet payload
+*  uint load: 0 = no payload (ignore data param), 1 = send payload
+*
+* OUTPUTS
+*  1 if packet is enqueued or sent successfully, 0 otherwise
+*
+* SOURCE
+*/
+
+uint spin1_send_fr_packet(uint key, uint data, uint load)
+{
+  uint tcr = (load) ? PKT_FR_PL : PKT_FR;
+
+  return spin1_send_packet (key, data, tcr);
+}
+
 /*
 *******/
 
@@ -2017,6 +2100,8 @@ uint spin1_trigger_user_event(uint arg0, uint arg1)
 */
 void sark_pre_main (void)
 {
+  sark_call_cpp_constructors();
+  
   sark_cpu_state (CPU_STATE_SARK);
   sark_vec->api = 1;
 

@@ -1,0 +1,27 @@
+#
+# tubotron &
+#
+# Load code in "ybug" as below and then
+#
+# ./sdp_ping 192.168.240.xxx 1 1 6 1
+#
+# This sends SDP packets into SpiNNaker on port 1 and the "sdping"
+# program running there sends them back to the sender which receives
+# and prints them.
+#
+# Stop that (CTRL/C) and then
+#
+# ./sdp_ping 192.168.240.xxx 1 1 6 2
+#
+# and in another shell
+#
+# ./sdp_recv 17894 1.5
+#
+# Now the sender is using port 2 which instructs the "sdping" program
+# on SpiNNaker to send the packets back to the host using IPTag 1
+# which is set up to use UDP port 17894. The "sdp_recv" program will
+# receive these packets and print them.
+
+sp root
+iptag 1 set . 17894
+app_load sdping.aplx @1,1 6 16

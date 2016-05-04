@@ -1,0 +1,2177 @@
+#!/usr/bin/perl
+
+##------------------------------------------------------------------------------
+##
+## bmpc		    An application for controlling BMPs
+##
+## Copyright (C)    The University of Manchester - 2012-2016
+##
+## Author           Steve Temple, APT Group, School of Computer Science
+## Email            steven.temple@manchester.ac.uk
+##
+##------------------------------------------------------------------------------
+
+
+use strict;
+use warnings;
+
+use Time::HiRes;
+use String::CRC32;
+
+use SpiNN::CLI;
+use SpiNN::Cmd;
+use SpiNN::Util qw/read_file hex_dump parse_bits sllt_version/;
+
+
+#-------------------------------------------------------------------------------
+
+
+my $bmp;		# SpiNN::Cmd object for BMP
+my $cli;		# SpiNN::CLI object
+
+my $debug = 0;		# Enable verbosity
+my $readline = 1;	# Use readline
+
+my $bmp_target;		# BMP host name
+
+my $bmp_port  = 17893;	# UDP port for BMP
+my $TUBE_PORT = 17892;	# UDP port for Tubotron
+
+my ($chip_x, $chip_y, $cpu) = (0, 0, 0);
+
+
+#-------------------------------------------------------------------------------
+
+
+my $CMD_BMP_INFO = 48;
+my $CMD_FLASH_COPY = 49;
+my $CMD_FLASH_ERASE = 50;
+my $CMD_FLASH_WRITE = 51;
+my $CMD_BMP_SF = 53;
+my $CMD_BMP_EE = 54;
+my $CMD_RESET = 55;
+my $CMD_XILINX = 56;
+my $CMD_POWER = 57;
+
+
+#-------------------------------------------------------------------------------
+
+
+sub get_fw_ver
+{
+    my $v = $bmp->ver (raw => 1);
+
+    return $v->[5];
+}
+
+
+sub get_flash_buf
+{
+    my $v = $bmp->scp_cmd ($CMD_BMP_INFO,
+			    arg1 => 0,
+			    unpack => "V8");
+    return $v->[5]
+}
+
+
+sub read_flash_data
+{
+    my $data = $bmp->read (0x1000, 4096);
+
+    return $data;
+}
+
+
+sub update_flash_data
+{
+    my $data = shift;
+
+    $data = substr $data, 0, 4092;
+    $data .= pack "V", ~crc32 ($data);	# Append CRC
+
+
+    my $ver = get_fw_ver ();
+    my $fb = get_flash_buf ();
+
+    if ($ver >= 138)
+    {
+	$bmp->write ($fb, $data);
+
+	$bmp->scp_cmd ($CMD_FLASH_WRITE,	# Write back to flash (with erase)
+		       arg1 => 0x1000,
+		       arg2 => 4096,
+		       arg3 => 1);
+    }
+    else
+    {
+	print ("Firmware upgrade (from $ver) recommended!\n");
+
+	$bmp->scp_cmd ($CMD_FLASH_ERASE,	# Erase sector
+		       arg1 => 0x1000,
+		       arg2 => 0x2000);
+
+	$bmp->write ($fb, $data);	# Put updated data in buffer
+
+	$bmp->scp_cmd ($CMD_FLASH_WRITE,	# Write back to flash
+		       arg1 => 0x1000,
+		       arg2 => 4096,
+		       arg3 => 0);
+    }
+
+    my $new = read_flash_data ();
+
+    return 1 if $new eq $data;
+
+    if (open my $fh, ">", "/tmp/bmp-data-flash")
+    {
+	syswrite $fh, $data, 4096;
+	close $fh;
+	print "Data saved in \"/tmp/bmp-data-flash\"...\n";
+    }
+
+    return 0;	
+}
+
+
+
+sub cmd_xslot
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+
+    my $slot = $cli->{arg_v}->[0];
+    my $state = $cli->{arg_v}->[1];
+    my $chip = $cli->{arg_v}->[2];
+
+    return "bad args" if $ac < 2 || $ac > 3;
+    return "bad slot" unless $slot =~ /^[0-3]$/;
+    return "bad state" unless $state =~ /^on|off$/;
+    return "bad chip" if $ac > 2 && $chip !~ /^[1-7]$/;
+
+    my $data;
+
+    eval
+    {
+	$data = read_flash_data ();
+
+	my ($type, $size, $flags) = unpack "C2 v",
+	substr $data, 256 + 128 * $slot, 4;
+
+#    printf "# type %d size %d flags %x\n", $type, $size, $flags;
+
+	die "slot not configured\n" unless $type == 3;
+
+	$flags |= 0x8000 if $state eq "on";
+	$flags &= ~0x8000 if $state eq "off";
+
+	$flags = ($flags & ~7) | $chip if $chip;
+
+	substr $data, 256 + 128 * $slot, 4, pack "C2 v", $type, $size, $flags;
+	$data .= pack "V", ~crc32 ($data);	# Append CRC
+
+	die "Flash update failed!\n" unless update_flash_data ($data);
+    };
+
+    return $@;
+}
+
+
+
+sub cmd_xreg
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+
+    return "bad args" unless $ac % 3 == 0;
+    return "too many args" if $ac > 12 * 3;
+
+    my @fpga_map = ("0  ", "1  ", "2  ", "0-2");
+    my @fpga_ok = (4, 0, 1, 4, 2, 4, 4, 3); # 4 is bad!
+
+    if ($ac == 0)
+    {
+	my $data;
+	eval { $data = $bmp->read (0x1000, 2048); };
+	return $@ if $@;
+
+	for (my $i = 0; $i < 16; $i++)
+	{
+	    my ($type, $size, $flags, $time, $crc, $base, $length,
+		$p0, $p1, $p2, @data) =
+		    unpack "C2 v V7 V*", substr $data, 128*$i, 128;
+
+	    next unless $type == 4;
+
+	    for (my $i = 0; $i < $size; $i++)
+	    {
+		my ($addr, $data) = ($data[2*$i], $data[2*$i+1]);
+		printf "%s %08x %08x\n", $fpga_map[$addr & 3], $addr & ~3, $data;
+	    }
+	}
+
+	return "";
+    }
+
+    my @data;
+
+    for (my $i = 0; $i < $ac; $i += 3)
+    {
+	my $fpga = parse_bits ($cli->{arg_v}->[$i], 0, 2);
+	return "bad FPGA list" unless $fpga;
+	$fpga = $fpga_ok[$fpga];
+	return "bad FPGA list" if $fpga > 3;
+
+	my $addr = $cli->{arg_x}->[$i+1];
+	return "bad address" if $addr & 3;
+	$addr |= $fpga;
+
+	my $data = $cli->{arg_x}->[$i+2];
+
+	push @data, $addr, $data;
+    }
+
+    for (my $i = $ac; $i < 12 * 3; $i += 3)
+    {
+	push @data, 0xffffffff, 0xffffffff;
+    }
+
+    my $buf = pack "C2 v V7 V24", 4, $ac / 3, 0, 0, 0, 0, 0, 0, 0, 0, @data;
+
+    print "Updating Flash Data sector\n";
+
+    eval
+    {
+	my $data = read_flash_data ();		# Read existing data
+
+	substr $data, 6 * 128, 128, $buf;	# Update xreg data
+
+	die "Flash update failed!\n" unless update_flash_data ($data);
+    };
+
+    return $@;
+}
+
+
+sub cmd_xboot
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $file = $cli->{arg_v}->[0];
+    my $slot = $cli->{arg_n}->[1];
+    my $chip = $cli->{arg_n}->[2];
+
+    return "bad args" if $ac > 3;
+
+    $slot = 0 unless defined $slot;
+    $chip = 7 unless defined $chip;
+
+    return "bad slot" if $ac > 1 && $slot !~ /^[0-3]$/;
+    return "bad chip" if $ac > 2 && $chip !~ /^[1-7]$/;
+
+    my %slot = (2 => "S0 ", 3 => "S1 ", 4 => "S2 ", 5 => "S3 ");
+    my @chip = ("   ", "  0", "  1", " 10", "  2", " 20", " 21", "210");
+
+    if ($ac == 0)
+    {
+	my $data;
+	eval { $data = $bmp->read (0x1000, 2048); };
+	return $@ if $@;
+
+	for (my $i = 0; $i < 16; $i++)
+	{
+	    my ($type, $size, $flags, $time, $crc, $base, $length,
+		$p0, $p1, $p2, $data) =
+#		    unpack "C2 v V7 a96", substr $data, 128*$i, 128;
+		    unpack "C2 v V7 Z*", substr $data, 128*$i, 128;
+
+	    next unless $type == 3;
+
+	    my $state = ($flags & 0x8000) ? "ENABLED " : "DISABLED";
+	    my $chip = $chip[$flags & 7];
+
+	    printf "%s  $state  Chips %s, Base 0x%06x, ",
+	      $slot{$i}, $chip, $base;
+	    printf "Length %8d, CRC 0x%08x\n", $length, $crc;
+	    printf "     File      %s\n", $data;
+	    printf "     Written   %s\n", scalar localtime $time;
+	    printf "     ModTime   %s\n", scalar localtime $p0;
+	}
+	return "";
+    }
+
+    open my $fh, '<', $file or return "can't open \"$file\"";
+
+    my $crc = crc32 ($fh);
+    seek $fh, 0, 0;	# Just in case...
+
+    my @stat = stat $fh;
+
+    my $length = $stat[7];
+    my $mtime = $stat[9];
+    my $count = 0;
+    my $base = 0x200000 + $slot * 0x180000;
+    my $data;
+
+    printf "Copying to Serial Flash at 0x%x\n", $base;
+
+    eval
+    {
+	my $addr = $base;
+
+	while (1)
+	{
+	    my $len = sysread $fh, my $buf, 256;
+	    last if $len <= 0;
+
+	    $bmp->scp_cmd ($CMD_BMP_SF,
+			   arg1 => $addr,
+			   arg2 => 256,
+			   arg3 => 1,
+			   data => $buf);
+
+	    $addr += 256;
+	    $count += 256;
+	    next if $cli->{quiet};
+	    print "\rByte $count" if ($count % 10240) == 0;
+	}
+
+	print "\rSent $length bytes\n";
+	printf "Checking Serial Flash CRC - 0x%08x\n", $crc;
+
+	$data = $bmp->scp_cmd ($CMD_BMP_SF,
+			       arg1 => $base,
+			       arg2 => $length,
+			       arg3 => 2,
+			       timeout => 2,
+			       unpack => "V");
+    };
+
+    close $fh;
+
+    return $@ if $@;
+
+    return sprintf "CRC error - 0x%08x\n", $data->[0] if $data->[0] != $crc;
+
+    my $size = length $file;
+    if ($size > 96)
+    {
+	$file = substr $file, 0, 96;
+	$size = 96;
+    }
+
+    my ($type, $flags) = (3, 0x8000 + $chip);
+    my $time = time ();
+
+    my $xboot = pack "C2 v V7 a96", $type, $size, $flags, $time, $crc,
+      $base, $length, $mtime, 0xffffffff, 0xffffffff, $file;
+
+    print "Updating Flash Data sector\n";
+
+    my ($flash, $offset) = (0x1000, 0x100 + $slot * 0x80);
+
+    eval
+    {
+	my $data = read_flash_data ();		# Read existing data
+
+	substr $data, $offset, 128, $xboot;	# Replace XBoot data
+
+	die "Flash update failed!\n" unless update_flash_data ($data);
+    };
+
+    return $@;
+}
+
+
+sub cmd_xreset
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $code = $cli->{arg_v}->[0];
+
+    if ($ac == 0)
+    {
+	eval
+	{
+	    # XIL_RST is IO port 1, bit 14
+	    my $d = $bmp->read (0x2009c034, 4, type => "word", unpack => "V");
+	    $d = ($d->[0] >> 14) & 1;
+	    printf "xreset %s\n", ($d) ? "high" : "low";
+	};
+
+	return $@;
+    }
+
+    return "bad args" unless $ac == 1 && $code =~ /^(low|high|pulse)$/;
+
+    $code = 0 if $code eq "low";
+    $code = 1 if $code eq "high";
+    $code = 2 if $code eq "pulse";
+
+    eval
+    {
+	$bmp->scp_cmd ($CMD_XILINX,	# Reset FPGAs
+		       arg1 => 2,
+		       arg2 => $code);
+    };
+
+    return $@;
+}
+
+
+sub cmd_xload
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $file = $cli->{arg_v}->[0];
+    my $mask = $cli->{arg_n}->[1];
+
+    $mask ||= 7;
+
+    return "bad args" if $ac < 1 || $ac > 2;
+    return "bad mask" if $ac == 2 && ($mask < 1 || $mask > 7);
+
+    open my $fh, '<', $file or return "can't open \"$file\"";
+    my $size = -s $file;
+    my $len = sysread $fh, my ($buf), $size;
+    close $fh;
+
+    return "error reading \"$file\"" unless $len == $size;
+
+    my $time = Time::HiRes::time;
+    my $count = 0;
+
+    eval
+    {
+	$bmp->scp_cmd ($CMD_XILINX,	# Init FPGAs
+		       arg1 => 1,
+		       arg2 => $mask);
+
+	while (1)
+	{
+	    my $data = substr $buf, $count, 256;
+	    last unless defined $data;
+	    my $len = length $data;
+	    last if $len == 0;
+
+	    $bmp->scp_cmd ($CMD_XILINX,
+			   arg1 => 0,
+			   arg2 => $len,
+			   data => $data);
+
+	    $count += $len;
+
+	    next if $cli->{quiet};
+	    print "\rByte $count" if ($count % 10240) == 0;
+	}
+
+	Time::HiRes::usleep (5000);
+
+	$bmp->scp_cmd ($CMD_XILINX,	# Release FPGA reset
+		       arg1 => 2,
+		       arg2 => 1);
+    };
+
+    $time = Time::HiRes::time - $time;
+
+    printf "\rSent $count bytes (%d bytes/sec)\n", $count / $time;
+
+    return $@;
+}
+
+
+sub cmd_adc
+{
+#    my @adc_n = ("V12d", "V12c", "V12b", "V12a", "V18", "V25", "V33", "VPWR");
+
+    my @adc_n = ("", "V12c", "V12b", "V12a", "V18", "", "V33", "VPWR",
+	         "T_intN", "T_intS", "", "",
+		 "T_ext0", "T_ext1", "", "",
+		 "Fan0", "Fan1", "", "");
+
+    my @adc_t = (2400, 2400, 2400, 2400, 2400, 3020, 3600, 14400,
+		 256, 256, 256, 256,
+		 256, 256, 256, 256,
+		 1, 1, 1, 1);
+
+    my @adc_x = (0, 0, 0, 0, 0, 0, 0, 0,
+		 -0x8000, -0x8000, -0x8000, -0x8000,
+		 -0x8000, -0x8000, -0x8000, -0x8000,
+		 0xffff, 0xffff, 0xffff, 0xffff);
+
+    my @adc_f = ("%8.2f", "%8.2f", "%8.2f", "%8.2f",
+		 "%8.2f", "%8.2f", "%8.2f", "%8.2f",
+		 "%8.1f", "%8.1f", "%8.1f", "%8.1f",
+		 "%8.1f", "%8.1f", "%8.1f", "%8.1f",
+		 "%8.0f", "%8.0f", "%8.0f", "%8.0f");
+
+    eval
+    {
+	my $data = $bmp->scp_cmd ($CMD_BMP_INFO,
+				  arg1=> 3,
+				  unpack => "v8s<16v4V2");
+
+	for (my $i = 0; $i < 8; $i++)
+	{
+	    my $v = $data->[$i] * 2500 / 4096;
+	    $v = $v * $adc_t[$i] / 2400;
+	    my $name = $adc_n[$i];
+	    next unless $name;
+	    printf "%-6s $adc_f[$i]\n", $name, $v / 1000;
+	}
+
+	for (my $i = 8; $i < 20; $i++)
+	{
+	    my $name = $adc_n[$i];
+	    next unless $name;
+	    my $v = $data->[$i];
+	    next if $v == $adc_x[$i];
+	    $v = $v / $adc_t[$i];
+	    printf "%-6s $adc_f[$i]\n", $name, $v;
+	}
+    };
+
+    return $@;
+}
+
+
+sub cmd_ee_read
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $addr = $cli->{arg_x}->[0];
+
+    $addr = 0 if $ac < 1;
+
+    eval
+    {
+	my $data = $bmp->scp_cmd ($CMD_BMP_EE,
+				  arg1 => $addr,
+				  arg2 => 256,
+				  arg3 => 0);
+
+	print hex_dump ($data, addr => $addr);
+    };
+
+    return $@;
+}
+
+
+sub number
+{
+    my $arg = shift;
+
+    return undef unless defined $arg;
+    return $arg + 0 if $arg =~ /^\d+$/;
+    return oct $arg if $arg =~ /^0x[0-9a-fA-F]+/;
+    return oct $arg if $arg =~ /^0b[0-1]+/;
+    return time () if $arg eq "unix_time";
+    return undef;
+}
+
+
+sub cmd_ee_data
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $file = $cli->{arg_v}->[0];
+    my $frame_id = $cli->{arg_v}->[1];
+
+    if ($ac == 0)
+    {
+	eval
+	{
+	    my $data = $bmp->scp_cmd ($CMD_BMP_EE,
+				      arg1 => 0,
+				      arg2 => 256,
+				      arg3 => 0);
+
+	    my @d   = unpack "C4 V C4 C C C C", $data;
+	    my @int = unpack "C8", substr $data, 32, 8;
+	    my @ext = unpack "C8", substr $data, 40, 8;
+	    my @fan = unpack "C8", substr $data, 48, 8;
+
+	    print "\n";
+	    printf "Type:       0x%02x\n", $d[0];
+	    printf "Written:    %s\n", scalar localtime $d[4];
+	    printf "SW ver:     %d\n", $d[1];
+	    printf "HW ver:     %d\n", $d[2];
+	    printf "Frame ID:   %d\n", $d[3];
+	    printf "GW addr:    %d.%d.%d.%d\n", @d[5..8];
+	    printf "Flags:      0x%02x\n", $d[9];
+	    printf "Mask bits:  %d\n", $d[10];
+	    printf "MAC byte:   0x%02x\n", $d[11];
+	    printf "LCD time:   %d\n", $d[12];
+	    $_ *= 16 for @fan;
+
+	    printf "Fan:        %-4d %-4d %-4d %-4d\n", @fan[0..3];
+	    printf "            %-4d %-4d %-4d %-4d\n", @fan[4..7];
+	    printf "T_int:      %-4d %-4d %-4d %-4d\n", @int[0..3];
+	    printf "            %-4d %-4d %-4d %-4d\n", @int[4..7];
+	    printf "T_ext:      %-4d %-4d %-4d %-4d\n", @ext[0..3];
+	    printf "            %-4d %-4d %-4d %-4d\n", @ext[4..7];
+	    print "\n";
+	};
+
+	return $@;
+    }
+
+    return "bad args" if $ac > 2;
+    return "bad frame ID" if $ac == 2 && ($frame_id !~ /^\d+$/ || $frame_id > 254);
+
+    open my $fh, "<", $file or return "Can't open $file";
+    my $buf;
+
+    eval
+    {
+	while (<$fh>)
+	{
+	    chomp;
+	    s/^\s+|\s+$//g;
+	    s/#.*//;
+	    next if /^$/;
+
+	    my ($key, @l) = split;
+	    my $pack = "C*";
+	    my $len = length $buf;
+
+	    for my $v (@l)
+	    {
+		my $t = $v;
+		$v = number ($v);
+		die "Bad value \"$t\" (line $.)\n" unless defined $v
+	    }
+
+	    if ($key =~ /^(byte|uchar|uint8_t|uint8)$/)
+	    {
+		$pack = "C*";
+	    }
+	    elsif ($key =~ /^(half|ushort|uint16_t)$/)
+	    {
+		$pack = "v*";
+		die "Bad align (line $.)\n" unless $len % 2 == 0;
+	    }
+	    elsif ($key =~ /^(word|uint|uint32_t|uint32)$/)
+	    {
+		$pack = "V*";
+		die "Bad align (line $.)\n" unless $len % 4 == 0;
+	    }
+	    elsif ($key =~ /^(date|time)$/)
+	    {
+		$pack = "V";
+		die "Bad align (line $.)\n" unless $len % 4 == 0;
+		$l[0] = time ();
+	    }
+	    elsif ($key eq "crc32")
+	    {
+		$pack = "V";
+		die "Bad align (line $.)\n" unless $len % 4 == 0;
+		$l[0] = ~crc32 ($buf);
+	    }
+	    elsif ($key eq "pad")
+	    {
+		die "Bad args (line $.)" unless $#l == 1;
+
+		my ($limit, $value) = splice @l, 0, 2;
+
+		die "Bad args (line $.)" unless defined $limit && defined $value;
+		die "Bad pad size (line $.)\n" if $limit < $len;
+
+		my $count = $limit - $len;
+		$buf .= chr ($value) x $count;
+	    }
+	    elsif ($key eq "align")
+	    {
+		die "Bad args (line $.)" unless $#l == 1;
+
+		my ($size, $value) = splice @l, 0, 2;
+
+		die "Bad args (line $.)" unless defined $size && defined $value;
+
+		my $count = $size - $len % $size;
+		$buf .= chr ($value) x $count;
+	    }
+	    else
+	    {
+		die "Bad key \"$key\" (line $.)\n";
+	    }
+
+	    $buf .= pack $pack, @l;
+	}
+    };
+
+    close $fh;
+    return $@ if $@;
+
+    # Frame ID is at offset 3
+    # !! Do not use - corrupts CRC - need to recompute!
+    substr $buf, 3, 1, chr ($frame_id) if $ac == 2;
+
+    eval
+    {
+	$bmp->scp_cmd ($CMD_BMP_EE,
+		       arg1 => 0,	# Address
+		       arg2 => 256,	# Length
+		       arg3 => 1,	# 1=Write
+		       data => $buf);
+    };
+
+    return $@;
+}
+
+
+sub cmd_sf_read
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $addr = $cli->{arg_x}->[0];
+
+    $addr = 0 if $ac < 1;
+
+    eval
+    {
+	my $data = $bmp->sf_read ($addr, 256);
+
+	print hex_dump ($data, addr => $addr);
+    };
+
+
+    return $@;
+}
+
+
+sub cmd_sf_write
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $file = $cli->{arg_v}->[0];
+    my $addr = $cli->{arg_x}->[1];
+
+    return "bad args" if $ac < 2;
+    return "address not 4k aligned" unless ($addr & 0xfff) == 0;
+
+    open my $dh, '<', $file or return "can't open \"$file\"";
+
+    my $count = 0;
+
+    eval
+    {
+	while (1)
+	{
+	    my $len = sysread $dh, my $buf, 256;
+
+	    last if $len <= 0;
+
+	    $bmp->sf_write ($addr, $len, $buf);
+
+	    $addr += $len;
+	    $count += $len;
+
+	    next if $cli->{quiet};
+	    printf "\rByte %d", $count if ($count % 10240) == 0
+	}
+    };
+
+    close $dh;
+
+    print "\rSent $count bytes\n";
+
+    return $@;
+}
+
+
+sub cmd_ee_write
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $file = $cli->{arg_v}->[0];
+    my $addr = $cli->{arg_x}->[1];
+
+    return "bad args" if $ac < 2;
+    return "address not 16 byte aligned" unless ($addr & 15) == 0;
+
+    open my $dh, '<', $file or return "can't open \"$file\"";
+
+    eval
+    {
+	while (1)
+	{
+	    my $len = sysread $dh, my ($buf), 256;
+
+	    last if $len <= 0;
+
+	    $bmp->scp_cmd ($CMD_BMP_EE,
+			   arg1 => $addr,
+			   arg2 => 256,
+			   arg3 => 1,
+			   data => $buf);
+	    $addr += 256;
+	}
+    };
+
+    close $dh;
+
+    return $@;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub cmd_flash_erase
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $from = $cli->{arg_x}->[0];
+    my $to = $cli->{arg_x}->[1];
+
+    return "bad args" if $ac != 2;
+    return "from >= to" if $from >= $to;
+    return "address not in flash" if $to >= 524288;
+
+    printf "Erase 0x%x to 0x%x\n", $from, $to;
+
+    eval
+    {
+	$bmp->scp_cmd ($CMD_FLASH_ERASE,
+		       arg1 => $from,
+		       arg2 => $to)
+    };
+
+    return $@;
+}
+
+
+sub cmd_flash_write
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $file = $cli->{arg_v}->[0];
+    my $addr = $cli->{arg_x}->[1];
+    my $opt = $cli->{arg_v}->[1];
+    my $update = 0;
+
+    return "bad args" if $ac != 2;
+    return "can't read \"$file\"" unless -r $file;
+ 
+    ($addr, $update) = (0x70000, 1) if $opt eq "update";
+
+    return "bad address" unless defined $addr;
+
+    open my $fh, "<", $file or return "can't open \"$file\"";
+    my $size = sysread $fh, my ($buffer), 65536;
+    close $fh;
+
+    printf "Program from 0x%06x to 0x%06x\n", $addr, $addr + $size;
+
+    eval
+    {
+	$bmp->flash_write ($addr, $buffer, update => $update);
+    };
+
+    print "You'll need to reset now...\n" if $update;
+
+    return $@;
+}
+
+
+sub board_info
+{
+    my $file = shift;
+
+    die "Can't open $file" unless open my $fh, "<", $file;
+
+    my $count = 0;
+    my @words;
+
+    while (<$fh>)
+    {
+	chomp;
+	s/^\s+|\s+$//g;
+	next if /^#/ || /^$/;
+
+	if (/chip\s+([0-7])\s+([0-7])\s+(.+)$/)
+	{
+	    my ($x, $y, $rest) = ($1, $2, $3);
+	    my ($core, $link) = (0, 0);
+
+	    if ($rest =~ s/core\s+(\S+)\s*//)
+	    {
+		$core = parse_bits ($1, 0, 17);
+		die "bad core list ($.) \"$_\"" unless $core;
+	    }
+
+	    if ($rest =~ s/link\s+(\S+)\s*//)
+	    {
+		$link = parse_bits ($1, 0, 5);
+		die "bad link list ($.) $_" unless $link;
+	    }
+
+	    if ($rest =~ s/dead\s*//)
+	    {
+		($link, $core) = (0x3f, 0x3ffff);
+	    }
+	    
+	    die "bad line ($.) \"$_\"" if $rest;
+
+	    my $word = ($x << 27) + ($y << 24) + ($link << 18) + $core;
+
+	    push @words, $word;
+	    $count++
+	}
+	else
+	{
+	    close $fh;
+	    die "bad line ($.) \"$_\"";
+	}
+    }
+
+    close $fh;
+    return pack "VV*", $count, @words;
+}
+
+
+sub cmd_board_info
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $file = $cli->{arg_v}->[0];
+
+    return "bad args" if $ac != 1;
+ 
+    eval
+    {
+	my $buffer = board_info ($file);
+
+	print "# Updating BMP Flash\n";
+
+	my $data = read_flash_data ();
+
+	substr $data, 0xe00, 256, chr (255) x 256;
+	substr $data, 0xe00, length ($buffer), $buffer;
+
+	die "BMP Flash update failed!\n" unless update_flash_data ($data);
+
+	print "# Updating Serial Flash\n";
+
+	# Read first 256 bytes of SF
+
+	my $read = $bmp->sf_read (0, 256);
+
+	# Append data to be added and write
+
+	my $write = $read . substr $data, 0xe00, 256;
+
+	$bmp->sf_write (0, 512, $write);
+
+	# Read back to check
+
+	$read = $bmp->sf_read (0, 512);
+
+	die "Serial Flash update failed!\n" unless $read eq $write;
+    };
+
+    return $@;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub check_ip
+{
+    my $s = shift;
+    my $ip = 0;
+
+    return undef unless $s =~ /^\d+\.\d+\.\d+\.\d+$/;
+
+    for my $n (split /\./, $s)
+    {
+	return undef if $n < 0 || $n > 255;
+	$ip = ($ip << 8) + $n;
+    }
+
+    return $ip;
+}
+
+
+sub text_ip
+{
+    my $ip = shift;
+
+    return sprintf "%d.%d.%d.%d", ($ip >> 24) & 255, ($ip >> 16) & 255,
+    				 ($ip >> 8) & 255,  $ip & 255;
+}
+
+
+sub ip_text
+{
+    my ($data, $long) = @_;
+
+    my @d = unpack "v C6 N3 v2 V2", substr $data, 32, 32;
+
+    my $flag = $d[0];
+    my $mac = sprintf "%02x:%02x:%02x:%02x:%02x:%02x", @d[1..6];
+    my $ip = text_ip ($d[7]);
+    my $gw = text_ip ($d[8]);
+    my $nm = text_ip ($d[9]);
+    my $port = $d[10];
+
+    my $text;
+
+    if ($long)
+    {
+	$text .= sprintf "Flag: %04x\n", $flag;
+	$text .= sprintf "MAC:  %s\n", $mac;
+	$text .= sprintf "IP:   %s\n", $ip;
+	$text .= sprintf "GW:   %s\n", $gw;
+	$text .= sprintf "NM:   %s\n", $nm;
+	$text .= sprintf "Port: %d\n", $port;
+    }
+    else
+    {
+	$text .= sprintf "%04x ", $flag;
+	$text .= sprintf "%s ", $mac;
+	$text .= sprintf "%s %s %s ", $ip, $gw, $nm;
+	$text .= sprintf "%d\n", $port;
+    }
+
+    return $text;
+}
+
+
+sub ip_info
+{
+    my ($addr, $long) = @_;
+
+    eval
+    {
+	my $data = $bmp->read ($addr, 128);
+
+	print ip_text ($data, $long);
+    };
+
+    return $@;
+}
+
+
+sub cmd_spin_ip
+{
+    my $cli = shift;
+    return ip_init ($cli, 128, 2)
+}
+
+
+sub cmd_bmp_ip
+{
+    my $cli = shift;
+    return ip_init ($cli, 0, 1)
+}
+
+
+sub ip_init
+{
+    my ($cli, $offset, $type) = @_;
+    my $ac = $cli->{arg_c};
+    my $arg = $cli->{arg_v}->[0];
+
+    my ($addr, $len) = (0x1000, 128);
+
+    return ip_info ($addr+$offset, 1) if $ac == 0;
+    return ip_info ($addr+$offset, 0) if $ac == 1 && $arg eq "*";
+
+    return "bad args" unless $ac == 6;
+
+    my $flag = $cli->{arg_x}->[0];
+    my $mac = $cli->{arg_v}->[1];
+    my $ip = check_ip ($cli->{arg_v}->[2]);
+    my $gw = check_ip ($cli->{arg_v}->[3]);
+    my $nm = check_ip ($cli->{arg_v}->[4]);
+    my $port = $cli->{arg_n}->[5];
+
+    return "bad flag" unless $flag >= 0x8000 && $flag < 0x10000;
+    return "bad MAC" unless $mac =~ /^([0-9a-f]{1,2}:){5}[0-9a-f]{1,2}$/i;
+    return "bad IP" unless defined $ip;
+    return "bad GW" unless defined $gw;
+    return "bad NM" unless defined $gw;
+    return "bad port" unless $port >= 1024 && $port < 65536;
+
+    my @mac = split /:/, $mac;
+    $_ = hex $_ for @mac;
+
+    my $time = time;
+    my $data = pack "v C6 N3 v2 V2 a64", $flag, @mac, $ip, $gw, $nm, $port,
+                 0, 0, 0, chr (255) x 64;
+
+    my $fl_dir = pack "C2 v V7", $type, 32, 0, $time, (0xffffffff) x 6;
+    $fl_dir .= $data;
+
+    eval
+    {
+	my $data = read_flash_data ();	# Read existing data
+
+	substr $data, $offset, $len, $fl_dir;	# Replace IP data
+
+	die "Flash update failed!\n" unless update_flash_data ($data);
+    };
+
+    return $@ ;
+}
+
+
+sub sf_info
+{
+    my $long = shift;
+
+    eval
+    {
+	my $data = $bmp->scp_cmd ($CMD_BMP_SF,
+				  arg1 => 8,	# address
+				  arg2 => 32,	# length
+				  arg3 => 0);	# 0=read
+
+	$data = pack "V*", unpack ("N*", $data);
+
+	print ip_info ($data, $long);
+    };
+
+    return $@;
+}
+
+
+sub cmd_sf_ip
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $arg = $cli->{arg_v}->[0];
+
+    return sf_info (1) if $ac == 0;
+    return sf_info (0) if $ac == 1 && $arg eq "*";
+    return "bad args" unless $ac == 6;
+
+    my $flag = $cli->{arg_x}->[0];
+    my $mac = $cli->{arg_v}->[1];
+    my $ip = check_ip ($cli->{arg_v}->[2]);
+    my $gw = check_ip ($cli->{arg_v}->[3]);
+    my $nm = check_ip ($cli->{arg_v}->[4]);
+    my $port = $cli->{arg_n}->[5];
+
+    return "bad flag" unless $flag >= 0x8000 && $flag < 0x10000;
+    return "bad MAC" unless $mac =~ /^([0-9a-f]{1,2}:){5}[0-9a-f]{1,2}$/i;
+    return "bad IP" unless defined $ip;
+    return "bad GW" unless defined $gw;
+    return "bad NM" unless defined $gw;
+    return "bad port" unless $port >= 1024 && $port < 65536;
+
+    my @mac = reverse split /:/, $mac;
+    $_ = hex $_ for @mac;
+
+    my $pack = pack "N2 C2 n C4 V3 N3 N",
+              0x553a0008, 0xf5007fe0, $mac[4], $mac[5], $flag,
+              $mac[0], $mac[1], $mac[2], $mac[3],
+              $ip, $gw, $nm, $port, 0, 0, 0xaaaaaaaa;
+
+    my ($addr, $len) = (0, length $pack);
+
+    eval
+    {
+	print "Writing data\n";
+
+	$bmp->scp_cmd ($CMD_BMP_SF,
+		       arg1 => $addr,
+		       arg2 => $len,
+		       arg3 => 1,
+		       data => $pack);
+
+	print "Reading data\n";
+    
+	my $read = $bmp->scp_cmd ($CMD_BMP_SF,
+				  arg1 => $addr,
+				  arg2 => $len,
+				  arg3 => 0);
+
+	if ($pack ne $read)
+	{
+	    print "Oops! - try again?\n";
+	    print "Wrote\n", hex_dump ($pack), "Read\n", hex_dump ($read);
+	}
+	else
+	{
+	    print "Looks OK!\n";
+	}
+    };
+
+    return $@;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub cmd_serial2
+{
+    eval
+    {
+	my $data = $bmp->scp_cmd ($CMD_BMP_INFO,
+				  arg1 => 0,
+				  unpack => "V5");
+
+	printf "%08x-%08x-%08x-%08x\n", @$data[1..4];
+    };
+
+    return $@;
+}
+
+
+sub cmd_serial
+{
+    eval
+    {
+	my $can_status = $bmp->scp_cmd ($CMD_BMP_INFO,
+					arg1 => 2,
+					addr => [0],
+					unpack => "C*");
+
+	print "Slot  Serial\n";
+	print "----  ------\n";
+
+	for (my $i = 0; $i < 24; $i++)
+	{
+	    next unless $can_status->[$i];
+
+	    my $data = $bmp->scp_cmd ($CMD_BMP_INFO,
+				      arg1 => 0,
+				      addr => [$i],
+				      unpack => "V5");
+
+	    printf "%3d   %08x-%08x-%08x-%08x\n", $i, @$data[1..4];
+	}
+    };
+
+    return $@;
+}
+
+
+sub short_date
+{
+    my @time = localtime (shift);
+
+    my @mon = qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
+
+    return sprintf "%02d%s%02d %02d:%02d",
+                   $time[3], lc $mon[$time[4]], $time[5] % 100,
+                   $time[2], $time[1];
+}
+
+
+sub ver_num
+{
+    my $n = shift;
+    return sprintf "%0.2f", $n / 100 if $n < 65535;
+    return sprintf "%d.%d.%d", $n >> 16, ($n >> 8) & 255, $n & 255;
+}
+
+
+sub cmd_firmware
+{
+    eval
+    {
+	my $can_status = $bmp->scp_cmd ($CMD_BMP_INFO,
+					arg1 => 2,
+					addr => [0],
+					unpack => "C*");
+
+	print "Slot  Addr    Primary                 Backup                  Boot\n";
+	print "----  -----   ---------------------   ---------------------   ---------------------\n";
+
+	for (my $i = 0; $i < 24; $i++)
+	{
+	    next unless $can_status->[$i];
+
+	    my $info = $bmp->scp_cmd ($CMD_BMP_INFO,
+				      arg1 => 0,
+				      addr => [$i],
+				      unpack => "V*");
+	    my $vec = $info->[7];
+
+	    my $d1 = $bmp->read (0x10000, 256, unpack => "V*", addr => [$i]);
+	    my $v1 = ver_num ($d1->[54]);
+	    my $t1 = short_date ($d1->[53]);
+
+	    my $d2 = $bmp->read (0x20000, 256, unpack => "V*", addr => [$i]);
+	    my $v2 = ver_num ($d2->[54]);
+	    my $t2 = short_date ($d2->[53]);
+
+	    my $db = $bmp->read (0, 32, unpack => "V*", addr => [$i]);
+	    my $vb = ver_num ($db->[6]);
+	    my $tb = short_date ($db->[5]);
+
+	    printf "%3d   %05x   %-6s  %s   %-6s  %s   %-6s  %s\n",
+	      $i, $vec, $v1, $t1, $v2, $t2, $vb, $tb;
+	}
+    };
+
+    return $@;
+}
+
+
+sub cmd_ip
+{
+    eval
+    {
+	my $can_status = $bmp->scp_cmd ($CMD_BMP_INFO,
+					arg1 => 2,
+					addr => [0],
+					unpack => "C*");
+
+	print "Slot  BMP              SpiNN\n";
+	print "----  ---              -----\n";
+
+	for (my $i = 0; $i < 24; $i++)
+	{
+	    next unless $can_status->[$i];
+
+	    my $data = $bmp->scp_cmd ($CMD_BMP_INFO,
+				      arg1 => 4,
+				      addr => [$i],
+				      unpack => "a32a32");
+
+	    my @bmp_ip = unpack "C4", substr $data->[0], 8, 4;
+	    my @spin_ip = unpack "C4", substr $data->[1], 8, 4;
+	    my $b = sprintf "%d.%d.%d.%d", @bmp_ip;
+	    my $s = sprintf "%d.%d.%d.%d", @spin_ip;
+	    printf "%3d   %-16s %-16s\n", $i, $b, $s;
+	}
+    };
+
+    return $@;
+}
+
+#-------------------------------------------------------------------------------
+
+
+sub cmd_led
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $num = $cli->{arg_v}->[0];
+    my $action = $cli->{arg_v}->[1];
+
+    return "bad args" if $ac != 2 || $num !~ /^[0-7]+$/ ||
+	$action !~ /^(on|off|inv|flip)$/;
+
+    my %led = (on => 3, off => 2, inv => 1, flip => 1);
+
+    my $c = 0;
+
+    for my $l (split //, $num)
+    {
+	$c |= $led{$action} << ($l * 2);
+    }
+
+    eval { $bmp->led ($c) };
+
+    return $@;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub cmd_sver
+{
+    eval
+    {
+	my $data = $bmp->ver (raw => 1);
+	my ($vc, $pc, $cy, $cx, $size, $ver_num, $time, $ver_str) = @$data;
+	my ($name, $hw) = split /\//, $ver_str;
+	if ($ver_num < 65535)
+	{
+	    printf "$name %0.2f at $hw:$vc (built %s) [C=$pc, F=$cy, B=$cx]\n",
+	      $ver_num / 100, scalar localtime $time;
+	}
+	else
+	{
+	    printf "$name %d.%d.%d at $hw:$vc (built %s) [C=$pc, F=$cy, B=$cx]\n",
+	      $ver_num >> 16, ($ver_num >> 8) & 255, $ver_num & 255, scalar localtime $time;
+	}
+    };
+
+    return $@;
+}
+
+
+sub cmd_smemw
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $addr = ($ac >= 1) ? $cli->{arg_x}->[0] : 0;
+
+    eval
+    {
+	my $data = $bmp->read ($addr, 256, type => "word");
+	print hex_dump ($data, addr => $addr, format => "word");
+    };
+
+    return $@;
+}
+
+
+sub cmd_smemh
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $addr = ($ac >= 1) ? $cli->{arg_x}->[0] : 0;
+
+    eval
+    {
+	my $data = $bmp->read ($addr, 256, type => "word");
+	print hex_dump ($data, addr => $addr, format => "half");
+    };
+
+    return $@;
+}
+
+
+sub cmd_smemb
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $addr = ($ac >= 1) ? $cli->{arg_x}->[0] : 0;
+
+    eval
+    {
+	my $data = $bmp->read ($addr, 256, type => "byte");
+	print hex_dump ($data, addr => $addr);
+    };
+
+    return $@;
+}
+
+
+sub cmd_sw
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $addr = $cli->{arg_x}->[0];
+    my $data = $cli->{arg_x}->[1];
+
+    return "bad args" unless $ac == 1 || $ac == 2;
+
+    eval
+    {
+	if ($ac == 1)
+	{
+	    my $data = $bmp->read ($addr, 4, type => "word", unpack => "V");
+	    printf "%08x = %08x\n", $addr, $data->[0];
+	}
+	else
+	{
+	    $data = pack "V", $data;
+	    $bmp->write ($addr, $data, type => "word");
+	}
+    };
+
+    return $@;
+}
+
+
+sub cmd_sb
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $addr = $cli->{arg_x}->[0];
+    my $data = $cli->{arg_x}->[1];
+
+    return "bad args" unless $ac == 1 || $ac == 2;
+
+    eval
+    {
+	if ($ac == 1)
+	{
+	    my $data = $bmp->read ($addr, 1, type => "byte", unpack => "C");
+	    printf "%08x = %02x\n", $addr, $data->[0];
+	}
+	else
+	{
+	    $data = pack "C", $data;
+	    $bmp->write ($addr, $data, type => "byte");
+	}
+    };
+
+    return $@;
+}
+
+
+sub cmd_sfill
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $from = $cli->{arg_x}->[0];
+    my $to = $cli->{arg_x}->[1];
+    my $fill = $cli->{arg_x}->[2];
+
+    eval { $bmp->fill ($from, $fill, $to-$from) };
+
+    return $@;
+}
+
+
+sub cmd_sp
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $arg1 = $cli->{arg_v}->[0];
+
+    return "" if $ac == 0;
+
+    $arg1 = 0 if $arg1 eq "root";
+
+    return "bad args" unless $ac == 1 && $arg1 =~ /^\d+$/;
+
+    eval
+    {
+	($chip_x, $chip_y, $cpu) = $bmp->addr ($arg1);
+
+	$cli->{prompt} =~ s/:.+//;
+	$cli->{prompt} .= ":$cpu > ";
+    };
+
+    return $@;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub cmd_freg
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $fpga = $cli->{arg_x}->[0];
+    my $addr = $cli->{arg_x}->[1];
+    my $data = $cli->{arg_x}->[2];
+
+    return "bad args" if $ac < 2 || $ac > 3;
+    return "bad FPGA" unless defined $fpga && $fpga >=0 && $fpga <= 2;
+
+    eval
+    {
+	if ($ac == 2)
+	{
+	    my $data = $bmp->link_read ($fpga, $addr, 4, unpack => "V");
+
+	    printf "%08x = %08x\n", $addr, $data->[0];
+	}
+	else
+	{
+	    my $d = pack "V", $data;
+
+	    $bmp->link_write ($fpga, $addr, $d);
+	}
+    };
+
+    return $@;
+}
+
+
+sub cmd_fdump
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $fpga = $cli->{arg_n}->[0];
+    my $addr = $cli->{arg_x}->[1];
+
+    return "bad args" unless $ac == 2;
+    return "bad FPGA" unless defined $fpga && $fpga >=0 && $fpga <= 2;
+
+    eval
+    {
+	my $data = $bmp->link_read ($fpga, $addr, 256);
+	print hex_dump ($data, addr => $addr, format => "word");
+    };
+
+    return $@;
+}
+
+
+sub cmd_fstat
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $fpga = $cli->{arg_n}->[0];
+
+    return "bad args" unless $ac == 1;
+    return "bad FPGA" unless defined $fpga && $fpga >=0 && $fpga <= 2;
+
+    eval
+    {
+	my $d = $bmp->link_read ($fpga, 0x40000, 32, unpack => "V*");
+
+	printf "%-8s %10s\n", "Register", "Global";
+	printf "%-8s %10s\n", "--------", "------";
+	printf "%-8s 0x%08x\n", "VERS", $d->[0];
+	printf "%-8s 0b%08b\n", "FLAG", $d->[1];
+	printf "%-8s 0x%08x\n", "PKEY", $d->[2];
+	printf "%-8s 0x%08x\n", "PMSK", $d->[3];
+	printf "%-8s 0x%08x\n", "SCRM", $d->[4];
+	printf "%-8s 0x%08x\n", "SLEN", $d->[5];
+	printf "%-8s 0x%08x\n", "LEDO", $d->[6];
+	printf "\n";
+    };
+
+    return $@ if $@;
+
+    my @regs = qw/VERS CRCE FRME BUSY LNAK RNAK LACK RACK LOOC ROOC CRDT
+		  SFRM TFRM DFRM RFRM EMPT FULL CFCL CFCR IDSO IDSI
+                  HAND RECO/;
+
+    my @fmt = qw/0x%08x %10u %10u %10u %10u %10u %10u %10u %10u %10u %10u
+		 %10u %10u %10u %10u 0b%08b 0b%08b 0b%08b 0b%08b 0x%04x 0x%04x
+                 0b%08b %10u/;
+
+    my @names = qw/East South Periph-0 SouthWest West Periph-1 North
+	           NorthEast Periph-2/;
+
+    my $size = 1+$#regs;
+    my $data;
+
+    for (my $bank = 0; $bank < 3; $bank++)
+    {
+	my $addr = 65536 * $bank;
+	my $d;
+
+	eval
+	{
+	    $d = $bmp->link_read ($fpga, $addr, $size*4, unpack => "V*");
+	};
+
+	return $@ if $@;
+
+	$data->[$bank] = $d;
+    };
+
+
+    printf "%-8s %10s  %10s  %10s\n",
+      "Register",
+      $names[3*$fpga + 0],
+      $names[3*$fpga + 1],
+      $names[3*$fpga + 2];
+
+    printf "%-8s %10s  %10s  %10s\n",
+      "--------",
+      "-" x length $names[3*$fpga + 0],
+      "-" x length $names[3*$fpga + 1],
+      "-" x length $names[3*$fpga + 2];
+
+    for (my $reg = 0; $reg < $size; $reg++)
+    {
+	printf "%-8s %10s  %10s  %10s\n",
+	    $regs[$reg],
+	    sprintf ($fmt[$reg], $data->[0]->[$reg]),
+	    sprintf ($fmt[$reg], $data->[1]->[$reg]),
+	    sprintf ($fmt[$reg], $data->[2]->[$reg]); 
+    }
+
+    return "";
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub cmd_iptag
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $host = $cli->{arg_v}->[0];
+    my $port = $cli->{arg_n}->[1];
+    my $tag = $cli->{arg_n}->[2];
+
+    my $MIN_TAG = 0; # Bodge!
+    my $MAX_TAG = 7;
+
+    $port = $TUBE_PORT unless $ac > 1 && defined $port;
+    return "bad tag" if $ac == 3 && ($tag < $MIN_TAG || $tag > $MAX_TAG);
+
+    $tag = 0 unless $ac == 3;
+
+    eval
+    {
+	if ($ac == 0)
+	{
+	    my $data = $bmp->iptag_tto (255);
+
+	    my ($tto, undef, $pool, $fix) = unpack "C4", $data;
+	    my $max = $pool + $fix;
+	    $tto = (1 << ($tto - 1)) / 100 if $tto;
+
+	    print "IPTags=$max (F=$fix, T=$pool), TTO=${tto}s\n\n";
+
+	    print "Tag   IP address      Port   T/O   Flags      Count\n";
+	    print "---   ----------      ----   ---   -----      -----\n";
+
+	    for (my $i = 0; $i < $max; $i++)
+	    {
+		my $data = $bmp->iptag_get ($i, 1);
+
+		my ($ip, $mac, $port, $timeout, $flags, $count, $rx_port,
+		    $bmp_addr, $bmp_port) = unpack "a4 a6 v3 V v2 C", $data;
+
+		if ($flags & 0x8000) # Tag in use
+		{
+		    $ip = join ".", unpack "C*", $ip;
+
+		    printf "%3d  %-15s  %5d  %-4s  %04x  %10u\n",
+		    $i, $ip, $port, $timeout / 100, $flags, $count;
+		}
+	    }
+	}
+	elsif ($ac >= 1 && $host eq "-")
+	{
+	    my $tag = ($ac == 2) ? $port : 0;
+	    die "bad tag\n" if $tag < $MIN_TAG || $tag > $MAX_TAG;
+
+	    $bmp->iptag_clear ($tag);
+	}
+	else
+	{
+	    $bmp->iptag_set ($tag, $host, $port);
+	}
+    };
+
+    return $@;
+}
+
+#-------------------------------------------------------------------------------
+
+
+sub cmd_sload
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $file = $cli->{arg_v}->[0];
+    my $addr = $cli->{arg_x}->[1];
+
+    return "bad args" if $ac < 2;
+
+    eval { $bmp->write_file ($addr, $file) };
+
+    return $@;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+#!! These need fixing...
+
+sub cmd_reset
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $arg = $cli->{arg_v}->[0];
+    my $delay = $cli->{arg_v}->[1];
+
+    return "bad args" unless $ac == 1 || $ac == 2;
+
+    my $mask = parse_bits ($arg, 0, 23);
+    return "bad mask" unless $mask;
+
+    $delay = 0 unless defined $delay;
+    return "bad delay" unless $delay =~ /^\d+$/;
+
+    eval
+    {
+	$bmp->reset ($mask, delay => $delay);
+    };
+
+    return $@;
+}
+
+
+sub cmd_power
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $arg0 = $cli->{arg_v}->[0];
+    my $arg1 = $cli->{arg_v}->[1];
+    my $delay = $cli->{arg_v}->[2];
+
+    return "bad args" unless $ac == 2 || $ac == 3;
+    return "bad args" unless $arg0 =~ /^on|off$/;
+
+    my $mask = parse_bits ($arg1, 0, 23);
+    return "bad mask" unless $mask;
+
+    $delay = 0 unless defined $delay;
+    return "bad delay" unless $delay =~ /^\d+$/;
+
+    my $on = ($arg0 eq "on") ? 1 : 0;
+
+    eval
+    {
+	$bmp->power ($on, $mask, delay => $delay);
+    };
+
+    return $@;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub cmd_debug
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $d = $cli->{arg_n}->[0];
+
+    $debug = $d if $ac > 0;
+
+    $bmp->debug ($debug);
+
+    print "Debug $debug\n";
+    return "";
+}
+
+
+sub cmd_sleep
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $t = $cli->{arg_v}->[0];
+
+    my $time = 1;
+
+    $time = $t if $ac > 0 && $t =~ /^\d+\.?\d*$/;
+
+    select (undef, undef, undef, $time);
+
+    return "";
+}
+
+
+sub cmd_timeout
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $t = $cli->{arg_v}->[0];
+
+    $bmp->timeout ($t) if defined $t && $t =~ /^\d+\.?\d*$/;
+
+    printf "Timeout %s\n", $bmp->timeout;
+
+    return "";
+}
+
+
+sub cmd_cmd
+{
+    my $cli = shift;
+    my $ac = $cli->{arg_c};
+    my $cmd = $cli->{arg_n}->[0];
+    my $arg1 = $cli->{arg_x}->[1] || 0;
+    my $arg2 = $cli->{arg_x}->[2] || 0;
+    my $arg3 = $cli->{arg_x}->[3] || 0;
+    my $data = $cli->{arg_v}->[4] || "";
+
+    if ($data =~ /^".+"$/)
+    {
+	$data =~ s/^"|"$//g;
+	$data .= "\n" . chr (0);
+    }
+    else
+    {
+	my @data = @{$cli->{arg_x}}[4..$ac-1];
+	$data = pack "C*", @data;
+    }
+    
+    return "bad args" if $ac < 1;
+
+    eval
+    {
+	$bmp->scp_cmd ($cmd,
+		       arg1 => $arg1,
+		       arg2 => $arg2,
+		       arg3 => $arg3,
+		       data => $data);
+    };
+
+    return $@;
+}
+
+
+sub cmd_version
+{
+    print "# bmpc - version ", sllt_version (), "\n";
+
+    return "";
+}
+
+
+#-------------------------------------------------------------------------------
+
+my $bmp_cmds =
+{
+    spin =>       [\&cmd_spin,
+		 '',
+		 'talk to SpiNNaker'],
+    version =>   [\&cmd_version,
+		 '',
+		 'show bmpc version'],
+    debug =>    [\&cmd_debug,
+		 '<num.D>',
+		 'set debug level'],
+    timeout =>  [\&cmd_timeout,
+		 '<secs.R>',
+		 'set target timeout'],
+    sleep =>    [\&cmd_sleep,
+		 '<secs.D>',
+		 'sleep (secs)'],
+    sp =>       [\&cmd_sp,
+		 '<chip_x.D> <chip_y.D> <cpu.D>',
+		 'select BMP chip'],
+    sver =>     [\&cmd_sver,
+		 '',
+		 'show BMP S/W version'],
+    smemb =>    [\&cmd_smemb,
+		 '<addr.X>',
+		 'read BMP memory (bytes)'],
+    smemh =>    [\&cmd_smemh,
+		 '<addr.X>',
+		 'read BMP memory (half-words)'],
+    smemw =>    [\&cmd_smemw,
+		 '<addr.X>',
+		 'read BMP memory (words)'],
+    flash_write => [\&cmd_flash_write,
+		 '<file.F> <addr.X> [update]',
+		 'load BMP flash memory from file'],
+    flash_erase => [\&cmd_flash_erase,
+		 '<from.X> <to.X>',
+		 'erase BMP flash memory'],
+    xreg =>     [\&cmd_xreg,
+		 '[<fpga_list> <addr.X> <data.X>]*',
+		 'set FPGA register preloads'],
+    xload =>    [\&cmd_xload,
+		 '<file.F> [<chipmask.D>]',
+		 'load FPGAs from file'],
+    xslot =>    [\&cmd_xslot,
+		 '<slot.D> on|off [<chipmask.D>]',
+		 'enable/disable FPGA load slot'],
+    xboot =>     [\&cmd_xboot,
+		 '[[[<file.F>] <slot.D>] <chipmask.D>]',
+		 'configure FPGA boot file'],
+    xreset =>    [\&cmd_xreset,
+		 '[low|high|pulse]',
+		 'Reset FPGAs'],
+    board_info =>  [\&cmd_board_info,
+		 '<file.F>',
+		 'load board_info from file'],
+    sload =>    [\&cmd_sload,
+		 '<file.F> <addr.X> [log]',
+		 'load BMP memory from file'],
+    sw =>       [\&cmd_sw,
+		 '<addr.X> [<data.X>]',
+		 'read/write BMP word'],
+    sh =>       [\&cmd_sh,
+		 '<addr.X> [<data.X>]',
+		 'read/write BMP half-word'],
+    sb =>       [\&cmd_sb,
+		 '<addr.X> [<data.X>]',
+		 'read/write BMP byte'],
+    sdump =>    [\&cmd_sdump,
+		 '<file.F> <addr.X> <len.X>',
+		 'dump BMP memory to file'],
+    sfill =>     [\&cmd_sfill,
+		 '<from_addr.X> <to_addr.X> <data.X>',
+		 'fill BMP memory'],
+    iptag =>    [\&cmd_iptag,
+		 "<name.S> | '.' | '-' | all <port> <tag>",
+		 'set up IPTAGs'],
+    firmware =>  [\&cmd_firmware,
+		 '',
+		 'Display BMP firmware info'],
+    adc =>      [\&cmd_adc,
+		 '',
+		 'Read voltages, temps, fan speeds on BMP'],
+    cmd =>       [\&cmd_cmd,
+		 '<cmd.D> <arg1.X> <arg2.X> <arg3.X>',
+		 'User specified command'],
+    reset =>     [\&cmd_reset,
+		 '<mask> [<delay.D>',
+		 'Reset Spinnakers'],
+    ip =>        [\&cmd_ip,
+		 '',
+		 'Display subrack IP addresses'],
+    led =>      [\&cmd_led,
+		 "<01234567>* on|off|inv|flip",
+		 "Set/clear LEDs"],
+    serial =>     [\&cmd_serial,
+		 '',
+		 'Read BMP serial number'],
+    power =>     [\&cmd_power,
+		 'on|off <mask> [<delay.D>]',
+		 'Switch power on/off'],
+    ee_data => [\&cmd_ee_data,
+		 '[<file>]',
+		 'display/set BMP backplane EEPROM info'],
+    ee_read => [\&cmd_ee_read,
+		 '<addr.X>',
+		 'read BMP backplane EEPROM data'],
+    ee_write => [\&cmd_ee_write,
+		 '<file.F> <addr.X>',
+		 'write BMP backplane EEPROM data'],
+    sf_read => [\&cmd_sf_read,
+		 '<addr.X>',
+		 'read BMP serial Flash data'],
+    sf_write => [\&cmd_sf_write,
+		 '<file.F> <addr.X>',
+		 'write BMP serial Flash data'],
+    sf_ip =>    [\&cmd_sf_ip,
+		 '<Flag.X> <MAC.M> <ip_addr.P> <gw_addr.P> <net_mask.P> <port.D>',
+		 'Initialise Serial Flash IP addr'],
+    bmp_ip =>  [\&cmd_bmp_ip,
+		 '<Flag.X> <MAC.M> <ip_addr.P> <gw_addr.P> <net_mask.P> <port.D>',
+		 'Initialise BMP Flash IP addr'],
+    spin_ip =>  [\&cmd_spin_ip,
+		 '<Flag.X> <MAC.M> <ip_addr.P> <gw_addr.P> <net_mask.P> <port.D>',
+		 'Initialise Spin Flash IP addr'],
+    fdump =>    [\&cmd_fdump,
+		 "<fpga.D> <addr.X>",
+		 "Dump FPGA register bank"],
+    fstat =>    [\&cmd_fstat,
+		 "<fpga.D>",
+		 "Display FPGA register banks"],
+    freg =>       [\&cmd_freg,
+		 "<fpga.D> <addr.X> [<data.X]",
+		 "Read/write FPGA register"],
+     pause =>    [\&SpiNN::CLI::pause,
+		 "<text.S>",
+		 "Print string and wait for Enter key"],
+    echo =>     [\&SpiNN::CLI::echo,
+		 "<text.S>",
+		 "Print string"],
+    quit =>     [\&SpiNN::CLI::quit,
+		 "",
+		 "Quit"],
+    help =>     [\&SpiNN::CLI::help,
+		 "[<command>]",
+		 "Provide help"],
+    "@" =>      [\&SpiNN::CLI::at,
+		 "<file.F> [quiet]",
+		 "Read commands from file"],
+    "?" =>      [\&SpiNN::CLI::query,
+		 "",
+		 "List commands"],
+};
+
+
+#-------------------------------------------------------------------------------
+
+
+sub usage
+{
+    warn "usage: bmpc <options> <hostname>[:<port>]\n";
+    warn "  -version                 - print version number\n";
+    warn "  -norl                    - don't use 'readline'\n";
+    die  "  -debug                   - set debug variable\n";
+}
+
+
+sub process_args
+{
+    while ($#ARGV >= 0)
+    {
+	my $arg = shift @ARGV;
+
+	if ($arg eq "-version")
+	{
+	    cmd_version ();
+	    exit 0;
+	}
+	elsif ($arg eq "-debug")
+	{
+	    die "debug not specified\n" unless $debug = shift @ARGV &&
+		$debug =~ /^\d+$/;
+	}
+	elsif ($arg eq "-norl")
+	{
+	    $readline = 0;
+	}
+	elsif ($arg !~ /^-/)
+	{
+	    $bmp_target = $arg;
+	}
+	else
+	{
+	    usage ();
+	}
+    }
+
+    die "target not specified\n" unless defined $bmp_target;
+
+    $bmp_port = $1 if $bmp_target =~ s/:(\d+)$//;
+
+    my $prompt = $bmp_target;
+    $prompt =~ s/\..+// unless $prompt =~ /^\d/;
+    $prompt = "$prompt:0 > ";
+
+    return $prompt;
+}
+
+
+sub open_targets
+{
+    $bmp = SpiNN::Cmd->new (target => $bmp_target,
+			     port => $bmp_port,
+			     debug => $debug);
+
+    die "Failed to open \"$bmp_target\"\n" unless $bmp;
+}
+
+
+sub init_readline
+{
+    return undef unless $readline;
+
+    use Term::ReadLine;
+    $ENV{PERL_RL} = "Gnu o=0";
+
+    my $term = Term::ReadLine->new ("bmpc");
+    my $attribs = $term->Attribs;
+
+    # Perform completion on command keyword at start of line
+    # and filename completion otherwise
+
+    $attribs->{completion_function} = sub
+    {
+	my ($text, $line, $start) = @_;
+	return $cli->list if $start == 0;
+	return $term->completion_matches ($text,
+			   $attribs->{filename_completion_function});
+    };
+
+    return $term;
+}
+
+
+sub main
+{
+    my $prompt = process_args ();
+
+    my $term = init_readline ();
+
+    open_targets ();
+
+    cmd_version ();
+
+    $cli = SpiNN::CLI->new (\*STDIN, $prompt, $bmp_cmds, $term);
+
+    $cli->run;
+}
+
+
+main ();
+
+
+#-------------------------------------------------------------------------------
