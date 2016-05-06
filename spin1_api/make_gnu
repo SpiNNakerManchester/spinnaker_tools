@@ -1,6 +1,0 @@
-#!/bin/sh
-
-# make libspin1_api.a
-
-make GNU=1 clean
-make GNU=1 install

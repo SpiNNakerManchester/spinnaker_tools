@@ -45,7 +45,7 @@ git clone --quiet --depth 1 "file://$SPINN_DIRS" .
 
 # Build SARK
 echo "Building SARK"
-(cd "$WORKING_DIR/sark" && ./make_arm) || exit 2
+(cd "$WORKING_DIR/sark" && make GNU=0) || exit 2
 
 # Build SC&MP
 echo "Building SC&MP"
@@ -69,17 +69,17 @@ git archive --output "$NAME.tar" --prefix "$NAME/" HEAD \
 # Add selected build artefacts
 echo "Adding build artefacts"
 (
-	# Directories for documentation
-	find docs -type d
-	
-	# Documentation (excluding PDFs of figures)
-	for document_makefile in $(find docs/ -name Makefile); do
-		document_dir="$(dirname "$document_makefile")"
-		echo "$document_dir/$(basename "$document_dir").pdf"
-	done
-	
-	# SC&MP binary
-	echo "boot/scamp.boot"
+    # Directories for documentation
+    find docs -type d
+
+    # Documentation (excluding PDFs of figures)
+    for document_makefile in $(find docs/ -name Makefile); do
+        document_dir="$(dirname "$document_makefile")"
+        echo "$document_dir/$(basename "$document_dir").pdf"
+    done
+
+    # SC&MP binary
+    echo "boot/scamp.boot"
 ) | xargs tar fr "$NAME.tar" --transform='s:.*:'"$NAME"'/\0:' --no-recursion \
   || exit 6
 
