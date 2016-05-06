@@ -66,7 +66,7 @@ else
     # ARM Compiler settings
     AS := armasm --keep --cpu=5te --apcs /interwork
     CC_NO_THUMB := armcc -c --c99 --cpu=5te -Ospace --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
-    CC_THUMB := $(CC) --thumb -DTHUMB
+    CC_THUMB := $(CC_NO_THUMB) --thumb -DTHUMB
     
     ifeq ($(LIB), 1)
         CFLAGS += --split_sections

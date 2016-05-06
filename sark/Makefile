@@ -59,7 +59,10 @@ else
 $(BUILD_DIR)/%.s: $(SPINN_INC_DIR)/%.h
 	$(SPINN_TOOLS_DIR)/h2asm $< > $@
 
-$(BUILD_DIR)/sark_alib.o: sark_alib.s $(BUILD_DIR)/spinnaker.s $(BUILD_DIR)/sark.s
+$(BUILD_DIR)/%.s: %.s
+	$(CP) $< $@
+
+$(BUILD_DIR)/sark_alib.o: $(BUILD_DIR)/sark_alib.s $(BUILD_DIR)/spinnaker.s $(BUILD_DIR)/sark.s
 	$(AS) -o $@ $<
 
 endif
