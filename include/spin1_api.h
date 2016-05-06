@@ -1,27 +1,3 @@
-/****a* spin1_api.h/spin1_api_header
-*
-* SUMMARY
-*  SpiNNaker API main header file
-*
-* AUTHOR
-*  Luis Plana - lap@cs.man.ac.uk
-*
-* DETAILS
-*  Created on       : 03 May 2011
-*  Version          : $Revision: 2011 $
-*  Last modified on : $Date: 2012-10-24 14:50:54 +0100 (Wed, 24 Oct 2012) $
-*  Last modified by : $Author: plana $
-*  $Id: spin1_api.h 2011 2012-10-24 13:50:54Z plana $
-*  $HeadURL: https://solem.cs.man.ac.uk/svn/spin1_api/trunk/src/spin1_api.h $
-*
-* COPYRIGHT
-*  Copyright (c) The University of Manchester, 2011. All rights reserved.
-*  SpiNNaker Project
-*  Advanced Processor Technologies Group
-*  School of Computer Science
-*
-*******/
-
 #ifndef __SPIN1_API_H__
 #define __SPIN1_API_H__
 
@@ -47,8 +23,11 @@
 /* function results   */
 #define SUCCESS            (uint) 1
 #define FAILURE            (uint) 0
+
+#ifndef NULL
 /* Null pointer value */
 #define NULL               0
+#endif // NULL
 
 // ------------------------------------------------------------------------
 // event definitions
@@ -92,10 +71,14 @@ typedef void (*callback_t) (uint, uint);  // callbacks
 // simulation control functions
 // ------------------------------------------------------------------------
 uint spin1_start (sync_bool sync);
+uint spin1_start_paused ();
 void spin1_exit (uint error);
 void spin1_set_timer_tick(uint time);
 uint spin1_get_simulation_time(void);
 void spin1_delay_us (uint n);
+void spin1_pause ();
+void spin1_resume (sync_bool sync);
+void spin1_rte (rte_code code);
 // ------------------------------------------------------------------------
 
 
@@ -104,6 +87,8 @@ void spin1_delay_us (uint n);
 // ------------------------------------------------------------------------
 void spin1_callback_on(uint event_id, callback_t cback, int priority);
 void spin1_callback_off(uint event_id);
+void spin1_sdp_callback_on (uint sdp_port, callback_t cback, int priority);
+void spin1_sdp_callback_off (uint sdp_port);
 uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1, uint priority);
 uint spin1_trigger_user_event(uint arg0, uint arg1);
 // ------------------------------------------------------------------------
@@ -147,7 +132,7 @@ void spin1_mode_restore(uint sr);
 
 
 // ------------------------------------------------------------------------
-//  system resources access funtions
+//  system resources access functions
 // ------------------------------------------------------------------------
 uint  spin1_get_id(void);
 uint  spin1_get_core_id(void);
@@ -170,20 +155,24 @@ uint  spin1_rand  (void);
 // ------------------------------------------------------------------------
 typedef struct
 {
-  uint exit_code;               // simulation exit code
-  uint warnings;                // warnings type bit map
-  uint total_mc_packets;        // total routed MC packets during simulation
-  uint dumped_mc_packets;       // total dumped MC packets by the router
-  uint discarded_mc_packets;    // total discarded MC packets by API
-  uint dma_transfers;           // total DMA transfers requested
-  uint dma_bursts;              // total DMA bursts completed
-  uint dma_queue_full;          // dma queue full count
-  uint task_queue_full;         // task queue full count
-  uint tx_packet_queue_full;    // transmitter packet queue full count
-  uint writeBack_errors;        // write-back buffer errror count
-  uint total_fr_packets;        // total routed FR packets during simulation
-  uint dumped_fr_packets;       // total dumped FR packets by the router
-  uint discarded_fr_packets;    // total discarded FR packets by API
+  uint exit_code;                                       // simulation exit code
+  uint warnings;                                        // warnings type bit map
+  uint total_mc_packets;                                // total routed MC packets during simulation
+  uint dumped_mc_packets;                               // total dumped MC packets by the router
+  volatile uint discarded_mc_packets;                   // total discarded MC packets by API
+  uint dma_transfers;                                   // total DMA transfers requested
+  uint dma_bursts;                                      // total DMA bursts completed
+  uint dma_queue_full;                                  // dma queue full count
+  uint task_queue_full;                                 // task queue full count
+  uint tx_packet_queue_full;                            // transmitter packet queue full count
+  uint writeBack_errors;                                // write-back buffer error count
+  uint total_fr_packets;                                // total routed FR packets during simulation
+  uint dumped_fr_packets;                               // total dumped FR packets by the router
+  uint discarded_fr_packets;                            // total discarded FR packets by API
+  uint in_timer_callback;                               // bool which states if currently in timer callback
+  uint number_timer_tic_in_queue;                       // the number of timer tic callbacks in the queue
+  uint largest_number_of_concurrent_timer_tic_overruns; // the max number of timer tics callbacks being queued at any time
+  uint total_times_tick_tic_callback_overran;           // the total number of times the timer tic callback overran
 } diagnostics_t;
 
 extern diagnostics_t diagnostics;

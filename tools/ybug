@@ -15,7 +15,12 @@
 use strict;
 use warnings;
 
-use String::CRC32;
+my $crc32_enabled = 1;
+eval {
+    require String::CRC32;
+    print "CRC32 Enabled!\n";
+    1;
+} or $crc32_enabled = 0;
 
 use SpiNN::Util qw/read_file hex_dump parse_cores parse_region parse_apps
                    parse_bits sllt_version/;
@@ -75,48 +80,48 @@ sub cmd_boot
     my $cli = shift;
     my $ac = $cli->{arg_c};
     my $file = $cli->{arg_v}->[0] || "scamp.boot";
-    my $conf = $cli->{arg_v}->[1];
+    my $conf = $cli->{arg_v}->[1] || "";
 
     return "bad args" unless $ac <= 2;
-    
+
     eval
     {
-	# Warn if already booted
-	eval {
-	  $spin->ver (addr => [], timeout => 0.1);
-	  print "Warning: Already booted.\n"
-	};
-	
-	SpiNN::Boot->boot ($spin_target, $file, $conf, debug => $debug);
-	
-	# Wait for boot to complete
-	my $booted = 1;
-	my $have_waited = 0;
-	do
-	{
-	  if (!$booted)
-	  {
-	    print ".";
-	    select (undef, undef, undef, 0.5);
-	    $have_waited = 1;
- 	  }
-	  my @version_info = @{$spin->ver (addr => [], raw => 1)};
-	  $booted = $version_info[3] != 0xFF && $version_info[2] != 0xFF;
-	} while (!$booted);
-	if ($have_waited)
-	{
-	  print "\n";
-	}
+        # Warn if already booted
+        eval {
+        $spin->ver (addr => [], timeout => 0.1);
+        print "Warning: Already booted.\n"
+        };
 
-	# Inform the user!
-	my $s = $spin->ver (addr => []);
-	$s =~ s/ at .*//;
-	
-	my $n = $sv->read_var ("sv.p2p_active", addr => []);
+        SpiNN::Boot->boot ($spin_target, $file, $conf, debug => $debug);
 
-	$spin->iptag_set (0, $TUBE_PORT, host => "0.0.0.0", addr => []);
+        # Wait for boot to complete
+        my $booted = 1;
+        my $have_waited = 0;
+        do
+        {
+            if (!$booted)
+            {
+                print ".";
+                select (undef, undef, undef, 0.5);
+                $have_waited = 1;
+            }
+            my @version_info = @{$spin->ver (addr => [], raw => 1)};
+            $booted = $version_info[3] != 0xFF && $version_info[2] != 0xFF;
+        } while (!$booted);
+        if ($have_waited)
+        {
+            print "\n";
+        }
 
-	print "Booted $s on $n chips\n";
+        # Inform the user!
+        my $s = $spin->ver (addr => []);
+        $s =~ s/ at .*//;
+
+        my $n = $sv->read_var ("sv.p2p_active", addr => []);
+
+        $spin->iptag_set (0, $TUBE_PORT, host => "0.0.0.0", addr => []);
+
+        print "Booted $s on $n chips\n";
     };
 
     # Return to the chip we were on before booting
@@ -146,18 +151,18 @@ sub cmd_lw
 
     eval
     {
-	if ($ac == 2)
-	{
-	    my $data = $spin->link_read ($link, $addr, 4, unpack => "V");
+        if ($ac == 2)
+        {
+            my $data = $spin->link_read ($link, $addr, 4, unpack => "V");
 
-	    printf "%08x = %08x\n", $addr, $data->[0];
-	}
-	else
-	{
-	    my $d = pack "V", $data;
+            printf "%08x = %08x\n", $addr, $data->[0];
+        }
+        else
+        {
+            my $d = pack "V", $data;
 
-	    $spin->link_write ($link, $addr, $d);
-	}
+            $spin->link_write ($link, $addr, $d);
+        }
     };
 
     return $@;
@@ -175,8 +180,8 @@ sub cmd_lmemw
 
     eval
     {
-	my $data = $spin->link_read ($link, $addr, 256);
-	print hex_dump ($data, addr => $addr, format => "word");
+        my $data = $spin->link_read ($link, $addr, 256);
+        print hex_dump ($data, addr => $addr, format => "word");
     };
 
     return $@;
@@ -191,8 +196,8 @@ sub cmd_smemw
 
     eval
     {
-	my $data = $spin->read ($addr, 256, type => "word");
-	print hex_dump ($data, addr => $addr, format => "word");
+        my $data = $spin->read ($addr, 256, type => "word");
+        print hex_dump ($data, addr => $addr, format => "word");
     };
 
     return $@;
@@ -207,9 +212,9 @@ sub cmd_smemh
 
     eval
     {
-	my $data = $spin->read ($addr, 256, type => "half");
-	print hex_dump ($data, addr => $addr, format => "half",
-			width => 16);
+        my $data = $spin->read ($addr, 256, type => "half");
+        print hex_dump ($data, addr => $addr, format => "half",
+                        width => 16);
     };
 
     return $@;
@@ -224,8 +229,8 @@ sub cmd_smemb
 
     eval
     {
-	my $data = $spin->read ($addr, 256, type => "byte");
-	print hex_dump ($data, addr => $addr);
+        my $data = $spin->read ($addr, 256, type => "byte");
+        print hex_dump ($data, addr => $addr);
     };
 
     return $@;
@@ -243,16 +248,16 @@ sub cmd_sw
 
     eval
     {
-	if ($ac == 1)
-	{
-	    my $data = $spin->read ($addr, 4, type => "word", unpack => "V");
-	    printf "%08x = %08x\n", $addr, $data->[0];
-	}
-	else
-	{
-	    $data = pack "V", $data;
-	    $spin->write ($addr, $data, type => "word");
-	}
+        if ($ac == 1)
+        {
+            my $data = $spin->read ($addr, 4, type => "word", unpack => "V");
+            printf "%08x = %08x\n", $addr, $data->[0];
+        }
+        else
+        {
+            $data = pack "V", $data;
+            $spin->write ($addr, $data, type => "word");
+        }
     };
 
     return $@;
@@ -270,16 +275,16 @@ sub cmd_sh
 
     eval
     {
-	if ($ac == 1)
-	{
-	    my $data = $spin->read ($addr, 2, type => "half", unpack => "v");
-	    printf "%08x = %04x\n", $addr, $data->[0];
-	}
-	else
-	{
-	    $data = pack "v", $data;
-	    $spin->write ($addr, $data, type => "half");
-	}
+        if ($ac == 1)
+        {
+            my $data = $spin->read ($addr, 2, type => "half", unpack => "v");
+            printf "%08x = %04x\n", $addr, $data->[0];
+        }
+        else
+        {
+            $data = pack "v", $data;
+            $spin->write ($addr, $data, type => "half");
+        }
     };
 
     return $@;
@@ -297,16 +302,16 @@ sub cmd_sb
 
     eval
     {
-	if ($ac == 1)
-	{
-	    my $data = $spin->read ($addr, 1, type => "byte", unpack => "C");
-	    printf "%08x = %02x\n", $addr, $data->[0];
-	}
-	else
-	{
-	    $data = pack "C", $data;
-	    $spin->write ($addr, $data, type => "byte");
-	}
+        if ($ac == 1)
+        {
+            my $data = $spin->read ($addr, 1, type => "byte", unpack => "C");
+            printf "%08x = %02x\n", $addr, $data->[0];
+        }
+        else
+        {
+            $data = pack "C", $data;
+            $spin->write ($addr, $data, type => "byte");
+        }
     };
 
     return $@;
@@ -338,38 +343,38 @@ sub cmd_sp
 
     eval
     {
-	if ($ac == 0 || ($ac == 1 && $arg1 eq "root"))
-	{
-	    # Try and determine the true coordinates of the root chip
-	    my $root_x = 0;
-	    my $root_y = 0;
-	    eval {
-	      my @version_info = @{$spin->ver (addr => [], raw => 1, timeout=> 0.1)};
-	      $root_x = $version_info[3];
-	      $root_y = $version_info[2];
-	    };
-	    ($chip_x, $chip_y, $cpu) = $spin->addr ($root_x, $root_y);
-	}
-	elsif ($ac == 1 && $arg1 =~ /^\d+$/)
-	{
-	    ($chip_x, $chip_y, $cpu) = $spin->addr ($arg1);
-	}
-	elsif ($ac == 2 && $arg1 =~ /^\d+$/ && $arg2 =~ /^\d+$/)
-	{
-	    ($chip_x, $chip_y, $cpu) = $spin->addr ($arg1, $arg2);
-	}
-	elsif ($ac == 3 && $arg1 =~ /^\d+$/ && $arg2 =~ /^\d+$/ &&
-	       $arg3 =~ /^\d+$/)
-	{
-	    ($chip_x, $chip_y, $cpu) = $spin->addr ($arg1, $arg2, $arg3);
-	}
-	else
-	{
-	    die "bad args\n";
-	}
+    if ($ac == 0 || ($ac == 1 && $arg1 eq "root"))
+    {
+        # Try and determine the true coordinates of the root chip
+        my $root_x = 0;
+        my $root_y = 0;
+        eval {
+        my @version_info = @{$spin->ver (addr => [], raw => 1, timeout=> 0.1)};
+        $root_x = $version_info[3];
+        $root_y = $version_info[2];
+        };
+        ($chip_x, $chip_y, $cpu) = $spin->addr ($root_x, $root_y);
+    }
+    elsif ($ac == 1 && $arg1 =~ /^\d+$/)
+    {
+        ($chip_x, $chip_y, $cpu) = $spin->addr ($arg1);
+    }
+    elsif ($ac == 2 && $arg1 =~ /^\d+$/ && $arg2 =~ /^\d+$/)
+    {
+        ($chip_x, $chip_y, $cpu) = $spin->addr ($arg1, $arg2);
+    }
+    elsif ($ac == 3 && $arg1 =~ /^\d+$/ && $arg2 =~ /^\d+$/ &&
+        $arg3 =~ /^\d+$/)
+    {
+        ($chip_x, $chip_y, $cpu) = $spin->addr ($arg1, $arg2, $arg3);
+    }
+    else
+    {
+        die "bad args\n";
+    }
 
-	$cli->{prompt} =~ s/:.+//;
-	$cli->{prompt} .= ":$chip_x,$chip_y,$cpu > ";
+    $cli->{prompt} =~ s/:.+//;
+    $cli->{prompt} .= ":$chip_x,$chip_y,$cpu > ";
     };
 
     return $@;
@@ -407,25 +412,25 @@ sub cmd_iobuf
 
     if ($ac == 2)
     {
-	open my $th, ">", $file or return "can't open \"$file\"\n";
-	$fh = $th;
+        open my $th, ">", $file or return "can't open \"$file\"\n";
+        $fh = $th;
     }
 
     eval
     {
-	my $vbase = $sv->read_var ("sv.vcpu_base");
-	my $size  = $sv->read_var ("sv.iobuf_size");
-	my $vsize = $sv->size ("vcpu");
+        my $vbase = $sv->read_var ("sv.vcpu_base");
+        my $size  = $sv->read_var ("sv.iobuf_size");
+        my $vsize = $sv->size ("vcpu");
 
-	$sv->base ("vcpu", $vbase + $vsize * $core);
+        $sv->base ("vcpu", $vbase + $vsize * $core);
 
-	my $iobuf = $sv->read_var ("vcpu.iobuf");
+        my $iobuf = $sv->read_var ("vcpu.iobuf");
 
-	while ($iobuf != 0)
-	{
-	    my $data = $spin->read ($iobuf, $size+16);
-	    $iobuf = iodump ($fh, $data);
-	}
+        while ($iobuf != 0)
+        {
+            my $data = $spin->read ($iobuf, $size+16);
+            $iobuf = iodump ($fh, $data);
+        }
     };
 
     close $fh if $ac == 2;
@@ -450,36 +455,36 @@ sub dump_heap
     printf "\n$name %u\n%s\n", $free_bytes, "-" x length $name;
 
     my $p = $heap_first;
-		 
+
     while ($p != 0)
     {
-	my $data = $spin->read ($p, 8, unpack => "VV");
-	my $next = $data->[0];
-	my $free = $data->[1];
-	my $size = ($next == 0) ? 0 : $next - $p - 8;
-	my $fs = sprintf "Free  %08x", $free;
+        my $data = $spin->read ($p, 8, unpack => "VV");
+        my $next = $data->[0];
+        my $free = $data->[1];
+        my $size = ($next == 0) ? 0 : $next - $p - 8;
+        my $fs = sprintf "Free  %08x", $free;
 
-	$fs = sprintf "Tag %3d ID %3d", $free & 255, ($free >> 8) & 255
-	    if ($free & 0xffff0000) == 0xffff0000;
+        $fs = sprintf "Tag %3d ID %3d", $free & 255, ($free >> 8) & 255
+            if ($free & 0xffff0000) == 0xffff0000;
 
-	printf "BLOCK  %8x  Next %8x  $fs  size %d\n", $p, $next, $size;
+        printf "BLOCK  %8x  Next %8x  $fs  size %d\n", $p, $next, $size;
 
-	$p = $next;
+        $p = $next;
     }
 
     $p = $heap_free;
 
     while ($p != 0)
     {
-	my $data = $spin->read ($p, 8, unpack => "VV");
-	my $next = $data->[0];
-	my $free = $data->[1];
-	my $size = ($next == 0) ? 0 : $next - $p - 8;
+        my $data = $spin->read ($p, 8, unpack => "VV");
+        my $next = $data->[0];
+        my $free = $data->[1];
+        my $size = ($next == 0) ? 0 : $next - $p - 8;
 
-	printf "FREE   %8x  Next %8x  Free  %08x  Size %d\n",
-  	  $p, $next, $free, $size;
+        printf "FREE   %8x  Next %8x  Free  %08x  Size %d\n",
+            $p, $next, $free, $size;
 
-	$p = $free;
+        $p = $free;
     }
 }
 
@@ -492,25 +497,25 @@ sub cmd_heap
 
     eval
     {
-	if ($ac == 0 || $ac == 1 && $arg1 eq "sdram")
-	{
-	    my $sdram_heap = $sv->read_var ("sv.sdram_heap");
-	    dump_heap ($sdram_heap, "SDRAM");
-	}
+        if ($ac == 0 || $ac == 1 && $arg1 eq "sdram")
+        {
+            my $sdram_heap = $sv->read_var ("sv.sdram_heap");
+            dump_heap ($sdram_heap, "SDRAM");
+        }
 
-	if ($ac == 0 || $ac == 1 && $arg1 eq "sysram")
-	{
-	    my $sysram_heap  = $sv->read_var ("sv.sysram_heap");
-	    dump_heap ($sysram_heap, "SysRAM");
-	}
+        if ($ac == 0 || $ac == 1 && $arg1 eq "sysram")
+        {
+            my $sysram_heap  = $sv->read_var ("sv.sysram_heap");
+            dump_heap ($sysram_heap, "SysRAM");
+        }
 
-	if ($ac == 0 || $ac == 1 && $arg1 eq "system")
-	{
-	    my $sys_heap  = $sv->read_var ("sv.sys_heap");
-	    dump_heap ($sys_heap, "System");
-	}
+        if ($ac == 0 || $ac == 1 && $arg1 eq "system")
+        {
+            my $sys_heap  = $sv->read_var ("sv.sys_heap");
+            dump_heap ($sys_heap, "System");
+        }
 
-	print "\n";
+        print "\n";
     };
 
     return $@;
@@ -532,34 +537,34 @@ sub cmd_rtr_load
 
     eval
     {
-	my $buf = read_file ($file, 65536);
+        my $buf = read_file ($file, 65536);
 
-	die "Failed to load \"$file\"\n" unless defined $buf;
+        die "Failed to load \"$file\"\n" unless defined $buf;
 
-	my $size = length $buf;
+        my $size = length $buf;
 
-	die "Funny file size\n" if ($size % 16) != 0 ||
-	    $size > 1024 * 16 ||
-	    $size < 32;
+        die "Funny file size\n" if ($size % 16) != 0 ||
+            $size > 1024 * 16 ||
+            $size < 32;
 
-	$size = ($size - 16) / 16;
+        $size = ($size - 16) / 16;
 
-	my $addr = 0x67800000;
+        my $addr = 0x67800000;
 
-	$spin->write ($addr, $buf);
+        $spin->write ($addr, $buf);
 
-	my $data = $spin->scp_cmd ($CMD_ALLOC,
-				   arg1 => ($app_id << 8) + 3,
-				   arg2 => $size);
+        my $data = $spin->scp_cmd ($CMD_ALLOC,
+                                   arg1 => ($app_id << 8) + 3,
+                                   arg2 => $size);
 
-	my $base = unpack "V", $data;
+        my $base = unpack "V", $data;
 
-	die "no room in router heap" if $base == 0;
+        die "no room in router heap" if $base == 0;
 
-	$spin->scp_cmd ($CMD_RTR,
-			arg1 => ($size << 16) + ($app_id << 8) + 2,
-			arg2 => $addr,
-			arg3 => $base);
+        $spin->scp_cmd ($CMD_RTR,
+                        arg1 => ($size << 16) + ($app_id << 8) + 2,
+                        arg2 => $addr,
+                        arg3 => $base);
     };
 
     return $@;
@@ -591,33 +596,33 @@ sub dump_iptag
 {
     eval
     {
-	my $data = $spin->iptag_tto (255);
+    my $data = $spin->iptag_tto (255);
 
-	my ($tto, undef, $pool, $fix) = unpack "C4", $data;
-	my $max = $pool + $fix;
-	$tto = (1 << ($tto - 1)) / 100 if $tto;
+    my ($tto, undef, $pool, $fix) = unpack "C4", $data;
+    my $max = $pool + $fix;
+    $tto = (1 << ($tto - 1)) / 100 if $tto;
 
-	print "IPTags=$max (F=$fix, T=$pool), TTO=${tto}s\n\n";
+    print "IPTags=$max (F=$fix, T=$pool), TTO=${tto}s\n\n";
 
-	print "Tag    IP address    TxPort RxPort  T/O   Flags    Addr    Port      Count\n";
-	print "---    ----------    ------ ------  ---   -----    ----    ----      -----\n";
+    print "Tag    IP address    TxPort RxPort  T/O   Flags    Addr    Port      Count\n";
+    print "---    ----------    ------ ------  ---   -----    ----    ----      -----\n";
 
-	for (my $i = 0; $i < $max; $i++)
-	{
-	    my $data = $spin->iptag_get ($i, 1);
+    for (my $i = 0; $i < $max; $i++)
+    {
+        my $data = $spin->iptag_get ($i, 1);
 
-	    my ($ip, $mac, $tx_port, $timeout, $flags, $count, $rx_port,
-		$spin_addr, $spin_port) = unpack "a4 a6 v3 V v2 C", $data;
+        my ($ip, $mac, $tx_port, $timeout, $flags, $count, $rx_port,
+        $spin_addr, $spin_port) = unpack "a4 a6 v3 V v2 C", $data;
 
-	    if ($flags & 0x8000) # Tag in use
-	    {
-		$ip = join ".", unpack "C*", $ip;
+        if ($flags & 0x8000) # Tag in use
+        {
+        $ip = join ".", unpack "C*", $ip;
 
-		printf "%3d  %-15s  %5d  %5d  %-4s  %-4s   0x%04x    0x%02x %10d\n",
-		    $i, $ip, $tx_port, $rx_port, $timeout / 100, ipflag ($flags),
-		    $spin_addr, $spin_port, $count;
-	    }
-	}
+        printf "%3d  %-15s  %5d  %5d  %-4s  %-4s   0x%04x    0x%02x %10d\n",
+            $i, $ip, $tx_port, $rx_port, $timeout / 100, ipflag ($flags),
+            $spin_addr, $spin_port, $count;
+        }
+    }
     };
 
     return $@;
@@ -642,47 +647,47 @@ sub cmd_iptag
 
     if ($cmd eq "clear")
     {
-	eval { $spin->iptag_clear ($tag); };
-	return $@;
+        eval { $spin->iptag_clear ($tag); };
+        return $@;
     }
 
     if ($cmd eq "set" || $cmd eq "strip")
     {
-	my $host = $cli->{arg_v}->[2];
-	my $port = $cli->{arg_n}->[3];
-	my $strip = $cmd eq "strip";
+        my $host = $cli->{arg_v}->[2];
+        my $port = $cli->{arg_n}->[3];
+        my $strip = $cmd eq "strip";
 
-	return "bad args" if $ac != 4;
-	return "pad port" unless $port;
+        return "bad args" if $ac != 4;
+        return "pad port" unless $port;
 
-	eval
-	{
-	    $spin->iptag_set ($tag, $port,
-			      host => $host,
-			      strip => $strip);
-	};
-	return $@;
+        eval
+        {
+            $spin->iptag_set ($tag, $port,
+                              host => $host,
+                              strip => $strip);
+        };
+        return $@;
     }
 
     if ($cmd eq "reverse")
     {
-	my $port = $cli->{arg_n}->[2];
-	my $dest_addr = $cli->{arg_x}->[3];
-	my $dest_port = $cli->{arg_x}->[4];
+        my $port = $cli->{arg_n}->[2];
+        my $dest_addr = $cli->{arg_x}->[3];
+        my $dest_port = $cli->{arg_x}->[4];
 
-	return "bad args" if $ac != 5;
-	return "bad args" unless $port && defined $dest_addr &&
-	    defined $dest_port;
+        return "bad args" if $ac != 5;
+        return "bad args" unless $port && defined $dest_addr &&
+            defined $dest_port;
 
-	eval
-	{
-	    $spin->iptag_set ($tag, $port,
-			      reverse => 1,
-			      dest_addr => $dest_addr,
-			      dest_port => $dest_port);
-	};
+        eval
+        {
+            $spin->iptag_set ($tag, $port,
+                              reverse => 1,
+                              dest_addr => $dest_addr,
+                              dest_port => $dest_port);
+        };
 
-	return $@;
+        return $@;
     }
 
     return "";
@@ -738,9 +743,9 @@ sub cmd_app_sig
 
     if ($signal >= 16) # and/or/count
     {
-	return "bad args" unless $ac == 4;
-	return "bad state" unless exists $state{$state};
-	$state = $state{$state};
+        return "bad args" unless $ac == 4;
+        return "bad state" unless exists $state{$state};
+        $state = $state{$state};
     }
 
     my $data = ($app_mask << 8) + $app_id;
@@ -748,22 +753,22 @@ sub cmd_app_sig
 
     if ($type == 1)
     {
-	my $level = ($region >> 16) & 3;
+        my $level = ($region >> 16) & 3;
 
-	my ($op, $mode) = (2, 2);	# sig, sum
-	$op = 1 if $signal >= 16;	# stat
+        my ($op, $mode) = (2, 2);	# sig, sum
+        $op = 1 if $signal >= 16;	# stat
 
-	$mode = $signal - 16 if $signal >= 16;
+        $mode = $signal - 16 if $signal >= 16;
 
-	$data += ($level << 26) + ($op << 22) + ($mode << 20);
-	$data += $state << 16 if $op == 1;	# stat
-	$data += $signal << 16 if $op != 1;	# !stat
+        $data += ($level << 26) + ($op << 22) + ($mode << 20);
+        $data += $state << 16 if $op == 1;	# stat
+        $data += $signal << 16 if $op != 1;	# !stat
 
-	printf "Level %d op %d mode %d\n", $level, $op, $mode if $debug;
+        printf "Level %d op %d mode %d\n", $level, $op, $mode if $debug;
     }
     else
     {
-	$data += $signal << 16;
+        $data += $signal << 16;
     }
 
     printf "Type %d data %08x mask %08x\n", $type, $data, $mask if $debug;
@@ -771,20 +776,20 @@ sub cmd_app_sig
 
     eval
     {
-	my $data = $spin->signal ($type, $data, $mask, addr => []);
+        my $data = $spin->signal ($type, $data, $mask, addr => []);
 
-	if ($type == 1)
-	{
-	    my $r = unpack "V", $data;
-	    if ($signal == 18) # Count
-	    {
-		printf "Count %d\n", $r;
-	    }
-	    else
-	    {
-		printf "Mask 0x%08x\n", $r;
-	    }
-	}
+        if ($type == 1)
+        {
+            my $r = unpack "V", $data;
+            if ($signal == 18) # Count
+            {
+                printf "Count %d\n", $r;
+            }
+            else
+            {
+                printf "Mask 0x%08x\n", $r;
+            }
+        }
     };
 
     return $@;
@@ -883,7 +888,7 @@ sub cmd_app_load
 
     eval
     {
-	$spin->flood_fill ($buf, $region, $mask, $app_id, $app_flags, addr => [])
+        $spin->flood_fill ($buf, $region, $mask, $app_id, $app_flags, addr => [])
     };
 
     return $@;
@@ -913,8 +918,8 @@ sub cmd_data_load
 
     eval
     {
-	$spin->flood_fill ($buf, $region, 0, 0, 0,
-			   base => $addr, addr => [])
+        $spin->flood_fill ($buf, $region, 0, 0, 0,
+                           base => $addr, addr => [])
     };
 
     return $@;
@@ -935,32 +940,32 @@ sub global_write
 
     if ($addr >= 0xf5007f00 && $addr < 0xf5008000)
     {
-	$addr -= 0xf5007f00;
-	$op = 0;
+        $addr -= 0xf5007f00;
+        $op = 0;
     }
     elsif ($addr >= 0xf5000000 && $addr < 0xf5000100)
     {
-	$addr -= 0xf5000000;
-	$op = 1;
+        $addr -= 0xf5000000;
+        $op = 1;
     }
     elsif ($addr >= 0xf2000000 && $addr < 0xf2000100)
     {
-	$addr -= 0xf2000000;
-	$op = 2;
+        $addr -= 0xf2000000;
+        $op = 2;
     }
     else
     {
-	return "bad address";
+        return "bad address";
     }
 
-    my $key = ($NN_CMD_SIG1 << 24) + (0 << 20) + ($type << 18) + 
-	($op << 16) + ($addr << 8) + 0; # const
+    my $key = ($NN_CMD_SIG1 << 24) + (0 << 20) + ($type << 18) +
+              ($op << 16) + ($addr << 8) + 0; # const
 
     my $fr = (1 << 31) + (0x3f << 8) + 0xf8;
 
     eval
     {
-	$spin->nnp ($key, $data, $fr, addr => []);
+        $spin->nnp ($key, $data, $fr, addr => []);
     };
 
     return $@;
@@ -1047,18 +1052,18 @@ sub cmd_sdump
 
     eval
     {
-	while ($bytes != $len)
-	{
-	    my $l = ($len - $bytes > $size) ? $size : $len - $bytes;
-	    $bytes += $l;
+        while ($bytes != $len)
+        {
+            my $l = ($len - $bytes > $size) ? $size : $len - $bytes;
+            $bytes += $l;
 
-	    my $data = $spin->read ($addr, $l);
+            my $data = $spin->read ($addr, $l);
 
-	    $addr += $l;
+            $addr += $l;
 
-	    die "Length mismatch" unless $l == length ($data);
-	    die "syswrite failed" unless syswrite $fh, $data;
-	}
+            die "Length mismatch" unless $l == length ($data);
+            die "syswrite failed" unless syswrite $fh, $data;
+        }
     };
 
     close $fh;
@@ -1075,22 +1080,22 @@ sub cpu_dump
     my ($num, $long, $fmt) = @_;
 
     my @cs = (
-	"----", "PWRDN", "RTE", "WDOG",
+    "----", "PWRDN", "RTE", "WDOG",
         "INIT", "WAIT",  "SARK", "RUN",
         "SYNC0", "SYNC1", "PAUSE", "EXIT",
-	"ST_12", "ST_13", "ST_14", "IDLE");
+    "ST_12", "ST_13", "ST_14", "IDLE");
 
-    my @rte = qw/NONE RESET UNDEF SVC PABT DABT IRQ FIQ VIC 
-		 ABORT MALLOC DIV0 EVENT SWERR IOBUF ENABLE
+    my @rte = qw/NONE RESET UNDEF SVC PABT DABT IRQ FIQ VIC
+        ABORT MALLOC DIV0 EVENT SWERR IOBUF ENABLE
                  NULL PKT TIMER API VER /;
 
     my @mon = qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
 
     eval
     {
-	my $base = $sv->read_var ("sv.vcpu_base");
-	$sv->base ("vcpu", $base + $sv->size ("vcpu") * $num);
-	$sv->read_struct ("vcpu");
+        my $base = $sv->read_var ("sv.vcpu_base");
+        $sv->base ("vcpu", $base + $sv->size ("vcpu") * $num);
+        $sv->read_struct ("vcpu");
     };
 
     return $@ if $@;
@@ -1101,108 +1106,108 @@ sub cpu_dump
 
     if ($time != 0)
     {
-	$time = sprintf "%2d %s %02d:%02d", $time[3], $mon[$time[4]], $time[2], $time[1];
-	$et = sprintf "%d:%02d:%02d", $et / 3600, ($et / 60) % 60, $et % 60;
+        $time = sprintf "%2d %s %02d:%02d", $time[3], $mon[$time[4]], $time[2], $time[1];
+        $et = sprintf "%d:%02d:%02d", $et / 3600, ($et / 60) % 60, $et % 60;
     }
     else
     {
-	$time = " " x 12;
-	$et = " " x 9;
+        $time = " " x 12;
+        $et = " " x 9;
     }
 
     if ($long)
     {
-	my $rt_code = $sv->get_var ("vcpu.rt_code");
-	printf "Core %2d: app \"%s\", state %s, app_id %d, running $et ($time)\n",
-	  $num, $sv->get_var ("vcpu.app_name"),
-	  $cs[$sv->get_var ("vcpu.cpu_state")],
-	  $sv->get_var ("vcpu.app_id"), $time;
+        my $rt_code = $sv->get_var ("vcpu.rt_code");
+        printf "Core %2d: app \"%s\", state %s, app_id %d, running $et ($time)\n",
+        $num, $sv->get_var ("vcpu.app_name"),
+        $cs[$sv->get_var ("vcpu.cpu_state")],
+        $sv->get_var ("vcpu.app_id"), $time;
 
-	printf "AP mbox:   cmd      %02x  msg     %08x\n",
-	  $sv->get_var ("vcpu.mbox_ap_cmd"),
-	  $sv->get_var ("vcpu.mbox_ap_msg");
+        printf "AP mbox:   cmd      %02x  msg     %08x\n",
+        $sv->get_var ("vcpu.mbox_ap_cmd"),
+        $sv->get_var ("vcpu.mbox_ap_msg");
 
-	printf "MP mbox:   cmd      %02x  msg     %08x\n",
-	  $sv->get_var ("vcpu.mbox_mp_cmd"),
-	  $sv->get_var ("vcpu.mbox_mp_msg");
+        printf "MP mbox:   cmd      %02x  msg     %08x\n",
+        $sv->get_var ("vcpu.mbox_mp_cmd"),
+        $sv->get_var ("vcpu.mbox_mp_msg");
 
-	printf "SW error:  line %6d  file    %08x count %d\n",
-	  $sv->get_var ("vcpu.sw_line"),
-	  $sv->get_var ("vcpu.sw_file"),
-	  $sv->get_var ("vcpu.sw_count");
+        printf "SW error:  line %6d  file    %08x count %d\n",
+        $sv->get_var ("vcpu.sw_line"),
+        $sv->get_var ("vcpu.sw_file"),
+        $sv->get_var ("vcpu.sw_count");
 
-	printf "RT error:  %-6s  PSR     %08x SP %08x LR %08x\n",
-	  $rte[$rt_code],
-	  $sv->get_var ("vcpu.psr"),
-	  $sv->get_var ("vcpu.sp"),
-	  $sv->get_var ("vcpu.lr");
+        printf "RT error:  %-6s  PSR     %08x SP %08x LR %08x\n",
+        $rte[$rt_code],
+        $sv->get_var ("vcpu.psr"),
+        $sv->get_var ("vcpu.sp"),
+        $sv->get_var ("vcpu.lr");
 
-	printf "r0-r7: %08x %08x %08x %08x %08x %08x %08x %08x\n",
-	  $sv->get_var ("vcpu.r0"), $sv->get_var ("vcpu.r1"),
-	  $sv->get_var ("vcpu.r2"), $sv->get_var ("vcpu.r3"),
-	  $sv->get_var ("vcpu.r4"), $sv->get_var ("vcpu.r5"),
-	  $sv->get_var ("vcpu.r6"), $sv->get_var ("vcpu.r7") if $rt_code != 0;
+        printf "r0-r7: %08x %08x %08x %08x %08x %08x %08x %08x\n",
+        $sv->get_var ("vcpu.r0"), $sv->get_var ("vcpu.r1"),
+        $sv->get_var ("vcpu.r2"), $sv->get_var ("vcpu.r3"),
+        $sv->get_var ("vcpu.r4"), $sv->get_var ("vcpu.r5"),
+        $sv->get_var ("vcpu.r6"), $sv->get_var ("vcpu.r7") if $rt_code != 0;
     }
     else
     {
-	if ($num == 0)
-	{
-	    printf "Core State  Application       ID   ";
+        if ($num == 0)
+        {
+            printf "Core State  Application       ID   ";
 
-	    if ($fmt == 0)
-	    {
-		printf "Running  Started\n";
-		printf "---- -----  -----------       --   ";
-		printf "-------  -------\n";
-	    }
-	    elsif ($fmt == 1 || $fmt == 2)
-	    {
-		printf "     User0      User1      User2      User3\n";
-		printf "---- -----  -----------       --   ";
-		printf "     -----      -----      -----      -----\n";
-	    }
-	    else
-	    {
-		printf "PCore  SWver\n";
-		printf "---- -----  -----------       --   ";
-		printf "-----  --------\n";
-	    }
-	}
+            if ($fmt == 0)
+            {
+                printf "Running  Started\n";
+                printf "---- -----  -----------       --   ";
+                printf "-------  -------\n";
+            }
+            elsif ($fmt == 1 || $fmt == 2)
+            {
+                printf "     User0      User1      User2      User3\n";
+                printf "---- -----  -----------       --   ";
+                printf "     -----      -----      -----      -----\n";
+            }
+            else
+            {
+                printf "PCore  SWver\n";
+                printf "---- -----  -----------       --   ";
+                printf "-----  --------\n";
+            }
+        }
 
-	printf "%3d  %-6s %-16s %3d ",
-	  $num,
-	  $cs[$sv->get_var ("vcpu.cpu_state")],
-	  $sv->get_var ("vcpu.app_name"),
-	  $sv->get_var ("vcpu.app_id");
+        printf "%3d  %-6s %-16s %3d ",
+        $num,
+        $cs[$sv->get_var ("vcpu.cpu_state")],
+        $sv->get_var ("vcpu.app_name"),
+        $sv->get_var ("vcpu.app_id");
 
-	if ($fmt == 1)
-	{
-	    printf "    %08x   %08x   %08x   %08x\n",
-	    $sv->get_var ("vcpu.user0"),
-	    $sv->get_var ("vcpu.user1"),
-	    $sv->get_var ("vcpu.user2"),
-	    $sv->get_var ("vcpu.user3");
-	}
-	elsif ($fmt == 2)
-	{
-	    printf "  %10u %10u %10u %10u\n",
-	    $sv->get_var ("vcpu.user0"),
-	    $sv->get_var ("vcpu.user1"),
-	    $sv->get_var ("vcpu.user2"),
-	    $sv->get_var ("vcpu.user3");
-	}
-	elsif ($fmt == 3)
-	{
-	    printf "   %2u  ", $sv->get_var ("vcpu.phys_cpu");
-	    my $v = $sv->get_var ("vcpu.sw_ver");
-	    printf "  %d.%d.%d\n", ($v >> 16) & 255, ($v >> 8) & 255, $v & 255;
-	}
-	else
-	{
-	    my $swc = $sv->get_var ("vcpu.sw_count");
-	    my $sw = ($swc) ? " SWC $swc" : "";
-	    printf "%9s  %s $sw\n", $et, $time;
-	}
+        if ($fmt == 1)
+        {
+            printf "    %08x   %08x   %08x   %08x\n",
+            $sv->get_var ("vcpu.user0"),
+            $sv->get_var ("vcpu.user1"),
+            $sv->get_var ("vcpu.user2"),
+            $sv->get_var ("vcpu.user3");
+        }
+        elsif ($fmt == 2)
+        {
+            printf "  %10u %10u %10u %10u\n",
+            $sv->get_var ("vcpu.user0"),
+            $sv->get_var ("vcpu.user1"),
+            $sv->get_var ("vcpu.user2"),
+            $sv->get_var ("vcpu.user3");
+        }
+        elsif ($fmt == 3)
+        {
+            printf "   %2u  ", $sv->get_var ("vcpu.phys_cpu");
+            my $v = $sv->get_var ("vcpu.sw_ver");
+            printf "  %d.%d.%d\n", ($v >> 16) & 255, ($v >> 8) & 255, $v & 255;
+        }
+        else
+        {
+            my $swc = $sv->get_var ("vcpu.sw_count");
+            my $sw = ($swc) ? " SWC $swc" : "";
+            printf "%9s  %s $sw\n", $et, $time;
+        }
     }
 
     return "";
@@ -1217,31 +1222,31 @@ sub cmd_ps
 
     if ($ac == 1 && $arg0 =~ /^\d+$/)
     {
-	my $vc = $arg0;
-	return "bad args" unless $vc >= 0 && $vc < 18;
+        my $vc = $arg0;
+        return "bad args" unless $vc >= 0 && $vc < 18;
 
-	my $e = cpu_dump ($vc, 1, 0);
-	return $e if $e;
+        my $e = cpu_dump ($vc, 1, 0);
+        return $e if $e;
     }
     elsif ($ac == 1 && ($arg0 eq "x" || $arg0 eq "d" || $arg0 eq "p"))
     {
-	my $fmt = ($arg0 eq "x") ? 1 : ($arg0 eq "d") ? 2 : 3;
+        my $fmt = ($arg0 eq "x") ? 1 : ($arg0 eq "d") ? 2 : 3;
 
-	for (my $vc = 0; $vc < 18; $vc++)
-	{
-	    my $e = cpu_dump ($vc, 0, $fmt);
-	    return $e if $e;	
-	}
+        for (my $vc = 0; $vc < 18; $vc++)
+        {
+            my $e = cpu_dump ($vc, 0, $fmt);
+            return $e if $e;
+        }
     }
     else
     {
-	for (my $vc = 0; $vc < 18; $vc++)
-	{
-	    my $e = cpu_dump ($vc, 0, 0);
-	    return $e if $e;
-	}
+        for (my $vc = 0; $vc < 18; $vc++)
+        {
+            my $e = cpu_dump ($vc, 0, 0);
+            return $e if $e;
+        }
     }
-	
+
     return "";
 }
 
@@ -1250,8 +1255,8 @@ sub cmd_ps
 
 
 my %srom_info = ("25aa1024" => {PAGE => 256, ADDR => 24},
-		 "25aa080a" => {PAGE => 16,  ADDR => 16},
-		 "25aa160b" => {PAGE => 32,  ADDR => 16});
+        "25aa080a" => {PAGE => 16,  ADDR => 16},
+        "25aa160b" => {PAGE => 32,  ADDR => 16});
 
 
 sub cmd_srom_type
@@ -1264,13 +1269,13 @@ sub cmd_srom_type
 
     if ($ac == 1)
     {
-	return "bad type" unless exists $srom_info{$type};
+        return "bad type" unless exists $srom_info{$type};
 
-	$srom_type = $type;
+        $srom_type = $type;
     }
 
     print "SROM type $srom_type (page $srom_info{$srom_type}->{PAGE}, " .
-	"addr $srom_info{$srom_type}->{ADDR})\n";
+    "addr $srom_info{$srom_type}->{ADDR})\n";
 
     return "";
 }
@@ -1286,9 +1291,9 @@ sub cmd_srom_read
 
     eval
     {
-	my $data = $spin->srom_read ($addr, 256,
-				     addr_size => $srom_info{$srom_type}->{ADDR});
-	print hex_dump ($data, addr => $addr);
+        my $data = $spin->srom_read ($addr, 256,
+                                     addr_size => $srom_info{$srom_type}->{ADDR});
+        print hex_dump ($data, addr => $addr);
     };
 
     return $@;
@@ -1316,13 +1321,17 @@ sub cmd_srom_write
 
     return "can't read file" unless defined $buf;
 
-    printf "Length %d, CRC32 0x%08x\n", length ($buf), crc32 ($buf);
+    if ($crc32_enabled) {
+        printf "Length %d, CRC32 0x%08x\n", length ($buf), crc32 ($buf);
+    } else {
+        printf "Length %d\n", length ($buf);
+    }
 
     eval
     {
-	$spin->srom_write ($addr, $buf,
-			   page_size => $srom_info{$srom_type}->{PAGE},
-			   addr_size => $srom_info{$srom_type}->{ADDR})
+    $spin->srom_write ($addr, $buf,
+                       page_size => $srom_info{$srom_type}->{PAGE},
+                       addr_size => $srom_info{$srom_type}->{ADDR})
     };
 
     return $@;
@@ -1345,22 +1354,26 @@ sub cmd_srom_dump
 
     eval
     {
-	while ($bytes != $len)
-	{
-	    my $l = ($len - $bytes > $size) ? $size : $len - $bytes;
-	    $bytes += $l;
+        while ($bytes != $len)
+        {
+            my $l = ($len - $bytes > $size) ? $size : $len - $bytes;
+            $bytes += $l;
 
-	    my $data = $spin->srom_read ($addr, $l,
-					 addr_size => $srom_info{$srom_type}->{ADDR});
+            my $data = $spin->srom_read ($addr, $l,
+                                         addr_size => $srom_info{$srom_type}->{ADDR});
 
-	    $addr += $l;
+            $addr += $l;
 
-	    die "Length mismatch" unless $l == length ($data);
-	    $buf .= $data;
-	}
+            die "Length mismatch" unless $l == length ($data);
+            $buf .= $data;
+        }
     };
 
-    printf "Length %d, CRC32 0x%08x\n", length ($buf), crc32 ($buf);
+    if ($crc32_enabled) {
+        printf "Length %d, CRC32 0x%08x\n", length ($buf), crc32 ($buf);
+    } else {
+        printf "Length %d\n", length ($buf);
+    }
 
     open my $fh, ">", $file or return "can't open \"$file\"";
     syswrite $fh, $buf or return "write failed\n";
@@ -1379,11 +1392,11 @@ sub check_ip
 
     if ($s =~ /^\/(\d+)$/) # Special case /nn -> 255.255....
     {
-	$s = $1;
-	return () if $s > 32 || $s < 8;
-	$s = (0xffffffff << (32 - $s)) & 0xffffffff;
-	$s = join ".", ($s >> 24) & 255, ($s >> 16) & 255,
-        	($s >> 8) & 255, ($s >> 0) & 255;
+        $s = $1;
+        return () if $s > 32 || $s < 8;
+        $s = (0xffffffff << (32 - $s)) & 0xffffffff;
+        $s = join ".", ($s >> 24) & 255, ($s >> 16) & 255,
+                       ($s >> 8)  & 255, ($s >> 0)  & 255;
     }
 
     return () unless $s =~ /^\d+\.\d+\.\d+\.\d+$/;
@@ -1392,7 +1405,7 @@ sub check_ip
 
     for my $n (@v)
     {
-	return () if $n < 0 || $n > 255;
+        return () if $n < 0 || $n > 255;
     }
     return @v;
 }
@@ -1406,13 +1419,13 @@ sub cmd_srom_info
     my $len = 32;
 
     my $data = $spin->srom_read ($addr, $len,
-				 addr_size => $srom_info{$srom_type}->{ADDR});
+                                 addr_size => $srom_info{$srom_type}->{ADDR});
 
     my @d = unpack "C8 C4 C4 C4 C2 n", $data;
 
     my $flag = ($d[2] << 8) + $d[3];
     my $mac = sprintf "%02x:%02x:%02x:%02x:%02x:%02x",
-    	$d[1], $d[0], $d[7], $d[6], $d[5], $d[4];
+        $d[1], $d[0], $d[7], $d[6], $d[5], $d[4];
     my $ip = join (".", reverse @d[8..11]);
     my $gw = join (".", reverse @d[12..15]);
     my $nm = join (".", reverse @d[16..19]);
@@ -1420,19 +1433,19 @@ sub cmd_srom_info
 
     if ($long)
     {
-	printf "Flag: %04x\n", $flag;
-	printf "MAC:  %s\n", $mac;
-	printf "IP:   %s\n", $ip;
-	printf "GW:   %s\n", $gw;
-	printf "NM:   %s\n", $nm;
-	printf "Port: %d\n", $port;
+        printf "Flag: %04x\n", $flag;
+        printf "MAC:  %s\n", $mac;
+        printf "IP:   %s\n", $ip;
+        printf "GW:   %s\n", $gw;
+        printf "NM:   %s\n", $nm;
+        printf "Port: %d\n", $port;
     }
     else
     {
-	printf "%04x ", $flag;
-	printf "%s ", $mac;
-	printf "%s %s %s ", $ip, $gw, $nm;
-	printf "%d\n", $port;
+        printf "%04x ", $flag;
+        printf "%s ", $mac;
+        printf "%s %s %s ", $ip, $gw, $nm;
+        printf "%d\n", $port;
     }
 
     return "";
@@ -1446,8 +1459,8 @@ sub cmd_srom_init
 
     if ($ac == 0)
     {
-	eval { cmd_srom_info (0) };
-	return $@;
+        eval { cmd_srom_info (0) };
+        return $@;
     }
 
     return "bad args" unless $ac == 6;
@@ -1470,18 +1483,18 @@ sub cmd_srom_init
     $_ = hex $_ for @mac;
 
     my $d = pack "N2 C2 n C4 C4 C4 C4 C2 n N2 N",
-              0x553a0008, 0xf5007fe0, $mac[4], $mac[5], $flag,
-              $mac[0], $mac[1], $mac[2], $mac[3],
-              @ip, @gw, @nm, 0, 0, $port, 0, 0,
-              0xaaaaaaaa;
+                 0x553a0008, 0xf5007fe0, $mac[4], $mac[5], $flag,
+                 $mac[0], $mac[1], $mac[2], $mac[3],
+                 @ip, @gw, @nm, 0, 0, $port, 0, 0,
+                 0xaaaaaaaa;
 
 
     eval
     {
-	$spin->srom_write (0, $d,
-			   page_size => $srom_info{$srom_type}->{PAGE},
-			   addr_size => $srom_info{$srom_type}->{ADDR});
-	cmd_srom_info (1);
+        $spin->srom_write (0, $d,
+                           page_size => $srom_info{$srom_type}->{PAGE},
+                           addr_size => $srom_info{$srom_type}->{ADDR});
+        cmd_srom_info (1);
     };
 
     return $@;
@@ -1498,45 +1511,45 @@ sub cmd_srom_ip
 
     eval
     {
-	return cmd_srom_info (1) if $ac == 0;
+        return cmd_srom_info (1) if $ac == 0;
 
-	my $data = "";
+        my $data = "";
 
-	for my $a (0..$ac-1)
-	{
-	    my $s = $cli->{arg_v}->[$a];
-	    my @ip = check_ip ($s);
+        for my $a (0..$ac-1)
+        {
+            my $s = $cli->{arg_v}->[$a];
+            my @ip = check_ip ($s);
 
-	    return "bad IP ($s)" if $#ip != 3;
+            return "bad IP ($s)" if $#ip != 3;
 
-	    $data .= pack "C4", @ip;
-	}
+            $data .= pack "C4", @ip;
+        }
 
-	my $len = length $data;
+        my $len = length $data;
 
-	print "Writing $len bytes at address $addr\n";
+        print "Writing $len bytes at address $addr\n";
 
-	$spin->srom_write ($addr, $data,
-			   page => $srom_info{$srom_type}->{PAGE},
-			   addr => $srom_info{$srom_type}->{ADDR});
+        $spin->srom_write ($addr, $data,
+                           page => $srom_info{$srom_type}->{PAGE},
+                           addr => $srom_info{$srom_type}->{ADDR});
 
-	print "Checking...\n";
-    
-	cmd_srom_info (1);
+        print "Checking...\n";
 
-	my $rdata = $spin->srom_read ($addr, $len,
-				      addr_size => $srom_info{$srom_type}->{ADDR});
+        cmd_srom_info (1);
 
-	my $lr = length ($rdata);
+        my $rdata = $spin->srom_read ($addr, $len,
+                                      addr_size => $srom_info{$srom_type}->{ADDR});
 
-	if ($lr != $len || $data ne $rdata)
-	{
-	    print "Oops! - try again?\n";
-	}
-	else
-	{
-	    print "Looks OK!\n";
-	}
+        my $lr = length ($rdata);
+
+        if ($lr != $len || $data ne $rdata)
+        {
+            print "Oops! - try again?\n";
+        }
+        else
+        {
+            print "Looks OK!\n";
+        }
     };
 
     return $@;
@@ -1554,7 +1567,7 @@ sub cmd_led
     my $action = $cli->{arg_v}->[1];
 
     return "bad args" if $ac != 2 || $num !~ /^[0-3]+$/ ||
-	$action !~ /^(on|off|inv|flip)$/;
+    $action !~ /^(on|off|inv|flip)$/;
 
     my %led = (on => 3, off => 2, inv => 1, flip => 1);
 
@@ -1562,7 +1575,7 @@ sub cmd_led
 
     for my $l (split //, $num)
     {
-	$c |= $led{$action} << ($l * 2);
+        $c |= $led{$action} << ($l * 2);
     }
 
     eval { $spin->led ($c, addr => [0]) };
@@ -1591,9 +1604,9 @@ sub cmd_remap
 
     eval
     {
-	$spin->scp_cmd ($CMD_REMAP,
-			arg1 => $arg0,
-			arg2 => $arg1);
+        $spin->scp_cmd ($CMD_REMAP,
+                        arg1 => $arg0,
+                        arg2 => $arg1);
     };
 
     return $@;
@@ -1611,10 +1624,10 @@ sub app_dump
 
     for (my $i = 0; $i < 256; $i++)
     {
-	my ($cores, $clean, $sema, $lead, $mask) =
-	    unpack "C4 V", substr $data, $i * 8, 8;
-	printf "%3d %5d %5d %5d %5d %08x\n", $i, $cores, $clean, $sema,
-  	  $lead, $mask if $cores != 0 || $clean != 0;
+        my ($cores, $clean, $sema, $lead, $mask) =
+            unpack "C4 V", substr $data, $i * 8, 8;
+        printf "%3d %5d %5d %5d %5d %08x\n", $i, $cores, $clean, $sema,
+            $lead, $mask if $cores != 0 || $clean != 0;
     }
 }
 
@@ -1647,33 +1660,33 @@ sub rtr_heap
 
     while ($p != 0)
     {
-	my $data = $spin->read ($rtr_copy + 16 * $p, 4, unpack => "vv");
-	my $next = $data->[0];
-	my $free = $data->[1];
-	my $size = ($next == 0) ? 0 : $next - $p;
-	
-	my $fs = sprintf "Free %5d", $free;
-	$fs = sprintf "AppID  %3d", $free & 255 if $free & 0x8000;
+        my $data = $spin->read ($rtr_copy + 16 * $p, 4, unpack => "vv");
+        my $next = $data->[0];
+        my $free = $data->[1];
+        my $size = ($next == 0) ? 0 : $next - $p;
 
-	printf "BLOCK %5d  Next %5d  $fs  Size %d\n",
-	  $p, $next, $size;
+        my $fs = sprintf "Free %5d", $free;
+        $fs = sprintf "AppID  %3d", $free & 255 if $free & 0x8000;
 
-	$p = $next;
+        printf "BLOCK %5d  Next %5d  $fs  Size %d\n",
+        $p, $next, $size;
+
+        $p = $next;
     }
 
     $p = $rtr_free;
 
     while ($p != 0)
     {
-	my $data = $spin->read ($rtr_copy + 16 * $p, 4, unpack => "vv");
-	my $next = $data->[0];
-	my $free = $data->[1];
-	my $size = ($next == 0) ? 0 : $next - $p;
+        my $data = $spin->read ($rtr_copy + 16 * $p, 4, unpack => "vv");
+        my $next = $data->[0];
+        my $free = $data->[1];
+        my $size = ($next == 0) ? 0 : $next - $p;
 
-	printf "FREE  %5d  Next %5d  Free %5d  Size %d\n",
-	  $p, $next, $free, $size;
+        printf "FREE  %5d  Next %5d  Free %5d  Size %d\n",
+        $p, $next, $free, $size;
 
-      $p = $free;
+        $p = $free;
     }
 
     print "\n";
@@ -1689,14 +1702,14 @@ sub rtr_dump
 
     for (my $i = 0; $i < 1024; $i++)
     {
-	my ($next, $free, $route, $key, $mask) =
-	    unpack "v2 V3", substr $buf, 16 * $i, 16;
+        my ($next, $free, $route, $key, $mask) =
+            unpack "v2 V3", substr $buf, 16 * $i, 16;
 
-	next if $route >= 0xff000000;
+        next if $route >= 0xff000000;
 
-	printf "%4d:  %018b %06b  %08x  %08x  %5d  %4d\n", $i,
-	    ($route >> 6) & 0x3ffff, $route & 63, $key, $mask,
-	    $free & 255, ($free >> 8) & 31;
+        printf "%4d:  %018b %06b  %08x  %08x  %5d  %4d\n", $i,
+            ($route >> 6) & 0x3ffff, $route & 63, $key, $mask,
+            $free & 255, ($free >> 8) & 31;
     }
     printf "  FR:  %018b %06b\n", ($fr >> 6) & 0x3ffff, $fr & 63
 }
@@ -1724,13 +1737,13 @@ sub cmd_rtr_dump
 
     eval
     {
-	my $rtr = $sv->read_var ("sv.rtr_copy");
-	return "Failed to read sv->rtr_copy" unless defined $rtr;
+        my $rtr = $sv->read_var ("sv.rtr_copy");
+        return "Failed to read sv->rtr_copy" unless defined $rtr;
 
-	my $fr = $sv->read_var ("sv.fr_copy");
-	return "Failed to read sv->fr_copy" unless defined $fr;
+        my $fr = $sv->read_var ("sv.fr_copy");
+        return "Failed to read sv->fr_copy" unless defined $fr;
 
-	rtr_dump ($spin->read ($rtr, 1025 * 16), $fr);
+        rtr_dump ($spin->read ($rtr, 1025 * 16), $fr);
     };
 
     return $@;
@@ -1755,37 +1768,37 @@ sub cmd_rtr_diag
 
     return "bad args" unless $ac < 2;
 
-    my @rtrc = ( "Loc  MC:", "Ext  MC:", "Loc  PP:", "Ext  PP:",
-		 "Loc  NN:", "Ext  NN:", "Loc  FR:", "Ext  FR:",
-		 "Dump MC:", "Dump PP:", "Dump NN:", "Dump FR:",
-		 "Cntr 12:", "Cntr 13:", "Cntr 14:", "Cntr 15:");
+    my @rtrc = ("Loc  MC:", "Ext  MC:", "Loc  PP:", "Ext  PP:",
+                "Loc  NN:", "Ext  NN:", "Loc  FR:", "Ext  FR:",
+                "Dump MC:", "Dump PP:", "Dump NN:", "Dump FR:",
+                "Cntr 12:", "Cntr 13:", "Cntr 14:", "Cntr 15:");
 
     eval
     {
-	my $rcr = $spin->read (0xe1000000, 4, type => "word", unpack => "V*");
+        my $rcr = $spin->read (0xe1000000, 4, type => "word", unpack => "V*");
 
-	printf "\nCtrl Reg:  0x%08x (Mon %d, Wait1 %d, Wait2 %d)\n",
-	  $rcr->[0],
-          ($rcr->[0] >> 8) & 31,
-	  rtr_wait ($rcr->[0] >> 16),
-  	  rtr_wait ($rcr->[0] >> 23);
+        printf "\nCtrl Reg:  0x%08x (Mon %d, Wait1 %d, Wait2 %d)\n",
+            $rcr->[0],
+            ($rcr->[0] >> 8) & 31,
+            rtr_wait ($rcr->[0] >> 16),
+            rtr_wait ($rcr->[0] >> 23);
 
-	my $es = $spin->read (0xe1000014, 4, type => "word", unpack => "V*");
-	printf "Err Stat:  0x%08x\n\n", $es->[0];
+        my $es = $spin->read (0xe1000014, 4, type => "word", unpack => "V*");
+        printf "Err Stat:  0x%08x\n\n", $es->[0];
 
-	my $data = $spin->read (0xe1000300, 64,
-				type => "word", unpack => "V*");
+        my $data = $spin->read (0xe1000300, 64,
+                    type => "word", unpack => "V*");
 
-	for (my $i = 0; $i < 16; $i++)
-	{
-	    printf "%-10s %d\n", $rtrc[$i], $data->[$i];
-	}
+        for (my $i = 0; $i < 16; $i++)
+        {
+            printf "%-10s %d\n", $rtrc[$i], $data->[$i];
+        }
 
-	if ($ac == 1 && $arg0 eq "clr")
-	{
-	    my $c = pack "V", 0xffffffff;
-	    $spin->write (0xf100002c, $c, type => "word");
-	}
+        if ($ac == 1 && $arg0 eq "clr")
+        {
+            my $c = pack "V", 0xffffffff;
+            $spin->write (0xf100002c, $c, type => "word");
+        }
     };
 
     return $@;
@@ -1801,10 +1814,10 @@ sub cmd_rtr_heap
 
     eval
     {
-	my $rtr_copy  = $sv->read_var ("sv.rtr_copy");
-	my $rtr_free  = $sv->read_var ("sv.rtr_free");
+        my $rtr_copy  = $sv->read_var ("sv.rtr_copy");
+        my $rtr_free  = $sv->read_var ("sv.rtr_free");
 
-	rtr_heap ($rtr_copy, $rtr_free);
+        rtr_heap ($rtr_copy, $rtr_free);
     };
 
     return $@;
@@ -1824,7 +1837,7 @@ sub cmd_reset
 
     eval
     {
-	$bmp->reset ($bmp_range);
+        $bmp->reset ($bmp_range);
     };
 
     return $@;
@@ -1842,8 +1855,8 @@ sub cmd_power
 
     eval
     {
-	$bmp->power (($arg0 eq "on") ? 1 : 0, $bmp_range,
-		     timeout => ($arg0 eq "on") ? 3.0 : $bmp->timeout);
+        $bmp->power (($arg0 eq "on") ? 1 : 0, $bmp_range,
+                     timeout => ($arg0 eq "on") ? 3.0 : $bmp->timeout);
     };
 
     return $@;
@@ -1861,8 +1874,8 @@ sub cmd_p2p_route
 
     if ($ac == 0)
     {
-	printf "Flags 0x%02x\n", $spin->flags;
-	return "";
+        printf "Flags 0x%02x\n", $spin->flags;
+        return "";
     }
 
     $spin->flags ($spin->flags & ~0x20) if $arg eq "on";
@@ -1938,10 +1951,10 @@ sub cmd_cmd
 
     eval
     {
-	$spin->scp_cmd ($cmd,
-			arg1 => $arg1,
-			arg2 => $arg2,
-			arg3 => $arg3);
+    $spin->scp_cmd ($cmd,
+                    arg1 => $arg1,
+                    arg2 => $arg2,
+                    arg3 => $arg3);
     };
 
     return $@;
@@ -1962,179 +1975,179 @@ sub cmd_version
 my $spin_cmds =
 {
     version =>   [\&cmd_version,
-		 "",
-		 "Show ybug version"],
+        "",
+        "Show ybug version"],
     expert =>   [\&cmd_expert,
-		 "",
-		 "Enable expert commands"],
+        "",
+        "Enable expert commands"],
     debug =>    [\&cmd_debug,
-		 "<num.D>",
-		 "Set debug level"],
+        "<num.D>",
+        "Set debug level"],
     timeout =>  [\&cmd_timeout,
-		 "<secs.R>",
-		 "Set target timeout"],
+        "<secs.R>",
+        "Set target timeout"],
     sleep =>    [\&cmd_sleep,
-		 "<secs.D>",
-		 "Sleep (secs)"],
+        "<secs.D>",
+        "Sleep (secs)"],
     sp =>       [\&cmd_sp,
-		 "<chip_x.D> <chip_y.D> <core.D>",
-		 "Select SpiNNaker chip and core"],
+        "<chip_x.D> <chip_y.D> <core.D>",
+        "Select SpiNNaker chip and core"],
     sver =>     [\&cmd_sver,
-		 "",
-		 "Show SpiNNaker S/W version"],
+        "",
+        "Show SpiNNaker S/W version"],
     ps =>       [\&cmd_ps,
-		 "[<core.D>|d|x|p]",
-		 "Display core state"],
+        "[<core.D>|d|x|p]",
+        "Display core state"],
     smemb =>    [\&cmd_smemb,
-		 "<addr.X>",
-		 "Read SpiNNaker memory (bytes)"],
+        "<addr.X>",
+        "Read SpiNNaker memory (bytes)"],
     smemh =>    [\&cmd_smemh,
-		 "<addr.X>",
-		 "Read SpiNNaker memory (half-words)"],
+        "<addr.X>",
+        "Read SpiNNaker memory (half-words)"],
     smemw =>    [\&cmd_smemw,
-		 "<addr.X>",
-		 "Read SpiNNaker memory (words)"],
+        "<addr.X>",
+        "Read SpiNNaker memory (words)"],
     sload =>    [\&cmd_sload,
-		 "<file.F> <addr.X>",
-		 "Load SpiNNaker memory from file"],
+        "<file.F> <addr.X>",
+        "Load SpiNNaker memory from file"],
     sw =>       [\&cmd_sw,
-		 "<addr.X> [<data.X>]",
-		 "Read/write Spinnaker word"],
+        "<addr.X> [<data.X>]",
+        "Read/write Spinnaker word"],
     sh =>       [\&cmd_sh,
-		 "<addr.X> [<data.X>]",
-		 "Read/write Spinnaker half-word"],
+        "<addr.X> [<data.X>]",
+        "Read/write Spinnaker half-word"],
     sb =>       [\&cmd_sb,
-		 "<addr.X> [<data.X>]",
-		 "Read/write Spinnaker byte"],
+        "<addr.X> [<data.X>]",
+        "Read/write Spinnaker byte"],
     sfill =>     [\&cmd_sfill,
-		 "<from_addr.X> <to_addr.X> <word.X>",
-		 "Fill Spinnaker memory (words)"],
+        "<from_addr.X> <to_addr.X> <word.X>",
+        "Fill Spinnaker memory (words)"],
     boot =>     [\&cmd_boot,
-		 "[<boot_file.F>] [<conf_file.F>]",
-		 "System bootstrap"],
+        "[<boot_file.F>] [<conf_file.F>]",
+        "System bootstrap"],
     app_load => [\&cmd_app_load,
-		 "<file.F> .|@<X.D>,<Y.D>|<region> <cores> <app_id.D> [wait]",
-		 "Load application"],
+        "<file.F> .|@<X.D>,<Y.D>|<region> <cores> <app_id.D> [wait]",
+        "Load application"],
     app_stop => [\&cmd_app_stop,
-		 "<app_id.D>[-<app_id.D>]",
-		 "Stop application(s)"],
+        "<app_id.D>[-<app_id.D>]",
+        "Stop application(s)"],
     app_sig =>  [\&cmd_app_sig,
-		 "<region> <app_id.D>[-<app_id.D>] <signal> [state]",
-		 "Send signal to application"],
+        "<region> <app_id.D>[-<app_id.D>] <signal> [state]",
+        "Send signal to application"],
     data_load => [\&cmd_data_load,
-		 "<file.F> <region> <addr.X>",
-		 "Load data to all chips in region"],
+        "<file.F> <region> <addr.X>",
+        "Load data to all chips in region"],
     rtr_load => [\&cmd_rtr_load,
-		 "<file.F> <app_id.D>",
-		 "Load router file"],
+        "<file.F> <app_id.D>",
+        "Load router file"],
     rtr_dump =>  [\&cmd_rtr_dump,
-		 "",
-		 "Dump router MC table"],
+        "",
+        "Dump router MC table"],
 #    rtr_init =>  [\&cmd_rtr_init,
 #		 "",
 #		 "Initialise router MC table and heap"],
     rtr_heap =>  [\&cmd_rtr_heap,
-		 "",
-		 "Dump router MC heap"],
+        "",
+        "Dump router MC heap"],
     rtr_diag =>  [\&cmd_rtr_diag,
-		 "[clr]",
-		 "Show router diagnostic counts, etc"],
+        "[clr]",
+        "Show router diagnostic counts, etc"],
     iobuf     => [\&cmd_iobuf,
-		 "<core.D> [<file.F>]",
-		 "Display/write I/O buffer for core"],
+        "<core.D> [<file.F>]",
+        "Display/write I/O buffer for core"],
     sdump =>    [\&cmd_sdump,
-		 "<file.F> <addr.X> <len.X>",
-		 "Dump SpiNNaker memory to file"],
+        "<file.F> <addr.X> <len.X>",
+        "Dump SpiNNaker memory to file"],
     iptag =>    [\&cmd_iptag,
-		 "<tag.D> <cmd.S> args...
+        "<tag.D> <cmd.S> args...
                <tag.D> clear
                <tag.D> set     <host.P> <port.D>
                <tag.D> strip   <host.P> <port.D>
                <tag.D> reverse <port.D> <address.X> <port.X>",
-		 "Set up IPTags"],
+        "Set up IPTags"],
     led =>      [\&cmd_led,
-		 "<0123>* on|off|inv|flip",
-		 "Set/clear LEDs"],
+        "<0123>* on|off|inv|flip",
+        "Set/clear LEDs"],
     heap =>      [\&cmd_heap,
-		 "sdram|sysram|system",
-		 "Dump heaps"],
+        "sdram|sysram|system",
+        "Dump heaps"],
     reset =>     [\&cmd_reset,
-		 "",
-		 "Reset Spinnakers via BMP"],
+        "",
+        "Reset Spinnakers via BMP"],
     power =>     [\&cmd_power,
-		 "on|off",
-		 "Switch power on/off via BMP"],
+        "on|off",
+        "Switch power on/off via BMP"],
     pause =>    [\&SpiNN::CLI::pause,
-		 "<text.S>",
-		 "Print string and wait for Enter key"],
+        "<text.S>",
+        "Print string and wait for Enter key"],
     echo =>    [\&SpiNN::CLI::echo,
-		 "<text.S>",
-		 "Print string"],
+        "<text.S>",
+        "Print string"],
     quit =>     [\&SpiNN::CLI::quit,
-		 "",
-		 "Quit"],
+        "",
+        "Quit"],
     help =>     [\&SpiNN::CLI::help,
-		 "",
-		 "Provide help"],
+        "",
+        "Provide help"],
     "@" =>      [\&SpiNN::CLI::at,
-		 "<file.F> [quiet]",
-		 "Read commands from file"],
+        "<file.F> [quiet]",
+        "Read commands from file"],
     "?" =>      [\&SpiNN::CLI::query,
-		 "",
-		 "List commands"],
+        "",
+        "List commands"],
 };
 
 
 my $expert_cmds =
 {
     gw =>        [\&cmd_gw,
-		 "<addr.X> <data.X>",
-		 "Global word write"],
+        "<addr.X> <data.X>",
+        "Global word write"],
     gh =>        [\&cmd_gh,
-		 "<addr.X> <data.X>",
-		 "Global half-word write"],
+        "<addr.X> <data.X>",
+        "Global half-word write"],
     gb =>        [\&cmd_gb,
-		 "<addr.X> <data.X>",
-		 "Global byte write"],
+        "<addr.X> <data.X>",
+        "Global byte write"],
     lmemw =>    [\&cmd_lmemw,
-		 "<link.D> <addr.X>",
-		 "Read SpiNNaker memory via link (words)"],
+        "<link.D> <addr.X>",
+        "Read SpiNNaker memory via link (words)"],
     lw =>       [\&cmd_lw,
-		 "<link.D> <addr.X> [<data.X]",
-		 "Read/write SpiNNaker word via link"],
+        "<link.D> <addr.X> [<data.X]",
+        "Read/write SpiNNaker word via link"],
     srom_ip =>  [\&cmd_srom_ip,
-		 "[<ip_addr.P> [<gw_addr.P> [<net_mask.P>]]]",
-		 "Set IP address in serial ROM"],
+        "[<ip_addr.P> [<gw_addr.P> [<net_mask.P>]]]",
+        "Set IP address in serial ROM"],
     srom_read => [\&cmd_srom_read,
-		 "<addr.X>",
-		 "Read serial ROM data"],
+        "<addr.X>",
+        "Read serial ROM data"],
     srom_type => [\&cmd_srom_type,
-		 "25aa1024|25aa080a|25aa160b",
-		 "Set SROM type"],
+        "25aa1024|25aa080a|25aa160b",
+        "Set SROM type"],
     srom_dump => [\&cmd_srom_dump,
-		 "<file.F> <addr.X> <len.D>",
-		 "Dump serial ROM data"],
+        "<file.F> <addr.X> <len.D>",
+        "Dump serial ROM data"],
     srom_write => [\&cmd_srom_write,
-		 "<file.F> <addr.X>",
-		 "Write serial ROM data"],
+        "<file.F> <addr.X>",
+        "Write serial ROM data"],
     srom_erase => [\&cmd_srom_erase,
-		 "",
-		 "Erase (all) serial ROM data"],
+        "",
+        "Erase (all) serial ROM data"],
     srom_init => [\&cmd_srom_init,
-		 "<Flag.X> <MAC.M> <ip_addr.P> <gw_addr.P> <net_mask.P> <port.D>",
-		 "Initialise serial ROM"],
+        "<Flag.X> <MAC.M> <ip_addr.P> <gw_addr.P> <net_mask.P> <port.D>",
+        "Initialise serial ROM"],
     remap =>     [\&cmd_remap,
-		 "<core.D> [phys|virt]",
-		 "Remove bad core from core map"],
+        "<core.D> [phys|virt]",
+        "Remove bad core from core map"],
     p2p_route => [\&cmd_p2p_route,
-		 "[on|off]",
-		 "Control P2P routing"],
+        "[on|off]",
+        "Control P2P routing"],
     app_dump =>  [\&cmd_app_dump,
-		 "",
-		 "Show app data for this chip"],
+        "",
+        "Show app data for this chip"],
     cmd =>       [\&cmd_cmd,
-		 '<cmd.D> <arg1.X> <arg2.X> <arg3.X>',
-		 'User specified command'],
+        '<cmd.D> <arg1.X> <arg2.X> <arg3.X>',
+        'User specified command'],
 };
 
 
@@ -2170,39 +2183,39 @@ sub process_args
 
     while ($#ARGV >= 0)
     {
-	my $arg = shift @ARGV;
+        my $arg = shift @ARGV;
 
-	if ($arg eq "-bmp")
-	{
-	    die "BMP not specified\n" unless $bmp_target = shift @ARGV;
-	    $range = $1 if $bmp_target =~ s/\/(\S+)$//;
-	}
-	elsif ($arg eq "-version")
-	{
-	    cmd_version ();
-	    exit 0;
-	}
-	elsif ($arg eq "-debug")
-	{
-	    die "debug not specified\n" unless $debug = shift @ARGV &&
-		$debug =~ /^\d+$/;
-	}
-	elsif ($arg eq "-norl")
-	{
-	    $readline = 0;
-	}
-	elsif ($arg eq "-expert")
-	{
-	    $expert = 1;
-	}
-	elsif ($arg !~ /^-/)
-	{
-	    $spin_target = $arg;
-	}
-	else
-	{
-	    usage ();
-	}
+        if ($arg eq "-bmp")
+        {
+            die "BMP not specified\n" unless $bmp_target = shift @ARGV;
+            $range = $1 if $bmp_target =~ s/\/(\S+)$//;
+        }
+        elsif ($arg eq "-version")
+        {
+            cmd_version ();
+            exit 0;
+        }
+        elsif ($arg eq "-debug")
+        {
+            die "debug not specified\n" unless $debug = shift @ARGV &&
+            $debug =~ /^\d+$/;
+        }
+        elsif ($arg eq "-norl")
+        {
+            $readline = 0;
+        }
+        elsif ($arg eq "-expert")
+        {
+            $expert = 1;
+        }
+        elsif ($arg !~ /^-/)
+        {
+            $spin_target = $arg;
+        }
+        else
+        {
+            usage ();
+        }
     }
 
     $bmp_range = parse_bits ($range, 0, 23);
@@ -2216,8 +2229,6 @@ sub process_args
     $prompt =~ s/\..+// unless $prompt =~ /^\d/;
     $prompt = "$prompt:0,0,0 > ";
 
-    die "SPINN_PATH not set\n" unless $ENV{SPINN_PATH};
-
     return $prompt;
 }
 
@@ -2225,8 +2236,8 @@ sub process_args
 sub open_targets
 {
     $spin = SpiNN::Cmd->new (target => $spin_target,
-			     port => $spin_port,
-			     debug => $debug);
+                             port => $spin_port,
+                             debug => $debug);
 
     die "Failed to open \"$spin_target\"\n" unless $spin;
 
@@ -2236,11 +2247,11 @@ sub open_targets
 
     if (defined $bmp_target)
     {
-	$bmp = SpiNN::Cmd->new (target => $bmp_target,
-				port => $bmp_port,
-				debug => $debug);
+        $bmp = SpiNN::Cmd->new (target => $bmp_target,
+                                port => $bmp_port,
+                                debug => $debug);
 
-	die "Failed to open \"$bmp_target\"\n" unless $bmp;
+        die "Failed to open \"$bmp_target\"\n" unless $bmp;
     }
 }
 
@@ -2257,10 +2268,10 @@ sub init_readline
 
     $attribs->{completion_function} = sub
     {
-	my ($text, $line, $start) = @_;
-	return $cli->list if $start == 0;
-	return $term->completion_matches ($text,
-			   $attribs->{filename_completion_function});
+        my ($text, $line, $start) = @_;
+        return $cli->list if $start == 0;
+        return $term->completion_matches ($text,
+                $attribs->{filename_completion_function});
     };
 
     return $term;

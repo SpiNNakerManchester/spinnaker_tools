@@ -1,3 +1,3 @@
 APP := interrupt
 THUMB := 0
-include $(SPINN_DIRS)/make/app.make
+include $(SPINN_DIRS)/Makefile.app

@@ -1,5 +1,5 @@
 
-scp.pdf: scp.tex appnote.tex sdp-scp.pdf cmd-ver.pdf cmd-read.pdf cmd-write.pdf
+scp.pdf: scp.tex ../appnote.tex sdp-scp.pdf cmd-ver.pdf cmd-read.pdf cmd-write.pdf
 	pdflatex scp.tex
 
 %.pdf: %.fig

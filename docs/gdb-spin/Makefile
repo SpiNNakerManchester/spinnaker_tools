@@ -1,5 +1,5 @@
 
-gdb-spin.pdf: gdb-spin.tex appnote.tex
+gdb-spin.pdf: gdb-spin.tex ../appnote.tex
 	pdflatex $<
 
 clean:

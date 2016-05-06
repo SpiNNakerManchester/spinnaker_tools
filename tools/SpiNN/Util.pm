@@ -15,6 +15,9 @@
 package SpiNN::Util;
 
 use Exporter;
+use File::Basename;
+use File::Spec;
+use Cwd 'abs_path';
 
 @ISA = qw/Exporter/;
 
@@ -55,26 +58,26 @@ sub parse_bits
 
     for my $sub (@range)
     {
-	if ($sub =~ /^\d+$/)
-	{
-	    return 0 if $sub < $min || $sub > $max;
+        if ($sub =~ /^\d+$/)
+        {
+            return 0 if $sub < $min || $sub > $max;
 
-	    $mask |= 1 << $sub;
-	}
-	elsif ($sub =~ /^(\d+)-(\d+)$/)
-	{
-	    my ($l, $h) = ($1, $2);
-	    return 0 if $l > $h || $l < $min || $h > $max;
+            $mask |= 1 << $sub;
+        }
+        elsif ($sub =~ /^(\d+)-(\d+)$/)
+        {
+            my ($l, $h) = ($1, $2);
+            return 0 if $l > $h || $l < $min || $h > $max;
 
-	    for (my $i = $l; $i <= $h; $i++)
-	    {
-		$mask |= 1 << $i;
-	    }
-	}
-	else
-	{
-	    return 0;
-	}
+            for (my $i = $l; $i <= $h; $i++)
+            {
+                $mask |= 1 << $i;
+            }
+        }
+        else
+        {
+            return 0;
+        }
     }
 
     return $mask;
@@ -89,30 +92,30 @@ sub parse_region
 
     if ($region eq ".")
     {
-	return 0 unless defined $x && defined $y;
+        return 0 unless defined $x && defined $y;
 
-	my $m = ($y & 3) * 4 + ($x & 3);
+        my $m = ($y & 3) * 4 + ($x & 3);
 
-	return (($x & 0xfc) << 24) +
-	       (($y & 0xfc) << 16) +
-	       (3 << 16) +
-	       (1 << $m);
+        return (($x & 0xfc) << 24) +
+               (($y & 0xfc) << 16) +
+               (3 << 16) +
+               (1 << $m);
     }
 
     if ($region =~ /^@(\d+),(\d+)$/)
     {
-	($x, $y) = ($1, $2);
+        ($x, $y) = ($1, $2);
 
-	my $m = ($y & 3) * 4 + ($x & 3);
+        my $m = ($y & 3) * 4 + ($x & 3);
 
-	return (($x & 0xfc) << 24) +
-	       (($y & 0xfc) << 16) +
-	       (3 << 16) +
-	       (1 << $m);
+        return (($x & 0xfc) << 24) +
+               (($y & 0xfc) << 16) +
+               (3 << 16) +
+               (1 << $m);
     }
-	
+
     $region = "0-15" if lc $region eq "all";
- 
+
     my @region = split /\./, $region;
     my $level = $#region;
 
@@ -122,14 +125,14 @@ sub parse_region
 
     for (my $i = 0; $i < $level; $i++)
     {
-	my $d = $region[$i];
+        my $d = $region[$i];
 
-	return 0 unless $d =~ /^\d+$/ && $d >= 0 && $d <= 15;
+        return 0 unless $d =~ /^\d+$/ && $d >= 0 && $d <= 15;
 
-	my $shift = 6 - 2 * $i;
+        my $shift = 6 - 2 * $i;
 
-	$x += ($d & 3) << $shift;
-	$y += ($d >> 2) << $shift;
+        $x += ($d & 3) << $shift;
+        $y += ($d >> 2) << $shift;
     }
 
     my $mask = parse_bits ($region[-1], 0, 15);
@@ -160,10 +163,10 @@ sub sllt_version
 
     while (<$vh>)
     {
-	next unless /^#define\s+SLLT_VER_STR\s+(\S+)/;
-	$version = $1;
-	$version =~ s/"//g;
-	last;
+        next unless /^#define\s+SLLT_VER_STR\s+(\S+)/;
+        $version = $1;
+        $version =~ s/"//g;
+        last;
     }
 
     close $vh;
@@ -175,16 +178,23 @@ sub find_path
 {
     my ($file) = @_;
 
+    my $currentdir = dirname(File::Spec->rel2abs( __FILE__ ));
+    my $extradir = "$currentdir/../boot";
+    return abs_path("$extradir/$file") if -f "$extradir/$file";
+
     return undef unless defined $ENV{SPINN_PATH};
+
+    return "$ENV{SPINN_PATH}/$file" if -f "$ENV{SPINN_PATH}/$file";
 
     my @path = split /:/, $ENV{SPINN_PATH};
 
     for my $dir (@path)
     {
-	$dir =~ s/(.+)\/+$/$1/;
-	return "$dir/$file" if -f "$dir/$file";
+        $dir =~ s/(.+)\/+$/$1/;
+        return "$dir/$file" if -f "$dir/$file";
     }
 
+    print "$file not found!\n";
     return undef;
 }
 
@@ -234,7 +244,7 @@ sub read_file
 #   start  - offset of first byte in buffer
 #   length - number of bytes to display (default is size of buffer)
 #   prefix - string printed at start of each line (default "")
-#   asize  - field width of address in output (default 8) 
+#   asize  - field width of address in output (default 8)
 
 sub hex_dump
 {
@@ -252,36 +262,36 @@ sub hex_dump
 
     while ($count > 0)
     {
-	my $w = ($width > $count) ? $count : $width;
-	my $chunk = substr $data, $ptr, $w;
-	my $len = length $chunk;
+        my $w = ($width > $count) ? $count : $width;
+        my $chunk = substr $data, $ptr, $w;
+        my $len = length $chunk;
 
-	last if $len == 0;
+        last if $len == 0;
 
-	$text .= sprintf "%s%0${asize}x ", $prefix, $addr + $ptr;
+        $text .= sprintf "%s%0${asize}x ", $prefix, $addr + $ptr;
 
-	if ($format eq 'byte')
-	{
-	    my @d = unpack 'C*', $chunk;
-	    $text .= sprintf " %02x", $_ for @d;
-	    $text .= '   ' x ($width - 1 - $#d);
-	    $text .= '  ';
-	    $text .= ($_ < 32 || $_ > 127) ? '.' : chr $_ for @d;
-	}
-	elsif ($format eq 'half')
-	{
-	    my @d = unpack 'v*', $chunk;
-	    $text .= sprintf " %04x", $_ for @d;
-	}
-	elsif ($format eq 'word')
-	{
-	    my @d = unpack 'V*', $chunk;
-	    $text .= sprintf " %08x", $_ for @d;
-	}
+        if ($format eq 'byte')
+        {
+            my @d = unpack 'C*', $chunk;
+            $text .= sprintf " %02x", $_ for @d;
+            $text .= '   ' x ($width - 1 - $#d);
+            $text .= '  ';
+            $text .= ($_ < 32 || $_ > 127) ? '.' : chr $_ for @d;
+        }
+        elsif ($format eq 'half')
+        {
+            my @d = unpack 'v*', $chunk;
+            $text .= sprintf " %04x", $_ for @d;
+        }
+        elsif ($format eq 'word')
+        {
+            my @d = unpack 'V*', $chunk;
+            $text .= sprintf " %08x", $_ for @d;
+        }
 
-	$text .= "\n";
-	$ptr += $len;
-	$count -= $len;
+        $text .= "\n";
+        $ptr += $len;
+        $count -= $len;
     }
 
     return $text;

@@ -68,65 +68,75 @@ sub read_file
 
     while (<$fh>)
     {
-	chomp;
-	s/^\s+|\s+$//g;
-	s/\s*#.*//;
-	next if /^$/;
+        if (/symlink (.*)/)
+        {
+            $file = find_path ($1);
 
-	print ">> $_\n" if $debug;
+            die "read_file: can't find $file\n" unless $file;
 
-	if (/^name\s*=\s*(\w+)$/)
-	{
-	    if ($name)
-	    {
-		die "read_file: size undefined in $file\n"
-		    unless $self->{$name}->{"=size="};
-		die "read_file: base undefined in $file\n"
-		    unless defined $self->{$name}->{"=base="};
+            close $fh;
+            open $fh, '<', $file or die "read_file: can't open $file\n";
+            next;
+        }
+        chomp;
+        s/^\s+|\s+$//g;
+        s/\s*#.*//;
+        next if /^$/;
+
+        print ">> $_\n" if $debug;
+
+        if (/^name\s*=\s*(\w+)$/)
+        {
+            if ($name)
+            {
+                die "read_file: size undefined in $file\n"
+		            unless $self->{$name}->{"=size="};
+		        die "read_file: base undefined in $file\n"
+		        unless defined $self->{$name}->{"=base="};
+	        }
+	        $name = $1;
+	        $self->{$name}->{"=size="} = 0;
+	        $self->{$name}->{"=base="} = undef;
 	    }
-	    $name = $1;
-	    $self->{$name}->{"=size="} = 0;
-	    $self->{$name}->{"=base="} = undef;
-	}
-	elsif (/^size\s*=\s*(\S+)$/)
-	{
-	    $self->{$name}->{"=size="} = number ($1);
-	}
-	elsif (/^base\s*=\s*(\S+)$/)
-	{
-	    $self->{$name}->{"=base="} = number ($1);
-	}
-	elsif (/^([\w\.]+)(\[\d+\])?\s+(V|v|C|A16)\s+(\S+)\s+(%\d*[dx]|%s)\s+(\S+)$/)
-	{
-	    my ($field, $index, $pack, $offset, $format, $value) = 
-		($1, $2, $3, $4, $5, $6);
-
-	    $offset = number ($offset);
-	    $value = number ($value);
-
-	    unless (defined $offset && defined $value) 
+	    elsif (/^size\s*=\s*(\S+)$/)
 	    {
-		close $fh;
-		die "read_file: syntax error - $file:$.\n";
+	        $self->{$name}->{"=size="} = number ($1);
+    	}
+	    elsif (/^base\s*=\s*(\S+)$/)
+	    {
+	        $self->{$name}->{"=base="} = number ($1);
 	    }
-
-	    if (defined $index)
+	    elsif (/^([\w\.]+)(\[\d+\])?\s+(V|v|C|A16)\s+(\S+)\s+(%\d*[dx]|%s)\s+(\S+)$/)
 	    {
-		$index =~ s/\[|\]//g;
-		$self->{$name}->{$field} = [$value, $pack, $offset,
-					    $format, $index];
+	        my ($field, $index, $pack, $offset, $format, $value) = 
+		    ($1, $2, $3, $4, $5, $6);
+
+	        $offset = number ($offset);
+	        $value = number ($value);
+
+	        unless (defined $offset && defined $value) 
+	        {
+		        close $fh;
+		        die "read_file: syntax error - $file:$.\n";
+	        }
+
+	        if (defined $index)
+	        {
+		        $index =~ s/\[|\]//g;
+		        $self->{$name}->{$field} = [$value, $pack, $offset,
+				    	                    $format, $index];
+	        }
+	        else
+	        {
+		        $self->{$name}->{$field} = [$value, $pack, $offset,
+					                        $format, 1];
+	        }
 	    }
 	    else
 	    {
-		$self->{$name}->{$field} = [$value, $pack, $offset,
-					    $format, 1];
+	        close $fh;
+	        die "read_file: syntax error - $file:$.\n";
 	    }
-	}
-	else
-	{
-	    close $fh;
-	    die "read_file: syntax error - $file:$.\n";
-	}
 
     }
 
@@ -135,7 +145,7 @@ sub read_file
     print ">> EOF\n" if $debug;
     if ($debug)
     {
-	print ">> $_ $self->{$_}\n" for sort keys %$self;
+	    print ">> $_ $self->{$_}\n" for sort keys %$self;
     }
 }
 
@@ -171,7 +181,7 @@ sub write_struct
     die "write_struct: bad args\n" unless $sv && $scp;
 
     $scp->write ($sv->{"=base="}, $sv->{"=size="}, $data,
-		 addr => $addr);
+		         addr => $addr);
 }
 
 
@@ -237,12 +247,12 @@ sub unpack
 
     for my $field (keys %$sv)
     {
-	next if $field =~ /^=/;
+	    next if $field =~ /^=/;
 
-	my ($value, $pack, $offset, $format, $index) = @{$sv->{$field}};
-	$value = substr $data, $offset, $size{$pack};
+	    my ($value, $pack, $offset, $format, $index) = @{$sv->{$field}};
+	    $value = substr $data, $offset, $size{$pack};
 
-	$sv->{$field}->[0] = unpack $pack, $value;
+    	$sv->{$field}->[0] = unpack $pack, $value;
     }
 
     return 1;
@@ -263,12 +273,12 @@ sub pack
 
     for my $field (keys %$sv)
     {
-	next if $field =~ /^=/;
+	    next if $field =~ /^=/;
 
-	my ($value, $pack, $offset, $format, $index) = @{$sv->{$field}};
-	next if $value eq "-";
-	my $d = pack $pack, $value;
-	substr $data, $offset, $size{$pack}, $d;
+	    my ($value, $pack, $offset, $format, $index) = @{$sv->{$field}};
+	    next if $value eq "-";
+	    my $d = pack $pack, $value;
+	    substr $data, $offset, $size{$pack}, $d;
     }
 
     return $data;
@@ -289,12 +299,12 @@ sub dump
 
     for my $field (@l)
     {
-	next if $field =~ /^=/;
+	    next if $field =~ /^=/;
 
-	my $format = $sv->{$field}->[3];
-	my $value = $sv->{$field}->[0];
-	$format = "0x$format" if substr ($format, -1, 1) eq "x";
-	printf "%-16s $format\n", $field, $value;
+	    my $format = $sv->{$field}->[3];
+	    my $value = $sv->{$field}->[0];
+	    $format = "0x$format" if substr ($format, -1, 1) eq "x";
+	    printf "%-16s $format\n", $field, $value;
     }
 }
 
@@ -382,32 +392,32 @@ sub update
 
     while (<$fh>)
     {
-	chomp;
-	s/^\s+|\s+$//g;
-	s/\s*#.*//;
-	next if /^$/;
+	    chomp;
+	    s/^\s+|\s+$//g;
+	    s/\s*#.*//;
+	    next if /^$/;
 
-	if (/^([\w\.]+)\s+(0x[0-9a-fA-F]+|\d+|time)$/)
-	{
-	    my ($name, $value) = ($1, $2);
-
-	    if (exists $sv->{$name})
+	    if (/^([\w\.]+)\s+(0x[0-9a-fA-F]+|\d+|time)$/)
 	    {
-		$value = time if $value eq "time";
-		$value = oct $value if $value =~ /^0x/;
-		$sv->{$name}->[0] = $value;
+	        my ($name, $value) = ($1, $2);
+
+	        if (exists $sv->{$name})
+	        {
+		        $value = time if $value eq "time";
+		        $value = oct $value if $value =~ /^0x/;
+		        $sv->{$name}->[0] = $value;
+	        }
+	        else
+	        {
+		        close $fh;
+		        die "update: \[$.\] unknown field \"$name\"\n";
+	        }
 	    }
 	    else
 	    {
-		close $fh;
-		die "update: \[$.\] unknown field \"$name\"\n";
-	    }	
-	}
-	else
-	{
-	    close $fh;
-	    die "update: \[$.\] bad line \"$_\"\n";
-	}
+	        close $fh;
+	        die "update: \[$.\] bad line \"$_\"\n";
+	    }
     }
 
     close $fh;

@@ -38,8 +38,8 @@ sub boot_pkt
 
     if ($data)
     {
-	my @data = unpack 'V*', $data;
-	$data = pack 'N*', @data;
+        my @data = unpack 'V*', $data;
+        $data = pack 'N*', @data;
     }
 
     my $rc = send ($socket, $hdr . $data, 0);
@@ -50,19 +50,18 @@ sub boot_pkt
 
 sub rom_boot
 {
-    my ($host, $buf, $sv, $time, $debug) = @_;
+    my ($host, $buf, $sv, $time, $debug, $port) = @_;
 
     my $BOOT_WORD_SIZE = 256;	# 256 words
     my $BOOT_BYTE_SIZE = 1024;	# 1024 bytes
     my $MAX_BLOCKS = 32;	# 32k limit in DTCM
-    my $PORT = 54321;
 
     my $delay = 0.01;
 
-    my $socket = new IO::Socket::INET (PeerAddr => "$host:$PORT",
-				       Proto => 'udp');
+    my $socket = new IO::Socket::INET(PeerAddr => "$host:$port",
+                                      Proto => 'udp');
 
-    die "can't connect to \"$host:$PORT\"\n" unless $socket;
+    die "can't connect to \"$host:$port\"\n" unless $socket;
 
     my $size = length $buf;
 
@@ -78,12 +77,12 @@ sub rom_boot
 
     for (my $block = 0; $block < $blocks; $block++)
     {
-	my $data = substr $buf, $block * $BOOT_BYTE_SIZE, $BOOT_BYTE_SIZE;
+        my $data = substr $buf, $block * $BOOT_BYTE_SIZE, $BOOT_BYTE_SIZE;
 
-	my $a1 = (($BOOT_WORD_SIZE - 1) << 8) | ($block & 255);
+        my $a1 = (($BOOT_WORD_SIZE - 1) << 8) | ($block & 255);
 
-	print "Boot: Data $block\r" if $debug;
-	boot_pkt ($socket, 3, $a1, 0, 0, $data, $delay);
+        print "Boot: Data $block\r" if $debug;
+        boot_pkt ($socket, 3, $a1, 0, 0, $data, $delay);
     }
 
     print "\nBoot: End\n" if $debug;
@@ -104,7 +103,7 @@ sub rom_boot
 
 sub scamp_boot
 {
-    my ($host, $buf, $sv, $time, $debug) = @_;
+    my ($host, $buf, $sv, $time, $debug, $port) = @_;
 
     my $spin = SpiNN::Cmd->new (target => $host, debug => $debug);
 
@@ -112,22 +111,33 @@ sub scamp_boot
 
     eval
     {
-	$spin->ver;
+        $spin->ver;
 
-	$spin->data =~ /^SC&MP 0.91/ || die "Expected SC&MP 0.91\n";
+        $spin->data =~ /^SC&MP 0.91/ || die "Expected SC&MP 0.91\n";
 
-	$spin->write ($sv->addr ("sv.rom_cpus"), chr (0));
+        $spin->write ($sv->addr ("sv.rom_cpus"), chr (0));
 
-	$spin->flood_boot ($buf);
+        $spin->flood_boot ($buf);
 
-	my $data = $spin->read (0xf5007f5c, 4, unpack => "V");
+        my $data = $spin->read (0xf5007f5c, 4, unpack => "V");
 
-	die "boot signature failure\n" unless $time == $data->[0];
+        die "boot signature failure\n" unless $time == $data->[0];
     };
 
     $spin->close;
 
     return $@;
+}
+
+sub resolve_links_read_path
+{
+    my ($file, $bufsize) = @_;
+    my $buf = read_path ($file, $bufsize);
+    if ($buf =~ /symlink (.*)/)
+    {
+        $buf = read_path($1, $bufsize);
+    }
+    return $buf;
 }
 
 
@@ -140,16 +150,17 @@ sub boot
     my ($class, $host, $file, $conf, %opts) = @_;
 
     my $debug = $opts{debug} || 0;
+    my $port = $opts{port} || 54321;
 
     my $sv = SpiNN::Struct->new;
     die "failed to process \"sv\" struct file\n" unless $sv;
 
     if ($conf)
     {
-      $sv->update ("sv", find_path ($conf));
+        $sv->update ("sv", find_path ($conf));
     }
 
-    my $buf = read_path ($file, 32768);
+    my $buf = resolve_links_read_path ($file, 32768);
     die "failed to load \"$file\"\n" unless defined $buf;
 
     my $time = time ();
@@ -158,23 +169,23 @@ sub boot
 
     if ($file =~ /\.boot$/)
     {
-	$sv->set_var ("sv.root_chip", 1);
+        $sv->set_var ("sv.root_chip", 1);
 
-	substr $buf, 384, 128, substr ($sv->pack ("sv"), 0, 128);
+        substr $buf, 384, 128, substr ($sv->pack ("sv"), 0, 128);
 
-	rom_boot ($host, $buf, $sv, $time, $debug);
+        rom_boot ($host, $buf, $sv, $time, $debug, $port);
     }
     elsif ($file =~ /\.aplx$/)
     {
-	$sv->set_var ("sv.boot_delay", 0);
+        $sv->set_var ("sv.boot_delay", 0);
 
-	substr $buf, 384, 128, substr ($sv->pack ("sv"), 0, 128);
+        substr $buf, 384, 128, substr ($sv->pack ("sv"), 0, 128);
 
-	scamp_boot ($host, $buf, $sv, $time, $debug);
+        scamp_boot ($host, $buf, $sv, $time, $debug, $port);
     }
     else
     {
-	die "unknown boot file format\n";
+        die "unknown boot file format\n";
     }
 }
 

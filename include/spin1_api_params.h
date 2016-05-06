@@ -217,6 +217,7 @@ typedef struct
 } task_queue_t;
 
 extern cback_t callback[NUM_EVENTS];
+extern cback_t sdp_callback[NUM_SDP_PORTS];
 
 // interrupt service routine
 #ifdef __GNUC__

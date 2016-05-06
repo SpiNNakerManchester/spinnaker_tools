@@ -26,57 +26,38 @@ README file for SpiNNaker Low-Level Software Tools - Release 2.1.0
    > source ./setup
 
 
-3) Go into the "sark" directory and make SARK for ARM or GNU tools
+3) make SARK and spin1_api for ARM or GNU tools
    (you will probably only want to do one of these)
 
-   > cd sark
-   > ./make_arm		# If you are using ARM tools
-   > ./make_gnu		# If you are using GNU tools
-   > cd ..
+   > ./make		        # If you are using ARM tools
+   > ./make ARM=1		# If you are using GNU tools
 
    Note that you may see some compiler warnings during these builds.
 
      ARM: Warning: A1581W: Added 2 bytes of padding at address ...
      ARM: Warning: C3017W: cpsr may be used before being set
-     GNU: warning: cast to pointer from integer of different size
 
    These are harmless and can be ignored.
 
+5) There is a generic make file which works for both C and C++ (Makefile.app)
+   which is used to build simple applications. The preferred way to use this
+   is to create a Makefile which looks something like:
 
-4) Go into the "spin1_api" directory and make "spin1_api" for ARM
-   or GNU
-
-   > cd spin1_api
-   > ./make_arm		# If you are using ARM tools
-   > ./make_gnu		# If you are using GNU tools
-   > cd ..
-
-
-5) There are generic C and C++ make files ("app.make" and "cpp_app.make"
-   respectively in the "make" directory) which are used to build simple
-   applications. The preferred way to use this is to create a Makefile
-   which looks something like:
-   
-       # A single-file C app called 'example.c'
+       # A single-file C app called 'example.c' or
+       # a single-file C++ app called 'example.cpp'
        APP := example
-       include $(SPINN_DIRS)/make/app.make
-   
-   or
-   
-       # A single-file C++ app called 'example.cpp'
-       APP := example
-       include $(SPINN_DIRS)/make/cpp_app.make
+       include $(SPINN_DIRS)/Makefile.app
 
    The following variables may be set at the top of your Makefile, in
    environment variables or given as arguments to 'make':
 
-   APP - to select the default source file to build (APP=sark)
+   APP - to select the default source file to build (required)
 
    GNU - to choose ARM or GNU tools (GNU=1)
 
-   THUMB - to choose to generate ARM or Thumb code (THUMB=1)
+   THUMB - to choose to generate ARM or Thumb code (THUMB=0)
 
-   DEBUG - to include debugging info in the ELF files (DEBUG=1)
+   DEBUG - to include debugging info in the ELF files (DEBUG=0)
 
    API - if you want link with "spin1_api" or not (API=1)
 

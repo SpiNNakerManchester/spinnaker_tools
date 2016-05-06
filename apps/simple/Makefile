@@ -1,2 +1,2 @@
 APP := simple
-include $(SPINN_DIRS)/make/app.make
+include $(SPINN_DIRS)/Makefile.app

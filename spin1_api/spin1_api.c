@@ -1,28 +1,3 @@
-/****a* spin1_api.c/spin1_api
-*
-* SUMMARY
-*  SpiNNaker API functions
-*
-* AUTHOR
-*  Thomas Sharp - thomas.sharp@cs.man.ac.uk
-*  Luis Plana   - luis.plana@manchester.ac.uk
-*
-* DETAILS
-*  Created on       : 08 June 2011
-*  Version          : $Revision: 2011 $
-*  Last modified on : $Date: 2012-10-24 14:50:54 +0100 (Wed, 24 Oct 2012) $
-*  Last modified by : $Author: plana $
-*  $Id: spin1_api.c 2011 2012-10-24 13:50:54Z plana $
-*  $HeadURL: https://solem.cs.man.ac.uk/svn/spin1_api/trunk/src/spin1_api.c $
-*
-* COPYRIGHT
-*  Copyright (c) The University of Manchester, 2011. All rights reserved.
-*  SpiNNaker Project
-*  Advanced Processor Technologies Group
-*  School of Computer Science
-*
-*******/
-
 #include <sark.h>
 
 #include <spin1_api.h>
@@ -36,9 +11,10 @@
 uchar leadAp;                    	// lead appl. core has special functions
 
 static volatile uint run;           	// controls simulation start/stop
+static volatile uint paused;            // indicates when paused
+static volatile uint resume_sync;       // controls re-synchronisation
 uint ticks;              		// number of elapsed timer periods
 static uint timer_tick;  	        // timer tick period
-static uint exit_val = NO_ERROR;    	// simulation return value
 
 // default fiq handler -- restored after simulation
 isr_t old_vector;
@@ -70,6 +46,7 @@ tx_packet_queue_t tx_packet_queue;
 // -----------------------
 static task_queue_t task_queue[NUM_PRIORITIES-1];  // priority <= 0 is non-queueable
 cback_t callback[NUM_EVENTS];
+cback_t sdp_callback[NUM_SDP_PORTS];
 uchar user_pending = FALSE;
 uint user_arg0;
 uint user_arg1;
@@ -90,22 +67,6 @@ uint user_arg1;
 /* debug, warning and diagnostics support */
 // ----------------
 diagnostics_t diagnostics;
-
-#if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
-  volatile uint mc_thrown; // keep track of thrown MC packets
-  volatile uint fr_thrown; // keep track of thrown FR packets
-#endif
-
-#if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-  static uint warnings;  // report warnings
-  static uint fullq;     // keep track of times task queue full
-  static uint pfull;     // keep track of times transmit queue full
-  static uint dfull;     // keep track of times DMA queue full
-  #if USE_WRITE_BUFFER == TRUE
-    uint wberrors; // keep track of write buffer errors
-  #endif
-#endif
-
 
 // ------------------------------------------------------------------------
 // functions
@@ -323,11 +284,11 @@ void configure_timer1 (uint time)
 *  simple copy+paste operation). Finally, the interrupt sources are enabled.
 *
 * SYNOPSIS
-*  void configure_vic()
+*  void configure_vic(uint enable_timer)
 *
 * SOURCE
 */
-void configure_vic (void)
+void configure_vic (uint enable_timer)
 {
   uint fiq_select = 0;
   uint int_select = ((1 << TIMER1_INT)   |
@@ -411,6 +372,11 @@ void configure_vic (void)
 
   vic[VIC_SELECT] = fiq_select;
 
+  if (!enable_timer)
+  {
+    int_select = int_select & ~(1 << TIMER1_INT);
+  }
+
   #if USE_WRITE_BUFFER == TRUE
     vic[VIC_ENABLE] = int_select;
   #else
@@ -420,6 +386,62 @@ void configure_vic (void)
 }
 /*
 *******/
+
+
+void spin1_pause()
+{
+  vic[VIC_DISABLE] = (1 << TIMER1_INT);
+  configure_timer1(timer_tick);
+  sark_cpu_state (CPU_STATE_PAUSE);
+  paused = 1;
+}
+
+
+void resume()
+{
+  if (resume_sync == 1)
+  {
+    resume_sync = 0;
+    event.wait ^= 1;
+  }
+  paused = 0;
+  sark_cpu_state (CPU_STATE_RUN);
+  vic[VIC_ENABLE] = (1 << TIMER1_INT);
+  tc[T1_CONTROL] = 0xe2;
+}
+
+
+void spin1_resume(sync_bool sync)
+{
+  if (sync == SYNC_NOWAIT)
+  {
+    resume();
+  }
+  else
+  {
+    resume_sync = 1;
+    if (event.wait)
+    {
+      sark_cpu_state(CPU_STATE_SYNC1);
+    }
+    else
+    {
+      sark_cpu_state(CPU_STATE_SYNC0);
+    }
+  }
+}
+
+
+uint resume_wait()
+{
+  uint bit = 1 << sark.virt_cpu;
+
+  if (event.wait)
+  {
+    return (~sc[SC_FLAG] & bit);    // Wait 1
+  }
+  return (sc[SC_FLAG] & bit);     // Wait 0
+}
 
 
 // ------------------------------------------------------------------------
@@ -463,6 +485,7 @@ void dispatch()
   uint cpsr;
   task_queue_t *tq;
   volatile callback_t cback;
+  resume_sync = 0;
 
   // dispatch callbacks from queues until spin1_stop () or
   // spin1_kill () are called (run = 0)
@@ -492,7 +515,28 @@ void dispatch()
         {
           // run callback with interrupts enabled
           spin1_mode_restore (cpsr);
-          cback (arg0, arg1);
+
+          // check for if its a timer callback, if it is, update tracker values
+          if (cback == callback[TIMER_TICK].cback)
+          {
+            diagnostics.in_timer_callback = 1;
+          }
+
+          // execute callback
+          if (cback != callback[TIMER_TICK].cback || !paused) {
+              cback (arg0, arg1);
+          }
+
+          // update queue size
+          if (cback == callback[TIMER_TICK].cback)
+          {
+            if (diagnostics.number_timer_tic_in_queue > 0)
+            {
+              diagnostics.number_timer_tic_in_queue -= 1;
+            }
+            diagnostics.in_timer_callback = 0;
+          }
+
           cpsr = spin1_int_disable ();
 
           // re-start examining queues at highest priority
@@ -506,12 +550,78 @@ void dispatch()
       // go to sleep with interrupts disabled to avoid hazard!
       // an interrupt will still wake up the dispatcher
       spin1_wfi ();
+
+      // Handle resume
+      if (resume_sync == 1) {
+          if (!resume_wait()) {
+              resume();
+          }
+      }
+
       spin1_mode_restore (cpsr);
     }
   }
 }
 /*
 *******/
+
+
+/****f* spin1_api.c/sdp_callback_handler
+*
+* SUMMARY
+*  This function demultiplexes SDP messages based on the destination port
+*  and triggers the appropriate callback registered against the receiving
+*  SDP port. If no callback is registered, the packet is dumped.
+*
+*  If the priority of the callback is the same of this handler, the
+*  callback is immediately triggered. In alternative, if the priority is
+*  lower than the priority of this handler the callback is scheduled
+*  with the appropriate priority, and is dispatched appropriately by
+*  the sceduler.
+*
+*  This demultiplexer replaces the SDP_PACKET_RX event, therefore the
+*  two mechanisms are mutually exclusive.
+*
+* SYNOPSIS
+*  void sdp_callback_handler (uint mailbox, uint port)
+*
+* INPUTS
+*  uint mailbox: event for which callback should be enabled
+*  uint port: callback function
+*
+* SOURCE
+*/
+void sdp_callback_handler(uint mailbox, uint port)
+{
+  int handler_priority = callback[SDP_PACKET_RX].priority;
+  int port_priority = sdp_callback[port].priority;
+
+  // if a callback is associated with the port, process it
+  if (sdp_callback[port].cback != NULL)
+  {
+    // message priority can only be equal or lower than the handler priority
+    // if it is equal, proceed to the callback
+    // if it is lower, schedule a callback with the appropriate priority
+    if (handler_priority == port_priority)
+    {
+      sdp_callback[port].cback(mailbox, port);
+    }
+    else
+    {
+      spin1_schedule_callback (sdp_callback[port].cback, mailbox,
+                               port, port_priority);
+    }
+  }
+  else
+  {
+    // if no callback is associated, dump the received packet
+    sdp_msg_t *msg = (sdp_msg_t *) mailbox;
+    sark_msg_free(msg);
+  }
+}
+/*
+*******/
+
 
 // ------------------------------------------------------------------------
 // simulation control and event management functions
@@ -537,6 +647,17 @@ void dispatch()
 */
 void spin1_callback_on (uint event_id, callback_t cback, int priority)
 {
+  // check if sdp_callback_handler is already in place and user
+  // tries to set up a different callback
+
+  if (event_id == SDP_PACKET_RX &&
+      cback != sdp_callback_handler &&
+      callback[event_id].cback == sdp_callback_handler)
+  {
+    rt_error (RTE_API);
+  }
+
+  // set up the callback
   callback[event_id].cback = cback;
   callback[event_id].priority = priority;
 
@@ -545,7 +666,7 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
   if (priority < 0)
   {
     if (fiq_event == -1 ||
-	(event_id == MC_PACKET_RECEIVED && fiq_event == MCPL_PACKET_RECEIVED) ||
+    (event_id == MC_PACKET_RECEIVED && fiq_event == MCPL_PACKET_RECEIVED) ||
 	(event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED) ||
 	(event_id == FR_PACKET_RECEIVED && fiq_event == FRPL_PACKET_RECEIVED) ||
 	(event_id == FRPL_PACKET_RECEIVED && fiq_event == FR_PACKET_RECEIVED))
@@ -561,7 +682,7 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
       if (mc_pkt_prio == -2)
 	mc_pkt_prio = priority;
       else if (mc_pkt_prio == -1 && priority != -1)
-	rt_error (RTE_API);
+        rt_error (RTE_API);
     }
   else if (event_id == FR_PACKET_RECEIVED || event_id == FRPL_PACKET_RECEIVED)
     {
@@ -596,6 +717,112 @@ void spin1_callback_off(uint event_id)
 
   if (callback[event_id].priority < 0)
     fiq_event = -1;
+}
+/*
+*******/
+
+
+/****f* spin1_api.c/spin1_sdp_callback_on
+*
+* SUMMARY
+*  This function sets the given callback to be scheduled on occurrence of
+*  receiving a packet on the specified SDP port. The priority argument
+*  dictates the order in which callbacks are executed by the scheduler.
+*
+* SYNOPSIS
+*  void spin1_sdp_callback_on(uint sdp_port, callback_t cback, int priority)
+*
+* INPUTS
+*  uint sdp_port: SDP port for which callback should be enabled
+*  callback_t cback: callback function
+*  int priority:   0 = non-queueable callback (associated to irq)
+*                > 0 = queueable callback
+*                < 0 = preeminent callback (associated to fiq)
+*
+* SOURCE
+*/
+void spin1_sdp_callback_on (uint sdp_port, callback_t cback, int priority)
+{
+  int i, highest_priority = NUM_PRIORITIES - 1;
+
+  if (callback[SDP_PACKET_RX].cback != NULL &&
+      callback[SDP_PACKET_RX].cback != sdp_callback_handler)
+  {
+    rt_error (RTE_API);
+  }
+
+  //add callback to list, based on port
+  sdp_callback[sdp_port].cback = cback;
+  sdp_callback[sdp_port].priority = priority;
+
+  //set up sdp handler
+  if (callback[SDP_PACKET_RX].cback == NULL)
+  {
+    spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, priority);
+  }
+  else
+  {
+    //check priority
+    for (i = 0; i < NUM_SDP_PORTS; i++)
+    {
+      if (sdp_callback[i].cback != NULL &&
+          sdp_callback[i].priority < highest_priority)
+      {
+        highest_priority = sdp_callback[i].priority;
+      }
+    }
+    spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, highest_priority);
+  }
+}
+/*
+*******/
+
+
+/****f* spin1_api.c/spin1_sdp_callback_off
+*
+* SUMMARY
+*  This function disables the callback for a packet receive on
+*  the specified SDP port.
+*
+* SYNOPSIS
+*  void spin1_sdp_callback_off(uint sdp_port)
+*
+* INPUTS
+*  uint sdp_port: SDP port for which callback should be disabled
+*
+* SOURCE
+*/
+void spin1_sdp_callback_off (uint sdp_port)
+{
+  int i, highest_priority = NUM_PRIORITIES - 1;
+  uint remove = 1;
+
+  // remove callback from list, based on port
+  sdp_callback[sdp_port].cback = NULL;
+
+  // check if there are other callbacks
+  for (i = 0; i < NUM_SDP_PORTS; i++)
+  {
+    if (sdp_callback[i].cback != NULL)
+    {
+      remove = 0;
+      if (sdp_callback[i].priority < highest_priority)
+      {
+        highest_priority = sdp_callback[i].priority;
+      }
+    }
+  }
+
+  // if no other callbacks are in place remove handler
+  // otherwise set priority accordingly
+  if (remove == 1)
+  {
+    spin1_callback_off(SDP_PACKET_RX);
+  }
+  else
+  {
+    spin1_callback_on(SDP_PACKET_RX, sdp_callback_handler, highest_priority);
+  }
 }
 /*
 *******/
@@ -683,10 +910,14 @@ void spin1_exit (uint error)
                      (1 << DMA_ERR_INT)  |
                      (1 << DMA_DONE_INT);
 
+  //removing any handler for the SDP messages
+
+  callback[SDP_PACKET_RX].cback = NULL;
+
   // Report back the return code and stop the simulation
 
   run = 0;
-  exit_val = error;
+  diagnostics.exit_code = error;
 }
 /*
 *******/
@@ -779,10 +1010,12 @@ void report_debug ()
       io_delay (API_PRINT_DELAY);
     }
 
-    io_printf (IO_API, "\t\t[api_debug] ISR thrown MC packets: %d\n", mc_thrown);
+    io_printf (IO_API, "\t\t[api_debug] ISR thrown packets: %d\n",
+               diagnostics.discarded_mc_packets);
     io_delay (API_PRINT_DELAY);
-
-    io_printf (IO_API, "\t\t[api_debug] ISR thrown FR packets: %d\n", fr_thrown);
+    
+    io_printf (IO_API, "\t\t[api_debug] ISR thrown FR packets: %d\n",
+               diagnostics.discarded_fr_packets);
     io_delay (API_PRINT_DELAY);
 
     // Report DMAC counters
@@ -810,30 +1043,30 @@ void report_debug ()
 void report_warns ()
 {
 #if API_WARN == TRUE	    // report warnings
-  if (warnings & TASK_QUEUE_FULL)
+  if (diagnostics.warnings & TASK_QUEUE_FULL)
     {
       io_printf (IO_API, "\t\t[api_warn] warning: task queue full (%u)\n",
-                 fullq);
+                 diagnostics.task_queue_full);
       io_delay (API_PRINT_DELAY);
     }
-  if (warnings & DMA_QUEUE_FULL)
+  if (diagnostics.warnings & DMA_QUEUE_FULL)
     {
       io_printf (IO_API, "\t\t[api_warn] warning: DMA queue full (%u)\n",
-                 dfull);
+                 diagnostics.dma_queue_full);
       io_delay (API_PRINT_DELAY);
     }
-  if (warnings & PACKET_QUEUE_FULL)
+  if (diagnostics.warnings & PACKET_QUEUE_FULL)
     {
       io_printf (IO_API, "\t\t[api_warn] warning: packet queue full (%u)\n",
-                 pfull);
+                 diagnostics.tx_packet_queue_full);
       io_delay (API_PRINT_DELAY);
     }
 # if USE_WRITE_BUFFER == TRUE
-  if (warnings & WRITE_BUFFER_ERROR)
+  if (diagnostics.warnings & WRITE_BUFFER_ERROR)
     {
       io_printf (IO_API,
-		 "\t\t[api_warn] warning: write buffer errors (%u)\n",
-                   wberrors);
+        "\t\t[api_warn] warning: write buffer errors (%u)\n",
+             diagnostics.writeBack_errors);
       io_delay (API_PRINT_DELAY);
     }
 #endif
@@ -843,37 +1076,50 @@ void report_warns ()
 *******/
 
 
-
-/****f* spin1_api.c/spin1_start
-*
-* SUMMARY
-*  This function begins a simulation by enabling the timer (if called for) and
-*  beginning the dispatcher loop.
-*
-* SYNOPSIS
-*  void spin1_start (sync_bool_t sync)
-*
-* SOURCE
-*/
-
-uint spin1_start (sync_bool sync)
+void spin1_rte(rte_code code)
 {
-  sark_cpu_state (CPU_STATE_RUN);
+
+  // Don't actually shutdown, just set the CPU into an RTE code and
+  // stop the timer
+  clean_up();
+  sark_cpu_state(CPU_STATE_RTE);
+  register uint lr asm("lr");
+  sv_vcpu->lr = lr;
+  sv_vcpu->rt_code = code;
+  sv->led_period = 8;
+}
+
+uint start (sync_bool sync, uint paused)
+{
+  if (paused)
+  {
+    sark_cpu_state (CPU_STATE_PAUSE);
+  }
+  else
+  {
+    sark_cpu_state (CPU_STATE_RUN);
+  }
 
   // Initialise hardware
 
   configure_communications_controller();
   configure_dma_controller();
   configure_timer1 (timer_tick);
-  configure_vic();
+  configure_vic(paused);
 
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-  warnings = NO_ERROR;
-  dfull = 0;
-  fullq = 0;
-  pfull = 0;
+  diagnostics.warnings = NO_ERROR;
+  diagnostics.dma_queue_full = 0;
+  diagnostics.task_queue_full = 0;
+  diagnostics.tx_packet_queue_full = 0;
+  diagnostics.dma_transfers = 1;
+  diagnostics.exit_code = NO_ERROR;     // simulation return value
+  diagnostics.in_timer_callback = 0;
+  diagnostics.number_timer_tic_in_queue = 0;
+  diagnostics.total_times_tick_tic_callback_overran = 0;
+  diagnostics.largest_number_of_concurrent_timer_tic_overruns = 0;
 #if USE_WRITE_BUFFER == TRUE
-  wberrors = 0;
+  diagnostics.writeBack_errors = 0;
 #endif
 #endif
 
@@ -885,7 +1131,7 @@ uint spin1_start (sync_bool sync)
   // initialise counter and ticks for simulation
   // 32-bit, periodic counter, interrupts enabled
 
-  if (timer_tick)
+  if (timer_tick && !paused)
     tc[T1_CONTROL] = 0xe2;
 
   ticks = 0;
@@ -900,25 +1146,14 @@ uint spin1_start (sync_bool sync)
   // re-enable interrupts for sark
   // only CPU_INT enabled in the VIC
   spin1_int_enable ();
-
+  
   // provide diagnostics data to application
   #if (API_DIAGNOSTICS == TRUE)
-    diagnostics.exit_code            = exit_val;
-    diagnostics.warnings             = warnings;
     diagnostics.total_mc_packets     = rtr[RTR_DGC0] + rtr[RTR_DGC1];
     diagnostics.dumped_mc_packets    = rtr[RTR_DGC8];
-    diagnostics.discarded_mc_packets = mc_thrown;
-    diagnostics.dma_transfers        = dma_id - 1;
     diagnostics.dma_bursts           = dma[DMA_STAT0];
-    diagnostics.dma_queue_full       = dfull;
-    diagnostics.task_queue_full      = fullq;
-    diagnostics.tx_packet_queue_full = pfull;
-    #if USE_WRITE_BUFFER == TRUE
-      diagnostics.writeBack_errors     = wberrors;
-    #endif
     diagnostics.total_fr_packets     = rtr[RTR_DGC6] + rtr[RTR_DGC7];
     diagnostics.dumped_fr_packets    = rtr[RTR_DGC11];
-    diagnostics.discarded_fr_packets = fr_thrown;
   #endif
 
   // report problems if requested!
@@ -935,11 +1170,33 @@ uint spin1_start (sync_bool sync)
     #endif
   #endif
 
-  return exit_val;
+  return diagnostics.exit_code;
 }
 /*
 *******/
 
+
+/****f* spin1_api.c/spin1_start
+*
+* SUMMARY
+*  This function begins a simulation by enabling the timer (if called for) and
+*  beginning the dispatcher loop.
+*
+* SYNOPSIS
+*  void spin1_start (sync_bool_t sync)
+*
+* SOURCE
+*/
+
+uint spin1_start (sync_bool sync)
+{
+  return start(sync, 0);
+}
+
+uint spin1_start_paused()
+{
+  return start(SYNC_NOWAIT, 1);
+}
 
 
 /****f* spin1_api.c/spin1_delay_us
@@ -994,7 +1251,7 @@ void spin1_delay_us (uint n)
 * SOURCE
 */
 uint spin1_dma_transfer (uint tag, void *system_address, void *tcm_address,
-			 uint direction, uint length)
+            uint direction, uint length)
 {
   uint id = 0;
   uint cpsr = spin1_int_disable ();
@@ -1003,7 +1260,7 @@ uint spin1_dma_transfer (uint tag, void *system_address, void *tcm_address,
 
   if (new_end != dma_queue.start)
   {
-    id = dma_id++;
+    id = diagnostics.dma_transfers++;
 
     uint desc = DMA_WIDTH << 24 | DMA_BURST_SIZE << 21
       | direction << 19 | length;
@@ -1027,8 +1284,8 @@ uint spin1_dma_transfer (uint tag, void *system_address, void *tcm_address,
   else
   {
     #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-      warnings |= DMA_QUEUE_FULL;
-      dfull++;
+      diagnostics.warnings |= DMA_QUEUE_FULL;
+      diagnostics.dma_queue_full++;
     #endif
   }
 
@@ -1135,8 +1392,8 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
       /* if queue full cannot do anything -- report failure */
       rc = FAILURE;
       #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-        warnings |= PACKET_QUEUE_FULL;
-        pfull++;
+        diagnostics.warnings |= PACKET_QUEUE_FULL;
+        diagnostics.tx_packet_queue_full++;
       #endif
     }
     else
@@ -1167,7 +1424,7 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
       cc[CC_TCR] = hTCR;
 
       if (hTCR & PKT_PL)
-	cc[CC_TXDATA] = hdata;
+        cc[CC_TXDATA] = hdata;
 
       cc[CC_TXKEY]  = hkey;
     }
@@ -1179,7 +1436,7 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
       cc[CC_TCR] = TCR;
 
       if (TCR & PKT_PL)
-	cc[CC_TXDATA] = data;
+        cc[CC_TXDATA] = data;
 
       cc[CC_TXKEY]  = key;
 
@@ -1598,8 +1855,8 @@ uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 
 #if API_DEBUG == TRUE
   io_printf (IO_API,
-	     "\t\t[api_debug] MC entry %d: k 0x%8z m 0x%8z r 0x%8z\n",
-	     entry, key, mask, route);
+        "\t\t[api_debug] MC entry %d: k 0x%8z m 0x%8z r 0x%8z\n",
+        entry, key, mask, route);
   io_delay (API_PRINT_DLY);
 #endif
 
@@ -1709,12 +1966,17 @@ void schedule_sysmode (uchar event_id, uint arg0, uint arg1)
       tq->queue[tq->end].arg1 = arg1;
 
       tq->end = (tq->end + 1) % TASK_QUEUE_SIZE;
+
+      if (event_id == TIMER_TICK)
+      {
+        diagnostics.number_timer_tic_in_queue += 1;
+      }
     }
     else      // queue is full
     {
       #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-        warnings |= TASK_QUEUE_FULL;
-        fullq++;
+        diagnostics.warnings |= TASK_QUEUE_FULL;
+        diagnostics.task_queue_full++;
       #endif
     }
   }
@@ -1742,7 +2004,7 @@ void schedule_sysmode (uchar event_id, uint arg0, uint arg1)
 * SOURCE
 */
 uint spin1_schedule_callback (callback_t cback, uint arg0, uint arg1,
-			      uint priority)
+                uint priority)
 {
   uchar result = SUCCESS;
 
@@ -1764,8 +2026,8 @@ uint spin1_schedule_callback (callback_t cback, uint arg0, uint arg1,
     // queue is full
     result = FAILURE;
     #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-      warnings |= TASK_QUEUE_FULL;
-      fullq++;
+      diagnostics.warnings |= TASK_QUEUE_FULL;
+      diagnostics.task_queue_full++;
     #endif
   }
 

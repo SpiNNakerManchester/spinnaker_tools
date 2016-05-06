@@ -1,3 +1,4 @@
+#!/bin/sh
 #-------------------------------------------------------------------------------
 #
 # Setup script for low-level Spinnaker work
@@ -26,9 +27,9 @@ SPINN_DIRS="$(readlink -e "$(dirname "${BASH_SOURCE[0]}")")"
 
 # SPINN_PATH is a path variable (elements separated by ":"). It's used
 # to find resources used while building and running applications. It
-# should always contain at least the "boot" directory of $SPINN_DIRS
+# should always contain at least the "tools/boot" directory of $SPINN_DIRS
 
-SPINN_PATH=$SPINN_DIRS/boot
+SPINN_PATH=$SPINN_DIRS/tools/boot
 
 #-------------------------------------------------------------------------------
 
@@ -73,4 +74,7 @@ GNUBIN=$GNUTOOLS/bin
 PATH=$GNUBIN:$ARMBIN:$PATH
 
 #-------------------------------------------------------------------------------
+
+
+chmod u+x $SPINN_DIRS/tools/*
 

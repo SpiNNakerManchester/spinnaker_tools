@@ -1,5 +1,5 @@
 
-sark.pdf: sark.tex appnote.tex sdram.pdf sysram.pdf tcm.pdf
+sark.pdf: sark.tex ../appnote.tex sdram.pdf sysram.pdf tcm.pdf
 	pdflatex sark.tex
 
 %.pdf: %.fig

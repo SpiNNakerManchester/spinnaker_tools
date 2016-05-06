@@ -1,2 +1,2 @@
-APP := data_abort
+APP := sdptest
 include $(SPINN_DIRS)/Makefile.app
