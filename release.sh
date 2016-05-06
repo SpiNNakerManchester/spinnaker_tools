@@ -45,11 +45,11 @@ git clone --quiet --depth 1 "file://$SPINN_DIRS" .
 
 # Build SARK
 echo "Building SARK"
-(cd "$WORKING_DIR/sark" && make GNU=0) || exit 2
+(cd "$WORKING_DIR/sark" && make GNU=0 SPINN_DIRS=$WORKING_DIR) || exit 2
 
 # Build SC&MP
 echo "Building SC&MP"
-(cd "$WORKING_DIR/scamp" && make install) || exit 3
+(cd "$WORKING_DIR/scamp" && make install SPINN_DIRS=$WORKING_DIR) || exit 3
 
 # Build documentation
 for document_makefile in $(find docs/ -name Makefile); do

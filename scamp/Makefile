@@ -41,8 +41,8 @@ $(APP).boot: $(OBJS) $(SARKLIB) sark.aplx boot_aplx.bin $(APP).sct
 	$(LS) $(APP).boot
 
 install: $(APP).boot # $(APP).aplx
-	$(MV) $(APP).boot ../boot/scamp.boot
-#	$(MV) $(APP).aplx ../boot/scamp.aplx
+	$(MV) $(APP).boot ../tools/boot/scamp.boot
+#	$(MV) $(APP).aplx ../tools/boot/scamp.aplx
 
 boot_aplx.bin: boot_aplx.s spinnaker.s sark.s
 	$(AS) boot_aplx.s
