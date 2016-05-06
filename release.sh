@@ -62,8 +62,8 @@ done
 echo "Building release"
 git archive --output "$NAME.tar" --prefix "$NAME/" HEAD \
   README release.txt setup \
-  board.info \
-  make include sark spin1_api lib boot tools apps \
+  Makefile Makefile.app Makefile.common Makefile.example \
+  build include sark spin1_api lib make_lib tools apps \
   || exit 5
 
 # Add selected build artefacts
@@ -79,7 +79,7 @@ echo "Adding build artefacts"
     done
 
     # SC&MP binary
-    echo "boot/scamp.boot"
+    echo "tools/boot/scamp.boot"
 ) | xargs tar fr "$NAME.tar" --transform='s:.*:'"$NAME"'/\0:' --no-recursion \
   || exit 6
 
