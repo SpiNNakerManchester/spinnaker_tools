@@ -1,102 +1,121 @@
-
+BUILD_DIR := ../build
 APP := scamp-3
-INC_DIR := ../include
-LIB_DIR := ../lib
-
-CC := armcc -c --cpu=5te --c99 -Ospace --apcs /interwork --thumb \
-   --min_array_alignment=4 -I $(INC_DIR)
-AS := armasm --keep --cpu=5te --apcs /interwork
-OBJCOPY := fromelf
-
-RM := /bin/rm -f
-LS := /bin/ls -l
-MV := mv
+include ../Makefile.common
 
 OBJS := spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
        scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o \
        $(APP).o
 
-SARKLIB := $(LIB_DIR)/sark.a
+ifeq ($(GNU),1)
+    SARKLIB := $(SPINN_LIB_DIR)/libsark.a
+else
+    SARKLIB := $(SPINN_LIB_DIR)/sark.a
+endif
 
-
-$(APP).boot: $(OBJS) $(SARKLIB) sark.aplx boot_aplx.bin $(APP).sct
-	mkbuild scamp > sark_build.c
-	$(CC) sark_build.c
-	armlink --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
-	  sark_build.o --output $(APP).elf 
-	perl mksv > scamp-3.sv
-	perl mkpad sark.aplx 3584 > sark_pad.aplx
-	fromelf $(APP).elf --bin --output $(APP).bin
-	fromelf $(APP).elf -cds --output $(APP).txt
-
-#	mkaplx -scamp $(APP).elf > scamp.tab
-#	cat scamp.tab boot_aplx.bin boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > $(APP).aplx
-
-	mkaplx -boot $(APP).elf > boot.tab
-	cat boot_aplx.bin boot.tab boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > $(APP).boot
-
-	$(RM) boot.tab scamp.tab scamp-3.bin scamp-3.sv sark_pad.aplx
-	$(RM) sark_build.c sark_build.o
-#	$(LS) $(APP).aplx
-	$(LS) $(APP).boot
-
-install: $(APP).boot # $(APP).aplx
-	$(MV) $(APP).boot ../tools/boot/scamp.boot
-#	$(MV) $(APP).aplx ../tools/boot/scamp.aplx
-
-boot_aplx.bin: boot_aplx.s spinnaker.s sark.s
-	$(AS) boot_aplx.s
+#
+#$(APP).boot: $(OBJS) $(SARKLIB) sark.aplx boot_aplx.bin $(APP).sct
+#	$(SPINN_TOOLS_DIR)/mkbuild scamp > sark_build.c
+#	$(CC) sark_build.c
+#	armlink --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
+#	  sark_build.o --output $(APP).elf 
+#	perl mksv > scamp-3.sv
+#	perl mkpad sark.aplx 3584 > sark_pad.aplx
+#	fromelf $(APP).elf --bin --output $(APP).bin
+#	fromelf $(APP).elf -cds --output $(APP).txt
+#
+##	mkaplx -scamp $(APP).elf > scamp.tab
+##	cat scamp.tab boot_aplx.bin boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > $(APP).aplx
+#
+#	mkaplx -boot $(APP).elf > boot.tab
+#	cat boot_aplx.bin boot.tab boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > $(APP).boot
+#
+#	$(RM) boot.tab scamp.tab scamp-3.bin scamp-3.sv sark_pad.aplx
+#	$(RM) sark_build.c sark_build.o
+##	$(LS) $(APP).aplx
+#	$(LS) $(APP).boot
+#
+#install: $(APP).boot # $(APP).aplx
+#	$(MV) $(APP).boot ../boot/scamp.boot
+##	$(MV) $(APP).aplx ../boot/scamp.aplx
+#
+boot_aplx.bin: boot_aplx.elf
 	armlink --ro_base 0 -o boot_aplx.elf boot_aplx.o
-	fromelf --bin -o boot_aplx.bin boot_aplx.elf
+ifeq ($(GNU),1)
+	$(OC) -O binary -j RO_DATA boot_aplx.elf RO_DATA.bin
+	$(OC) -O binary -j RW_DATA boot_aplx.elf RW_DATA.bin
+	$(SPINN_TOOLS_DIR)/mkbin RO_DATA.bin RW_DATA.bin > boot_aplx.bin
+	$(RM) RO_DATA.bin RW_DATA.bin
+else
+	$(OC) --bin -o boot_aplx.bin boot_aplx.elf
+endif
 
 sark.aplx: sark.o $(SARKLIB)
 	mkbuild sark > sark_build.c
 	$(CC) sark_build.c
-	armlink --scatter=$(LIB_DIR)/sark.sct --remove --entry cpu_reset sark.o sark_build.o \
-	  $(SARKLIB) --output sark.elf
-	fromelf sark.elf --bin --output sark.bin
-	fromelf sark.elf -cds --output sark.txt
-	mkaplx sark.elf | cat - sark.bin > sark.aplx
+	$(LD) sark.o sark_build.o $(SARKLIB) --output sark.elf
+ifeq ($(GNU),1)
+	$(OC) -O binary -j RO_DATA sark.elf RO_DATA.bin
+	$(OC) -O binary -j RW_DATA sark.elf RW_DATA.bin
+	$(SPINN_TOOLS_DIR)/mkbin RO_DATA.bin RW_DATA.bin > sark.bin
+	$(RM) RO_DATA.bin RW_DATA.bin
+else
+	$(OC) --bin --output sark.bin sark.elf
+endif
+	$(OD) > sark.txt sark.elf
+	$(SPINN_TOOLS_DIR)/mkaplx -nm $(NM) sark.elf | cat - sark.bin > sark.aplx
 	$(RM) sark_build.c sark_build.o sark.bin
+	
+ifeq ($(GNU),1)
+%.gas: %.s
+	$(SPINN_TOOLS_DIR)/arm2gas $< > $@
 
-sark.o: $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h sark.c
+boot_aplx.elf: boot_aplx.gas spinnaker.gas sark.gas
+	$(AS) -I $(BUILD_DIR) -o boot_aplx.o $<
+		
+else
+boot_aplx.o: boot_aplx.s spinnaker.s sark.s
+	$(AS) boot_aplx.s
+	armlink --ro_base 0 -o boot_aplx.elf boot_aplx.o
+endif
+
+sark.o: $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h sark.c
 	$(CC) sark.c
 
-spinnaker.s: $(INC_DIR)/spinnaker.h
-	h2asm $(INC_DIR)/spinnaker.h > spinnaker.s
+spinnaker.s: $(SPINN_INC_DIR)/spinnaker.h
+	h2asm $(SPINN_INC_DIR)/spinnaker.h > spinnaker.s
 
-sark.s: $(INC_DIR)/sark.h
-	h2asm $(INC_DIR)/sark.h > sark.s
+sark.s: $(SPINN_INC_DIR)/sark.h
+	h2asm $(SPINN_INC_DIR)/sark.h > sark.s
 
-spinn_phy.o: spinn_phy.c spinn_phy.h $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h scamp.h
+spinn_phy.o: spinn_phy.c spinn_phy.h $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) spinn_phy.c
 
-spinn_srom.o: spinn_srom.c $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h scamp.h
+spinn_srom.o: spinn_srom.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) spinn_srom.c
 
-spinn_net.o: spinn_net.c spinn_net.h $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h scamp.h
+spinn_net.o: spinn_net.c spinn_net.h $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) spinn_net.c
 
-scamp-p2p.o: scamp-p2p.c $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h scamp.h
+scamp-p2p.o: scamp-p2p.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) scamp-p2p.c
 
-scamp-nn.o: scamp-nn.c $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h scamp.h
+scamp-nn.o: scamp-nn.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) scamp-nn.c
 
-scamp-cmd.o: scamp-cmd.c $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h scamp.h
+scamp-cmd.o: scamp-cmd.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) scamp-cmd.c
 
-scamp-isr.o: scamp-isr.c $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h scamp.h
+scamp-isr.o: scamp-isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) scamp-isr.c
 
-scamp-app.o: scamp-app.c $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h scamp.h
+scamp-app.o: scamp-app.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) scamp-app.c
 
-scamp-boot.o: scamp-boot.c $(INC_DIR)/spinnaker.h $(INC_DIR)/sark.h scamp.h
+scamp-boot.o: scamp-boot.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) scamp-boot.c
 
-$(APP).o: $(APP).c spinn_net.h spinn_phy.h $(INC_DIR)/spinnaker.h \
-	$(INC_DIR)/sark.h scamp.h
+$(APP).o: $(APP).c spinn_net.h spinn_phy.h $(SPINN_INC_DIR)/spinnaker.h \
+	$(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC) $(APP).c
 
 tar:
