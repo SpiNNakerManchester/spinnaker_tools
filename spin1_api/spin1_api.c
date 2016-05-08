@@ -1089,8 +1089,9 @@ void spin1_rte(rte_code code)
   sv->led_period = 8;
 }
 
-uint start (sync_bool sync, uint paused)
+uint start (sync_bool sync, uint start_paused)
 {
+  paused = start_paused;
   if (paused)
   {
     sark_cpu_state (CPU_STATE_PAUSE);
