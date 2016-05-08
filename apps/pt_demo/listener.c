@@ -4,21 +4,36 @@
 // August 2012
 // ----------------------------------------------------------------------------
 
+#ifndef WIN32
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#else
+#include <windows.h>
+#include <ws2tcpip.h>
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
+#define bcopy(b1,b2,len) (memmove((b2), (b1), (len)), (void) 0)
+#define close(sock)
+
+#define SHUT_RD   SD_RECEIVE
+#define SHUT_WR   SD_SEND
+#define SHUT_RDWR SD_BOTH
+
+typedef unsigned int uint;
+typedef unsigned short ushort;
+#endif
 
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/time.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
-#include <arpa/inet.h>
 #include <pthread.h>
-#include <math.h>	
+#include <math.h>
 #include <time.h>
 
 
@@ -39,7 +54,7 @@ int packet_number=0;
 // Stop alignment in structure: word alignment would be nasty here,
 // byte alignment reqd
 
-#pragma pack(1) 
+#pragma pack(1)
 
 // A structure that holds SpiNNaker packet data (inside UDP segment)
 
@@ -106,26 +121,26 @@ void init_udp_server_spinnaker()
   for (p_input = servinfo_input; p_input != NULL; p_input = p_input->ai_next)
     {
       if ((sockfd_input = socket(p_input->ai_family, p_input->ai_socktype, p_input->ai_protocol)) == -1)
-	{
-	  perror("SpiNNaker listener: socket");
-	  continue;
-	}
+    {
+    perror("SpiNNaker listener: socket");
+    continue;
+    }
 
       if (bind (sockfd_input, p_input->ai_addr, p_input->ai_addrlen) == -1)
-	{
-	  close(sockfd_input);
-	  perror("SpiNNaker listener: bind");
-	  continue;
-	}
+    {
+    close(sockfd_input);
+    perror("SpiNNaker listener: bind");
+    continue;
+    }
       break;
-    } 
+    }
 
   if (p_input == NULL)
     {
       fprintf(stderr, "SpiNNaker listener: failed to bind socket\n");
       exit(-1);
     }
-  
+
   freeaddrinfo (servinfo_input);
 }
 
@@ -141,13 +156,13 @@ void* input_thread (void *ptr)
       addr_len_input = sizeof their_addr_input;
 
       if ((numbytes_input = recvfrom (sockfd_input, buffer_input,
-				      1514 , 0,
-				      (struct sockaddr *)&their_addr_input,
-				      &addr_len_input)) == -1)
-	{ // Error getting the input frame off the Ethernet
-	  perror((char*)"error recvfrom");
-	  exit (-1);
-	}
+                    1514 , 0,
+                    (struct sockaddr *)&their_addr_input,
+                    &addr_len_input)) == -1)
+    { // Error getting the input frame off the Ethernet
+    perror((char*)"error recvfrom");
+    exit (-1);
+    }
 
       scanptr = (struct sdp_msg*) buffer_input;
 
@@ -155,42 +170,42 @@ void* input_thread (void *ptr)
 
       if ((int) (scanptr->command) == 3)
         {
-	  int numberOfPixels = (int)(scanptr->arg1);
+    int numberOfPixels = (int)(scanptr->arg1);
 
-	  int i;
-	  for (i = 0; i < numberOfPixels; i++)
+    int i;
+    for (i = 0; i < numberOfPixels; i++)
             {
-	      unsigned char x1 = ((unsigned char)data[i*7]);
-	      unsigned char x2 = ((unsigned char)data[i*7+1]);
-	      unsigned char y1 = ((unsigned char)data[i*7+2]);
-	      unsigned char y2 = ((unsigned char)data[i*7+3]);
-	      int x = (((int)x1)<<8) + ((int)x2);
-	      int y = (((int)y1)<<8) + ((int)y2);
-	      unsigned int r = ((unsigned int)data[i*7+4]);
-	      unsigned int g = ((unsigned int)data[i*7+5]);
-	      unsigned int b = ((unsigned int)data[i*7+6]);
+        unsigned char x1 = ((unsigned char)data[i*7]);
+        unsigned char x2 = ((unsigned char)data[i*7+1]);
+        unsigned char y1 = ((unsigned char)data[i*7+2]);
+        unsigned char y2 = ((unsigned char)data[i*7+3]);
+        int x = (((int)x1)<<8) + ((int)x2);
+        int y = (((int)y1)<<8) + ((int)y2);
+        unsigned int r = ((unsigned int)data[i*7+4]);
+        unsigned int g = ((unsigned int)data[i*7+5]);
+        unsigned int b = ((unsigned int)data[i*7+6]);
 
-	      if (((frameHeight-y-1)*(frameWidth)+x)*3+2 <
-		  frameWidth*frameHeight*3-1)
+        if (((frameHeight-y-1)*(frameWidth)+x)*3+2 <
+        frameWidth*frameHeight*3-1)
                 {
-		  int index = ((frameHeight-y-1)*(frameWidth)+x);
-		  unsigned long long receivedFrames = (unsigned long long)(receivedFrame[index]);
+        int index = ((frameHeight-y-1)*(frameWidth)+x);
+        unsigned long long receivedFrames = (unsigned long long)(receivedFrame[index]);
 
-		  viewingFrame[index*3]   = (unsigned char) ((  ((unsigned long long)((unsigned char)r)) + ((unsigned long long)viewingFrame[index*3])*receivedFrames)/(receivedFrames+1));
-		  viewingFrame[index*3+1] = (unsigned char) ((  ((unsigned long long)((unsigned char)g)) + ((unsigned long long)viewingFrame[index*3+1])*receivedFrames)/(receivedFrames+1));
-		  viewingFrame[index*3+2] = (unsigned char) ((  ((unsigned long long)((unsigned char)b)) + ((unsigned long long)viewingFrame[index*3+2])*receivedFrames)/(receivedFrames+1));
+        viewingFrame[index*3]   = (unsigned char) ((  ((unsigned long long)((unsigned char)r)) + ((unsigned long long)viewingFrame[index*3])*receivedFrames)/(receivedFrames+1));
+        viewingFrame[index*3+1] = (unsigned char) ((  ((unsigned long long)((unsigned char)g)) + ((unsigned long long)viewingFrame[index*3+1])*receivedFrames)/(receivedFrames+1));
+        viewingFrame[index*3+2] = (unsigned char) ((  ((unsigned long long)((unsigned char)b)) + ((unsigned long long)viewingFrame[index*3+2])*receivedFrames)/(receivedFrames+1));
 
-		  //viewingFrame[index*3]   = (unsigned char) r;
-		  //viewingFrame[index*3+1] = (unsigned char) g;
-		  //viewingFrame[index*3+2] = (unsigned char) b;
+        //viewingFrame[index*3]   = (unsigned char) r;
+        //viewingFrame[index*3+1] = (unsigned char) g;
+        //viewingFrame[index*3+2] = (unsigned char) b;
 
-		  receivedFrame[index] += 1;
+        receivedFrame[index] += 1;
                 }
             }
         }
 
       packet_number++;
-		
+
       fflush (stdout);
     }
 }
