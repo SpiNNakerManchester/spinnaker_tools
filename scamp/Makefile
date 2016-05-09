@@ -1,16 +1,15 @@
 BUILD_DIR := ../build/
 APP := scamp-3
 THUMB := 1
-include ../Makefile.common
+include ../make/Makefile.common
 
 OBJS := spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
        scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o \
        $(APP).o
 
-CFLAGS += -Os -fdata-sections -ffunction-sections
-
 ifeq ($(GNU),1)
     SARKLIB := $(SPINN_LIB_DIR)/libsark.a
+    CFLAGS += -Os -fdata-sections -ffunction-sections
 else
     SARKLIB := $(SPINN_LIB_DIR)/sark.a
 endif
@@ -69,10 +68,11 @@ ifeq ($(GNU),1)
 	$(OC) -O binary -j RW_DATA sark.elf RW_DATA.bin
 	$(SPINN_TOOLS_DIR)/mkbin RO_DATA.bin RW_DATA.bin > sark.bin
 	$(RM) RO_DATA.bin RW_DATA.bin
+	$(OD) > sark.txt sark.elf
 else
 	$(OC) --bin --output sark.bin sark.elf
+	$(OD) sark.txt sark.elf
 endif
-	$(OD) > sark.txt sark.elf
 	$(SPINN_TOOLS_DIR)/mkaplx -nm $(NM) sark.elf | cat - sark.bin > sark.aplx
 	$(RM) sark_build.c sark_build.o sark.bin
 	
