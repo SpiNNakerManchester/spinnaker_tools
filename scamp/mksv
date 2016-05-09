@@ -9,4 +9,5 @@ my $sv = SpiNN::Struct->new;
 
 die "mksv: failed\n" unless defined $sv;
 
+binmode(STDOUT);
 print substr $sv->pack ("sv"), 0, 128;

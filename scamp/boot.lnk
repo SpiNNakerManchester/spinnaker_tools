@@ -1,0 +1,34 @@
+
+/*
+// sark.lnk	    GNU linker script for SARK/SpiNNaker applications
+//
+// Copyright (C)    The University of Manchester - 2011-2013
+//
+// Author           Steve Temple, APT Group, School of Computer Science
+//
+// Email            temples@cs.man.ac.uk
+//
+*/
+
+
+MEMORY
+{
+    ITCM : ORIGIN = 0, LENGTH = 0x7f00
+}
+
+
+SECTIONS
+{
+    ITCM_BASE = 0x00000000;
+
+    . = ITCM_BASE;
+
+    RO_DATA :
+    {
+          * (boot_aplx);
+    } > ITCM
+
+    . = ALIGN (4);
+
+    RO_BASE = ITCM_BASE;
+}

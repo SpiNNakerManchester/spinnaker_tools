@@ -114,7 +114,7 @@ sub ver
     my $data = $self->scp_cmd ($CMD_VER, %opts);
 
     my ($vc, $pc, $cy, $cx, $size, $ver_num, $time, $ver_str) =
-    unpack "C4 v2 V! a*", $data;
+    unpack "C4 v2 V a*", $data;
 
     if ($ver_num != 0xffff)
     {
