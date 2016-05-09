@@ -46,8 +46,8 @@ endif
 	$(LS) $(APP).boot
 
 install: $(APP).boot # $(APP).aplx
-	$(MV) $(APP).boot ../boot/scamp.boot
-#	$(MV) $(APP).aplx ../boot/scamp.aplx
+	$(MV) $(APP).boot ../tools/boot/scamp.boot
+#	$(MV) $(APP).aplx ../tools/boot/scamp.aplx
 
 boot_aplx.bin: boot_aplx.elf
 ifeq ($(GNU),1)
