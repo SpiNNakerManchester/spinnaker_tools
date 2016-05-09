@@ -29,7 +29,6 @@ int fr_pkt_prio = -2;
 // ---------------
 /* dma transfer */
 // ---------------
-static uint dma_id = 1;
 dma_queue_t dma_queue;
 // ---------------
 
@@ -1083,7 +1082,11 @@ void spin1_rte(rte_code code)
   // stop the timer
   clean_up();
   sark_cpu_state(CPU_STATE_RTE);
+#ifdef __GNUC__
   register uint lr asm("lr");
+#else
+  register uint lr __asm("lr");
+#endif
   sv_vcpu->lr = lr;
   sv_vcpu->rt_code = code;
   sv->led_period = 8;
