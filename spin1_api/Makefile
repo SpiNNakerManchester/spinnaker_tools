@@ -2,7 +2,7 @@
 # Makefile for spin1_api
 BUILD_DIR := ../build
 LIB := 1
-include ../Makefile.common
+include ../make/Makefile.common
 
 #-------------------------------------------------------------------------------
 

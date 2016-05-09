@@ -71,12 +71,12 @@ typedef void (*callback_t) (uint, uint);  // callbacks
 // simulation control functions
 // ------------------------------------------------------------------------
 uint spin1_start (sync_bool sync);
-uint spin1_start_paused ();
+uint spin1_start_paused (void);
 void spin1_exit (uint error);
 void spin1_set_timer_tick(uint time);
 uint spin1_get_simulation_time(void);
 void spin1_delay_us (uint n);
-void spin1_pause ();
+void spin1_pause (void);
 void spin1_resume (sync_bool sync);
 void spin1_rte (rte_code code);
 // ------------------------------------------------------------------------

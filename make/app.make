@@ -12,7 +12,7 @@ endif
 
 LIBRARIES = -lspin1_api
 
-include $(SPINN_DIRS)/Makefile.common
+include $(SPINN_DIRS)/make/Makefile.common
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx
 	

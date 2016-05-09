@@ -1,2 +1,2 @@
 APP := random
-include $(SPINN_DIRS)/Makefile.app
+include $(SPINN_DIRS)/make/app.make
