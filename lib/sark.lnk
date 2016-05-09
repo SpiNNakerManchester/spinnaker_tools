@@ -41,6 +41,7 @@ SECTIONS
           __init_array_end = .;
           * (.rodata*);
           * (.fini*);
+          * (.init*);
     } > ITCM
 
     . = ALIGN (4);
