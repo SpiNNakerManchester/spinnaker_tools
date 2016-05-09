@@ -16,7 +16,7 @@ program "pt_trig" run on the host.
 Building and running the demo...
 
 1) Compile the host and SpiNNaker code
-   (you'll need "pthread" and "freeglut" libraries installed...
+   (you'll need "pthread" and "freeglut" libraries installed...)
 
    > make
 
