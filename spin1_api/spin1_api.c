@@ -667,9 +667,9 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
   {
     if (fiq_event == -1 ||
     (event_id == MC_PACKET_RECEIVED && fiq_event == MCPL_PACKET_RECEIVED) ||
-	(event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED) ||
-	(event_id == FR_PACKET_RECEIVED && fiq_event == FRPL_PACKET_RECEIVED) ||
-	(event_id == FRPL_PACKET_RECEIVED && fiq_event == FR_PACKET_RECEIVED))
+    (event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED) ||
+    (event_id == FR_PACKET_RECEIVED && fiq_event == FRPL_PACKET_RECEIVED) ||
+    (event_id == FRPL_PACKET_RECEIVED && fiq_event == FR_PACKET_RECEIVED))
       fiq_event = event_id;
     else
       rt_error (RTE_API);
@@ -680,16 +680,16 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
   if (event_id == MC_PACKET_RECEIVED || event_id == MCPL_PACKET_RECEIVED)
     {
       if (mc_pkt_prio == -2)
-	mc_pkt_prio = priority;
+        mc_pkt_prio = priority;
       else if (mc_pkt_prio == -1 && priority != -1)
         rt_error (RTE_API);
     }
   else if (event_id == FR_PACKET_RECEIVED || event_id == FRPL_PACKET_RECEIVED)
     {
       if (fr_pkt_prio == -2)
-	fr_pkt_prio = priority;
+        fr_pkt_prio = priority;
       else if (fr_pkt_prio == -1 && priority != -1)
-	rt_error (RTE_API);
+        rt_error (RTE_API);
     }
 
 }
@@ -1013,7 +1013,7 @@ void report_debug ()
     io_printf (IO_API, "\t\t[api_debug] ISR thrown packets: %d\n",
                diagnostics.discarded_mc_packets);
     io_delay (API_PRINT_DELAY);
-    
+
     io_printf (IO_API, "\t\t[api_debug] ISR thrown FR packets: %d\n",
                diagnostics.discarded_fr_packets);
     io_delay (API_PRINT_DELAY);
@@ -1089,8 +1089,9 @@ void spin1_rte(rte_code code)
   sv->led_period = 8;
 }
 
-uint start (sync_bool sync, uint paused)
+uint start (sync_bool sync, uint start_paused)
 {
+  paused = start_paused;
   if (paused)
   {
     sark_cpu_state (CPU_STATE_PAUSE);
@@ -1105,7 +1106,7 @@ uint start (sync_bool sync, uint paused)
   configure_communications_controller();
   configure_dma_controller();
   configure_timer1 (timer_tick);
-  configure_vic(paused);
+  configure_vic(!paused);
 
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
   diagnostics.warnings = NO_ERROR;
@@ -1131,8 +1132,9 @@ uint start (sync_bool sync, uint paused)
   // initialise counter and ticks for simulation
   // 32-bit, periodic counter, interrupts enabled
 
-  if (timer_tick && !paused)
+  if (timer_tick && !paused) {
     tc[T1_CONTROL] = 0xe2;
+  }
 
   ticks = 0;
   run = 1;
@@ -1146,7 +1148,7 @@ uint start (sync_bool sync, uint paused)
   // re-enable interrupts for sark
   // only CPU_INT enabled in the VIC
   spin1_int_enable ();
-  
+
   // provide diagnostics data to application
   #if (API_DIAGNOSTICS == TRUE)
     diagnostics.total_mc_packets     = rtr[RTR_DGC0] + rtr[RTR_DGC1];
@@ -2101,7 +2103,7 @@ uint spin1_trigger_user_event(uint arg0, uint arg1)
 void sark_pre_main (void)
 {
   sark_call_cpp_constructors();
-  
+
   sark_cpu_state (CPU_STATE_SARK);
   sark_vec->api = 1;
 

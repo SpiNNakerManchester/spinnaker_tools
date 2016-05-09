@@ -10,6 +10,10 @@
 #include <math.h>
 #include <pthread.h>
 #include <GL/freeglut.h>
+#ifdef WIN32
+#include <windows.h>
+#include <ws2tcpip.h>
+#endif
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
@@ -24,7 +28,7 @@ unsigned int *receivedFrame;
 
 
 struct Vector3
-{      
+{
     float x, y, z;
 };
 
@@ -48,7 +52,7 @@ float horizontalFieldOfView = 60.0;
 // Called every time OpenGL needs to update the display
 
 void display (void)
-{ 
+{
   glClearColor (1.0, 1.0, 1.0, 0.001);
   glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glDrawPixels (windowWidth, windowHeight, GL_RGB, GL_UNSIGNED_BYTE, viewingFrame);
@@ -161,8 +165,8 @@ struct Vector3 fVectorNormalise(struct Vector3 in)
 {
   float magnitudeReciprocal = 1.0 / sqrt (in.x * in.x + in.y * in.y + in.z * in.z);
   struct Vector3 result = {in.x * magnitudeReciprocal,
-			   in.y * magnitudeReciprocal,
-			   in.z * magnitudeReciprocal};
+            in.y * magnitudeReciprocal,
+            in.z * magnitudeReciprocal};
   return result;
 }
 
@@ -170,8 +174,8 @@ struct Vector3 fVectorNormalise(struct Vector3 in)
 struct Vector3 fVectorCrossProduct(struct Vector3 a, struct Vector3 b)
 {
   struct Vector3 result = {a.y * b.z - a.z * b.y,
-			   a.z * b.x - a.x * b.z,
-			   a.x * b.y - a.y * b.x};
+            a.z * b.x - a.x * b.z,
+            a.x * b.y - a.y * b.x};
   return result;
 }
 
@@ -191,7 +195,7 @@ struct Vector3 fVectorRotate (struct Vector3 rotated, struct Vector3 rotateAbout
     rotated.z * (t * rotateAbout.x * rotateAbout.z - s * rotateAbout.y);
 
   result.y = rotated.x * (t * rotateAbout.x * rotateAbout.y - s * rotateAbout.z) +
-    rotated.y * (t * rotateAbout.y * rotateAbout.y + c) +		      
+    rotated.y * (t * rotateAbout.y * rotateAbout.y + c) +
     rotated.z * (t * rotateAbout.y * rotateAbout.z + s * rotateAbout.x);
 
   result.z = rotated.x * (t * rotateAbout.z * rotateAbout.x + s * rotateAbout.y) +
@@ -252,11 +256,20 @@ void idleFunctionLoop ()
       prevTime = currTime;
       display();
     }
-} 
+}
 
 
 int main (int argc, char **argv)
 {
+
+#ifdef WIN32
+  WSADATA wsaData;
+  if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0) {
+      fprintf(stderr, "WSAStartup failed.\n");
+      exit(1);
+  }
+#endif
+
   pthread_t p1;				// this sets up the thread that can come back to here from type
 
   init_udp_server_spinnaker ();		//initialization of the port for receiving SpiNNaker frames

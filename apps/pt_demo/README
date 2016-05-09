@@ -15,27 +15,19 @@ program "pt_trig" run on the host.
 
 Building and running the demo...
 
-1) Compile the drawing application which runs on the workstation
+1) Compile the host and SpiNNaker code
    (you'll need "pthread" and "freeglut" libraries installed...
 
-   > gcc -O3 -o drawer drawer.c listener.c -lm -lGL -lGLU -lglut -lpthread 
+   > make
 
-2) Build the "tracer" code
-
-   > make APP=tracer
-
-3) Build the "aggregator" code
-
-   > make APP=aggregator
-
-4) Start the "drawer"
+2) Start the "drawer"
 
    > ./drawer 600 &
 
-5) Load the application(s) onto SpiNNaker (substitute your IP address)
+3) Load the application(s) onto SpiNNaker (substitute your IP address)
 
    > ybug 192.168.240.253 < pt_demo.ybug
 
-6) Trigger the application (substitute IP address).
+4) Trigger the application (substitute IP address).
 
    > ./pt_trig 192.168.240.253 600 10 16
