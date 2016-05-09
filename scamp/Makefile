@@ -2,6 +2,7 @@
 APP := scamp-3
 INC_DIR := ../include
 LIB_DIR := ../lib
+TOOLS_DIR := ../tools
 
 CC := armcc -c --cpu=5te --c99 -Ospace --apcs /interwork --thumb \
    --min_array_alignment=4 -I $(INC_DIR)
@@ -52,7 +53,7 @@ boot_aplx.bin: boot_aplx.s spinnaker.s sark.s
 sark.aplx: sark.o $(SARKLIB)
 	mkbuild sark > sark_build.c
 	$(CC) sark_build.c
-	armlink --scatter=$(LIB_DIR)/sark.sct --remove --entry cpu_reset sark.o sark_build.o \
+	armlink --scatter=$(TOOLS_DIR)/sark.sct --remove --entry cpu_reset sark.o sark_build.o \
 	  $(SARKLIB) --output sark.elf
 	fromelf sark.elf --bin --output sark.bin
 	fromelf sark.elf -cds --output sark.txt
