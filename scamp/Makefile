@@ -7,7 +7,7 @@ OBJS := spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
        scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o \
        $(APP).o
 
-CFLAGS += -Os
+CFLAGS += -Os -fdata-sections -ffunction-sections
 
 ifeq ($(GNU),1)
     SARKLIB := $(SPINN_LIB_DIR)/libsark.a
