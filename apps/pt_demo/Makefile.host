@@ -2,18 +2,6 @@ OBJECTS = drawer.o listener.o
 
 APP = drawer
 
-UNAME_S := $(shell uname -s)
-ifeq ($(findstring MINGW, $(UNAME_S)), MINGW)
-    CFLAGS += -D FREEGLUT_STATIC
-    LIBS += -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32
-endif
-ifeq ($(UNAME_S), Darwin)
-    LIBS += -framework OpenGL -framework GLUT
-endif
-ifeq ($(UNAME_S), Linux)
-    LIBS += -lGL -lGLU -lglut
-endif
-
 OBJS=$(OBJECTS:%=build/%)
 
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -21,15 +9,15 @@ CURRENT_DIR := $(dir $(MAKEFILE_PATH))
 UNAME_S := $(shell uname -s)
 
 ifeq ($(findstring MINGW, $(UNAME_S)), MINGW)
-    CFLAGS += -D WINVER=0x501 -D WIN32_LEAN_AND_MEAN
+    CFLAGS += -D FREEGLUT_STATIC -D WINVER=0x501 -D WIN32_LEAN_AND_MEAN
+    LIBS += -lfreeglut_static -lopengl32 -lwinmm -lgdi32 -lglu32 -lpthread -lws2_32 -lsqlite3
     PRE_LDFLAGS += -static-libgcc
-    LIBS += -lpthread -lws2_32 -lsqlite3
 endif
 ifeq ($(UNAME_S), Darwin)
-    LIBS += -lpthread
+    LIBS += -framework OpenGL -framework GLUT -lpthread
 endif
 ifeq ($(UNAME_S), Linux)
-    LIBS += -lpthread -lm
+    LIBS += -lGL -lGLU -lglut -lpthread -lm
 endif
 
 
