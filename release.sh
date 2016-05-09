@@ -61,9 +61,8 @@ done
 # Package just the git-tracked files for the release
 echo "Building release"
 git archive --output "$NAME.tar" --prefix "$NAME/" HEAD \
-  README release.txt setup \
-  Makefile Makefile.app Makefile.common Makefile.example \
-  build include sark spin1_api lib make_lib tools apps \
+  README release.txt setup Makefile \
+  build include sark spin1_api lib make tools apps \
   || exit 5
 
 # Add selected build artefacts

@@ -2,7 +2,7 @@
 # Makefile for SARK
 BUILD_DIR := ../build
 LIB := 1
-include ../Makefile.common
+include ../make/Makefile.common
 
 CFLAGS += -DSARK_API
 

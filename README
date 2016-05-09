@@ -39,14 +39,14 @@ README file for SpiNNaker Low-Level Software Tools - Release 2.1.0
 
    These are harmless and can be ignored.
 
-5) There is a generic make file which works for both C and C++ (Makefile.app)
+5) There is a generic make file which works for both C and C++ (make/app.make)
    which is used to build simple applications. The preferred way to use this
    is to create a Makefile which looks something like:
 
        # A single-file C app called 'example.c' or
        # a single-file C++ app called 'example.cpp'
        APP := example
-       include $(SPINN_DIRS)/Makefile.app
+       include $(SPINN_DIRS)/make/app.make
 
    The following variables may be set at the top of your Makefile, in
    environment variables or given as arguments to 'make':
