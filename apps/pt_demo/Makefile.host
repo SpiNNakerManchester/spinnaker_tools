@@ -29,7 +29,7 @@ ifeq ($(UNAME_S), Darwin)
     LIBS += -lpthread
 endif
 ifeq ($(UNAME_S), Linux)
-    LIBS += -lpthread
+    LIBS += -lpthread -lm
 endif
 
 
