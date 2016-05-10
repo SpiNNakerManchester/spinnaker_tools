@@ -1061,8 +1061,9 @@ void spin1_rte(rte_code code)
   sv->led_period = 8;
 }
 
-uint start (sync_bool sync, uint paused)
+uint start (sync_bool sync, uint start_paused)
 {
+  paused = start_paused;
   if (paused)
   {
     sark_cpu_state (CPU_STATE_PAUSE);
@@ -1077,7 +1078,7 @@ uint start (sync_bool sync, uint paused)
   configure_communications_controller();
   configure_dma_controller();
   configure_timer1 (timer_tick);
-  configure_vic(paused);
+  configure_vic(!paused);
 
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
   diagnostics.warnings = NO_ERROR;
