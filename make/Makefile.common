@@ -87,6 +87,7 @@ CAT := cat
 LS := ls -l
 MKDIR := mkdir -p
 CP := cp
+MV := mv
 
 ifeq ($(THUMB),1)
   CC := $(CC_THUMB)

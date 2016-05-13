@@ -15,4 +15,6 @@
 *.aux
 *.log
 *.pdf
+*.tab
+*.sv
 **/build
