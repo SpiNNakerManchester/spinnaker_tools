@@ -363,8 +363,10 @@ uint cmd_rtr (sdp_msg_t *msg)
 // Get information about this chip. Intended to support a host probing the
 // machine for its basic information.
 //
-// An optional arg1 is taken; if specified and is "1", the new format of the
-// chip_info is returned, otherwise the old format is specified
+// An optional arg1 is taken:
+// * If not specified or 0, the old format is returned
+// * If 1, the new format is returned without the machine size
+// * If 2, the new format is returned with the machine size
 //
 // The response will contain arg1-3 as described below with an additional data
 // payload indicating the application states of all cores.
@@ -377,6 +379,8 @@ uint cmd_rtr (sdp_msg_t *msg)
 //                  largest free block.
 //   * Bit 25     - 1 if Ethernet is up, 0 otherwise.
 //   * Bit 26     - 1 if in the new format, 0 otherwise
+//   * Bit 27     - 1 if in the new format, and the data includes the machine
+//                  dimensions, 0 otherwise
 //   * Bits 27:31 - Undefined
 // * arg2: The size (in bytes) of the largest free block in the SDRAM heap
 // * arg3: The size (in bytes) of the largest free block in the SysRAM heap
@@ -385,7 +389,7 @@ uint cmd_rtr (sdp_msg_t *msg)
 // * If bit 26 is 0 the data payload contains an 18-byte block which gives the
 //   cpu_state_e of each application core with byte 0 containing core 0's state
 //   and so-on.
-// * If bit 26 is 0, the data payload contains (in order):
+// * If bit 26 is 1, the data payload contains (in order):
 //   * an 18-byte block which gives the cpu_state_e of each application
 //     core, with byte 0 containing core 0's state and so on.
 //   * a 6-halfword block which gives the p2p id of the chip down each of the
@@ -395,10 +399,10 @@ uint cmd_rtr (sdp_msg_t *msg)
 //   * A word containing the base address of the multicast router table copy
 //   * A word containing the base address of the fixed router table copy
 //   * A halfword containing the chip p2p id
-//   * A halfword containing the machine dimensions
 //   * A halfword containing the nearest Ethernet p2p id
 //   * A halfword containing the speed of the CPUs in MHz
-//   * If Ethernet is up, a 4-byte block containing the Ethernet ip address
+//   * If bit 25 is 1, a 4-byte block containing the Ethernet ip address
+//   * If bit 27 is 1, a halfword containing the machine dimensions
 //
 
 uint cmd_info (sdp_msg_t *msg)
@@ -455,8 +459,8 @@ uint cmd_info (sdp_msg_t *msg)
   // The size so far is the 3 args plus the 18 cores
   uint size = 12 + 18;
 
-  // Only add the following if the version is 1
-  if (version == 1)
+  // Only add the following if the version is 1 or 2
+  if (version == 1 || version == 2)
   {
     ushort* shortbuf = (ushort*) buf;
 
@@ -495,16 +499,12 @@ uint cmd_info (sdp_msg_t *msg)
     size += 4;
 
     // Add the fixed router copy address
-    *((uint *) shortbuf) = (uint) sv->fr_copy;
+    *((uint *) shortbuf) = (uint) &(sv->fr_copy);
     shortbuf = &(shortbuf[2]);
     size += 4;
 
     // Add the P2P id of this chip
     *(shortbuf++) = sv->p2p_addr;
-    size += 2;
-
-    // Add the P2P dims
-    *(shortbuf++) = sv->p2p_dims;
     size += 2;
 
     // Add the nearest Ethernet P2P id
@@ -523,6 +523,13 @@ uint cmd_info (sdp_msg_t *msg)
       *(buf++) = sv->ip_addr[2];
       *(buf++) = sv->ip_addr[3];
       size += 4;
+    }
+
+    if (version == 2)
+    {
+      // Add the P2P dims
+      *(shortbuf++) = sv->p2p_dims;
+      size += 2;
     }
   }
 
