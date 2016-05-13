@@ -395,10 +395,10 @@ uint cmd_rtr (sdp_msg_t *msg)
 //   * a 6-halfword block which gives the p2p id of the chip down each of the
 //     links, with halfword 0 containing link 0's p2p id and so on (disabled
 //     links will contain a p2p id of 0)
+//   * A halfword containing the chip p2p id
 //   * A word containing the base address of the vcpu_t data structure
 //   * A word containing the base address of the multicast router table copy
 //   * A word containing the base address of the fixed router table copy
-//   * A halfword containing the chip p2p id
 //   * A halfword containing the nearest Ethernet p2p id
 //   * A halfword containing the speed of the CPUs in MHz
 //   * If bit 25 is 1, a 4-byte block containing the Ethernet ip address
@@ -462,6 +462,7 @@ uint cmd_info (sdp_msg_t *msg)
   // Only add the following if the version is 1 or 2
   if (version == 1 || version == 2)
   {
+    msg->arg1 |= (1 << 26);
     ushort* shortbuf = (ushort*) buf;
 
     // Add the link remote p2p ids to the message
@@ -474,7 +475,7 @@ uint cmd_info (sdp_msg_t *msg)
             (uint)(sv), link, &remote_chip_p2p, timeout);
         if (rc == RC_OK)
         {
-          *(shortbuf++) = (ushort) ((remote_chip_p2p >> 16) & 0xFFFF);
+          *(shortbuf++) = (ushort) (remote_chip_p2p & 0xFFFF);
         }
         else
         {
@@ -487,6 +488,10 @@ uint cmd_info (sdp_msg_t *msg)
       }
     }
     size += 12;
+
+    // Add the P2P id of this chip
+    *(shortbuf++) = sv->p2p_addr;
+    size += 2;
 
     // Add the vcpu_t base address
     *((uint *) shortbuf) = (uint) &sv_vcpu;
@@ -502,10 +507,6 @@ uint cmd_info (sdp_msg_t *msg)
     *((uint *) shortbuf) = (uint) &(sv->fr_copy);
     shortbuf = &(shortbuf[2]);
     size += 4;
-
-    // Add the P2P id of this chip
-    *(shortbuf++) = sv->p2p_addr;
-    size += 2;
 
     // Add the nearest Ethernet P2P id
     *(shortbuf++) = sv->eth_addr;
@@ -528,6 +529,8 @@ uint cmd_info (sdp_msg_t *msg)
     if (version == 2)
     {
       // Add the P2P dims
+      shortbuf = (ushort*) buf;
+      msg->arg1 |= (1 << 27);
       *(shortbuf++) = sv->p2p_dims;
       size += 2;
     }
