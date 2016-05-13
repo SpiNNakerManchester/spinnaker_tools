@@ -446,11 +446,11 @@ uint __attribute__((weak)) sark_init (uint *stack)
 
       // Check software version number
       //   Major must match
-      //   Minor must be GE
+      //   Minor must be LE
       //   Patch is ignored
 
       if ((SLLT_VER_NUM & 0x00ff0000) != (sv->sw_ver & 0x00ff0000) ||
-	  (SLLT_VER_NUM & 0x0000ff00) < (sv->sw_ver & 0x0000ff00))
+	  (SLLT_VER_NUM & 0x0000ff00) > (sv->sw_ver & 0x0000ff00))
 	rt_error (RTE_VER);
     }
 
