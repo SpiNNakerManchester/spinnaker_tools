@@ -515,7 +515,7 @@ uint cmd_info (sdp_msg_t *msg)
       *return_flags |= (1 << 1);
 
       // Add the vcpu_t base address
-      uint sv_cpu_addr = (uint) &sv_vcpu;
+      uint sv_cpu_addr = (uint) sv->vcpu_base;
       *(shortbuf++) = (ushort) (sv_cpu_addr & 0xFFFF);
       *(shortbuf++) = (ushort) ((sv_cpu_addr >> 16) & 0xFFFF);
       size += 4;
