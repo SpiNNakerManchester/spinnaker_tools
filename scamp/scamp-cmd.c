@@ -366,15 +366,19 @@ uint cmd_rtr (sdp_msg_t *msg)
 // An optional arg1 is taken:
 // * If not specified or 0, basic information is returned
 // * If specified, the bits indicate the items to be returned
-//   * Bit 26   - set to include the link destinations
-//   * Bit 27   - set to include the vcpu_t structure base address
-//   * Bit 28   - set to include the router table copy addresses
-//   * Bit 29   - set to include the nearest Ethernet p2p address
-//   * Bit 30   - set to include the Ethernet IP address (if the Ethernet is up)
-//   * Bit 31   - set to include the machine dimensions
+//   * Bit  0    - set to include the link destinations
+//   * Bit  1    - set to include the vcpu_t structure base address
+//   * Bit  2    - set to include the router table copy addresses
+//   * Bit  3    - set to include the nearest Ethernet p2p address
+//   * Bit  4    - set to include the Ethernet IP address
+//                 (if the Ethernet is up, otherwise this is ignored)
+//   * Bit  5    - set to include the machine dimensions
+//   * Bit  6    - set to include the size of an iobuf buffer
+//   * Bits 7-31 - undefined
 //
 // The response will contain arg1-3 as described below with an additional data
-// payload indicating the application states of all cores.
+// payload indicating the application states of all cores.  If requested, it
+// will also contain further information.
 // * arg1:
 //   * Bits  4:0  - The number of working cores (including the monitor)
 //   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
@@ -382,36 +386,37 @@ uint cmd_rtr (sdp_msg_t *msg)
 //                  performed on demand.
 //   * Bits 24-14 - The number of routing table entries in the
 //                  largest free block.
-//   * Bit 25     - 1 if Ethernet is up, 0 otherwise.
-//   * Bit 26     - 1 if the link destinations are included
-//   * Bit 27     - 1 if the vcpu_t structure is included
-//   * Bit 28     - 1 if the router table copy addresses are included
-//   * Bit 29     - 1 if the nearest Ethernet p2p address is included
-//   * Bit 30     - 1 if the Ethernet IP address is included
-//   * Bit 31     - 1 if the machine dimensions are included
+//   * Bit  25    - 1 if Ethernet is up, 0 otherwise.
+//   * Bit  26    - 1 if any extra information is included
+//   * Bits 27-31 - undefined
 // * arg2: The size (in bytes) of the largest free block in the SDRAM heap
 // * arg3: The size (in bytes) of the largest free block in the SysRAM heap
 //
 // The data payload starts with an 18-byte block which gives the cpu_state_e
 // of each application core with byte 0 containing core 0's state and so-on.
 //
-// The rest of the payload depends on the values of bits 25-31.  The items in
-// order are:
-// * If bit 26 is 1, a 6-halfword block which gives the p2p id of the chip down
+// If bit 26 is 0, no further data follows.  If bit 26 is 1, the next halfword
+// of the data payload is a bit field that indicates the information contained
+// in the rest of the data payload.  The items in order are:
+// * If bit 0 is 1, a 6-halfword block which gives the p2p id of the chip down
 //   each of the links, with halfword 0 containing link 0's p2p id and so on
 //   (disabled links will contain a p2p id of 0)
-// * If bit 27 is 1, a word containing the base address of the vcpu_t data
+// * If bit 1 is 1, a word containing the base address of the vcpu_t data
 //   structure
-// * If bit 28 is 1, a word containing the base address of the multicast router
+// * If bit 2 is 1, a word containing the base address of the multicast router
 //   table copy followed by a word containing the base address of the fixed
 //   router table copy
-// * If bit 29 is 1, a halfword containing the nearest Ethernet p2p id
-// * If bit 30 is 1, a 4-byte block containing the Ethernet ip address
-// * If bit 31 is 1, a halfword containing the machine dimensions
-//
+// * If bit 3 is 1, a halfword containing the nearest Ethernet p2p id
+// * If bit 4 is 1, a 4-byte block containing the Ethernet ip address
+// * If bit 5 is 1, a halfword containing the machine dimensions
+// * If bit 6 is 1, a word containing the size of an iobuf buffer
+// * Bits 7-15 can be ignored. (Future implementation note: if any more than 15
+//                              bits are required, use bit 15 to indicate the
+//                              inclusion of another bit field following the
+//                              rest of the data)
 
 uint cmd_info (sdp_msg_t *msg)
-{   
+{
   uint extra_info_flags = 0;
   if (msg->length >= 20)
     {
@@ -450,7 +455,7 @@ uint cmd_info (sdp_msg_t *msg)
 
   // Get largest free block in SDRAM
   msg->arg2 = sark_heap_max (sv->sdram_heap, ALLOC_LOCK);
-  
+
   // Get largest free block in SysRAM
   msg->arg3 = sark_heap_max (sv->sysram_heap, ALLOC_LOCK);
 
@@ -464,10 +469,21 @@ uint cmd_info (sdp_msg_t *msg)
   // The size so far is the 3 args plus the 18 cores
   uint size = 12 + 18;
 
+  // If any additional information was requested, set bit 26 in arg1, and
+  // add a word indicating what information is returned
   ushort* shortbuf = (ushort*) buf;
-  if ((extra_info_flags & (1 << 26)) != 0)
+  ushort* return_flags = shortbuf++;
+  if (extra_info_flags != 0)
     {
       msg->arg1 |= (1 << 26);
+      *return_flags = 0;
+      size += 2;
+    }
+
+  if ((extra_info_flags & 1) != 0)
+    {
+
+      *return_flags |= 1;
 
       // Add the link remote p2p ids to the message
       for (uint link = 0; link < NUM_LINKS; link++)
@@ -494,46 +510,48 @@ uint cmd_info (sdp_msg_t *msg)
         size += 12;
     }
 
-  if ((extra_info_flags & (1 << 27)) != 0)
+  if ((extra_info_flags & (1 << 1)) != 0)
     {
-      msg->arg1 |= (1 << 27);
+      *return_flags |= (1 << 1);
 
       // Add the vcpu_t base address
       uint sv_cpu_addr = (uint) &sv_vcpu;
-      *(shortbuf++) = (ushort) ((sv_cpu_addr >> 16) & 0xFFFF);
       *(shortbuf++) = (ushort) (sv_cpu_addr & 0xFFFF);
+      *(shortbuf++) = (ushort) ((sv_cpu_addr >> 16) & 0xFFFF);
       size += 4;
     }
 
-  if ((extra_info_flags & (1 << 28)) != 0)
+  if ((extra_info_flags & (1 << 2)) != 0)
     {
-      msg->arg1 |= (1 << 28);
+      *return_flags |= (1 << 2);
 
       // Add the multicast router copy address
       uint rtr_copy = (uint) sv->rtr_copy;
-      *(shortbuf++) = (ushort) ((rtr_copy >> 16) & 0xFFFF);
       *(shortbuf++) = (ushort) (rtr_copy & 0xFFFF);
+      *(shortbuf++) = (ushort) ((rtr_copy >> 16) & 0xFFFF);
       size += 4;
 
       // Add the fixed router copy address
       uint fr_copy = (uint) &(sv->fr_copy);
-      *(shortbuf++) = (ushort) ((fr_copy >> 16) & 0xFFFF);
       *(shortbuf++) = (ushort) (fr_copy & 0xFFFF);
+      *(shortbuf++) = (ushort) ((fr_copy >> 16) & 0xFFFF);
       size += 4;
     }
 
-  if ((extra_info_flags & (1 << 29)) != 0)
+  if ((extra_info_flags & (1 << 3)) != 0)
     {
-      msg->arg1 |= (1 << 29);
+      *return_flags |= (1 << 3);
 
       // Add the nearest Ethernet P2P id
       *(shortbuf++) = sv->eth_addr;
       size += 2;
     }
 
-  if (sv->eth_up && ((extra_info_flags & (1 << 30)) != 0))
+  if (sv->eth_up && ((extra_info_flags & (1 << 4)) != 0))
     {
-      msg->arg1 |= (1 << 30);
+      *return_flags |= (1 << 4);
+
+      // Add the Ethernet IP address
       buf = (uchar*) shortbuf;
       *(buf++) = sv->ip_addr[0];
       *(buf++) = sv->ip_addr[1];
@@ -543,15 +561,24 @@ uint cmd_info (sdp_msg_t *msg)
       shortbuf = (ushort*) buf;
     }
 
-  if ((extra_info_flags & (1 << 31)) != 0)
+  if ((extra_info_flags & (1 << 5)) != 0)
     {
-      msg->arg1 |= (1 << 31);
+      *return_flags |= (1 << 5);
 
       // Add the P2P dims
-      shortbuf = (ushort*) buf;
       msg->arg1 |= (1 << 27);
       *(shortbuf++) = sv->p2p_dims;
       size += 2;
+    }
+
+  if ((extra_info_flags & (1 << 6)) != 0)
+    {
+      *return_flags |= (1 << 6);
+
+      // Add the iobuf size
+      *(shortbuf++) = (ushort) (sv->iobuf_size & 0xFFFF);
+      *(shortbuf++) = (ushort) ((sv->iobuf_size >> 16) & 0xFFFF);
+      size += 4;
     }
 
   // Returned packet size
