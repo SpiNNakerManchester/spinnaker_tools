@@ -790,9 +790,9 @@ void nn_cmd_sig1 (uint data, uint key)
 // with 65535) and the "id table" contains the last ID that was used to
 // update the tables (initialised to 128)
 
-// An update occurs when a packet with a new ID arrives or a packet with
-// a lower hop count than the current one. The link on which the packet
-// arrived is used to update the P2P routing table.
+// An update occurs when a packet with a new ID arrives or a packet with a
+// lower hop count than the current one via an enabled link. The link on which
+// the packet arrived is used to update the P2P routing table.
 
 // Returns data with P2P_STOP_BIT set if the packet should not be propagated
 
@@ -806,7 +806,9 @@ uint nn_cmd_p2pb (uint id, uint data, uint link)
   uint table_id = hop_table[addr] >> 24;
   uint table_hops = hop_table[addr] & 0xffff;
 
-  if (addr != p2p_addr && (id != table_id || hops < table_hops))
+  if (addr != p2p_addr &&
+      (id != table_id || hops < table_hops) &&
+      (link_en & (1 << link)))
     {
       if (table_hops == 0xffff)
         sv->p2p_active++;
