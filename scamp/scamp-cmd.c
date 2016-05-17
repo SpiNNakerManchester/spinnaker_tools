@@ -363,18 +363,7 @@ uint cmd_rtr (sdp_msg_t *msg)
 // Get information about this chip. Intended to support a host probing the
 // machine for its basic information.
 //
-// An optional arg1 is taken:
-// * If not specified or 0, basic information is returned
-// * If specified, the bits indicate the items to be returned
-//   * Bit  0    - set to include the link destinations
-//   * Bit  1    - set to include the vcpu_t structure base address
-//   * Bit  2    - set to include the router table copy addresses
-//   * Bit  3    - set to include the nearest Ethernet p2p address
-//   * Bit  4    - set to include the Ethernet IP address
-//                 (if the Ethernet is up, otherwise this is ignored)
-//   * Bit  5    - set to include the machine dimensions
-//   * Bit  6    - set to include the size of an iobuf buffer
-//   * Bits 7-31 - undefined
+// No input arguments expected.
 //
 // The response will contain arg1-3 as described below with an additional data
 // payload indicating the application states of all cores.  If requested, it
@@ -384,36 +373,25 @@ uint cmd_rtr (sdp_msg_t *msg)
 //   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
 //                  Chip ID in system controller, 0 otherwise. This check is
 //                  performed on demand.
-//   * Bits 24-14 - The number of routing table entries in the
+//   * Bits 24:14 - The number of routing table entries in the
 //                  largest free block.
 //   * Bit  25    - 1 if Ethernet is up, 0 otherwise.
-//   * Bit  26    - 1 if any extra information is included
-//   * Bits 27-31 - undefined
+//   * Bits 26:31 - undefined
 // * arg2: The size (in bytes) of the largest free block in the SDRAM heap
 // * arg3: The size (in bytes) of the largest free block in the SysRAM heap
 //
-// The data payload starts with an 18-byte block which gives the cpu_state_e
-// of each application core with byte 0 containing core 0's state and so-on.
+// The data payload consists of (in order):
+// * an 18-byte block which gives the cpu_state_e of each application core with
+//   byte 0 containing core 0's state and so-on.
+// * a short giving the P2P address of the closest chip with an active Ethernet.
+//   Note that this is the chip to which SDP packets will be sent to from this
+//   chip when they contain a destination address indicating that they should be
+//   sent over Ethernet.
+// * a 4-byte block containing the IPv4 address of the Ethernet connection on
+//   this chip, made up of the 4 segments of the IPv4 address, each between
+//   0 and 255.  This might equate to an address of 0.0.0.0 if this chip is not
+//   physically connected to the Ethernet port of a board.
 //
-// If bit 26 is 0, no further data follows.  If bit 26 is 1, the next halfword
-// of the data payload is a bit field that indicates the information contained
-// in the rest of the data payload.  The items in order are:
-// * If bit 0 is 1, a 6-halfword block which gives the p2p id of the chip down
-//   each of the links, with halfword 0 containing link 0's p2p id and so on
-//   (disabled links will contain a p2p id of 0)
-// * If bit 1 is 1, a word containing the base address of the vcpu_t data
-//   structure
-// * If bit 2 is 1, a word containing the base address of the multicast router
-//   table copy followed by a word containing the base address of the fixed
-//   router table copy
-// * If bit 3 is 1, a halfword containing the nearest Ethernet p2p id
-// * If bit 4 is 1, a 4-byte block containing the Ethernet ip address
-// * If bit 5 is 1, a halfword containing the machine dimensions
-// * If bit 6 is 1, a word containing the size of an iobuf buffer
-// * Bits 7-15 can be ignored. (Future implementation note: if any more than 15
-//                              bits are required, use bit 15 to indicate the
-//                              inclusion of another bit field following the
-//                              rest of the data)
 
 uint cmd_info (sdp_msg_t *msg)
 {
