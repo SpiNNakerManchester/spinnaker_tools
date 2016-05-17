@@ -417,11 +417,6 @@ uint cmd_rtr (sdp_msg_t *msg)
 
 uint cmd_info (sdp_msg_t *msg)
 {
-  uint extra_info_flags = 0;
-  if (msg->length >= 20)
-    {
-      extra_info_flags = msg->arg1;
-    }
 
   // Get number of working CPUs
   msg->arg1 = sv->num_cpus & 0x0000001F;
@@ -466,123 +461,19 @@ uint cmd_info (sdp_msg_t *msg)
       *(buf++) = sv_vcpu[core].cpu_state;
     }
 
-  // The size so far is the 3 args plus the 18 cores
-  uint size = 12 + 18;
+  // Add the nearest Ethernet P2P id
+  *(buf++) = sv->eth_addr & 0xFF;
+  *(buf++) = (sv->eth_addr >> 8) & 0xFF;
 
-  // If any additional information was requested, set bit 26 in arg1, and
-  // add a word indicating what information is returned
-  ushort* shortbuf = (ushort*) buf;
-  ushort* return_flags = shortbuf++;
-  if (extra_info_flags != 0)
-    {
-      msg->arg1 |= (1 << 26);
-      *return_flags = 0;
-      size += 2;
-    }
+  // Add the Ethernet IP address
+  *(buf++) = sv->ip_addr[0];
+  *(buf++) = sv->ip_addr[1];
+  *(buf++) = sv->ip_addr[2];
+  *(buf++) = sv->ip_addr[3];
 
-  if ((extra_info_flags & 1) != 0)
-    {
-
-      *return_flags |= 1;
-
-      // Add the link remote p2p ids to the message
-      for (uint link = 0; link < NUM_LINKS; link++)
-        {
-          if (msg->arg1 & (1 << (link + 8)))
-            {
-              uint remote_chip_p2p = 0;
-              uint rc = link_read_word (
-                (uint)(sv), link, &remote_chip_p2p, timeout);
-              if (rc == RC_OK)
-                {
-                  *(shortbuf++) = (ushort) (remote_chip_p2p & 0xFFFF);
-                }
-              else
-                {
-                  *(shortbuf++) = 0;
-                }
-            }
-          else
-            {
-              *(shortbuf++) = 0;
-            }
-        }
-        size += 12;
-    }
-
-  if ((extra_info_flags & (1 << 1)) != 0)
-    {
-      *return_flags |= (1 << 1);
-
-      // Add the vcpu_t base address
-      uint sv_cpu_addr = (uint) sv->vcpu_base;
-      *(shortbuf++) = (ushort) (sv_cpu_addr & 0xFFFF);
-      *(shortbuf++) = (ushort) ((sv_cpu_addr >> 16) & 0xFFFF);
-      size += 4;
-    }
-
-  if ((extra_info_flags & (1 << 2)) != 0)
-    {
-      *return_flags |= (1 << 2);
-
-      // Add the multicast router copy address
-      uint rtr_copy = (uint) sv->rtr_copy;
-      *(shortbuf++) = (ushort) (rtr_copy & 0xFFFF);
-      *(shortbuf++) = (ushort) ((rtr_copy >> 16) & 0xFFFF);
-      size += 4;
-
-      // Add the fixed router copy address
-      uint fr_copy = (uint) &(sv->fr_copy);
-      *(shortbuf++) = (ushort) (fr_copy & 0xFFFF);
-      *(shortbuf++) = (ushort) ((fr_copy >> 16) & 0xFFFF);
-      size += 4;
-    }
-
-  if ((extra_info_flags & (1 << 3)) != 0)
-    {
-      *return_flags |= (1 << 3);
-
-      // Add the nearest Ethernet P2P id
-      *(shortbuf++) = sv->eth_addr;
-      size += 2;
-    }
-
-  if (sv->eth_up && ((extra_info_flags & (1 << 4)) != 0))
-    {
-      *return_flags |= (1 << 4);
-
-      // Add the Ethernet IP address
-      buf = (uchar*) shortbuf;
-      *(buf++) = sv->ip_addr[0];
-      *(buf++) = sv->ip_addr[1];
-      *(buf++) = sv->ip_addr[2];
-      *(buf++) = sv->ip_addr[3];
-      size += 4;
-      shortbuf = (ushort*) buf;
-    }
-
-  if ((extra_info_flags & (1 << 5)) != 0)
-    {
-      *return_flags |= (1 << 5);
-
-      // Add the P2P dims
-      msg->arg1 |= (1 << 27);
-      *(shortbuf++) = sv->p2p_dims;
-      size += 2;
-    }
-
-  if ((extra_info_flags & (1 << 6)) != 0)
-    {
-      *return_flags |= (1 << 6);
-
-      // Add the iobuf size
-      *(shortbuf++) = (ushort) (sv->iobuf_size & 0xFFFF);
-      *(shortbuf++) = (ushort) ((sv->iobuf_size >> 16) & 0xFFFF);
-      size += 4;
-    }
 
   // Returned packet size
-  return size;
+  return 12 + 18 + 2 + 4;
 }
 
 //------------------------------------------------------------------------------
