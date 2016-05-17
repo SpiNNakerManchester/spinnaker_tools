@@ -376,7 +376,7 @@ uint cmd_rtr (sdp_msg_t *msg)
 //   * Bits 24:14 - The number of routing table entries in the
 //                  largest free block.
 //   * Bit  25    - 1 if Ethernet is up, 0 otherwise.
-//   * Bits 26:31 - undefined
+//   * Bits 31:26 - Undefined
 // * arg2: The size (in bytes) of the largest free block in the SDRAM heap
 // * arg3: The size (in bytes) of the largest free block in the SysRAM heap
 //
