@@ -49,7 +49,7 @@ echo "Building SARK"
 
 # Build SC&MP
 echo "Building SC&MP"
-(cd "$WORKING_DIR/scamp" && make install SPINN_DIRS=$WORKING_DIR) || exit 3
+(cd "$WORKING_DIR/scamp" && make GNU=0 install SPINN_DIRS=$WORKING_DIR) || exit 3
 
 # Build documentation
 for document_makefile in $(find docs/ -name Makefile); do

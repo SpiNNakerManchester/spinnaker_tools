@@ -1,6 +1,7 @@
 BUILD_DIR := ../build/
 APP := scamp-3
 THUMB := 1
+GNU ?= 0
 include ../make/Makefile.common
 
 OBJS := spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
