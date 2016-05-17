@@ -372,15 +372,24 @@ uint cmd_rtr (sdp_msg_t *msg)
 //   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
 //                  Chip ID in system controller, 0 otherwise. This check is
 //                  performed on demand.
-//   * Bits 24-14 - The number of routing table entries in the
+//   * Bits 24:14 - The number of routing table entries in the
 //                  largest free block.
 //   * Bit 25     - 1 if Ethernet is up, 0 otherwise.
 //   * Bits 31:26 - Undefined
 // * arg2: The size (in bytes) of the largest free block in the SDRAM heap
 // * arg3: The size (in bytes) of the largest free block in the SysRAM heap
-// * The data payload which follows contains an 18-byte block which gives the
-//   cpu_state_e of each application core with byte 0 containing core 0's state
-//   and so-on.
+//
+// The data payload consists of (in order):
+// * an 18-byte block which gives the cpu_state_e of each application core with
+//   byte 0 containing core 0's state and so-on.
+// * a short giving the P2P address of the closest chip with an active Ethernet.
+//   Note that this is the chip to which SDP packets will be sent to from this
+//   chip when they contain a destination address indicating that they should be
+//   sent over Ethernet.
+// * a 4-byte block containing the IPv4 address of the Ethernet connection on
+//   this chip, made up of the 4 segments of the IPv4 address, each between
+//   0 and 255.  This might equate to an address of 0.0.0.0 if this chip is not
+//   physically connected to the Ethernet port of a board.
 
 uint cmd_info (sdp_msg_t *msg)
 {
@@ -422,8 +431,19 @@ uint cmd_info (sdp_msg_t *msg)
   for (uint core = 0; core < NUM_CPUS; core++)
     *(buf++) = sv_vcpu[core].cpu_state;
 
-  // Returned packet has arg1-3 and a byte per core of data payload
-  return 12 + 18;
+  // Add the nearest Ethernet P2P id
+  *(buf++) = sv->eth_addr & 0xFF;
+  *(buf++) = (sv->eth_addr >> 8) & 0xFF;
+
+  // Add the Ethernet IP address
+  *(buf++) = sv->ip_addr[0];
+  *(buf++) = sv->ip_addr[1];
+  *(buf++) = sv->ip_addr[2];
+  *(buf++) = sv->ip_addr[3];
+
+
+  // Returned packet size
+  return 12 + 18 + 2 + 4;
 }
 
 //------------------------------------------------------------------------------
