@@ -129,17 +129,6 @@ sub scamp_boot
     return $@;
 }
 
-sub resolve_links_read_path
-{
-    my ($file, $bufsize) = @_;
-    my $buf = read_path ($file, $bufsize);
-    if ($buf =~ /symlink (.*)/)
-    {
-        $buf = read_path($1, $bufsize);
-    }
-    return $buf;
-}
-
 
 #------------------------------------------------------------------------------
 
@@ -160,7 +149,7 @@ sub boot
         $sv->update ("sv", find_path ($conf));
     }
 
-    my $buf = resolve_links_read_path ($file, 32768);
+    my $buf = read_path ($file, 32768);
     die "failed to load \"$file\"\n" unless defined $buf;
 
     my $time = time ();
