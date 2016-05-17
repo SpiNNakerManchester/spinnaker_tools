@@ -71,7 +71,7 @@ uint cmd_ffd (sdp_msg_t *msg)
     }
 
   key = (NN_CMD_FBE << 24) + (msg->arg2 & 0x00ff0000) + ID;
-  
+
   ff_nn_send (key, -sum, fwd_rty, 0);
 
   return 0;
@@ -97,50 +97,50 @@ uint cmd_iptag (sdp_msg_t *msg, uint srce_ip)
   if (op == IPTAG_NEW || op == IPTAG_SET)
     {
       if (op == IPTAG_NEW)
-	tag = iptag_new ();
+        tag = iptag_new ();
 
       if (tag != TAG_NONE)
-	{
-	  iptag_t *tt = tag_table + tag;
+        {
+          iptag_t *tt = tag_table + tag;
 
-	  sark_word_set (tt, 0, sizeof (iptag_t));
+          sark_word_set (tt, 0, sizeof (iptag_t));
 
-	  uint timeout = (msg->arg1 >> 24) & 15;
-	  uint flags = (msg->arg1 >> 20) & 0x0f00;
+          uint timeout = (msg->arg1 >> 24) & 15;
+          uint flags = (msg->arg1 >> 20) & 0x0f00;
 
-	  if (timeout != 0)
-	    timeout = 1 << (timeout - 1);
+          if (timeout != 0)
+            timeout = 1 << (timeout - 1);
 
-	  tt->timeout = timeout;
-	  tt->flags = flags |= timeout;
+          tt->timeout = timeout;
+          tt->flags = flags |= timeout;
 
-	  tt->dest_addr = msg->arg2 >> 16;
-	  tt->dest_port = (msg->arg1 >> 8) & 255;
+          tt->dest_addr = msg->arg2 >> 16;
+          tt->dest_port = (msg->arg1 >> 8) & 255;
 
-	  if (msg->arg3 != 0)
-	    {
-	      uchar *ip_addr = (uchar *) &msg->arg3;
-	      copy_ip (ip_addr, tt->ip);
-	    }
-	  else if (! (flags & IPFLAG_REV))
-	    {
-	      copy_ip ((uchar *) &srce_ip, tt->ip);
-	    }
+          if (msg->arg3 != 0)
+            {
+              uchar *ip_addr = (uchar *) &msg->arg3;
+              copy_ip (ip_addr, tt->ip);
+            }
+          else if (! (flags & IPFLAG_REV))
+            {
+              copy_ip ((uchar *) &srce_ip, tt->ip);
+            }
 
-	  if (flags & IPFLAG_REV)
-	    {
-	      tt->rx_port = msg->arg2 & 0xffff;
+          if (flags & IPFLAG_REV)
+            {
+              tt->rx_port = msg->arg2 & 0xffff;
 
-	      tt->flags |= IPFLAG_VALID;
-	    }
-	  else
-	    {
-	      tt->tx_port = msg->arg2 & 0xffff;
+              tt->flags |= IPFLAG_VALID;
+            }
+          else
+            {
+              tt->tx_port = msg->arg2 & 0xffff;
 
-	      tt->flags |= IPFLAG_ARP;
-	      arp_lookup (tt);
-	    }
-	}
+              tt->flags |= IPFLAG_ARP;
+              arp_lookup (tt);
+            }
+        }
 
       msg->arg1 = tag;
 
@@ -152,10 +152,10 @@ uint cmd_iptag (sdp_msg_t *msg, uint srce_ip)
       uint size = msg->arg2 * sizeof (iptag_t);
 
       if (size > SDP_BUF_SIZE)
-	{
-	  msg->cmd_rc = RC_ARG;
-	  return 0;
-	}
+        {
+          msg->cmd_rc = RC_ARG;
+          return 0;
+        }
 
       sark_mem_cpy (&msg->arg1, tt, size);
 
@@ -163,13 +163,13 @@ uint cmd_iptag (sdp_msg_t *msg, uint srce_ip)
     }
   else if (op == IPTAG_TTO)
     {
-      msg->arg1 = (TAG_FIXED_SIZE << 24) + 
-	          (TAG_POOL_SIZE << 16) +
-	          (sizeof (iptag_t) << 8) +
-	          tag_tto;
+      msg->arg1 = (TAG_FIXED_SIZE << 24) +
+                  (TAG_POOL_SIZE << 16) +
+                  (sizeof (iptag_t) << 8) +
+                  tag_tto;
 
       if (msg->arg2 < 16)
-	tag_tto = msg->arg2;
+        tag_tto = msg->arg2;
 
       return 4;
     }
@@ -227,10 +227,10 @@ uint cmd_link_read (sdp_msg_t *msg)
       uint rc = link_read_word (addr, link, buf, timeout);
 
       if (rc != RC_OK)
-	{
-	  msg->cmd_rc = rc;
-	  return 0;
-	}
+        {
+          msg->cmd_rc = rc;
+          return 0;
+        }
 
       addr += 4;
       buf += 1;
@@ -266,10 +266,10 @@ uint cmd_link_write (sdp_msg_t *msg)
       uint rc = link_write_word (addr, link, buf, timeout);
 
       if (rc != RC_OK)
-	{
-	  msg->cmd_rc = rc;
-	  return 0;
-	}
+        {
+          msg->cmd_rc = rc;
+          return 0;
+        }
 
       addr += 4;
       buf += 1;
@@ -331,7 +331,7 @@ uint cmd_rtr (sdp_msg_t *msg)
   else if (op == 1)
     {
       if (! rtr_mc_clear (msg->arg2, count))
-	msg->cmd_rc = RC_ARG;
+        msg->cmd_rc = RC_ARG;
     }
   else if (op == 2)
     {
@@ -339,15 +339,15 @@ uint cmd_rtr (sdp_msg_t *msg)
       uint offset = msg->arg3;
 
       if (! rtr_mc_load (table, count, offset, app_id))
-	msg->cmd_rc = RC_ARG;
+        msg->cmd_rc = RC_ARG;
     }
   else if (op == 3)
     {
       if (msg->arg2 & BIT_31)
-	{
-	  msg->arg1 = rtr_fr_get ();
-	  return 4;
-	}
+        {
+          msg->arg1 = rtr_fr_get ();
+          return 4;
+        }
       rtr_fr_set (msg->arg2);
     }
   else
@@ -365,25 +365,37 @@ uint cmd_rtr (sdp_msg_t *msg)
 //
 // No input arguments expected.
 //
-// The response will contain arg1-3 as desribed below with an additional data
-// payload indicating the application states of all cores.
+// The response will contain arg1-3 as described below with an additional data
+// payload indicating the application states of all cores.  If requested, it
+// will also contain further information.
 // * arg1:
 //   * Bits  4:0  - The number of working cores (including the monitor)
 //   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
 //                  Chip ID in system controller, 0 otherwise. This check is
 //                  performed on demand.
-//   * Bits 24-14 - The number of routing table entries in the
+//   * Bits 24:14 - The number of routing table entries in the
 //                  largest free block.
-//   * Bit 25     - 1 if Ethernet is up, 0 otherwise.
+//   * Bit  25    - 1 if Ethernet is up, 0 otherwise.
 //   * Bits 31:26 - Undefined
 // * arg2: The size (in bytes) of the largest free block in the SDRAM heap
 // * arg3: The size (in bytes) of the largest free block in the SysRAM heap
-// * The data payload which follows contains an 18-byte block which gives the
-//   cpu_state_e of each application core with byte 0 containing core 0's state
-//   and so-on.
+//
+// The data payload consists of (in order):
+// * an 18-byte block which gives the cpu_state_e of each application core with
+//   byte 0 containing core 0's state and so-on.
+// * a short giving the P2P address of the closest chip with an active Ethernet.
+//   Note that this is the chip to which SDP packets will be sent to from this
+//   chip when they contain a destination address indicating that they should be
+//   sent over Ethernet.
+// * a 4-byte block containing the IPv4 address of the Ethernet connection on
+//   this chip, made up of the 4 segments of the IPv4 address, each between
+//   0 and 255.  This might equate to an address of 0.0.0.0 if this chip is not
+//   physically connected to the Ethernet port of a board.
+//
 
 uint cmd_info (sdp_msg_t *msg)
 {
+
   // Get number of working CPUs
   msg->arg1 = sv->num_cpus & 0x0000001F;
 
@@ -405,25 +417,41 @@ uint cmd_info (sdp_msg_t *msg)
       if (link_en & (1 << link))
         {
           uint remote_chip_id;
-          uint rc = link_read_word ((uint)(sc + SC_CHIP_ID), link, &remote_chip_id, timeout);
+          uint rc = link_read_word (
+            (uint)(sc + SC_CHIP_ID), link, &remote_chip_id, timeout);
           if (rc == RC_OK && remote_chip_id == local_chip_id)
+            {
             msg->arg1 |= 1 << (link + 8);
+            }
         }
     }
 
   // Get largest free block in SDRAM
   msg->arg2 = sark_heap_max (sv->sdram_heap, ALLOC_LOCK);
-  // 
+
   // Get largest free block in SysRAM
   msg->arg3 = sark_heap_max (sv->sysram_heap, ALLOC_LOCK);
-  
+
   // Add core states to the message
   uchar *buf = (uchar*) &(msg->data);
   for (uint core = 0; core < NUM_CPUS; core++)
-    *(buf++) = sv_vcpu[core].cpu_state;
+    {
+      *(buf++) = sv_vcpu[core].cpu_state;
+    }
 
-  // Returned packet has arg1-3 and a byte per core of data payload
-  return 12 + 18;
+  // Add the nearest Ethernet P2P id
+  *(buf++) = sv->eth_addr & 0xFF;
+  *(buf++) = (sv->eth_addr >> 8) & 0xFF;
+
+  // Add the Ethernet IP address
+  *(buf++) = sv->ip_addr[0];
+  *(buf++) = sv->ip_addr[1];
+  *(buf++) = sv->ip_addr[2];
+  *(buf++) = sv->ip_addr[3];
+
+
+  // Returned packet size
+  return 12 + 18 + 2 + 4;
 }
 
 //------------------------------------------------------------------------------
@@ -468,17 +496,17 @@ void proc_send (uint data, uint mask)
   for (uint i = 0; i < 16; i++)
     {
       if (mask & (1 << i))
-	{
-	  uint valid = levels[level].valid[i];
+        {
+          uint valid = levels[level].valid[i];
 
-	  if (valid)
-	    {
-	      uint addr = levels[level].addr[i];
+          if (valid)
+            {
+              uint addr = levels[level].addr[i];
 
-	      levels[level].sent++;
-	      p2p_send_reg (data & (3 << 22), addr, data); //##
-	    }
-	}
+              levels[level].sent++;
+              p2p_send_reg (data & (3 << 22), addr, data); //##
+            }
+        }
     }
 }
 
@@ -511,18 +539,18 @@ void p2p_region (uint data, uint srce)
       data &= 0x000fffff;	// trim to 20 bits
 
       if (mode == MODE_OR)
-	{
-	  levels[level].result += data & 0xffff;
-	  levels[level].result |= data & (1 << 16);
-	}
+        {
+          levels[level].result += data & 0xffff;
+          levels[level].result |= data & (1 << 16);
+        }
       else if (mode == MODE_AND)
-	{
-	  uint count = (levels[level].result + data) & 0xffff;
-	  uint bit = levels[level].result & data & (1 << 16);
-	  levels[level].result = bit | count;
-	}
+        {
+          uint count = (levels[level].result + data) & 0xffff;
+          uint bit = levels[level].result & data & (1 << 16);
+          levels[level].result = bit | count;
+        }
       else
-	levels[level].result += data;
+        levels[level].result += data;
 
       levels[level].rcvd++;
 
@@ -551,37 +579,37 @@ void p2p_region (uint data, uint srce)
       uint mask = 0;
 
       for (uint i = 1; i < num_cpus; i++)
-	{
-	  uint b = (core_app[i] & app_mask) == app_id;
-	  mask |= b << i;
-	}
+        {
+          uint b = (core_app[i] & app_mask) == app_id;
+          mask |= b << i;
+        }
 
       result = 0;
 
       if (mode == MODE_SUM)
-	{
-	  for (uint i = 1; i < num_cpus; i++)
-	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state))
-	      result++;
-	}
+        {
+          for (uint i = 1; i < num_cpus; i++)
+            if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state))
+              result++;
+        }
       else if (mode == MODE_OR)
-	{
-	  for (uint i = 1; i < num_cpus; i++)
-	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state))
-	      result = 1 << 16;
+        {
+          for (uint i = 1; i < num_cpus; i++)
+            if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state))
+              result = 1 << 16;
 
-	  result++;
-	}
+          result++;
+        }
       else // MODE_AND
-	{
-	  result = 1 << 16;
+        {
+          result = 1 << 16;
 
-	  for (uint i = 1; i < num_cpus; i++)
-	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state != state))
-	      result = 0;
+          for (uint i = 1; i < num_cpus; i++)
+            if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state != state))
+              result = 0;
 
-	  result++;
-	}
+          result++;
+        }
     }
   else if (cmd == APP_SIG)
     {
@@ -613,10 +641,10 @@ uint cmd_sig (sdp_msg_t *msg)
       uint mask = msg->arg3;
 
       if (mask == 0)
-	{
-	  msg->cmd_rc = RC_ARG;
-	  return 0;
-	}
+        {
+          msg->cmd_rc = RC_ARG;
+          return 0;
+        }
 
       uint level = (data >> 26) & 3;
 
@@ -631,9 +659,9 @@ uint cmd_sig (sdp_msg_t *msg)
   else if (type == 2)
     {
       ff_nn_send ((NN_CMD_SIG0 << 24) + 0x3f0000,
-		  (5 << 28) + data,
-	          0x3f00,
-		  1);
+                  (5 << 28) + data,
+                  0x3f00,
+                  1);
     }
   else
     {
@@ -672,9 +700,9 @@ uint cmd_alloc (sdp_msg_t *msg)
     {
     case ALLOC_SDRAM:
       msg->arg1 = (uint) sark_xalloc (sv->sdram_heap,
-				      msg->arg2,
-				      msg->arg3,
-				      ALLOC_LOCK + ALLOC_ID + (app_id << 8));
+                                      msg->arg2,
+                                      msg->arg3,
+                                      ALLOC_LOCK + ALLOC_ID + (app_id << 8));
       sv->app_data[app_id].clean = 0;
       break;
 
@@ -775,10 +803,10 @@ uint scamp_debug (sdp_msg_t *msg, uint srce_ip)
     case CMD_VER:
       return cmd_ver (msg);
 
-    case CMD_READ: 
+    case CMD_READ:
       return sark_cmd_read (msg);
 
-    case CMD_WRITE: 
+    case CMD_WRITE:
       return sark_cmd_write (msg);
 
     case CMD_FILL:
@@ -823,7 +851,7 @@ uint scamp_debug (sdp_msg_t *msg, uint srce_ip)
 
     case CMD_RTR:
       return cmd_rtr (msg);
-    
+
     case CMD_INFO:
       return cmd_info (msg);
 
