@@ -1213,21 +1213,40 @@ void proc_100hz (uint a1, uint a2)
       break;
     
     case NETINIT_PHASE_BIFF:
-      // Send the BIFFs and consider the job done!
-      last_netinit_broadcast = 0;
-      netinit_phase = NETINIT_PHASE_P2P_TABLE;
+      // The board information floodfilll is allowed three 100Hz ticks. In the
+      // first tick, the board information is actually broadcast. In the second
+      // tick, nothing happens and in the third the state advances to the P2P
+      // table generation phase.
+      //
+      // The reason for using more than one tick is that the 10ms ticks around
+      // the machine are not aligned. As a result, some chips may be *almost*
+      // 10ms ahead of others. Since it is important that blacklisting
+      // information is broadcast ahead of P2P generation, leaving an extra
+      // "tick" before moving to the next state should deal with the problem. A
+      // third tick is left to allow extra leeway accounting for the fact that
+      // the timers are not necessarily *perfectly* aligned to within 10ms...
       
-      if (sv->board_info)
+      last_netinit_broadcast++;
+      
+      if (last_netinit_broadcast == 1)
         {
-          uint num_info_words = sv->board_info[0];
-          uint *info_word = sv->board_info + 1;
-          while (num_info_words--)
+          if (sv->board_info)
             {
-              // Handle command on this chip
-              nn_cmd_biff(0, 0, *(info_word));
-              // Also flood to other chips on this board
-              biff_nn_send(*(info_word++));
+              uint num_info_words = sv->board_info[0];
+              uint *info_word = sv->board_info + 1;
+              while (num_info_words--)
+                {
+                  // Handle command on this chip
+                  nn_cmd_biff(0, 0, *(info_word));
+                  // Also flood to other chips on this board
+                  biff_nn_send(*(info_word++));
+                }
             }
+        }
+      else if (last_netinit_broadcast >= 3)
+        {
+          last_netinit_broadcast = 0;
+          netinit_phase = NETINIT_PHASE_P2P_TABLE;
         }
       break;
     
