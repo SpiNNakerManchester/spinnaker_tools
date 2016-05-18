@@ -659,33 +659,24 @@ void proc_route_msg (uint arg1, uint srce_ip)
       msg->flags = flags &= ~SDPF_SUM;
     }
 
-  uint dest_addr = msg->dest_addr;
-  uint srce_addr = msg->srce_addr;
-
   // Map (255, 255) to the root chip's coordinates
-  if (dest_addr == 0xFFFF)
-    {
-      msg->dest_addr = p2p_root;
-      dest_addr = p2p_root;
-    }
-  if (srce_addr == 0xFFFF)
-    {
-      msg->srce_addr = p2p_root;
-      srce_addr = p2p_root;
-    }
+  if (msg->dest_addr == 0xFFFF)
+    msg->dest_addr = p2p_root;
+  if (msg->srce_addr == 0xFFFF)
+    msg->srce_addr = p2p_root;
 
   // Off-chip via P2P
 
-  if (dest_addr != srce_addr && dest_addr != p2p_addr &&
+  if (msg->dest_addr != msg->srce_addr && msg->dest_addr != p2p_addr &&
       (flags & SDPF_NR) == 0)
     {
-      if (p2p_up == 0 || rtr_p2p_get (dest_addr) == 6)
+      if (p2p_up == 0 || rtr_p2p_get (msg->dest_addr) == 6)
 	{
 	  return_msg (msg, RC_ROUTE);
 	  return;
 	}
 
-      uint rc = p2p_send_msg (dest_addr, msg);
+      uint rc = p2p_send_msg (msg->dest_addr, msg);
 
       if (rc == RC_OK)
 	sark_msg_free (msg);
