@@ -664,9 +664,15 @@ void proc_route_msg (uint arg1, uint srce_ip)
 
   // Map (255, 255) to the root chip's coordinates
   if (dest_addr == 0xFFFF)
-    dest_addr = p2p_root;
+    {
+      msg->dest_addr = p2p_root;
+      dest_addr = p2p_root;
+    }
   if (srce_addr == 0xFFFF)
-    srce_addr = p2p_root;
+    {
+      msg->srce_addr = p2p_root;
+      srce_addr = p2p_root;
+    }
 
   // Off-chip via P2P
 
