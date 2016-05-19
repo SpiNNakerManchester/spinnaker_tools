@@ -519,7 +519,8 @@ void p2pb_nn_send(uint arg1, uint arg2)
   key |= chksum_64 (key, data);
 
   for (uint link = 0; link < NUM_LINKS; link++)
-    pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    if (link_en & (1 << link))
+      pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
 }
 
 // Update our current best guess of our coordinates based on a packet from a
