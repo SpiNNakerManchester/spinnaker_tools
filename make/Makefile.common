@@ -47,7 +47,7 @@ ifeq ($(GNU),1)
     CXX_NO_THUMB := $(GP)-gcc -c -mthumb-interwork -march=armv5te -std=c++11 -I $(SPINN_INC_DIR) -fno-rtti -fno-exceptions
     
     ifeq ($(LIB), 1)
-        CFLAGS += -Os -fdata-sections -ffunction-sections
+        CFLAGS += -fdata-sections -ffunction-sections
         LD := $(GP)-ld -i
     else
         LD := $(GP)-gcc -T$(SPINN_TOOLS_DIR)/sark.lnk -Wl,-e,cpu_reset -Wl,-static -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
