@@ -45,6 +45,11 @@ ifeq ($(GNU),1)
     AS := $(GP)-as --defsym GNU=1 -mthumb-interwork -march=armv5te
     CC_NO_THUMB  := $(GP)-gcc -c -mthumb-interwork -march=armv5te -std=gnu99 -I $(SPINN_INC_DIR)
     CXX_NO_THUMB := $(GP)-gcc -c -mthumb-interwork -march=armv5te -std=c++11 -I $(SPINN_INC_DIR) -fno-rtti -fno-exceptions
+    CC_THUMB  := $(CC_NO_THUMB) -mthumb -DTHUMB
+    CXX_THUMB := $(CXX_NO_THUMB) -mthumb -DTHUMB
+    
+    OSPACE := -Os
+    OTIME := -Ofast
     
     ifeq ($(LIB), 1)
         CFLAGS += -fdata-sections -ffunction-sections
@@ -54,19 +59,22 @@ ifeq ($(GNU),1)
         LFLAGS += -L $(SPINN_LIB_DIR)
     endif
     
-    CC_THUMB  := $(CC_NO_THUMB) -mthumb -DTHUMB
-    CXX_THUMB := $(CXX_NO_THUMB) -mthumb -DTHUMB
     AR := $(GP)-ar -rcs
     OC := $(GP)-objcopy
-    OD := $(GP)-objdump -dxt
+    OD := $(GP)-objdump -dxt >
     NM := $(GP)-nm
     SPINN_LIBS += $(SPINN_LIB_DIR)/libspin1_api.a
 
 else
     # ARM Compiler settings
     AS := armasm --keep --cpu=5te --apcs /interwork
-    CC_NO_THUMB := armcc -c --c99 --cpu=5te -Ospace --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
+    CC_NO_THUMB := armcc -c --c99 --cpu=5te --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
+    CXX_NO_THUMB := armcc -c --cpp11 --cpu=5te --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR) --no_rtti --no_exceptions
     CC_THUMB := $(CC_NO_THUMB) --thumb -DTHUMB
+    CXX_THUMB := $(CXX_NO_THUMB) --thumb -DTHUMB
+    
+    OSPACE := -Ospace
+    OTIME := -Otime
     
     ifeq ($(LIB), 1)
         CFLAGS += --split_sections
@@ -104,35 +112,42 @@ endif
 
 
 # Primary target is an APLX file - built from the ELF
-#  1) Create a binary file which is the concatenation of RO and RW sections
-#  2) Make an APLX header from the ELF file with "mkaplx" and concatenate
+#  1) Make an APLX header from the ELF file with "mkaplx" and concatenate
 #     that with the binary to make the APLX file
-#  3) Remove temporary files and "ls" the APLX file
-$(APP_OUTPUT_DIR)%.aplx: $(BUILD_DIR)%.elf
+#  2) "ls" the APLX file
+$(APP_OUTPUT_DIR)%.aplx: $(BUILD_DIR)%.bin $(BUILD_DIR)%.nm
 	$(MKDIR) $(APP_OUTPUT_DIR)
+	$(SPINN_TOOLS_DIR)/mkaplx $(BUILD_DIR)$*.nm | $(CAT) - $(BUILD_DIR)$*.bin > $@
+	$(LS) $@
+
+# Create a list of the objects in the file using nm
+$(BUILD_DIR)%.nm: $(BUILD_DIR)%.elf
+	$(NM) $< > $@
+	
+# Create a binary file which is the concatenation of RO and RW sections
+$(BUILD_DIR)%.bin: $(BUILD_DIR)%.elf
 ifeq ($(GNU),1)
 	$(OC) -O binary -j RO_DATA $< $(BUILD_DIR)RO_DATA.bin
 	$(OC) -O binary -j RW_DATA $< $(BUILD_DIR)RW_DATA.bin
-	$(SPINN_TOOLS_DIR)/mkbin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin > $(BUILD_DIR)$*.bin
+	$(SPINN_TOOLS_DIR)/mkbin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin > $@
+	$(RM) $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin
 else
-	$(OC) --bin --output $*.bin $<
+	$(OC) --bin --output $@ $<
 endif
-	$(SPINN_TOOLS_DIR)/mkaplx -nm $(NM) $< | $(CAT) - $(BUILD_DIR)$*.bin > $@
-	$(RM) $(BUILD_DIR)$*.bin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin
-	$(LS) $@
 
 # Build the ELF file
 #  1) Make a "sark_build.c" file containing app. name and build time
 #     with "mkbuild" and compile it
 #  2) Link application object(s), build file and library to make the ELF
 #  3) Tidy up temporaries and create a list file
-$(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT)
+$(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT) $(BUILD_DIR)%_build.o
 	$(MKDIR) $(BUILD_DIR)
-	$(SPINN_TOOLS_DIR)/mkbuild $* > $(BUILD_DIR)sark_build.c
-	$(CC) -o $(BUILD_DIR)sark_build.o $(BUILD_DIR)sark_build.c
-	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)sark_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
-	$(RM) $(BUILD_DIR)sark_build.c $(BUILD_DIR)sark_build.o
-	$(OD) > $(BUILD_DIR)$*.txt $@
+	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
+	$(OD) $(BUILD_DIR)$*.txt $@
+	
+# Build sark_build.o
+$(BUILD_DIR)%_build.c:
+	$(SPINN_TOOLS_DIR)/mkbuild $* > $@
 
 $(BUILD_DIR)%.o: %.c
 	$(MKDIR) $(BUILD_DIR)

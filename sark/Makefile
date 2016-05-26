@@ -16,7 +16,6 @@ else
 endif
 
 SARKLIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
-SARKINT := $(SPINN_LIB_DIR)/$(LIBNAME).o
 
 #-------------------------------------------------------------------------------
 
@@ -35,9 +34,9 @@ $(SARKLIB): $(SARKOBJ)
 	$(RM) $@
 	$(AR) $@ $^
 
-$(SARKINT): $(SARKOBJ)
+%/sark.o: $(SARKOBJ)
 	$(RM) $@
-	$(LD) -o $(SARKINT) $^
+	$(LD) -o $@ $^
 
 #-------------------------------------------------------------------------------
 
@@ -80,4 +79,4 @@ $(BUILD_DIR)/sark_isr.o: sark_isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR
 #-------------------------------------------------------------------------------
 
 clean:
-	$(RM) $(SARKLIB) $(SARKINT) $(SARKOBJ) $(SARK_ASM_OBJ)
+	$(RM) $(SARKLIB) $(SARKOBJ) $(SARK_ASM_OBJ)
