@@ -19,6 +19,8 @@ endif
 
 APILIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
 
+CFLAGS += $(OSIZE)
+
 #-------------------------------------------------------------------------------
 
 # APILIB (default target)
