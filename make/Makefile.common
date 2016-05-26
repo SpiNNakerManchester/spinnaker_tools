@@ -91,6 +91,7 @@ else
 endif
 
 RM := rm -f
+RMDIR := rmdir
 CAT := cat
 LS := ls -l
 MKDIR := mkdir -p
@@ -136,10 +137,8 @@ else
 endif
 
 # Build the ELF file
-#  1) Make a "sark_build.c" file containing app. name and build time
-#     with "mkbuild" and compile it
-#  2) Link application object(s), build file and library to make the ELF
-#  3) Tidy up temporaries and create a list file
+#  1) Link application object(s), build file and library to make the ELF
+#  2) Create a list file
 $(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT) $(BUILD_DIR)%_build.o
 	$(MKDIR) $(BUILD_DIR)
 	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@

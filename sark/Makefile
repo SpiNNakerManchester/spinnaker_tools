@@ -17,6 +17,8 @@ endif
 
 SARKLIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
 
+CFLAGS += $(OSIZE)
+
 #-------------------------------------------------------------------------------
 
 # SARK objects

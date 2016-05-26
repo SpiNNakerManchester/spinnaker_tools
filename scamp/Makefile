@@ -17,20 +17,20 @@ else
 endif
 
 
-$(APP).boot: $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP)_boot.tab $(BUILD_DIR)$(APP).sv sark_pad.aplx $(BUILD_DIR)$(APP).bin
+$(APP).boot: $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP)_boot.tab $(BUILD_DIR)$(APP).sv $(BUILD_DIR)sark_pad.aplx $(BUILD_DIR)$(APP).bin
 #	$(SPINN_TOOLS_DIR)/mkaplx -scamp $(BUILD_DIR)$(APP).nm > $(BUILD_DIR)scamp.tab
 #	cat $(BUILD_DIR)scamp.tab $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)scamp-3.sv $(BUILD_DIR)sark_pad.aplx $(BUILD_DIR)scamp-3.bin > $(APP).aplx
 	
-	cat $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP)_boot.tab $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP).sv sark_pad.aplx $(BUILD_DIR)$(APP).bin > $(APP).boot
+	cat $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP)_boot.tab $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP).sv $(BUILD_DIR)sark_pad.aplx $(BUILD_DIR)$(APP).bin > $(APP).boot
 #	$(LS) $(APP).aplx
 	$(LS) $(APP).boot
 	
 $(BUILD_DIR)$(APP).elf: $(OBJS) $(SARK_LIB) $(BUILD_DIR)$(APP)_build.o $(APP).sct
 ifeq ($(GNU),1)
-	$(LD) $(OBJS) $(BUILD_DIR)_build.o $(SARKLIB) -o $(APP).elf
+	$(LD) $(OBJS) $(BUILD_DIR)$(APP)_build.o $(SARKLIB) -o $@
 else
 	armlink --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
-	  $(BUILD_DIR)$(APP)_build.o --output $(BUILD_DIR)$(APP).elf 
+	  $(BUILD_DIR)$(APP)_build.o --output $@
 endif
 
 %_boot.tab: %.nm
@@ -39,15 +39,16 @@ endif
 %.sv:
 	perl mksv > $@
 
-sark_pad.aplx: sark.aplx
+$(BUILD_DIR)sark_pad.aplx: $(BUILD_DIR)sark.aplx
 	perl mkpad $< 3584 > $@
 
 install: $(APP).boot # $(APP).aplx
 	$(MV) $(APP).boot ../tools/boot/scamp.boot
 #	$(MV) $(APP).aplx ../tools/boot/scamp.aplx
 
-$(BUILD_DIR)sark.elf: $(BUILD_DIR)sark.o $(BUILD_DIR)sark_build.o $(SARKLIB)
-	 $(LD) $(BUILD_DIR)sark.o $(BUILD_DIR)sark_build.o $(SARKLIB) --output $@
+$(BUILD_DIR)$(BUILD_DIR)sark.elf: $(BUILD_DIR)sark.o $(BUILD_DIR)sark_build.o $(SARKLIB)
+	$(MKDIR) $(BUILD_DIR)$(BUILD_DIR)
+	$(LD) $(BUILD_DIR)sark.o $(BUILD_DIR)sark_build.o $(SARKLIB) --output $@
 	
 ifeq ($(GNU),1)
 $(BUILD_DIR)%.gas: $(BUILD_DIR)%.s
@@ -57,8 +58,8 @@ $(BUILD_DIR)%.gas: %.s
 	$(SPINN_TOOLS_DIR)/arm2gas $< > $@
 
 $(BUILD_DIR)boot_aplx.elf: $(BUILD_DIR)boot_aplx.gas $(BUILD_DIR)spinnaker.gas $(BUILD_DIR)sark.gas
-	$(AS) -I $(BUILD_DIR) -o $@ $<
-	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx -nostartfiles boot_aplx.o -o boot_aplx.elf
+	$(AS) -I $(BUILD_DIR) -o $(BUILD_DIR)boot_aplx.o $<
+	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx -nostartfiles $(BUILD_DIR)boot_aplx.o -o $@
 		
 else
 $(BUILD_DIR)boot_aplx.elf: boot_aplx.s $(BUILD_DIR)spinnaker.s $(BUILD_DIR)sark.s
@@ -67,10 +68,11 @@ $(BUILD_DIR)boot_aplx.elf: boot_aplx.s $(BUILD_DIR)spinnaker.s $(BUILD_DIR)sark.
 endif
 
 $(BUILD_DIR)%.s: $(SPINN_INC_DIR)/%.h
+	$(MKDIR) $(BUILD_DIR)
 	h2asm $< > $@
 
-scamp-isr.o: scamp-isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
-	$(CC_NO_THUMB) $(CFLAGS) scamp-isr.c
+$(BUILD_DIR)scamp-isr.o: scamp-isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
+	$(CC_NO_THUMB) $(CFLAGS) scamp-isr.c -o $@
 
 tar:
 	tar -C .. -czf /tmp/scamp.tgz scamp/spinn_phy.c \
@@ -82,4 +84,6 @@ tar:
 	scamp/Makefile scamp/mkpad scamp/mksv
 
 clean:
-	$(RM) $(BUILD_DIR)* sark_pad.aplx
+	$(RM) $(BUILD_DIR)$(BUILD_DIR)*
+	$(RM) -r $(BUILD_DIR)$(BUILD_DIR)
+	$(RM) $(BUILD_DIR)* $(APP).boot
