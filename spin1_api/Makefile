@@ -19,7 +19,8 @@ endif
 
 APILIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
 
-CFLAGS += $(OSIZE)
+APIOPT ?= $(OSIZE)
+CFLAGS += $(APIOPT)
 
 #-------------------------------------------------------------------------------
 

@@ -17,7 +17,8 @@ endif
 
 SARKLIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
 
-CFLAGS += $(OSIZE)
+SARKOPT ?= $(OSIZE)
+CFLAGS += $(SARKOPT)
 
 #-------------------------------------------------------------------------------
 
