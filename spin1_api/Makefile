@@ -19,7 +19,7 @@ endif
 
 APILIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
 
-APIOPT ?= $(OSIZE)
+APIOPT ?= $(OSPACE)
 CFLAGS += $(APIOPT)
 
 #-------------------------------------------------------------------------------

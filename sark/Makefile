@@ -4,7 +4,8 @@ BUILD_DIR := ../build
 LIB := 1
 include ../make/Makefile.common
 
-CFLAGS += -DSARK_API
+SARKOPT ?= $(OSPACE)
+CFLAGS += -DSARK_API $(SARKOPT)
 
 #-------------------------------------------------------------------------------
 ifeq ($(GNU),1)
@@ -17,8 +18,6 @@ endif
 
 SARKLIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
 
-SARKOPT ?= $(OSIZE)
-CFLAGS += $(SARKOPT)
 
 #-------------------------------------------------------------------------------
 
