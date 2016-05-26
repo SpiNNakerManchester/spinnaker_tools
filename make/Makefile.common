@@ -150,7 +150,7 @@ $(BUILD_DIR)%_build.c:
 
 $(BUILD_DIR)%.o: %.c
 	$(MKDIR) $(BUILD_DIR)
-	$(CC) $(CFLAGS) -DBLAH=BLAH -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 	
 $(BUILD_DIR)%.o: %.cpp
 	$(MKDIR) $(BUILD_DIR)
