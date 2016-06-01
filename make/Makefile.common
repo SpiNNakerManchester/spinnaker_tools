@@ -10,7 +10,7 @@ API ?= 1
 THUMB ?= 0
 
 # Set to 1 to include debug info in ELF file
-DEBUG ?= 0
+DEBUG ?= 1
 
 # Set to 1 if making a library (advanced!)
 LIB ?= 0
@@ -24,11 +24,19 @@ ifndef SPINN_DIRS
 endif
 
 ifndef APP_OUTPUT_DIR
-    APP_OUTPUT_DIR = ./
+    APP_OUTPUT_DIR := ./
 endif
 
 ifndef BUILD_DIR
-    BUILD_DIR = build/
+    ifeq ($(GNU),1)
+        BUILD_DIR := build/gnu/
+    else
+        BUILD_DIR := build/arm/
+    endif
+endif
+
+ifeq ($(DEBUG),1)
+.SECONDARY: $(BUILD_DIR)$(APP).elf
 endif
 
 SPINN_LIB_DIR = $(SPINN_DIRS)/lib
