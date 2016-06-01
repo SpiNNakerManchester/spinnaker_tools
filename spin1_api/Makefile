@@ -1,6 +1,10 @@
 
 # Makefile for spin1_api
-BUILD_DIR := ../build
+ifeq ($(GNU),1)
+    BUILD_DIR := ../build/gnu
+else
+    BUILD_DIR := ../build/arm
+endif
 LIB := 1
 include ../make/Makefile.common
 

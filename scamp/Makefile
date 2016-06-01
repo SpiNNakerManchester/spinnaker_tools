@@ -1,4 +1,8 @@
-BUILD_DIR := build/
+ifeq ($(GNU),1)
+    BUILD_DIR := build/gnu/
+else
+    BUILD_DIR := build/arm/
+endif
 APP := scamp-3
 THUMB := 1
 GNU ?= 0
@@ -67,23 +71,28 @@ $(BUILD_DIR)$(BUILD_DIR)sark.elf: $(BUILD_DIR)sark.o $(BUILD_DIR)sark_build.o $(
 # Create the boot_aplx elf file (uses a different linker script)
 ifeq ($(GNU),1)
 $(BUILD_DIR)%.gas: $(BUILD_DIR)%.s
+	$(MKDIR) $(BUILD_DIR)
 	$(SPINN_TOOLS_DIR)/arm2gas $< > $@
 
 $(BUILD_DIR)%.gas: %.s
+	$(MKDIR) $(BUILD_DIR)
 	$(SPINN_TOOLS_DIR)/arm2gas $< > $@
 
 $(BUILD_DIR)boot_aplx.elf: $(BUILD_DIR)boot_aplx.gas $(BUILD_DIR)spinnaker.gas $(BUILD_DIR)sark.gas
+	$(MKDIR) $(BUILD_DIR)
 	$(AS) -I $(BUILD_DIR) -o $(BUILD_DIR)boot_aplx.o $<
 	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx -nostartfiles $(BUILD_DIR)boot_aplx.o -o $@
 		
 else
 $(BUILD_DIR)boot_aplx.elf: boot_aplx.s $(BUILD_DIR)spinnaker.s $(BUILD_DIR)sark.s
+	$(MKDIR) $(BUILD_DIR)
 	$(AS) -I $(BUILD_DIR) boot_aplx.s -o $(BUILD_DIR)boot_aplx.o
 	armlink --ro_base 0 -o $@ $(BUILD_DIR)boot_aplx.o
 endif
 
 # Convert h file to s
 $(BUILD_DIR)%.s: $(SPINN_INC_DIR)/%.h
+	$(MKDIR) $(BUILD_DIR)
 	$(MKDIR) $(BUILD_DIR)
 	h2asm $< > $@
 
@@ -101,6 +110,4 @@ tar:
 	scamp/Makefile scamp/mkpad scamp/mksv
 
 clean:
-	$(RM) $(BUILD_DIR)$(BUILD_DIR)*
-	$(RM) -r $(BUILD_DIR)$(BUILD_DIR)
-	$(RM) $(BUILD_DIR)* $(APP).boot
+	$(RM) -r $(BUILD_DIR)* $(APP).boot
