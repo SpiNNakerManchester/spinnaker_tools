@@ -1,22 +1,22 @@
 # Common includes for making SpiNNaker binaries
 
 # Set to 1 for GNU tools, 0 for ARM
-GNU ?= 1
+GNU := 1
 
 # Set to 1 if using SARK/API (0 for SARK)
-API ?= 1
+API := 1
 
 # Set to 1 to make Thumb code (0 for ARM)
-THUMB ?= 0
+THUMB := 0
 
 # Set to 1 to include debug info in ELF file
-DEBUG ?= 1
+DEBUG := 1
 
 # Set to 1 if making a library (advanced!)
-LIB ?= 0
+LIB := 0
 
 # Prefix for GNU tool binaries
-GP  ?= arm-none-eabi
+GP := arm-none-eabi
 
 # If SPINN_DIRS is not defined, this is an error!
 ifndef SPINN_DIRS

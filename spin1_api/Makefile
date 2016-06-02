@@ -5,8 +5,8 @@ ifeq ($(GNU),1)
 else
     BUILD_DIR := ../build/arm
 endif
-LIB := 1
 include ../make/Makefile.common
+LIB := 1
 
 #-------------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ endif
 
 APILIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
 
-APIOPT ?= $(OSPACE)
+APIOPT := $(OSPACE)
 CFLAGS += $(APIOPT)
 
 #-------------------------------------------------------------------------------
