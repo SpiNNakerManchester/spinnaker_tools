@@ -1,5 +1,5 @@
 APPS = aggregator tracer
-GNU ?= 1
+GNU := 1
 
 all:
 	for app in $(APPS); do ("$(MAKE)" -f Makefile.spinn GNU=$(GNU) APP=$$app) || exit $$?; done

@@ -5,10 +5,10 @@ ifeq ($(GNU),1)
 else
     BUILD_DIR := ../build/arm
 endif
-LIB := 1
+override LIB := 1
 include ../make/Makefile.common
 
-SARKOPT ?= $(OSPACE)
+SARKOPT := $(OSPACE)
 CFLAGS += -DSARK_API $(SARKOPT)
 
 #-------------------------------------------------------------------------------

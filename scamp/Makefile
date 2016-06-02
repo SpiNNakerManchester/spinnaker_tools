@@ -1,11 +1,5 @@
-ifeq ($(GNU),1)
-    BUILD_DIR := build/gnu/
-else
-    BUILD_DIR := build/arm/
-endif
 APP := scamp-3
-THUMB := 1
-GNU ?= 0
+override THUMB := 1
 include ../make/Makefile.common
 
 SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
