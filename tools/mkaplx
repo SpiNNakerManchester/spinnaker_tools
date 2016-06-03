@@ -22,11 +22,11 @@ my @addrs;
 
 sub usage ()
 {
-    die "usage: mkaplx [-text] [-scamp] [-boot] [-nm nm] <ELF file> [<file> <addr>]*\n"
+    die "usage: mkaplx [-text] [-scamp] [-boot] <nm file> [<file> <addr>]*\n"
 }
 
 my $count = 0;
-my ($text, $scamp, $boot, $nm) = (0, 0, 0, "nm");
+my ($text, $scamp, $boot) = (0, 0, 0);
 
 
 # Process arguments
@@ -37,12 +37,9 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^-.+/)
     $text = 1 if $flag eq "-text";
     $scamp = 1 if $flag eq "-scamp";
     $boot = 1 if $flag eq "-boot";
-    $nm = shift @ARGV if $flag eq "-nm";
 }
 
 usage () unless $#ARGV >= 0;
-
-print STDERR "Using $nm\n";
 
 my $file = shift @ARGV;
 
@@ -78,9 +75,9 @@ my ($RW_TO, $RW_FROM, $RW_LENGTH);
 my ($ZI_TO, $ZI_LENGTH);
 
 
-# Read ELF file symbols using "nm"
+# Read ELF file symbols from nm format
 
-open my $fh, "-|", "$nm $file" or die "Can't open pipe \"$nm $file\"\n";
+open my $fh, "<", "$file" or die "Can't open \"$file\"\n";
 binmode($fh);
 
 while (<$fh>)

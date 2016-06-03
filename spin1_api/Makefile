@@ -1,8 +1,12 @@
 
 # Makefile for spin1_api
-BUILD_DIR := ../build
-LIB := 1
+ifeq ($(GNU),1)
+    BUILD_DIR := ../build/gnu
+else
+    BUILD_DIR := ../build/arm
+endif
 include ../make/Makefile.common
+LIB := 1
 
 #-------------------------------------------------------------------------------
 
@@ -13,24 +17,25 @@ HEADER := $(HEADERS:%.h=$(SPINN_INC_DIR)/%.h)
 
 ifeq ($(GNU),1)
   LIBNAME := libspin1_api
-  SARKOBJ := $(SPINN_LIB_DIR)/libsark.o 
 else
   LIBNAME := spin1_api
-  SARKOBJ := $(SPINN_LIB_DIR)/sark.o 
 endif
 
 APILIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
+
+APIOPT := $(OSPACE)
+CFLAGS += $(APIOPT)
 
 #-------------------------------------------------------------------------------
 
 # APILIB (default target)
 
-$(APILIB): $(SARKOBJ) $(APIOBJ)
+$(APILIB): $(BUILD_DIR)/sark.o $(APIOBJ)
 	$(RM) $@
 	$(AR) $@ $^
 
-$(SARKOBJ):
-	cd ../sark/; $(MAKE) $(SARKOBJ)
+$(BUILD_DIR)/sark.o:
+	cd ../sark/; $(MAKE) $@
 
 #-------------------------------------------------------------------------------
 
@@ -45,4 +50,4 @@ $(BUILD_DIR)/spin1_isr.o: spin1_isr.c $(HEADER)
 #-------------------------------------------------------------------------------
 
 clean:
-	$(RM) $(APILIB) $(APIOBJ)
+	$(RM) $(APILIB) $(APIOBJ) $(BUILD_DIR)/sark.o

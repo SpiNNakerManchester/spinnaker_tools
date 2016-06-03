@@ -1,12 +1,11 @@
-BUILD_DIR := ../build/
 APP := scamp-3
-THUMB := 1
-GNU ?= 0
+override THUMB := 1
 include ../make/Makefile.common
 
-OBJS := spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
-       scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o \
-       $(APP).o
+SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
+             scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o \
+             $(APP).o
+OBJS := $(SCAMP_OBJS:%.o=$(BUILD_DIR)%.o)
 
 ifeq ($(GNU),1)
     SARKLIB := $(SPINN_LIB_DIR)/libsark.a
@@ -15,90 +14,85 @@ else
     SARKLIB := $(SPINN_LIB_DIR)/sark.a
 endif
 
-
-$(APP).boot: $(OBJS) $(SARKLIB) sark.aplx boot_aplx.bin $(APP).sct
-	$(SPINN_TOOLS_DIR)/mkbuild scamp > sark_build.c
-	$(CC) sark_build.c
-	perl mksv > scamp-3.sv
-	perl mkpad sark.aplx 3584 > sark_pad.aplx
-ifeq ($(GNU),1)
-	$(LD) $(OBJS) sark_build.o $(SARKLIB) -o $(APP).elf
-	$(OC) -O binary -j RO_DATA $(APP).elf RO_DATA.bin
-	$(OC) -O binary -j RW_DATA $(APP).elf RW_DATA.bin
-	$(SPINN_TOOLS_DIR)/mkbin RO_DATA.bin RW_DATA.bin > $(APP).bin
-	$(RM) RO_DATA.bin RW_DATA.bin
-	$(OD) $(APP).elf > $(APP).txt
-else
-	armlink --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
-	  sark_build.o --output $(APP).elf 
-	fromelf $(APP).elf --bin --output $(APP).bin
-	fromelf $(APP).elf -cds --output $(APP).txt
-endif
-
-#	mkaplx -scamp $(APP).elf > scamp.tab
-#	cat scamp.tab boot_aplx.bin boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > $(APP).aplx
-
-	$(SPINN_TOOLS_DIR)/mkaplx -nm $(NM) -boot $(APP).elf > boot.tab
-	cat boot_aplx.bin boot.tab boot_aplx.bin scamp-3.sv sark_pad.aplx scamp-3.bin > $(APP).boot
-
-	$(RM) boot.tab scamp.tab scamp-3.bin scamp-3.sv sark_pad.aplx
-	$(RM) sark_build.c sark_build.o
-#	$(LS) $(APP).aplx
+# Create the boot file (default)
+$(APP).boot: $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP)_boot.tab $(BUILD_DIR)$(APP).sv $(BUILD_DIR)sark_pad.aplx $(BUILD_DIR)$(APP).bin
+	cat $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP)_boot.tab $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP).sv $(BUILD_DIR)sark_pad.aplx $(BUILD_DIR)$(APP).bin > $(APP).boot
 	$(LS) $(APP).boot
 
-install: $(APP).boot # $(APP).aplx
+# Create the aplx file (optional)
+$(APP).aplx: $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP)_boot.tab $(BUILD_DIR)$(APP).sv $(BUILD_DIR)sark_pad.aplx $(BUILD_DIR)$(APP).bin
+	cat $(BUILD_DIR)$(APP)_scamp.tab $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP).sv $(BUILD_DIR)sark_pad.aplx $(BUILD_DIR)$(APP).bin > $(APP).aplx
+	$(LS) $(APP).aplx
+
+# Install the boot file (default)
+install: $(APP).boot
 	$(MV) $(APP).boot ../tools/boot/scamp.boot
-#	$(MV) $(APP).aplx ../tools/boot/scamp.aplx
 
-boot_aplx.bin: boot_aplx.elf
+# Install the aplx file (optional)
+install-aplx: $(APP).aplx
+	$(MV) $(APP).aplx ../tools/boot/scamp.aplx
+
+# Build the SCAMP elf file - uses scatter file on ARM
+$(BUILD_DIR)$(APP).elf: $(OBJS) $(SARK_LIB) $(BUILD_DIR)$(APP)_build.o $(APP).sct
 ifeq ($(GNU),1)
-	$(OC) -O binary -j RO_DATA boot_aplx.elf RO_DATA.bin
-	$(OC) -O binary -j RW_DATA boot_aplx.elf RW_DATA.bin
-	$(SPINN_TOOLS_DIR)/mkbin RO_DATA.bin RW_DATA.bin > boot_aplx.bin
-	$(RM) RO_DATA.bin RW_DATA.bin
+	$(LD) $(OBJS) $(BUILD_DIR)$(APP)_build.o $(SARKLIB) -o $@
 else
-	$(OC) --bin -o boot_aplx.bin boot_aplx.elf
+	armlink --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
+	  $(BUILD_DIR)$(APP)_build.o --output $@
 endif
 
-sark.aplx: sark.o $(SARKLIB)
-	mkbuild sark > sark_build.c
-	$(CC) sark_build.c
-	$(LD) sark.o sark_build.o $(SARKLIB) --output sark.elf
+# Create an aplx header table for booting
+%_boot.tab: %.nm
+	$(SPINN_TOOLS_DIR)/mkaplx -boot $< > $@
+
+# Create an aplx header table for aplx
+%_scamp.tab: %.nm
+	$(SPINN_TOOLS_DIR)/mkaplx -scamp $< > $@
+
+# Create the sv structure from perl
+%.sv:
+	perl mksv > $@
+
+# Create the padded sark APLX
+$(BUILD_DIR)sark_pad.aplx: $(BUILD_DIR)sark.aplx
+	perl mkpad $< 3584 > $@
+
+# Create the SARK elf file (uses own objects)
+$(BUILD_DIR)$(BUILD_DIR)sark.elf: $(BUILD_DIR)sark.o $(BUILD_DIR)sark_build.o $(SARKLIB)
+	$(MKDIR) $(BUILD_DIR)$(BUILD_DIR)
+	$(LD) $(BUILD_DIR)sark.o $(BUILD_DIR)sark_build.o $(SARKLIB) --output $@
+
+# Create the boot_aplx elf file (uses a different linker script)
 ifeq ($(GNU),1)
-	$(OC) -O binary -j RO_DATA sark.elf RO_DATA.bin
-	$(OC) -O binary -j RW_DATA sark.elf RW_DATA.bin
-	$(SPINN_TOOLS_DIR)/mkbin RO_DATA.bin RW_DATA.bin > sark.bin
-	$(RM) RO_DATA.bin RW_DATA.bin
-	$(OD) > sark.txt sark.elf
-else
-	$(OC) --bin --output sark.bin sark.elf
-	$(OD) sark.txt sark.elf
-endif
-	$(SPINN_TOOLS_DIR)/mkaplx -nm $(NM) sark.elf | cat - sark.bin > sark.aplx
-	$(RM) sark_build.c sark_build.o sark.bin
-	
-ifeq ($(GNU),1)
-%.gas: %.s
+$(BUILD_DIR)%.gas: $(BUILD_DIR)%.s
+	$(MKDIR) $(BUILD_DIR)
 	$(SPINN_TOOLS_DIR)/arm2gas $< > $@
 
-boot_aplx.elf: boot_aplx.gas spinnaker.gas sark.gas
-	$(AS) -I $(BUILD_DIR) -o boot_aplx.o $<
-	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx -nostartfiles boot_aplx.o -o boot_aplx.elf
+$(BUILD_DIR)%.gas: %.s
+	$(MKDIR) $(BUILD_DIR)
+	$(SPINN_TOOLS_DIR)/arm2gas $< > $@
+
+$(BUILD_DIR)boot_aplx.elf: $(BUILD_DIR)boot_aplx.gas $(BUILD_DIR)spinnaker.gas $(BUILD_DIR)sark.gas
+	$(MKDIR) $(BUILD_DIR)
+	$(AS) -I $(BUILD_DIR) -o $(BUILD_DIR)boot_aplx.o $<
+	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx -nostartfiles $(BUILD_DIR)boot_aplx.o -o $@
 		
 else
-boot_aplx.elf: boot_aplx.s spinnaker.s sark.s
-	$(AS) boot_aplx.s
-	armlink --ro_base 0 -o boot_aplx.elf boot_aplx.o
+$(BUILD_DIR)boot_aplx.elf: boot_aplx.s $(BUILD_DIR)spinnaker.s $(BUILD_DIR)sark.s
+	$(MKDIR) $(BUILD_DIR)
+	$(AS) -I $(BUILD_DIR) boot_aplx.s -o $(BUILD_DIR)boot_aplx.o
+	armlink --ro_base 0 -o $@ $(BUILD_DIR)boot_aplx.o
 endif
 
-spinnaker.s: $(SPINN_INC_DIR)/spinnaker.h
-	h2asm $(SPINN_INC_DIR)/spinnaker.h > spinnaker.s
+# Convert h file to s
+$(BUILD_DIR)%.s: $(SPINN_INC_DIR)/%.h
+	$(MKDIR) $(BUILD_DIR)
+	$(MKDIR) $(BUILD_DIR)
+	h2asm $< > $@
 
-sark.s: $(SPINN_INC_DIR)/sark.h
-	h2asm $(SPINN_INC_DIR)/sark.h > sark.s
-
-scamp-isr.o: scamp-isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
-	$(CC_NO_THUMB) $(CFLAGS) scamp-isr.c
+# Compile the interrupt state registers without THUMB
+$(BUILD_DIR)scamp-isr.o: scamp-isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
+	$(CC_NO_THUMB) $(CFLAGS) scamp-isr.c -o $@
 
 tar:
 	tar -C .. -czf /tmp/scamp.tgz scamp/spinn_phy.c \
@@ -110,9 +104,4 @@ tar:
 	scamp/Makefile scamp/mkpad scamp/mksv
 
 clean:
-	$(RM) $(OBJS) boot_aplx.o boot_aplx.bin boot_aplx.elf 
-	$(RM) $(APP).txt $(APP).aplx $(APP).elf $(APP).bin $(APP).boot $(APP).tab
-	$(RM) spinnaker.s sark.s sark_build.c sark_build.o sark.o sark.txt sark.elf
-	$(RM) boot_aplx.gas spinnaker.gas sark.gas sark.aplx sark-pad.aplx
-
-
+	$(RM) -r $(BUILD_DIR)* $(APP).boot

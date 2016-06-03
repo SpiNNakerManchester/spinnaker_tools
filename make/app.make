@@ -10,11 +10,9 @@ ifndef OBJECTS
     OBJECTS = $(BUILD_DIR)$(APP).o
 endif
 
-LIBRARIES = -lspin1_api
-
 include $(SPINN_DIRS)/make/Makefile.common
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx
 	
 clean:
-	$(RM) $(OBJECTS) $(BUILD_DIR)$(APP).elf $(BUILD_DIR)$(APP).txt $(APP_OUTPUT_DIR)$(APP).aplx
+	$(RM) $(OBJECTS) $(BUILD_DIR)$(APP).txt $(APP_OUTPUT_DIR)$(APP).aplx $(BUILD_DIR)$(APP).elf

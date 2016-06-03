@@ -29,8 +29,8 @@ README file for SpiNNaker Low-Level Software Tools - Release 2.1.0
 3) make SARK and spin1_api for ARM or GNU tools
    (you will probably only want to do one of these)
 
-   > make		        # If you are using ARM tools
-   > make ARM=1		# If you are using GNU tools
+   > make GNU=0	        # If you are using ARM tools
+   > make        		# If you are using GNU tools
 
    Note that you may see some compiler warnings during these builds.
 
