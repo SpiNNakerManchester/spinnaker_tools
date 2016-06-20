@@ -5,11 +5,12 @@
 #-------------------------------------------------------------------------------
 
 Version 3.0.0 - Merging of changes made on a different branch of the tools 
-(Breaking change due to version checking)
+(Breaking change due to version checking bug in previous releases.)
 
 Packaging/build changes:
 
-* The boot files relevant to ybug have moved under the "tools" folder.
+* The SC&MP boot binary and boot configuration files have been moved from
+  boot to tools/boot.
 
 * A Makefile.common file has been created to contain common build directives.
 
@@ -71,11 +72,15 @@ ybug changes:
   
 Bug Fixes:
 
-* Some fixes have been made to the booting process in SC&MP.
+* Some fixes have been made to the booting process in SC&MP. Specifically
+  the P2P routing table construction algorithm now obeys the blacklist.
 
 * A bug in the version number checking has been fixed.  This is a breaking
   change, as the version number of SC&MP must now be less than or equal to the
   version number of the running application.
+
+* Some race conditions in the PT Demo application's visualiser program have
+  been fixed.
 
 #-------------------------------------------------------------------------------
 
