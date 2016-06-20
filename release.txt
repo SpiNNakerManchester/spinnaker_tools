@@ -4,6 +4,81 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.0.0 - Merging of changes made on a different branch of the tools 
+(Breaking change due to version checking)
+
+Packaging/build changes:
+
+* The boot files relevant to ybug have moved under the "tools" folder.
+
+* A Makefile.common file has been created to contain common build directives.
+
+* By default, intermediate files for ARM builds are made in build/arm and for 
+  GNU builds are made in build/gnu.  Folders are created automatically.
+  
+* mkaplx now expects a .nm file rather than a .elf file.  Rules for building
+  the nm file are in Makefile.common.
+  
+* sark and spin1_api have a Makefile each instead of make.gnu and make.arm.  
+  Users can specify which of ARM or GNU is required by using GNU=0 or GNU=1
+  respectively.
+  
+* A top level Makefile is included to build both sark and spin1_api.
+
+* SC&MP can be built with GNU tools.
+
+* Support for C++ has been added to Makefile.common, removing cpp_app.make.
+  C++ application can therefore rely on the app.make Makefile.
+
+* Tools are all Windows compatible.
+
+SCP Command Changes:
+
+* P2P messages to 255, 255 will now respond with the P2P id of the chip used to
+  boot the machine.
+
+* CMD_INFO now additionally returns the P2P address of the chip considered to be
+  the nearest Ethernet to the chip, and the IP address currently assigned to the
+  chip.  Note that the IP address can be set even if the Ethernet is not
+  connected.  The default IP address is 0.0.0.0.
+  
+Spin1 API Changes:
+
+* Diagnostics are now stored directly in the diagnostics data structure,
+  allowing applications to read this at any point during the execution.
+
+* Additional diagnostics have been added to indicate the number of times the
+  timer callback over-ran, and the maximum number of queued timer callbacks
+  at any time during the simulation (i.e. how far behind this core got at
+  worst).
+  
+* Added the ability to pause and resume simulations through spin1_pause and 
+  spin1_resume.  During pause, a simulation can still communicate using SDP; 
+  only the timer tick is currently disabled.  Simulations can be resumed 
+  synchronously or asynchronously as per spin1_start.
+
+* Added the ability to start a simulation in paused mode i.e. to start all the
+  interrupt handling except the timer tick.  Simulations started paused are
+  done so asynchronously - spin1_resume is expected to be used when
+  synchronisation is required.
+  
+ybug changes:
+
+* ybug no longer needs CRC32 to be installed to work.
+
+* It is no longer necessary to set SPINN_PATH.  Instead, boot files will be
+  searched for in the tools/boot folder by default.
+  
+Bug Fixes:
+
+* Some fixes have been made to the booting process in SC&MP.
+
+* A bug in the version number checking has been fixed.  This is a breaking
+  change, as the version number of SC&MP must now be less than or equal to the
+  version number of the running application.
+
+#-------------------------------------------------------------------------------
+
 Version 2.1.0 - Implement FPGA "xreg" facility
 
 This allows a set of writes to FPGA control registers to be performed
