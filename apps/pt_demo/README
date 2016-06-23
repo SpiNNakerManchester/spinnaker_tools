@@ -1,0 +1,33 @@
+
+This directory contains a "Path Tracer" demo for SpiNNaker. It was
+originally written by Andrew Webb and has been kept up to date by
+Steve Temple.
+
+Two applications run on SpiNNaker. The "aggregator" application runs
+on core 1 of chip (0,0) and it collects results from the "tracer"
+application which runs on cores 2-16 of chip (0, 0) and cores 1-16 of
+all of the other chips.
+
+On the host, an OpenGL application "drawer" runs which gets data sent
+from the "aggregator" and displays it in a window. The tracing is
+started by sending an SCP command to the "aggregator" from a trigger
+program "pt_trig" run on the host.
+
+Building and running the demo...
+
+1) Compile the host and SpiNNaker code
+   (you'll need "pthread" and "freeglut" libraries installed...)
+
+   > make
+
+2) Start the "drawer"
+
+   > ./drawer 600 &
+
+3) Load the application(s) onto SpiNNaker (substitute your IP address)
+
+   > ybug 192.168.240.253 < pt_demo.ybug
+
+4) Trigger the application (substitute IP address).
+
+   > ./pt_trig 192.168.240.253 600 10 16

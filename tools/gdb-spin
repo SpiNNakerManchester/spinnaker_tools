@@ -1,0 +1,421 @@
+#!/usr/bin/perl
+
+##------------------------------------------------------------------------------
+##
+## gdb-spin	    An experimental GDB interface for SpiNNaker
+##
+## Copyright (C)    The University of Manchester - 2013-2014
+##
+## Author           Steve Temple, APT Group, School of Computer Science
+## Email            steven.temple@manchester.ac.uk
+##
+##------------------------------------------------------------------------------
+
+
+use warnings;
+use strict;
+
+use IO::Socket::INET;
+use IO::Select;
+
+use SpiNN::Cmd;
+use SpiNN::Util qw/sllt_version/;
+
+
+my $version = sllt_version ();
+my $gdb_port = 17899;
+
+my $spin;
+my $spin_debug = 0;
+my $gdb_debug = 0;
+my $cmd_count = 0;
+
+my $next_id = 0;
+my $session;
+
+
+#-------------------------------------------------------------------------------
+
+my $open_msg = <<EOF;
+#-------------------------------------------------------------------------------
+#
+# SpiNNaker GDB Interface   Version $version (experimental)
+#
+EOF
+
+my $gdb_msg = <<EOF;
+#-------------------------------------------------------------------------------
+#
+# Remember to build your code with the debug (-g) flag
+#
+# Start GDB (eg "arm-none-eabi-gdb") and then
+#   (gdb) target remote localhost:17899      # Connect to this interface
+#   (gdb) symbol-file <program.elf>          # Load symbols from your program
+#   (gdb) set print pretty on                # Pretty print structures
+#   (gdb) set print array on                 # Pretty print arrays
+#   (gdb) print sark                         # Print a (static) variable
+#
+# Commands - to be typed as "monitor <command>" in GDB
+#
+#  sp <x> <y> <core>    - select target core (like "ybug")
+#  debug <num>          - change debug level (0 = no debug)
+#
+#-------------------------------------------------------------------------------
+EOF
+
+
+sub usage
+{
+    die "usage: $0 <host> [<port>]\n";
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub user_cmd
+{
+    my ($cmd, $id) = @_;
+
+    $cmd =~ s/^\s+|\s+$//g;
+
+    my $r = "OK";
+
+    return $r unless $cmd;
+
+    my $sr = $session->{$id};
+    my $sn = $sr->{number};
+
+    if ($cmd =~ /^sp\s+((\d+\s*){1,3})$/)	# sp <x> <y> <c> etc
+    {
+	my @s = split /\s+/, $1;
+
+	eval { @s = $spin->addr (@s); };
+
+	if ($@)
+	{
+	    print "#! ($sn) SCP error: $@";
+	}
+	else
+	{
+	    $sr->{address} = \@s;
+	    $r = "#  ($sn) Select core @s\n";
+	}
+    }
+    elsif ($cmd =~ /^sp$/)			# sp (only)
+    {
+	$r = "#  ($sn) Current core @{$sr->{address}}\n";
+    }
+    elsif ($cmd =~ /^debug\s+(\d+)/)		# debug <n>
+    {
+	$gdb_debug = $1;
+	$r = "#  Debug $1\n";
+    }
+    else
+    {
+	$r = "#! ($sn) Bad command - $cmd\n";
+    }
+
+    print $r;
+
+    return unpack "H*", $r;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub checksum
+{
+    my ($r, $sum) = (shift, 0);
+
+    $sum += $_ for unpack "C*", $r;
+    return sprintf "+\$$r#%02x", $sum & 255;
+}
+
+
+sub trim
+{
+    my $text = shift;
+    return $text if length ($text) < 65;
+    return substr ($text, 0, 30) . " ... " . substr ($text, -30)
+}
+
+
+sub process
+{
+    my ($msg, $id) = @_;
+
+    return "" if $msg eq "+";
+
+    my $sr = $session->{$id};
+    my $sn = $sr->{number};
+
+    $cmd_count++;
+
+    $msg =~ s/\#[0-9a-fA-F][0-9a-fA-F]//;
+    $msg =~ s/^\++//;
+    $msg =~ s/\++$//;
+
+    printf "<< ($sn) %4d  %s\n", $cmd_count, trim ($msg) if $gdb_debug;
+
+    if ($msg =~ s/^\$//)
+    {
+	my $r;
+
+	if ($msg =~ /^m([0-9a-fA-F]+),([0-9a-fA-F]+)$/) # Read memory
+	{
+	    my ($addr, $len) = (hex $1, hex $2);
+
+	    eval
+	    {
+		$r = $spin->read ($addr, $len,
+				  format => "%02x" x $len,
+			     	  unpack => "C*",
+				  addr => $sr->{address});
+	    };
+
+	    if ($@)
+	    {
+		print "#! ($sn) SCP error - $@";
+		$r = "E00";
+	    }
+	}
+	elsif ($msg =~ /^qRcmd,(([0-9a-f][0-9a-f])*)$/i) # Monitor command
+	{
+            my $cmd = pack "H*", $1;
+
+            $r = user_cmd ($cmd, $id);
+	}
+	elsif ($msg =~ "^qSupported")	# qSupported (1 - packet size)
+	{
+	    $r = "PacketSize=255";
+	}
+	elsif ($msg eq "Hg0")		# Set thread (2 - g0 = any)
+	{
+	    $r = "OK";
+	}
+	elsif ($msg eq "?")		# Reason for halt (3 - signal 0)
+	{
+	    $r = "S00";
+	}
+	elsif ($msg eq "Hc-1")		# Set thread (4 - c-1 = all)
+	{
+	    $r = "OK";
+	}
+	elsif ($msg eq "qC")		# General query (5 C = curr thread ID)
+	{
+	    $r = "QC0";
+	}
+	elsif ($msg eq "qAttached")	# Server attached? (6 1 = existing)
+	{
+	    $r = "1";
+	}
+	elsif ($msg eq "qOffsets")	# Get section offsets (7)
+	{
+	    $r = "Text=0;Data=0;Bss=0";
+	}
+	elsif ($msg eq "g")		# Read general registers (8)
+	{
+	    $r = "00000000" x 32;
+	}
+	elsif ($msg eq "qSymbol::")	# GDB serves symbols (10)
+	{
+	    $r = "OK";
+	}
+	elsif ($msg eq "qTStatus")	# Tracepoint status (11 return null)
+	{
+##	    $r = "T0";
+	    $r = "";
+	}
+
+	elsif ($msg eq "vCont?")	# Return vCont capability
+	{
+##	    $r = "vCont;c;C;s;S;t";
+	    $r = "";
+	}
+	elsif ($msg =~ /^vCont;/)	# Resume process
+	{
+	    $r = "S00";
+	}
+	elsif ($msg eq "D")		# Detach (not used)
+	{
+	    $r = "OK";
+	}
+
+# Following not fully implemented (or used)
+#
+#	elsif ($msg eq "qTfV") { $r = "OK"; } # !!
+#
+#	elsif ($msg =~ /^X([0-9a-fA-F]+),([0-9a-fA-F]+)/) # Write memory (binary)
+#	{
+#	    my ($addr, $len, $data) = (hex $1, hex $2, $3);
+#
+#	    printf "WRITE $addr $len - msg len %d\n", length $msg;
+#
+#	    $r = "";
+#	}
+#
+#	elsif ($msg =~ /^M([0-9a-fA-F]+),([0-9a-fA-F]+):(.*)$/) # Write memory
+#	{
+#	    my ($addr, $len, $data) = (hex $1, hex $2, $3);
+#	    my @data = unpack "(H2)*", $data;
+#
+#	    printf "WRITE %s len %d %02x %02x %02x %02x\n",
+#	        substr ($data, 0, 8), 1+$#data,
+#	        $data[0], $data[1], $data[2], $data[3];
+#
+#	    $r = "OK";
+#	}
+#	elsif ($msg =~ /^p([0-9a-fA-F]+)$/) # Read register
+#	{
+#	    my $reg = hex $1;
+#	    $r = "00000000";
+#	}
+#	elsif ($msg =~ /^P([0-9a-fA-F]+)=([0-9a-fA-F]+)$/) # Write register
+#	{
+#	    my ($reg, $val) = (hex $1, hex $2);
+#	    $r = "OK";
+#	}
+#
+        else
+        {
+            print "#! ($sn) Unhandled GDB command - $msg\n";
+	    $r = "OK";
+        }
+
+	printf ">> ($sn) %4d  %s\n", $cmd_count, trim ($r) if $gdb_debug;
+
+	return checksum ($r);
+     }
+    else
+    {
+	return "-";
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub gdb_server
+{
+    my ($addr, $port, $note) = @_;
+
+    print "# Starting GDB interface    $addr:$port\n";
+
+    my $server = IO::Socket::INET->new
+	(
+	 LocalAddr => $addr,
+	 LocalPort => $port,
+	 ReuseAddr => 1,
+	 Listen    => 25
+	);
+
+    die "error: failed to connect: $!\n" unless $server;
+
+    print "#\n$note#\n";
+
+    my $ioset = IO::Select->new;
+
+    $ioset->add ($server);
+##    $ioset->add (\*STDIN);	# For local command issue...
+
+    while (1)
+    {
+	for my $socket ($ioset->can_read)
+	{
+	    if ($socket == $server)	# New client connection
+	    {
+		my $client = $server->accept;
+
+		if ($client)
+		{
+		    my ($id) = $client =~ /\((0x[0-9a-f]+)\)/;
+
+		    $next_id++;
+
+		    my $ip = inet_ntoa ($client->sockaddr);
+
+		    print "#  ($next_id) Open from $ip\n";
+
+		    $session->{$id} = {number => $next_id,
+				       address => [0, 0, 0]};
+
+		    $ioset->add ($client);
+		}
+		else
+		{
+		    print "#! Unable to accept new connection\n";
+		}
+	    }
+	    else			# Existing connection
+	    {
+		my ($id) = $socket =~ /\((0x[0-9a-f]+)\)/;
+		my $sn = $session->{$id}->{number};
+
+		my $read = $socket->sysread (my $buffer, 4096);
+
+		if ($read)		# Data - GDB commands begin "+-$%"
+		{
+		    if ($buffer =~ /^[-+\$%]/)
+		    {
+			my $r = process ($buffer, $id);
+			$socket->syswrite ($r) if $r ne "";
+		    }
+		    else
+		    {
+			print "#! ($sn) unexpected input ($buffer)\n";
+##			user_cmd ($buffer, 0);
+		    }
+		}
+		else			# Close request
+		{
+		    my $ip = inet_ntoa ($socket->sockaddr);
+
+		    print "#  ($sn) Closed $ip\n";
+
+		    delete $session->{$id};
+		    $ioset->remove ($socket);
+		    $socket->close;
+		}
+	    }
+	}
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub open_spin
+{
+    my ($host, $msg) = @_;
+
+    print $msg;
+
+    print "# Connecting to SpiNNaker   $host\n";
+
+    $spin = SpiNN::Cmd->new (target => $host, debug => $spin_debug);
+
+    die "error: failed to connect\n" unless defined $spin;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+usage () unless $#ARGV >= 0 && $#ARGV <= 1;
+
+my ($host, $port) = @ARGV;
+
+$port ||= $gdb_port;
+
+usage () unless $port =~ /^\d+$/;
+
+open_spin ($host, $open_msg);
+
+gdb_server ("0.0.0.0", $port, $gdb_msg);
+
+
+#-------------------------------------------------------------------------------

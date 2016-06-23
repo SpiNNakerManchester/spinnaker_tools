@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+die "bad args\n" unless $#ARGV == 1 && -r $ARGV[0] && $ARGV[1] =~ /^\d+$/;
+
+my ($file, $size) = @ARGV;
+
+my $file_size = -s $file;
+my $buf;
+
+die "file too big\n" if $file_size > $size;
+
+open my $fh, "<", $file or die "Can't open $file\n";
+binmode($fh);
+my $r = sysread $fh, $buf, $file_size;
+close $fh;
+
+die "failed to read file\n" if $r != $file_size;
+
+my $pad = chr (0) x ($size - $file_size);
+
+binmode(STDOUT);
+print $buf, $pad;

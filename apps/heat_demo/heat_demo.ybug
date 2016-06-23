@@ -1,0 +1,9 @@
+# make
+# tubotron &
+# visualiser &
+
+iptag 1 set . 17894
+app_load heat_demo.aplx all 1-16 16
+sleep 1
+app_sig all 16 sync0
+

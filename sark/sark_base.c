@@ -6,7 +6,7 @@
 // Copyright (C)    The University of Manchester - 2010-2013
 //
 // Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
+// Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
 
@@ -27,9 +27,7 @@ void __attribute__((weak)) schedule_sysmode (uchar event_id,
 
 //------------------------------------------------------------------------------
 
-#define SARK_VER_NUM  		133
-
-#define SARK_VER_STR		"SARK/SpiNNaker"
+#define SARK_ID_STR		"SARK/SpiNNaker"
 
 sark_data_t sark;
 
@@ -365,6 +363,24 @@ void sark_shmsg_free (sdp_msg_t *msg)
 }
 
 
+#ifdef __GNUC__
+extern void (*__init_array_start)();
+extern void (*__init_array_end)();
+void sark_call_cpp_constructors (void)
+{
+  // Loop through any C++ constructors that may be present and call them
+  for (void (**p)() = &__init_array_start; p < &__init_array_end; p++)
+  {
+    (*p)();
+  }
+}
+#else  // Not GCC: No C++ support
+void sark_call_cpp_constructors (void)
+{
+  // Do nothing
+}
+#endif
+
 //------------------------------------------------------------------------------
 
 // "sark_init" sets up SARK stacks and some internal data structures.
@@ -410,10 +426,10 @@ uint __attribute__((weak)) sark_init (uint *stack)
   sark.msg_root.free = (mem_link_t *) msg_bufs;
   sark_block_init (msg_bufs, sark_vec->num_msgs, sizeof (sdp_msg_t));
 
-  // Initialise the "vcpu" fields for this virtual CPU. May be out
-  // of range (eg for SC&MP) if p2v_map is not set up yet.
+  // Initialise the "vcpu" fields for this virtual CPU. This is only
+  // done if we are not the Monitor processor
 
-  if (sark.virt_cpu < NUM_CPUS)
+  if (sark.phys_cpu != (sc[SC_MON_ID] & 31))
     {
       sark.vcpu = sv_vcpu + sark.virt_cpu;
       sark.sdram_buf = (void *) (sv->sdram_bufs +
@@ -421,10 +437,21 @@ uint __attribute__((weak)) sark_init (uint *stack)
 
       sark_word_set (sark.vcpu, 0, sizeof (vcpu_t) - 4 * sizeof (uint));
       sark.vcpu->cpu_state = CPU_STATE_WAIT;
+      sark.vcpu->phys_cpu = sark.phys_cpu;
 
       sark.vcpu->app_id = sark_vec->app_id;
       sark.vcpu->time = sv->unix_time;
+      sark.vcpu->sw_ver = SLLT_VER_NUM;
       sark_str_cpy (sark.vcpu->app_name, build_name);
+
+      // Check software version number
+      //   Major must match
+      //   Minor must be LE
+      //   Patch is ignored
+
+      if ((SLLT_VER_NUM & 0x00ff0000) != (sv->sw_ver & 0x00ff0000) ||
+	  (SLLT_VER_NUM & 0x0000ff00) > (sv->sw_ver & 0x0000ff00))
+	rt_error (RTE_VER);
     }
 
   // Set up VIC - disable everything
@@ -448,6 +475,7 @@ uint __attribute__((weak)) sark_init (uint *stack)
 
 void __attribute__((weak)) sark_pre_main (void)
 {
+  sark_call_cpp_constructors();
   sark_cpu_state (CPU_STATE_SARK);
 }
 
@@ -513,12 +541,13 @@ uint sark_msg_send (sdp_msg_t *msg, uint timeout)
 uint sark_cmd_ver (sdp_msg_t *msg)
 {
   msg->arg1 = (sv->p2p_addr << 16) + (sark.phys_cpu << 8) + sark.virt_cpu;
-  msg->arg2 = (SARK_VER_NUM << 16) + SDP_BUF_SIZE;
+  msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
   msg->arg3 = (uint) build_date;
 
-  sark_str_cpy ((char *) msg->data, SARK_VER_STR);
+  sark_str_cpy ((char *) msg->data, SARK_ID_STR);
+  sark_str_cpy ((char *) msg->data + sizeof (SARK_ID_STR), SLLT_VER_STR);
 
-  return 12 + sizeof (SARK_VER_STR);
+  return 12 + sizeof (SARK_ID_STR) + sizeof (SLLT_VER_STR);
 }
 
 

@@ -1,0 +1,1351 @@
+% ----------------------------------------------------------------------------
+% $Id: spinn_api_doc.tex 3807 2014-04-17 15:34:03Z temples $
+% Copyright(C) The University of Manchester
+% APT Group, School of Computer Science
+% ----------------------------------------------------------------------------
+% ----------------------------------------------------------------------------
+% Abstract : SpiNNaker API
+% Project  : SpiNNaker
+% Filename : $HeadURL: https://solem.cs.man.ac.uk/svn/spinnSoft_design_doc/spinn_api_doc.tex $
+% Author   : lap
+% Creation date: 03 May 2011
+% Last modified date: $Date: 2014-04-17 16:34:03 +0100 (Thu, 17 Apr 2014) $
+% Version  : $Revision: 3807 $
+% ----------------------------------------------------------------------------
+
+% define useful variables
+% --------------------------------------------------------------------------
+\def\myversion{Version 2.0.0}
+\def\mydate{10 March 2016}
+
+
+\documentclass[11pt,a4paper,twoside]{article}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{tabularx}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+
+% adjust paper size and margins
+% --------------------------------------------------------------------------
+\textheight 246mm
+\textwidth 154mm
+\voffset -7.5mm
+\topmargin -8mm
+\oddsidemargin 2.7mm
+\evensidemargin 2.7mm
+\headheight 18.0pt
+\headsep 15mm
+\raggedbottom
+%\setlength{\parindent}{0pt}
+%\setlength{\parskip}{1ex plus 0.5ex minus 0.2ex}
+
+% define background templates as watermarks
+% --------------------------------------------------------------------------
+%\leftwatermark{\put(-55.5,-760){\includegraphics{left_page}}}
+%\rightwatermark{\put(-55.5,-760){\includegraphics{right_page}}}
+
+% command to simplify image handling
+% --------------------------------------------------------------------------
+\newcommand{\image}[5][]
+{
+\begin{figure}[#2]
+   \begin{center}
+      \includegraphics[#1]{#3}
+      \caption{#5}
+      \label{fig:#4}
+   \end{center}
+\end{figure}
+}
+
+\setcounter{secnumdepth}{-1} 
+
+% --------------------------------------------------------------------------
+
+\begin{document}
+
+\vspace*{5.0cm}
+
+\begin{center}
+\textbf{
+\Large{SpiNNaker Application Programming Interface (API)} \\
+\vspace*{0.5cm}
+\large {\myversion} \\
+\vspace*{0.5cm}
+\large{\mydate}
+}
+\end{center}
+
+\vspace*{\fill}
+
+\thispagestyle{empty}
+
+\pagebreak
+
+\section*{Application programming interface (API)}
+\label{sec:spinn_api}
+
+\def\fcw{45mm}
+\def\tblf{| \fcw X X |}
+\def\tblc{green!15}
+
+\subsection{Event-driven programming model}
+\label{sec:PM}
+
+The SpiNNaker API programming model is a simple, event-driven
+model. Applications do not control execution flow, they can only
+indicate the functions, referred to as callbacks, to be executed when
+specific events occur, such as the arrival of a packet, the completion
+of a Direct Memory Access (DMA) transfer or the lapse of a periodic
+time interval. A dispatcher kernel controls the flow of execution and
+schedules/dispatches application callback functions when appropriate.
+
+\image[scale=0.75]{!h}{threads}{PM}{SpiNNaker event-driven programming framework.}
+
+Fig.~\ref{fig:PM} shows the basic architecture of the event-driven
+framework. Application developers write callback routines that are
+associated with events of interest and register them at a certain
+priority with the dispatcher. When the corresponding event occurs the
+dispatcher either executes the callback immediately and atomically (in
+the case of a non-queueable callback) or places it into a scheduling
+queue at a position according to its priority (in case of a queueable
+callback). When control is returned to the dispatcher (following the
+completion of a callback) the highest-priority queueable callback is
+executed. Queueable callbacks do not necessarily execute atomically:
+they may be pre-empted by non-queueable callbacks if a corresponding
+event occurs during their execution. The dispatcher goes to sleep
+(low-power consumption state) if the pending callback queues are empty
+and will be awakened by an event. Application developers can designate
+one non-queueable callback as the preeminent callback, which has the
+highest priority and can pre-empt other non-queueable callbacks as
+well as all queueable ones.
+
+The preeminent callback is associated with a FIQ interrupt while other
+non-queueable callbacks are associated with IRQ interrupts.
+
+\subsubsection{Design considerations}
+
+\begin{itemize}
+
+\item
+Non-queueable callbacks are available as a method of pre-empting long
+running tasks with short, high priority tasks. The allocation of
+application tasks to non-queueable callbacks must be carefully
+considered. The selection of the preeminent callback can be
+particularly important. Long-running operations should not be executed
+in non-queueable callbacks for fear of starving queueable callbacks.
+
+\item
+Queueable callbacks may require critical sections (\emph{i.e.},
+sections that are completed atomically) to prevent pre-emption during
+access to shared resources. Critical sections may be achieved by
+disabling interrupts before accessing the shared resource and
+re-enabling them afterwards. Applications are executed in a privileged
+mode to allow the callback programmer to insert these critical
+sections. This approach has the risk that it allows the programmer to
+modify peripherals, such as the system controller, unchecked.
+
+\item
+Non-queueable callbacks may also require critical sections, as they
+can be pre-empted by the preeminent callback.
+
+\item
+Events, usually triggered by interrupts, have priority determined by
+the programming of the Vectored Interrupt Controller (VIC). This
+allows priority to be determined when multiple events corresponding to
+different non-queueable callbacks occur concurrently. It also affects
+the order in which queueable callbacks of the same priority are
+queued.
+
+\end{itemize}
+
+\subsection{Programming interface}
+\label{sec:API}
+
+The following sections introduce the events and functions supported by
+the API.
+
+\subsubsection{Events}
+
+The SpiNNaker API programming model is event-driven: all computation
+follows from some event. The following events are available to the
+application:
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{\fcw} X |}
+\hline
+\textbf{event} & \textbf{trigger} \\%
+\hline
+\hline
+\textbf{MC packet received} & reception of a multicast packet (no payload) \\%
+\textbf{MCPL packet received} & reception of a multicast packet (with payload) \\%
+\textbf{FR packet received} & reception of a fixed route packet (no payload) \\%
+\textbf{FRPL packet received} & reception of a fixed route packet (with payload) \\%
+\textbf{DMA transfer done} & successful completion of a DMA transfer \\%
+\textbf{Timer tick} & passage of specified period of time \\%
+\textbf{SDP packet received} & reception of a SpiNNaker Datagram Protocol packet \\%
+\textbf{User event} & software-triggered interrupt \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+In addition, errors can also generate events:
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| X |}
+\hline
+\rowcolor{red!25}
+\textbf{--- events not yet supported ---} \\%
+\hline
+\end{tabularx}
+\begin{tabularx}{\textwidth}{| p{\fcw} X |}
+\hline
+\textbf{event} & \textbf{trigger} \\%
+\hline
+\hline
+\textbf{MCP parity error} & multicast packet received with wrong parity \\%
+\textbf{MCP framing error} & wrongly framed multicast packet received \\%
+\textbf{DMA transfer error} & unsuccessful completion of a DMA transfer \\%
+\textbf{DMA transfer timeout} & DMA transfer is taking too long \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+Each of these events is handled by a dispatcher routine which may schedule
+or execute an application callback, if one is registered by the
+application.
+
+\subsubsection{Callback arguments}
+
+Callbacks are functions with two unsigned integer arguments and no
+return value. The arguments may be cast into the appropriate types by
+the callback. The arguments provided to callbacks (where `none'
+denotes a superfluous argument) by each event are:
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{\fcw} X X |}
+\hline
+\textbf{event} & \textbf{first argument} & \textbf{second argument} \\%
+\hline
+\hline
+\textbf{MC packet received} & uint key & (uint none) \\%
+\textbf{MCPL packet received} & uint key & uint payload \\%
+\textbf{FR packet received} & uint 'key' & (uint none) \\%
+\textbf{FRPL packet received} & uint 'key' & uint payload \\%
+\textbf{DMA transfer done} & uint transfer\_ID & uint tag \\%
+\textbf{Timer tick} & uint simulation\_time & (uint none) \\%
+\textbf{SDP packet received} & uint mailbox & uint destination\_port \\%
+\textbf{User event} & uint arg0 & uint arg1 \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\subsubsection{Pre-defined constants}
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{\fcw} X X |}
+\hline
+\textbf{logic value} & \textbf{value} & \textbf{keyword} \\%
+\hline
+\hline
+\textbf{true} & (0 == 0) & TRUE \\%
+\textbf{false} & (0 != 0) & FALSE \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{\fcw} X X |}
+\hline
+\textbf{function result} & \textbf{value} & \textbf{keyword} \\%
+\hline
+\hline
+\textbf{failure} & 0 & FAILURE \\%
+\textbf{success} & 1 & SUCCESS \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{\fcw} X X |}
+\hline
+\textbf{transfer direction} & \textbf{value} & \textbf{keyword} \\%
+\hline
+\hline
+\textbf{read} (system to TCM) & 0 & DMA\_READ \\%
+\textbf{write} (TCM to system) & 1 & DMA\_WRITE \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{\fcw} X X |}
+\hline
+\textbf{packet payload} & \textbf{value} & \textbf{keyword} \\%
+\hline
+\hline
+\textbf{no payload} & 0 & NO\_PAYLOAD \\%
+\textbf{payload present} & 1 & WITH\_PAYLOAD \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{\fcw} X X |}
+\hline
+\textbf{event} & \textbf{value} & \textbf{keyword} \\%
+\hline
+\hline
+\textbf{MC packet received} & 0 & MC\_PACKET\_RECEIVED \\%
+\textbf{DMA transfer done} & 1 & DMA\_TRANSFER\_DONE \\%
+\textbf{Timer tick} & 2 & TIMER\_TICK \\%
+\textbf{SDP packet received} & 3 & SDP\_PACKET\_RX \\%
+\textbf{User event} & 4 & USER\_EVENT \\%
+\textbf{MCPL packet received} & 5 & MCPL\_PACKET\_RECEIVED \\%
+\textbf{FR packet received} & 6 & FR\_PACKET\_RECEIVED \\%
+\textbf{FRPL packet received} & 7 & FRPL\_PACKET\_RECEIVED \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\subsubsection{Pre-defined types}
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{\fcw} X X |}
+%\begin{tabular}{| l l |}
+\hline
+\textbf{type} & \textbf{value} & \textbf{size} \\%
+\hline
+\hline
+\textbf{uint} & unsigned int & 32 bits \\%
+\textbf{ushort} & unsigned short & 16 bits \\%
+\textbf{uchar} & unsigned char & 8 bits \\%
+\textbf{callback\_t} & {\small void (*callback\_t) (uint, uint)} & 32 bits \\%
+\textbf{sdp\_msg\_t} & struct (see below) & 292 bytes \\%
+\textbf{diagnostics\_t} & struct (see below) & 44 bytes \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| X |}
+\hline
+SDP message structure \\%
+\hline
+\end{tabularx}
+
+\lstset{%language=C,
+ basicstyle=\scriptsize,
+ tabsize=4,
+ emph={typedef, struct, ushort, uchar, uint},
+ emphstyle=\bfseries
+}
+
+\begin{minipage}{4.5in}
+\begin{lstlisting}
+typedef struct sdp_msg             // SDP message (=292 bytes)
+{
+ struct sdp_msg *next;             // Next in free list
+ ushort length;                    // length
+ ushort checksum;                  // checksum (if used)
+
+ // sdp_hdr_t
+
+ uchar flags;                      // SDP flag byte
+ uchar tag;                        // SDP IPtag
+ uchar dest_port;                  // SDP destination port
+ uchar srce_port;                  // SDP source port
+ ushort dest_addr;                 // SDP destination addr
+ ushort srce_addr;                 // SDP source address
+
+ // cmd_hdr_t (optional)
+
+ ushort cmd_rc;                    // Command/Return Code
+ ushort seq;                       // Sequence number
+ uint arg1;                        // Arg 1
+ uint arg2;                        // Arg 2
+ uint arg3;                        // Arg 3
+
+ // user data (optional)
+
+ uchar data[SDP_BUF_SIZE];         // User data (256 bytes)
+
+ uint _PAD;                        // Private padding
+} sdp_msg_t;
+
+\end{lstlisting}
+\end{minipage}
+
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| X |}
+\hline
+ \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| X |}
+\hline
+diagnostics variable structure \\%
+\hline
+\end{tabularx}
+
+\lstset{%language=C,
+ basicstyle=\scriptsize,
+ tabsize=4,
+ emph={typedef, struct, ushort, uchar, uint},
+ emphstyle=\bfseries
+}
+
+\begin{minipage}{5.5in}
+\begin{lstlisting}
+typedef struct
+{
+ uint exit_code;                // simulation exit code
+ uint warnings;                 // warnings type bit map
+ uint total_mc_packets;         // total routed MC packets during simulation
+ uint dumped_mc_packets;        // total dumped MC packets by the router
+ uint discarded_mc_packets;     // total discarded MC packets by API
+ uint dma_transfers;            // total DMA transfers requested
+ uint dma_bursts;               // total DMA bursts completed
+ uint dma_queue_full;           // dma queue full count
+ uint task_queue_full;          // task queue full count
+ uint tx_packet_queue_full;     // transmitter packet queue full count
+ uint writeBack_errors;         // write-back buffer errror count
+} diagnostics_t;
+\end{lstlisting}
+\end{minipage}
+
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| X |}
+\hline
+ \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\pagebreak
+
+\subsubsection{Pre-declared variables}
+
+
+\begin{center}
+\rowcolors {1}{}{ \tblc }
+\renewcommand{\arraystretch}{1.2}
+%\begin{tabularx}{\textwidth}{| p{\fcw} X X |}
+\begin{tabularx}{\textwidth}{| p{18mm} p{24mm} X |}
+%\begin{tabular}{| l l |}
+\hline
+\textbf{variable} & \textbf{type} & \textbf{function} \\%
+\hline
+\hline
+leadAp & \textbf{uchar} & TRUE if appointed chip-wide application leader \\%
+diagnostics & \textbf{diagnostics\_t} & returns diagnostic information (if turned on in compilation) \\%
+\hline
+\end{tabularx}
+%\end{tabular}
+\end{center}
+
+\subsubsection{Dispatcher services}
+
+The dispatcher provides a number of services to the application programmer:
+
+\subsubsection*{Simulation control functions}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Start simulation} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_start} & sync\_bool & synchronisation flag \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{EXIT\_CODE (0 = NO ERRORS)} \\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ transfers control from the application to the dispatcher. \\%
+ & $\bullet$ use spin1\_exit to return with EXIT\_CODE. \\%
+ & $\bullet$ the argument should be \texttt{SYNC\_NOWAIT} or \texttt{SYNC\_WAIT}  \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Stop simulation and report error} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_exit} & uint rc & return code to report \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ transfers control from the dispatcher back to the application. \\%
+ & $\bullet$ The argument is used as the return value for spin1\_start. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Set the timer tick period} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_set\_timer\_tick} & uint period & timer tick period (in microseconds) \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Request simulation time} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+{\small \textbf{uint spin1\_get\_simulation\_time}} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{timer ticks since the start of simulation.} \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\subsubsection*{Event management functions}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Register \textbf{callback} to be executed when \textbf{event\_id} occurs} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_callback\_on} & uint event\_id & event that triggers callback \\%
+ & callback\_t callback & callback function pointer \\%
+ & uint priority & priority $<$0 denotes preeminent \\%
+ & & priority 0 denotes non-queueable \\%
+ & & priorities $>$0 denote queueable \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
+\hline
+\end{tabularx}
+\renewcommand{\arraystretch}{1.2}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ a callback registration overrides any previous ones for the same event. \\%
+ & $\bullet$ only one callback can be registered as preeminent. \\%
+ & $\bullet$ a second preeminent registration is demoted to non-queueable. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Deregister \textbf{callback} from \textbf{event\_id}} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_callback\_off} & uint event\_id & event that triggers callback \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Schedule a \textbf{callback} for execution with given \textbf{priority}} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_schedule\_callback} & callback\_t callback & callback function pointer \\%
+ & uint arg0 & callback argument \\%
+ & uint arg1 & callback argument \\%
+ & uint priority & callback priority \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{SUCCESS (=1) / FAILURE (=0)} \\%
+\hline
+\end{tabularx}
+\renewcommand{\arraystretch}{1.2}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ this function allows the application to schedule a callback without an event. \\%
+ & $\bullet$ priority $<= 0$ must not be used (unpredictable results). \\%
+ & $\bullet$ function arguments are not validated. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Trigger a \textbf{user event}} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+{\small \textbf{uint spin1\_trigger\_user\_event}} & uint arg0 & callback argument \\%
+ & uint arg1 & callback argument \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{SUCCESS (=1) / FAILURE (=0)} \\%
+\hline
+\end{tabularx}
+\renewcommand{\arraystretch}{1.2}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ FAILURE indicates a trigger attempt before a previous one has been serviced. \\%
+ & $\bullet$ arg0 and arg1 will be passed as arguments to the registered callback. \\%
+ & $\bullet$ function arguments are not validated. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\pagebreak
+
+% new subsubsection -------------------------------------------------------------
+\subsubsection*{Data transfer functions}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Request a DMA transfer} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_dma\_transfer} & uint tag & for application use \\%
+ & void *system\_address & address in system NoC \\%
+ & void *tcm\_address & address in TCM \\%
+ & uint direction & DMA\_READ / DMA\_WRITE \\%
+ & uint length & transfer length (in bytes) \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{unique transfer identification number (TID)} \\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ completion of the transfer generates a DMA transfer done event. \\%
+ & $\bullet$ a registered callback can use TID and tag to identify the completed request. \\%
+ & $\bullet$ DMA transfers are completed in the order in which they are requested. \\%
+ & $\bullet$ TID = FAILURE (= 0) indicates failure to schedule the transfer. \\%
+ & $\bullet$ function arguments are not validated. \\%
+ & $\bullet$ may cause DMA error or DMA timeout events. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Copy a block of memory} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_memcpy} & void *dst & destination address \\%
+ & void const *src & source address \\%
+ & uint len & transfer length (in bytes) \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ function arguments are not validated. \\%
+ & $\bullet$ may cause a data abort. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\pagebreak
+
+\subsubsection*{Communications functions}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Send a multicast packet} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_send\_mc\_packet} & uint key & packet key \\%
+ & uint data & packet payload \\%
+ & uint load & 1 = payload present / 0 = no payload \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{SUCCESS (=1) / FAILURE (=0)} \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Send a fixed route packet} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_send\_fr\_packet} & uint key & packet 'key' \\%
+ & uint data & packet payload \\%
+ & uint load & 1 = payload present / 0 = no payload \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{SUCCESS (=1) / FAILURE (=0)} \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| l l X |}
+\hline
+\multicolumn{3}{| r |}{Flush software outgoing multicast packet queue} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+{\small \textbf{uint spin1\_flush\_tx\_packet\_queue}} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{SUCCESS (=1) / FAILURE (=0)} \\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ queued packets are thrown away (not sent). \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{57mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Flush software incoming multicast packet queue} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+{\small \textbf{uint spin1\_flush\_rx\_packet\_queue}} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{SUCCESS (=1) / FAILURE (=0)} \\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ queued packets are thrown away. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\pagebreak
+
+% new subsubsection -------------------------------------------------------------
+\subsubsection*{SpiNNaker Datagram Protocol (SDP)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Send an SDP message} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_send\_sdp\_msg} & sdp\_msg\_t * msg & pointer to message \\%
+ & uint timeout & transmission timeout (ms) \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{SUCCESS (=1) / FAILURE (=0)} \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Request a free SDP message container} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{sdp\_msg\_t * spin1\_msg\_get} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{pointer to message (NULL if unsuccessful)} \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Free an SDP message container} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_msg\_free} & sdp\_msg\_t *msg & pointer to message \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\pagebreak
+
+% new subsubsection -------------------------------------------------------------
+\subsubsection*{Critical section support functions}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Disable IRQ interrupts} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_irq\_disable} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{contents of CPSR before interrupt flags altered.}\\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Disable FIQ interrupts} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_fiq\_disable} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{contents of CPSR before interrupt flags altered.}\\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Disable ALL interrupts} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_int\_disable} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{contents of CPSR before interrupt flags altered.}\\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Restore core mode and interrupt state} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_mode\_restore} & uint status & CPSR state to be restored \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value.}\\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\pagebreak
+
+% new subsubsection -------------------------------------------------------------
+\subsubsection*{System resources access functions}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Get core ID} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_get\_core\_id} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{core ID in bits [4:0].}\\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Get chip ID} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_get\_chip\_id} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{chip ID in bits [15:0].}\\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ chip ID contains x coordinate in bits [15:8], y coordinate in bits [7:0]. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Get ID} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{uint spin1\_get\_id} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{chip ID in bits [20:5] / core ID in bits [4:0].}\\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Control state of board LEDs} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_led\_control} & uint p & new state for board LEDs \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value.}\\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ the number of LEDs and their colour varies according to board version. \\%
+ & $\bullet$ to turn LEDs 0 and 1 on: spin1\_led\_control (LED\_ON (0) + LED\_ON (1)) \\%
+ & $\bullet$ to invert LED 2: spin1\_led\_control (LED\_INV (2)) \\%
+ & $\bullet$ to turn LED 0 off: spin1\_led\_control (LED\_OFF (0)) \\%
+\hline
+\end{tabularx}
+\end{center}
+
+\subsubsection*{Memory allocation}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Allocate a new block of DTCM} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void * spin1\_malloc} & uint bytes & size of the memory block in bytes \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{pointer to the new memory block.} \\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ DEPRECATED - use sark\_alloc, sark\_free \\%
+ & $\bullet$ memory blocks are word-aligned. \\%
+ & $\bullet$ memory is allocated in DTCM. \\%
+ & $\bullet$ there is no support for freeing a memory block. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\pagebreak
+
+\subsubsection*{Miscellaneous}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Wait for a given time} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_delay\_us} & uint time & wait time (in microseconds) \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ the function busy waits for the given time (in microseconds). \\%
+ & $\bullet$ prevents any queueable callbacks from executing (use with care). \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Generate a 32-bit pseudo-random number} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_rand} & void & no arguments \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{32-bit pseudo-random number} \\%
+\hline
+\end{tabularx}
+\rowcolors {1}{ blue!25 }{ blue!25 }
+\begin{tabularx}{\textwidth}{| l X |}
+\hline
+\textbf{notes:} & $\bullet$ Function based on example function in: \\%
+ & $\bullet$ "Programming Techniques", ARM document ARM DUI 0021A. \\%
+ & $\bullet$ Uses a 33-bit shift register with exclusive-or feedback taps at bits 33 and 20. \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+\hline
+\multicolumn{3}{| r |}{Provide a seed to the pseudo-random number generator} \\%
+\hline
+\hline
+\rowcolor[gray]{.75}
+\textbf{function} & arguments & description \\%
+\hline
+\textbf{void spin1\_srand} & uint seed & 32-bit seed \\%
+\hline
+\hline
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
+\hline
+\end{tabularx}
+\end{center}
+
+
+\pagebreak
+
+% new subsubsection -------------------------------------------------------------
+\subsubsection{Application Program Structure}
+
+In general, an application program contains three basic sections:
+
+\begin{itemize}
+\item \textbf{Application Functions}: General application functions to support the callbacks.
+\item \textbf{Application Callbacks}: Functions to be associated with run-time events.
+\item \textbf{Application Main Function}: Variable initialisation, callback registration and transfer of control to main loop.
+\end{itemize}
+
+The structure of a simple application program is shown below
+Many details are left out for brevity.
+
+\pagebreak
+
+\lstset{%language=C,
+ basicstyle=\scriptsize,
+ tabsize=4,
+ emph={c_main, spin1_send_mc_packet, spin1_get_simulation_time, spin1_exit, spin1_set_timer_tick,
+ spin1_callback_on, spin1_start, spin1_dma_transfer, NO_PAYLOAD, TIMER_TICK, MC_PACKET_RECEIVED,
+ DMA_TRANSFER_DONE, SYNC_WAIT},
+ emphstyle=\bfseries
+}
+
+
+\begin{lstlisting}
+// declare application types and variables
+neuron_state state[1000];
+spike_bin bins[1000][16];
+. . .
+
+/* --------------------------------------------------------------------- */
+/* ----------------------- application functions ----------------------- */
+/* --------------------------------------------------------------------- */
+void izhikevich_update(neuron_state *state){
+	. . .
+	spin1_send_mc_packet(key, 0, NO_PAYLOAD);
+	. . .
+}
+
+syn_row_addr lookup_synapse_row(neuron_key key)
+{
+	. . .
+}
+
+void bin_spike(neuron_key key, axn_delay delay, syn_weigth weight)
+{
+	. . .
+}
+
+/* --------------------------------------------------------------------- */
+/* ----------------------- application callbacks ----------------------- */
+/* --------------------------------------------------------------------- */
+void update_neurons()
+{
+	. . .
+	if (spin1_get_simulation_time() > 1000) // simulation time in "ticks"
+		spin1_exit(0);
+	else
+		for (i=0; i < 1000; i++) izhikevich_update(state[i]);
+	. . .
+}
+
+void process_spike(uint key, uint payload)
+{
+	. . .
+	row_addr = lookup_synapses(key);
+	tid = spin1_dma_transfer(tag, row_addr, syn_buffer, READ, row_len);
+	. . .
+}
+
+void schedule_spike()
+{
+	. . . 
+	bin_spike(key, delay, weight);
+	. . . 
+}
+
+/* --------------------------------------------------------------------- */
+/* -------------------------- application main ------------------------- */
+/* --------------------------------------------------------------------- */
+void c_main()
+{
+	// initialise variables and timer tick 
+	. . .
+	spin1_set_timer_tick(1000); // timer tick period in microseconds
+	. . .
+	// register callbacks
+	spin1_callback_on(TIMER_TICK, update_neurons, 1);
+	spin1_callback_on(MC_PACKET_RECEIVED, process_spike, 0);
+	spin1_callback_on(DMA_TRANSFER_DONE, schedule_spike, 0);
+	. . .
+	// transfer control to the dispatcher
+	spin1_start(SYNC_WAIT);
+	// control returns here on execution of spin1_exit()
+}
+\end{lstlisting}
+
+\subsection{Changes in Version 1.3}
+
+The following changes were made in version 1.3 of the API.
+
+\begin{itemize}
+
+\item
+The function \texttt{spin1\_set\_mc\_table\_entry} was removed. The
+SARK functions \texttt{rtr\_alloc} and \texttt{rtr\_mc\_set} should be
+used instead.
+
+\item
+The functions \texttt{spin1\_stop} and \texttt{spin1\_kill} have been
+removed and replaced by \texttt{spin1\_exit} which provides a unified
+way to stop the API dispatcher and pass back a return code.
+
+\item
+The functions \texttt{spin1\_set\_core\_map} and
+\texttt{spin1\_application\_core\_map} have been removed. They were
+used to synchronise application start-up and this is now done by an
+argument passed to \texttt{spin1\_start}.
+
+\item
+The function \texttt{spin1\_start} now takes a single argument
+\texttt{SYNC\_WAIT} or \texttt{SYNC\_NOWAIT} which indicates if
+the application should synchronise with applications on other cores
+before entering the API dispatcher. This was previously indicated
+by the presence of a core map.
+
+\item
+There is a new event \texttt{MCPL\_PACKET\_RECEIVED} which allows (and
+requires) separate callbacks to be provided for received multicast
+packets with and without payloads.
+
+\item
+The use of \texttt{spin1\_malloc} is deprecated. The SARK routines
+\texttt{sark\_alloc} and \texttt{sark\_free} provide access to a
+more flexible heap which allows blocks to be freed.
+
+\end{itemize}
+
+\subsection{Changes in Version 2.0.0}
+
+The following changes were made in version 2.0.0 of the API.
+
+\begin{itemize}
+
+\item
+There are two new events \texttt{FR\_PACKET\_RECEIVED} and
+\texttt{FRPL\_PACKET\_RECEIVED} which allow reception of
+fixed route packets (without and with payload). There is a
+corresponding function \texttt{spin1\_send\_fr\_packet} to
+transmit fixed route packets. The SARK functions
+\texttt{rtr\_fr\_set} and \texttt{rtr\_fr\_get} can be used
+to set up and query the fixed routes.
+
+\end{itemize}
+
+\end{document}

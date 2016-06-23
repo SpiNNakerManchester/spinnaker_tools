@@ -1,10 +1,15 @@
 
 # Makefile for SARK
-BUILD_DIR := ../build
-LIB := 1
-include ../Makefile.common
+ifeq ($(GNU),1)
+    BUILD_DIR := ../build/gnu
+else
+    BUILD_DIR := ../build/arm
+endif
+override LIB := 1
+include ../make/Makefile.common
 
-CFLAGS += -DSARK_API
+SARKOPT := $(OSPACE)
+CFLAGS += -DSARK_API $(SARKOPT)
 
 #-------------------------------------------------------------------------------
 ifeq ($(GNU),1)
@@ -16,7 +21,7 @@ else
 endif
 
 SARKLIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
-SARKINT := $(SPINN_LIB_DIR)/$(LIBNAME).o
+
 
 #-------------------------------------------------------------------------------
 
@@ -35,9 +40,9 @@ $(SARKLIB): $(SARKOBJ)
 	$(RM) $@
 	$(AR) $@ $^
 
-$(SARKINT): $(SARKOBJ)
+%/sark.o: $(SARKOBJ)
 	$(RM) $@
-	$(LD) -o $(SARKINT) $^
+	$(LD) -o $@ $^
 
 #-------------------------------------------------------------------------------
 
@@ -46,20 +51,29 @@ $(SARKINT): $(SARKOBJ)
 ifeq ($(GNU),1)
 
 $(BUILD_DIR)/%.gas:	$(SPINN_INC_DIR)/%.h
+	$(MKDIR) $(BUILD_DIR)
 	$(SPINN_TOOLS_DIR)/h2asm $< | $(SPINN_TOOLS_DIR)/arm2gas > $@
 
 $(BUILD_DIR)/%.gas: %.s
+	$(MKDIR) $(BUILD_DIR)
 	$(SPINN_TOOLS_DIR)/arm2gas $< > $@
 
 $(BUILD_DIR)/sark_alib.o: $(BUILD_DIR)/sark_alib.gas $(BUILD_DIR)/spinnaker.gas $(BUILD_DIR)/sark.gas
+	$(MKDIR) $(BUILD_DIR)
 	$(AS) -I $(BUILD_DIR) -o $@ $<
 
 else
 
 $(BUILD_DIR)/%.s: $(SPINN_INC_DIR)/%.h
+	$(MKDIR) $(BUILD_DIR)
 	$(SPINN_TOOLS_DIR)/h2asm $< > $@
 
-$(BUILD_DIR)/sark_alib.o: sark_alib.s $(BUILD_DIR)/spinnaker.s $(BUILD_DIR)/sark.s
+$(BUILD_DIR)/%.s: %.s
+	$(MKDIR) $(BUILD_DIR)
+	$(CP) $< $@
+
+$(BUILD_DIR)/sark_alib.o: $(BUILD_DIR)/sark_alib.s $(BUILD_DIR)/spinnaker.s $(BUILD_DIR)/sark.s
+	$(MKDIR) $(BUILD_DIR)
 	$(AS) -o $@ $<
 
 endif
@@ -77,4 +91,4 @@ $(BUILD_DIR)/sark_isr.o: sark_isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR
 #-------------------------------------------------------------------------------
 
 clean:
-	$(RM) $(SARKLIB) $(SARKINT) $(SARKOBJ) $(SARK_ASM_OBJ)
+	$(RM) $(SARKLIB) $(SARKOBJ) $(SARK_ASM_OBJ)

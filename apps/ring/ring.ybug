@@ -1,0 +1,10 @@
+# make
+# tubogrid &
+
+app_load ring.aplx @0,0 1-16 16
+sleep 0.1
+app_sig all 16 sync0
+sleep 0.1
+iobuf 2
+sleep 30
+app_stop 16

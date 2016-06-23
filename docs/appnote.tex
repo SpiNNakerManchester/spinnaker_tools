@@ -1,0 +1,115 @@
+%
+% Simple LaTeX header to generate SpiNNaker documentation
+%
+% Generates AppNotes if variable NoteNum is defined otherwise
+% just generates a simple note. The variables TitleA and TitleB
+% may be overridden (second and third lines of title heading)
+% TitleC is optional and only used if defined.
+%
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fancyhdr}
+\usepackage{color}
+\usepackage{ifthen}
+\usepackage{xspace}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{alltt}
+\renewcommand{\ttdefault}{txtt}
+%\usepackage[compact]{titlesec}
+
+\usepackage[pdftex,a4paper]{geometry}
+\usepackage[pdftex]{graphicx}
+
+\geometry{left=25mm,right=25mm,top=25mm,bottom=20mm}
+
+\ifdefined\TitleA
+\else
+  \def\TitleA{SpiNNaker Group, School of Computer Science,
+    University of Manchester}
+\fi
+
+\ifdefined\TitleB
+\else
+ \def\TitleB{\Author\ - \Date\ - Version \Version}
+\fi
+
+\ifdefined\NoteNum
+ \def\HeadLeft{SpiNNaker AppNote \NoteNum}
+ \def\HeadCentre{\ShortTitle}
+ \def\HeadRight{Page \thepage}
+ \def\Title{AppNote \NoteNum\ - \FullTitle}
+\else
+ \def\HeadLeft{\ShortTitle}
+ \def\HeadCentre{}
+ \def\HeadRight{Page \thepage}
+ \def\Title{\FullTitle}
+\fi
+
+\addtolength{\headheight}{2pt}
+
+\pagestyle{fancy}
+
+\renewcommand{\headrulewidth}{0.6pt}
+
+\lhead{\itshape\HeadLeft}
+\chead{\itshape\HeadCentre}
+\rhead{\itshape\HeadRight}
+
+\fancyfoot{}
+
+\newcommand{\image}[5][]
+{
+  \begin{figure}[#2]
+  \begin{center}
+  \includegraphics[#1]{#3}
+  \ifthenelse{\equal{#5}{}}{}{\caption{#5}}
+  \label{fig:#4}
+  \end{center}
+  \end{figure}
+}
+
+% A substitute for changepage/chngpage's adjustwidth: provides a changemargin
+% environment.
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
+\let\endchangemargin=\endlist 
+
+\newenvironment{shell}
+{
+  \begin{changemargin}{2em}{0em}
+  \begin{alltt}
+  \small
+}
+{
+  \end{alltt}
+  \end{changemargin}
+}
+
+\setcounter{secnumdepth}{-1} 
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\setitemize{itemsep=0pt}
+\setitemize{parsep=0pt}
+\setitemize{leftmargin=12pt}
+
+\lstset{xleftmargin=2em,columns=flexible,basicstyle=\ttfamily\small}
+
+\begin{document}
+
+\begin{center}
+\setlength{\parskip}{0em}
+{\Large\bfseries\Title}
+\par
+\vspace{5mm}
+{\large\itshape\TitleA}
+\par
+\vspace{2mm}
+{\large\itshape\TitleB}
+\ifdefined\TitleC
+\par
+\vspace{2mm}
+{\large\itshape\TitleC}
+\fi
+\end{center}

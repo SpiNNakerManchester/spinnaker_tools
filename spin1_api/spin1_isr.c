@@ -56,10 +56,10 @@ INT_HANDLER cc_rx_ready_isr (void)
       uint rx_key = cc[CC_RXKEY];  // also clears interrupt
 
       if(callback[MC_PACKET_RECEIVED].cback != NULL)
-    schedule (MC_PACKET_RECEIVED, rx_key, 0);
+        schedule (MC_PACKET_RECEIVED, rx_key, 0);
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-    diagnostics.discarded_mc_packets++;
+        diagnostics.discarded_mc_packets++;
 #endif
     }
 
@@ -107,6 +107,105 @@ INT_HANDLER cc_rx_ready_fiqsr ()
       uint rx_key = cc[CC_RXKEY];  // also clears interrupt
 
       callback[MC_PACKET_RECEIVED].cback (rx_key, 0);
+    }
+
+  // TODO: maybe clear error flags (sticky) in CC
+}
+/*
+*******/
+
+
+/****f* spin1_isr.c/cc_fr_ready_isr
+*
+* SUMMARY
+*  This interrupt service routine is called in response to receipt of a packet
+*  from the router. Chips are configured such that fascicle processors receive
+*  only multicast neural event packets. In response to receipt of a MC packet
+*  a callback is scheduled to process the corresponding routing key and data.
+*
+*  Checking for parity and framing errors is not performed. The VIC is
+*  configured so that the interrupts raised by erroneous packets prompt
+*  execution of cc_rx_error_isr which clears them.
+*
+* SYNOPSIS
+*  INT_HANDLER cc_fr_ready_isr()
+*
+* SOURCE
+*/
+INT_HANDLER cc_fr_ready_isr (void)
+{
+  uint rx_status = cc[CC_RSR];	// Get Rx status
+
+  if (rx_status & PKT_PL)	// Has payload?
+    {
+      uint rx_data = cc[CC_RXDATA];
+      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+
+      // If application callback registered schedule it
+
+      if (callback[FRPL_PACKET_RECEIVED].cback != NULL)
+        schedule (FRPL_PACKET_RECEIVED, rx_key, rx_data);
+#if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
+      else
+        diagnostics.discarded_fr_packets++;
+#endif
+    }
+  else
+    {
+      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+
+      if(callback[FR_PACKET_RECEIVED].cback != NULL)
+        schedule (FR_PACKET_RECEIVED, rx_key, 0);
+#if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
+      else
+        diagnostics.discarded_fr_packets++;
+#endif
+    }
+
+  // TODO: maybe clear error flags (sticky) in CC
+  // Ack VIC
+
+  vic[VIC_VADDR] = (uint) vic;
+}
+/*
+*******/
+
+
+/****f* spin1_isr.c/cc_fr_ready_fiqsr
+*
+* SUMMARY
+*  This interrupt service routine is called in response to receipt of a packet
+*  from the router. Chips are configured such that fascicle processors receive
+*  only multicast neural event packets. In response to receipt of a MC packet
+*  a callback is scheduled to process the corresponding routing key and data.
+*
+*  Checking for parity and framing errors is not performed. The VIC is
+*  configured so that the interrupts raised by erroneous packets prompt
+*  execution of cc_rx_error_isr which clears them.
+*
+* SYNOPSIS
+*  INT_HANDLER cc_fr_ready_fiqsr()
+*
+* SOURCE
+*/
+INT_HANDLER cc_fr_ready_fiqsr ()
+{
+  uint rx_status = cc[CC_RSR];	// Get Rx status
+
+  if (rx_status & PKT_PL)	// Has payload?
+    {
+      uint rx_data = cc[CC_RXDATA];
+      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+
+      // Execute preeminent callback
+
+      callback[FRPL_PACKET_RECEIVED].cback (rx_key, rx_data);
+    }
+  else
+    {
+      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+
+      callback[FR_PACKET_RECEIVED].cback (rx_key, 0);
     }
 
   // TODO: maybe clear error flags (sticky) in CC
@@ -172,13 +271,15 @@ INT_HANDLER cc_tx_empty_isr ()
 
     uint key = tx_packet_queue.queue[tx_packet_queue.start].key;
     uint data = tx_packet_queue.queue[tx_packet_queue.start].data;
-    uint load = tx_packet_queue.queue[tx_packet_queue.start].load;
+    uint TCR = tx_packet_queue.queue[tx_packet_queue.start].TCR;
 
     tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
 
     // Send the packet
 
-    if (load)
+    cc[CC_TCR] = TCR;
+
+    if (TCR & PKT_PL)
       cc[CC_TXDATA] = data;
 
     cc[CC_TXKEY]  = key;
@@ -410,7 +511,7 @@ INT_HANDLER timer1_fiqsr ()
   ticks++;
 
   // Execute preeminent callback
-  
+
   callback[TIMER_TICK].cback(ticks, NULL);
 }
 /*

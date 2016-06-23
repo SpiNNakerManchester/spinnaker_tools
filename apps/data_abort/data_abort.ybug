@@ -1,0 +1,8 @@
+# make
+# tubotron &
+
+app_load data_abort.aplx . 1 16
+sleep 0.1
+ps
+ps 1
+app_stop 16

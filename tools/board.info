@@ -1,0 +1,6 @@
+# Sample board info file
+
+chip 1 2 core 6
+chip 6 7 core 12
+chip 2 5 link 1
+chip 3 3 dead

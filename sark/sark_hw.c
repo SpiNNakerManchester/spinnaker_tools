@@ -355,6 +355,29 @@ uint rtr_mc_get (uint entry, rtr_entry_t *r)
   return 1;
 }
 
+// Set router fixed-route entry 
+
+void rtr_fr_set (uint route)
+{
+  uint t = rtr[RTR_FR] & 0xff000000;
+
+  sv->fr_copy = route &= 0x00ffffff;
+
+  uint phys_mask = v2p_mask (route >> NUM_LINKS);
+  route &= (1 << NUM_LINKS) - 1;
+  route |= phys_mask << NUM_LINKS;
+
+  rtr[RTR_FR] = t | route;
+}
+
+
+// Get router fixed-route entry 
+
+uint rtr_fr_get (void)
+{
+  return sv->fr_copy;
+}
+
 
 // Initialise router point-to-point tables (every entry set to 6)
 
