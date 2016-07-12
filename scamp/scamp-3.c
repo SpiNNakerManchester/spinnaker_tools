@@ -1153,7 +1153,8 @@ void compute_st (void)
 void proc_100hz (uint a1, uint a2)
 {
   // Counter used to time how long we've been in certain netinit states.
-  static uint netinit_tick_counter = 0;
+  static uint netinit_biff_tick_counter = 0;
+  static uint netinit_p2p_tick_counter = 0;
   
   // Boot-up related packet sending and boot-phase advancing
   switch (netinit_phase)
@@ -1165,8 +1166,8 @@ void proc_100hz (uint a1, uint a2)
       
       // If no new P2P addresses have been broadcast for a while we can assume
       // all chips are have a valid P2P address so it is now time to determine
-			// the system's dimensions.
-			if (ticks_since_last_p2pc_new++ > (uint)sv->netinit_bc_wait)
+      // the system's dimensions.
+      if (ticks_since_last_p2pc_new++ > (uint)sv->netinit_bc_wait)
         {
           netinit_phase = NETINIT_PHASE_P2P_DIMS;
           
@@ -1208,13 +1209,13 @@ void proc_100hz (uint a1, uint a2)
           // Work out the local Ethernet connected chip coordinates
           compute_eth ();
           
-          netinit_tick_counter = 0;
+          netinit_biff_tick_counter = 0;
           netinit_phase = NETINIT_PHASE_BIFF;
         }
       break;
     
     case NETINIT_PHASE_BIFF:
-      // The board information floodfilll is allowed three 100Hz ticks. In the
+      // The board information floodfill is allowed three 100Hz ticks. In the
       // first tick, the board information is actually broadcast. In the second
       // tick, nothing happens and in the third the state advances to the P2P
       // table generation phase.
@@ -1223,13 +1224,13 @@ void proc_100hz (uint a1, uint a2)
       // the machine are not aligned. As a result, some chips may be *almost*
       // 10ms ahead of others. Since it is important that blacklisting
       // information is broadcast ahead of P2P generation, leaving an extra
-      // "tick" before moving to the next state should deal with the problem. A
-      // third tick is left to allow extra leeway accounting for the fact that
+      // "tick" before moving to the next state should deal with the problem.
+      // More ticks allow extra lee-way accounting for the fact that
       // the timers are not necessarily *perfectly* aligned to within 10ms...
       
-      netinit_tick_counter++;
+      netinit_biff_tick_counter++;
       
-      if (netinit_tick_counter == 1)
+      if (netinit_biff_tick_counter == 1)
         {
           if (sv->board_info)
             {
@@ -1244,9 +1245,9 @@ void proc_100hz (uint a1, uint a2)
                 }
             }
         }
-      else if (netinit_tick_counter >= 3)
+      else if (netinit_biff_tick_counter >= 20)
         {
-          netinit_tick_counter = 0;
+          netinit_p2p_tick_counter = 0;
           netinit_phase = NETINIT_PHASE_P2P_TABLE;
         }
       break;
@@ -1256,7 +1257,7 @@ void proc_100hz (uint a1, uint a2)
       // network load.
       {
         uint p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
-        if (netinit_tick_counter == 0)
+        if (netinit_p2p_tick_counter == 0)
           {
             hop_table[p2p_addr] = 0;
             rtr_p2p_set (p2p_addr, 7);
@@ -1267,10 +1268,10 @@ void proc_100hz (uint a1, uint a2)
         // Once all P2P messages have had ample time to send (and the required
         // number of repeats have occurred), compute the level
         // config and signalling broadcast spanning tree.
-        if (netinit_tick_counter++ >=
+        if (netinit_p2p_tick_counter++ >=
             ((p2pb_period / 10000) + 2))
           {
-            netinit_tick_counter = 0;
+            netinit_p2p_tick_counter = 0;
             
             if (sv->p2pb_repeats-- == 0)
               {
