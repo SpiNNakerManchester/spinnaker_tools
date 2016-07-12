@@ -1224,8 +1224,8 @@ void proc_100hz (uint a1, uint a2)
       // the machine are not aligned. As a result, some chips may be *almost*
       // 10ms ahead of others. Since it is important that blacklisting
       // information is broadcast ahead of P2P generation, leaving an extra
-      // "tick" before moving to the next state should deal with the problem.
-      // More ticks allow extra lee-way accounting for the fact that
+      // "tick" before moving to the next state should deal with the problem. A
+      // third tick is left to allow extra leeway accounting for the fact that
       // the timers are not necessarily *perfectly* aligned to within 10ms...
       
       netinit_biff_tick_counter++;
@@ -1245,7 +1245,7 @@ void proc_100hz (uint a1, uint a2)
                 }
             }
         }
-      else if (netinit_biff_tick_counter >= 20)
+      else if (netinit_biff_tick_counter >= 3)
         {
           netinit_p2p_tick_counter = 0;
           netinit_phase = NETINIT_PHASE_P2P_TABLE;
