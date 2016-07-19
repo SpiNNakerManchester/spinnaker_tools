@@ -568,7 +568,7 @@ void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
   // If guess was updated, broadcast this fact
   if (updated)
     {
-      last_netinit_broadcast = 0;
+      ticks_since_last_p2pc_new = 0;
       p2pc_new_nn_send(p2p_addr_guess_x, p2p_addr_guess_y);
     }
 }
@@ -596,7 +596,7 @@ void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
   // Re-broadcast only newly discovered coordinates
   if (byte != new_byte)
     {
-      last_netinit_broadcast = 0;
+      ticks_since_last_p2pc_new = 0;
       p2pc_new_nn_send(x, y);
     }
 }
@@ -640,7 +640,7 @@ void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
   // delay
   if (changed)
     {
-      last_netinit_broadcast = 0;
+      ticks_since_last_p2pc_dims = 0;
       p2pc_dims_nn_send(0, 0);
     }
 }

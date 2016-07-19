@@ -355,7 +355,8 @@ extern uchar core_app[MAX_CPUS];
 extern uint app_mask[256];
 
 extern volatile enum netinit_phase_e netinit_phase;
-extern volatile uint last_netinit_broadcast;
+extern volatile uint ticks_since_last_p2pc_new;
+extern volatile uint ticks_since_last_p2pc_dims;
 extern volatile int p2p_addr_guess_x;
 extern volatile int p2p_addr_guess_y;
 extern volatile int p2p_min_x;
