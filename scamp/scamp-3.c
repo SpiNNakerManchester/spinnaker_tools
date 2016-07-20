@@ -106,9 +106,10 @@ uint tag_tto = 9;	// 2.56s = 10ms * (1 << (9-1))
 // The network initialisation process phase currently in progress
 volatile enum netinit_phase_e netinit_phase;
 
-// Number of 10ms ticks ellapsed since a network initialisation broadcast
-// message was receieved
-volatile uint last_netinit_broadcast;
+// Number of 10ms ticks ellapsed since the last P2PC_NEW arrived
+volatile uint ticks_since_last_p2pc_new;
+// Number of 10ms ticks ellapsed since the last P2PC_DIMS arrived
+volatile uint ticks_since_last_p2pc_dims;
 
 // During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address. Note
 // that this value may be negative and may be much larger than realistic
@@ -1099,7 +1100,8 @@ void netinit_start(void)
   p2p_addr_table = sark_xalloc (sv->sys_heap, P2P_ADDR_TABLE_BYTES, 0, 0);
   sark_word_set (p2p_addr_table, 0, P2P_ADDR_TABLE_BYTES);
   
-  last_netinit_broadcast = 0;
+  ticks_since_last_p2pc_new = 0;
+  ticks_since_last_p2pc_dims = 0;
 }
 
 // Sets up a broadcast MC route by constructing a spanning tree of the  P2P
@@ -1150,6 +1152,10 @@ void compute_st (void)
 // "proc_100hz" is put on the event queue every 10ms
 void proc_100hz (uint a1, uint a2)
 {
+  // Counter used to time how long we've been in certain netinit states.
+  static uint netinit_biff_tick_counter = 0;
+  static uint netinit_p2p_tick_counter = 0;
+  
   // Boot-up related packet sending and boot-phase advancing
   switch (netinit_phase)
   {
@@ -1161,10 +1167,9 @@ void proc_100hz (uint a1, uint a2)
       // If no new P2P addresses have been broadcast for a while we can assume
       // all chips are have a valid P2P address so it is now time to determine
       // the system's dimensions.
-      if (last_netinit_broadcast++ > (uint)sv->netinit_bc_wait)
+      if (ticks_since_last_p2pc_new++ > (uint)sv->netinit_bc_wait)
         {
           netinit_phase = NETINIT_PHASE_P2P_DIMS;
-          last_netinit_broadcast = 0;
           
           p2p_min_x = (p2p_addr_guess_x < 0) ? p2p_addr_guess_x : 0;
           p2p_min_y = (p2p_addr_guess_y < 0) ? p2p_addr_guess_y : 0;
@@ -1180,7 +1185,7 @@ void proc_100hz (uint a1, uint a2)
       
       // If no new guesses have been broadcast for a while we can assume the
       // current guess is accurate so its time to move onto the next phase
-      if (last_netinit_broadcast++ > (uint)sv->netinit_bc_wait)
+      if (ticks_since_last_p2pc_dims++ > (uint)sv->netinit_bc_wait)
         {
           // If no coordinate discovered, just shut down this chip
           if (p2p_addr_guess_x == NO_IDEA || p2p_addr_guess_y == NO_IDEA)
@@ -1204,13 +1209,13 @@ void proc_100hz (uint a1, uint a2)
           // Work out the local Ethernet connected chip coordinates
           compute_eth ();
           
-          last_netinit_broadcast = 0;
+          netinit_biff_tick_counter = 0;
           netinit_phase = NETINIT_PHASE_BIFF;
         }
       break;
     
     case NETINIT_PHASE_BIFF:
-      // The board information floodfilll is allowed three 100Hz ticks. In the
+      // The board information floodfill is allowed three 100Hz ticks. In the
       // first tick, the board information is actually broadcast. In the second
       // tick, nothing happens and in the third the state advances to the P2P
       // table generation phase.
@@ -1223,9 +1228,9 @@ void proc_100hz (uint a1, uint a2)
       // third tick is left to allow extra leeway accounting for the fact that
       // the timers are not necessarily *perfectly* aligned to within 10ms...
       
-      last_netinit_broadcast++;
+      netinit_biff_tick_counter++;
       
-      if (last_netinit_broadcast == 1)
+      if (netinit_biff_tick_counter == 1)
         {
           if (sv->board_info)
             {
@@ -1240,9 +1245,9 @@ void proc_100hz (uint a1, uint a2)
                 }
             }
         }
-      else if (last_netinit_broadcast >= 3)
+      else if (netinit_biff_tick_counter >= 3)
         {
-          last_netinit_broadcast = 0;
+          netinit_p2p_tick_counter = 0;
           netinit_phase = NETINIT_PHASE_P2P_TABLE;
         }
       break;
@@ -1252,7 +1257,7 @@ void proc_100hz (uint a1, uint a2)
       // network load.
       {
         uint p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
-        if (last_netinit_broadcast == 0)
+        if (netinit_p2p_tick_counter == 0)
           {
             hop_table[p2p_addr] = 0;
             rtr_p2p_set (p2p_addr, 7);
@@ -1263,10 +1268,10 @@ void proc_100hz (uint a1, uint a2)
         // Once all P2P messages have had ample time to send (and the required
         // number of repeats have occurred), compute the level
         // config and signalling broadcast spanning tree.
-        if (last_netinit_broadcast++ >=
+        if (netinit_p2p_tick_counter++ >=
             ((p2pb_period / 10000) + 2))
           {
-            last_netinit_broadcast = 0;
+            netinit_p2p_tick_counter = 0;
             
             if (sv->p2pb_repeats-- == 0)
               {

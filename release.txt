@@ -4,6 +4,14 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.0.1 - Bugfix of barriers used during boot.
+
+This version fixes an issue where a random set of chips would not appear after
+boot.
+
+#-------------------------------------------------------------------------------
+
+
 Version 3.0.0 - Merging of changes made on a different branch of the tools 
 (Breaking change due to version checking bug in previous releases.)
 
