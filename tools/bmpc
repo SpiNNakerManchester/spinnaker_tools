@@ -1623,11 +1623,11 @@ sub cmd_fstat
 
     my @regs = qw/VERS CRCE FRME BUSY LNAK RNAK LACK RACK LOOC ROOC CRDT
 		  SFRM TFRM DFRM RFRM EMPT FULL CFCL CFCR IDSO IDSI
-                  HAND RECO/;
+                  HAND RECO STOP/;
 
     my @fmt = qw/0x%08x %10u %10u %10u %10u %10u %10u %10u %10u %10u %10u
 		 %10u %10u %10u %10u 0b%08b 0b%08b 0b%08b 0b%08b 0x%04x 0x%04x
-                 0b%08b %10u/;
+                 0b%08b %10u %1b/;
 
     my @names = qw/East South Periph-0 SouthWest West Periph-1 North
 	           NorthEast Periph-2/;

@@ -1791,7 +1791,7 @@ sub cmd_rtr_diag
 
         for (my $i = 0; $i < 16; $i++)
         {
-            printf "%-10s %d\n", $rtrc[$i], $data->[$i];
+            printf "%-10s %u\n", $rtrc[$i], $data->[$i];
         }
 
         if ($ac == 1 && $arg0 eq "clr")
