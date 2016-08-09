@@ -378,6 +378,24 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 
 	  if (mask & 1)
 	    {
+              if ((p >= desc->limit) || ((mask >> 1) == 0))
+		{
+		  desc->ack = 0;
+
+		  event_t* e = event_new (p2p_ack_timeout, (uint) desc, 0);
+
+		  if (e != NULL)
+		    {
+		      desc->event = e;
+		      desc->event_id = e->ID;
+		      timer_schedule (e, data_ack_time);
+		    }
+		  else
+		    {
+		      sw_error (SW_OPT);
+		    }
+		}
+
 	      uint data = (desc->rid << 29) + (desc->phase << 28) + (seq << 24) + //##
 		(p[2] << 16) + (p[1] << 8) + p[0];
 
@@ -394,21 +412,6 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 
 	  if (mask == 0)
 	    break;
-	}
-
-      desc->ack = 0;
-
-      event_t* e = event_new (p2p_ack_timeout, (uint) desc, 0);
-
-      if (e != NULL) 
-	{
-	  desc->event = e;
-	  desc->event_id = e->ID;
-	  timer_schedule (e, data_ack_time);
-	}
-      else
-	{
-	  sw_error (SW_OPT);
 	}
 
       while (desc->ack == 0) //const - 1 data_ack, 2 timeout, 3 close_req
