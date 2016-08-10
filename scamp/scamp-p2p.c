@@ -376,9 +376,12 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 	{
 	  uchar *p = desc->base + 3 * seq;
 
+          uint is_last_seq = (p >= desc->limit);
+          uint next_mask = mask >> 1;
+
 	  if (mask & 1)
 	    {
-              if ((p >= desc->limit) || ((mask >> 1) == 0))
+              if (is_last_seq || (next_mask == 0))
 		{
 		  desc->ack = 0;
 
@@ -402,13 +405,13 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 	      p2p_send_data (data, addr);
 	    }
 
-	  if (p >= desc->limit)
+	  if (is_last_seq)
 	    {
 	      desc->done = 1;
 	      break;
 	    }
 
-	  mask = mask >> 1;
+	  mask = next_mask;
 
 	  if (mask == 0)
 	    break;
