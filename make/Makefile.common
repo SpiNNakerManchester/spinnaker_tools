@@ -75,9 +75,9 @@ ifeq ($(GNU),1)
 
 else
     # ARM Compiler settings
-    AS := armasm --keep --cpu=5te --apcs /interwork
-    CC_NO_THUMB := armcc -c --c99 --cpu=5te --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
-    CXX_NO_THUMB := armcc -c --cpp11 --cpu=5te --apcs /interwork --min_array_alignment=4 -I $(SPINN_INC_DIR) --no_rtti --no_exceptions
+    AS := armasm --keep --cpu=5te --apcs interwork
+    CC_NO_THUMB := armcc -c --c99 --cpu=5te --apcs interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
+    CXX_NO_THUMB := armcc -c --cpp11 --cpu=5te --apcs interwork --min_array_alignment=4 -I $(SPINN_INC_DIR) --no_rtti --no_exceptions
     CC_THUMB := $(CC_NO_THUMB) --thumb -DTHUMB
     CXX_THUMB := $(CXX_NO_THUMB) --thumb -DTHUMB
     
