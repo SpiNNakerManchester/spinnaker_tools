@@ -5,8 +5,12 @@ ifeq ($(GNU),1)
 else
     BUILD_DIR := ../build/arm
 endif
-include ../make/Makefile.common
 LIB := 1
+include ../make/Makefile.common
+
+# For some reason these need to be added again dispite them being added in
+# the above Makefile.common
+CFLAGS += -ffunction-sections -fdata-sections
 
 #-------------------------------------------------------------------------------
 
