@@ -30,6 +30,11 @@ SECTIONS
     APLX_ENTRY = 16;
 
     . = ITCM_BASE;
+    
+    /DISCARD/ :
+    {
+        *(.ARM.exidx*);
+    }
 
     RO_DATA :
     {
