@@ -31,11 +31,6 @@ SECTIONS
 
     . = ITCM_BASE;
     
-    /DISCARD/ :
-    {
-        *(.ARM.exidx*);
-    }
-
     RO_DATA :
     {
           * (_alib_reset);
@@ -52,7 +47,14 @@ SECTIONS
     . = ALIGN (4);
 
     RO_LENGTH = . - ITCM_BASE;
+    
+    .ARM.exidx :
+    {
+        * (.ARM.exidx*);
+    } > ITCM
 
+    . = ALIGN (4);
+    
     . = DTCM_BASE;
 
     RW_DATA  :
