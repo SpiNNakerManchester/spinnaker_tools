@@ -46,14 +46,18 @@ SECTIONS
 
     . = ALIGN (4);
 
-    RO_LENGTH = . - ITCM_BASE;
-    
-    .ARM.exidx :
+    /*
+      Attempt to deal with .ARM.exdix* sections. Ideally we probably
+      want to throw these away but for now they go into the RO binary
+      See also "objcopy" lines in make file...
+    */     
+
+    EX_DATA :
     {
         * (.ARM.exidx*);
     } > ITCM
 
-    . = ALIGN (4);
+    RO_LENGTH = . - ITCM_BASE;
     
     . = DTCM_BASE;
 
