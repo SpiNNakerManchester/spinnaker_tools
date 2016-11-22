@@ -22,17 +22,6 @@
 
 //------------------------------------------------------------------------------
 
-
-typedef struct iobuf
-{
-  struct iobuf *next;
-  uint unix_time;
-  uint time_ms;
-  uint ptr;
-  uchar buf[];
-} iobuf_t;
-
-
 static uint sp_ptr;		// Buffer pointer for 'sprintf'
 static uint buf_ptr;		// Buffer pointer for IO_BUF
 
