@@ -758,20 +758,6 @@ typedef struct vcpu     // 128 bytes
   uint user3;                   //!< 124 - User word 3
 } vcpu_t;
 
-/*!
-Struct containing information about each iobuf entry in the linked list of
-iobuf entries.
-*/
-
-typedef struct iobuf
-{
-  struct iobuf *next;
-  uint unix_time;
-  uint time_ms;
-  uint ptr;
-  uchar buf[];
-} iobuf_t;
-
 // For "sark_alib.s" (maintain sync with vcpu_t)
 
 #define VCPU_SIZE           128 //!< Size of vcpu_t
@@ -1851,6 +1837,9 @@ to char array
 */
 
 void io_put_char (char *stream, uint c);
+
+//! \brief routine to support clearing of the iobuf for a given core
+void sark_reset_iobuf();
 
 //------------------------------------------------------------------------------
 

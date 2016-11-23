@@ -20,6 +20,20 @@
 
 #include <stdarg.h>
 
+/*!
+Struct containing information about each iobuf entry in the linked list of
+iobuf entries.
+*/
+
+typedef struct iobuf
+{
+  struct iobuf *next;
+  uint unix_time;
+  uint time_ms;
+  uint ptr;
+  uchar buf[];
+} iobuf_t;
+
 //------------------------------------------------------------------------------
 
 static uint sp_ptr;		// Buffer pointer for 'sprintf'
@@ -124,6 +138,39 @@ void io_put_char (char *stream, uint c)
 
       else if (c == '\n' || c == 0)
 	io_buf->ptr = buf_ptr;
+    }
+}
+
+void sark_reset_iobuf(){
+    // locate first iobuf entry
+    iobuf_t *initial_io_buf = sark.vcpu->iobuf;
+
+    // reset pointer for writing
+    initial_io_buf->ptr = 0;
+    buf_ptr = 0;
+
+    // if theres other iobufs, cycle and clear
+    if (initial_io_buf->next != NULL){
+
+        // get the first next iobuf
+        iobuf_t *first_next_io_buf = initial_io_buf->next;
+        iobuf_t *next_io_buf = first_next_io_buf;
+
+        // clear all other entries if there are any
+        while(next_io_buf->next != NULL){
+
+          // record next iobuf location
+          iobuf_t *io_buf_to_delete = next_io_buf->next;
+
+          // free the current memory location
+          sark_free(next_io_buf);
+
+          // update pointer to next iobuf struct
+          next_io_buf = io_buf_to_delete;
+        }
+
+        // clear the second one now.
+        sark_free(first_next_io_buf);
     }
 }
 
