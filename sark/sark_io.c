@@ -94,31 +94,37 @@ static iobuf_t *io_buf_init ()
 
 void sark_io_buf_reset (void)
 {
-    // rewind to first iobuf block
-    io_buf = sark.vcpu->iobuf;
+  // start critical section to access io_buf
+  uint cpsr = cpu_int_disable ();
 
-    // pointer to the rest of the block list, to be freed
-    iobuf_t *io_buf_to_free = io_buf->next;
+  // rewind to first iobuf block
+  io_buf = sark.vcpu->iobuf;
 
-    // reset pointer to the rest of the block list
-    io_buf->next = NULL;
+  // pointer to the rest of the block list, to be freed
+  iobuf_t *io_buf_to_free = io_buf->next;
 
-    // reset pointers for writing
-    io_buf->ptr = 0;
-    buf_ptr = 0;
+  // reset pointer to the rest of the block list
+  io_buf->next = NULL;
 
-    // if there are other iobuf blocks, cycle and free
-    while (io_buf_to_free != NULL)
-      {
-        // record location of next iobuf block
-        iobuf_t *next_io_buf = io_buf_to_free->next;
+  // reset pointers for writing
+  io_buf->ptr = 0;
+  buf_ptr = 0;
 
-        // free the current iobuf block
-        sark_xfree (sv->sys_heap, (void *) io_buf_to_free, 1);
+  // exit critical section
+  cpu_int_restore (cpsr);
 
-        // update current pointer to next iobuf block
-        io_buf_to_free = next_io_buf;
-      }
+  // if there are other iobuf blocks, cycle and free
+  while (io_buf_to_free != NULL)
+    {
+      // record location of next iobuf block
+      iobuf_t *next_io_buf = io_buf_to_free->next;
+
+      // free the current iobuf block
+      sark_xfree (sv->sys_heap, (void *) io_buf_to_free, 1);
+
+      // update current pointer to next iobuf block
+      io_buf_to_free = next_io_buf;
+    }
 }
 
 
