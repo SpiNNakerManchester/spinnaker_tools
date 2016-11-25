@@ -20,6 +20,8 @@
 
 #include <stdarg.h>
 
+//------------------------------------------------------------------------------
+
 /*!
 Struct containing information about each iobuf entry in the linked list of
 iobuf entries.
@@ -34,7 +36,6 @@ typedef struct iobuf
   uchar buf[];
 } iobuf_t;
 
-//------------------------------------------------------------------------------
 
 static uint sp_ptr;		// Buffer pointer for 'sprintf'
 static uint buf_ptr;		// Buffer pointer for IO_BUF
@@ -91,6 +92,36 @@ static iobuf_t *io_buf_init ()
 }
 
 
+void sark_io_buf_reset (void)
+{
+    // locate first iobuf block
+    iobuf_t *initial_io_buf = sark.vcpu->iobuf;
+
+    // pointer to the rest of the block list, to be freed
+    iobuf_t *io_buf_to_free = initial_io_buf->next;
+
+    // reset pointer to the rest of the block list
+    initial_io_buf->next = NULL;
+
+    // reset pointers for writing
+    initial_io_buf->ptr = 0;
+    buf_ptr = 0;
+
+    // if there are other iobuf blocks, cycle and free
+    while (io_buf_to_free != NULL)
+      {
+        // record location of next iobuf block
+        iobuf_t *next_io_buf = io_buf_to_free->next;
+
+        // free the current iobuf block
+        sark_xfree (sv->sys_heap, (void *) io_buf_to_free, 1);
+
+        // update current pointer to next iobuf block
+        io_buf_to_free = next_io_buf;
+      }
+}
+
+
 //------------------------------------------------------------------------------
 
 // Routine to put a character to an output stream. Different behaviour
@@ -138,39 +169,6 @@ void io_put_char (char *stream, uint c)
 
       else if (c == '\n' || c == 0)
 	io_buf->ptr = buf_ptr;
-    }
-}
-
-void sark_reset_iobuf(){
-    // locate first iobuf entry
-    iobuf_t *initial_io_buf = sark.vcpu->iobuf;
-
-    // reset pointer for writing
-    initial_io_buf->ptr = 0;
-    buf_ptr = 0;
-
-    // if theres other iobufs, cycle and clear
-    if (initial_io_buf->next != NULL){
-
-        // get the first next iobuf
-        iobuf_t *first_next_io_buf = initial_io_buf->next;
-        iobuf_t *next_io_buf = first_next_io_buf;
-
-        // clear all other entries if there are any
-        while(next_io_buf->next != NULL){
-
-          // record next iobuf location
-          iobuf_t *io_buf_to_delete = next_io_buf->next;
-
-          // free the current memory location
-          sark_free(next_io_buf);
-
-          // update pointer to next iobuf struct
-          next_io_buf = io_buf_to_delete;
-        }
-
-        // clear the second one now.
-        sark_free(first_next_io_buf);
     }
 }
 

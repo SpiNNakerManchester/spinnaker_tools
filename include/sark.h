@@ -758,6 +758,7 @@ typedef struct vcpu     // 128 bytes
   uint user3;                   //!< 124 - User word 3
 } vcpu_t;
 
+
 // For "sark_alib.s" (maintain sync with vcpu_t)
 
 #define VCPU_SIZE           128 //!< Size of vcpu_t
@@ -1838,8 +1839,11 @@ to char array
 
 void io_put_char (char *stream, uint c);
 
-//! \brief routine to support clearing of the iobuf for a given core
-void sark_reset_iobuf();
+/*! Routine to reset the iobuf for the core.
+Frees additional allocated iobuf blocks in the system heap.
+ */
+
+void sark_io_buf_reset (void);
 
 //------------------------------------------------------------------------------
 
