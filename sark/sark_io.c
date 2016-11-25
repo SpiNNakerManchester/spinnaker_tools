@@ -94,17 +94,17 @@ static iobuf_t *io_buf_init ()
 
 void sark_io_buf_reset (void)
 {
-    // locate first iobuf block
-    iobuf_t *initial_io_buf = sark.vcpu->iobuf;
+    // rewind to first iobuf block
+    io_buf = sark.vcpu->iobuf;
 
     // pointer to the rest of the block list, to be freed
-    iobuf_t *io_buf_to_free = initial_io_buf->next;
+    iobuf_t *io_buf_to_free = io_buf->next;
 
     // reset pointer to the rest of the block list
-    initial_io_buf->next = NULL;
+    io_buf->next = NULL;
 
     // reset pointers for writing
-    initial_io_buf->ptr = 0;
+    io_buf->ptr = 0;
     buf_ptr = 0;
 
     // if there are other iobuf blocks, cycle and free
