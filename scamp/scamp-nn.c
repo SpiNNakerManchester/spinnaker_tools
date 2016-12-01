@@ -1274,9 +1274,10 @@ void nn_rcv_pkt (uint link, uint data, uint key)
   //            NorthEast, and so on counterclockwise.
   //            To send to all links except the incoming one use:
   //            forward[6:0] = 0x3e [relative and not to incoming link (0)].
-  // retry[7:3] number of usec to wait between sending a copy of the packet
   // retry[2:0] number of additional times to repeat the packet (i.e. sent
   //            this many times + 1)
+  // retry[7:3] The number of usec to wait between repeated packets is
+  //            wait = (8 * retry[7:3]) + 8
   uint forward, retry;
   
 
