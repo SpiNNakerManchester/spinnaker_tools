@@ -1142,7 +1142,7 @@ void nn_rcv_biff_pct (uint link, uint data, uint key)
       return;
     }
 
-  pkt->fwd = 0x3f ^ (1 << link); // Don't return to sender...
+  pkt->fwd = 0x3e; // Don't return to sender...
   pkt->delay = 0; // Not sent more than once so no delay needed
   pkt->link = link;
 
@@ -1264,14 +1264,20 @@ void nn_rcv_pkt (uint link, uint data, uint key)
   // Now forward the incoming packet
   
   // forward[5:0] Which links should the packet be sent down
-  // forward[6] If set, link numbers above will be treated relative to the
-  //            direction the incoming packet was travelling. E.g. if a
-  //            packet comes in on the south link, fwd[6]==1 then fwd[0]
-  //            means send north, fwd[1] means send west, etc. If fwd[6]==0
-  //            then fwd[0] means send east etc. as usual.
-  // retry[7:3] number of usec to wait between sending a copy of the packet
+  // forward[6] If reset (fwd[6]==0), link numbers above will be treated
+  //            as relative to the packet's incoming link, i.e., fwd[0] 
+  //            means send to the incoming link. For example. if a packet
+  //            comes in on the south link, fwd[0] means send South, fwd[1]
+  //            means send East, and so on counterclockwise.
+  //            If set (fwd[6]==1), link numbers above will be treated as
+  //            absolute, i.e., fwd[0] means send East, fwd[1] means send
+  //            NorthEast, and so on counterclockwise.
+  //            To send to all links except the incoming one use:
+  //            forward[6:0] = 0x3e [relative and not to incoming link (0)].
   // retry[2:0] number of additional times to repeat the packet (i.e. sent
   //            this many times + 1)
+  // retry[7:3] The number of usec to wait between repeated packets is
+  //            wait = (8 * retry[7:3]) + 8
   uint forward, retry;
   
 
