@@ -1839,6 +1839,12 @@ to char array
 
 void io_put_char (char *stream, uint c);
 
+/*! Routine to reset the iobuf for the core.
+Frees additional allocated iobuf blocks in the system heap.
+ */
+
+void sark_io_buf_reset (void);
+
 //------------------------------------------------------------------------------
 
 // Routines exported by SARK - sark_alloc.c

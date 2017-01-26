@@ -22,6 +22,10 @@
 
 //------------------------------------------------------------------------------
 
+/*!
+Struct containing information about each iobuf entry in the linked list of
+iobuf entries.
+*/
 
 typedef struct iobuf
 {
@@ -85,6 +89,42 @@ static iobuf_t *io_buf_init ()
   iobuf->ptr = buf_ptr = 0;
 
   return iobuf;
+}
+
+
+void sark_io_buf_reset (void)
+{
+  // start critical section to access io_buf
+  uint cpsr = cpu_int_disable ();
+
+  // rewind to first iobuf block
+  io_buf = sark.vcpu->iobuf;
+
+  // pointer to the rest of the block list, to be freed
+  iobuf_t *io_buf_to_free = io_buf->next;
+
+  // reset pointer to the rest of the block list
+  io_buf->next = NULL;
+
+  // reset pointers for writing
+  io_buf->ptr = 0;
+  buf_ptr = 0;
+
+  // exit critical section
+  cpu_int_restore (cpsr);
+
+  // if there are other iobuf blocks, cycle and free
+  while (io_buf_to_free != NULL)
+    {
+      // record location of next iobuf block
+      iobuf_t *next_io_buf = io_buf_to_free->next;
+
+      // free the current iobuf block
+      sark_xfree (sv->sys_heap, (void *) io_buf_to_free, 1);
+
+      // update current pointer to next iobuf block
+      io_buf_to_free = next_io_buf;
+    }
 }
 
 
