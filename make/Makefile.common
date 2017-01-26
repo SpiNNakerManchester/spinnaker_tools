@@ -136,7 +136,7 @@ $(BUILD_DIR)%.nm: $(BUILD_DIR)%.elf
 # Create a binary file which is the concatenation of RO and RW sections
 $(BUILD_DIR)%.bin: $(BUILD_DIR)%.elf
 ifeq ($(GNU),1)
-	$(OC) -O binary -j RO_DATA $< $(BUILD_DIR)RO_DATA.bin
+	$(OC) -O binary -j RO_DATA -j EX_DATA $< $(BUILD_DIR)RO_DATA.bin
 	$(OC) -O binary -j RW_DATA $< $(BUILD_DIR)RW_DATA.bin
 	$(SPINN_TOOLS_DIR)/mkbin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin > $@
 	$(RM) $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin
