@@ -15,6 +15,7 @@ static volatile uint paused;            // indicates when paused
 static volatile uint resume_sync;       // controls re-synchronisation
 uint ticks;              		// number of elapsed timer periods
 static uint timer_tick;  	        // timer tick period
+static uint timer_phase;                // additional phase on starting the timer
 
 // default fiq handler -- restored after simulation
 isr_t old_vector;
@@ -248,19 +249,20 @@ void configure_dma_controller()
 *    [7]   Timer enable          Disabled
 *
 * SYNOPSIS
-*  void configure_timer1(uint time)
+*  void configure_timer1(uint time, uint phase)
 *
 * INPUTS
 *  uint time: timer period in microseconds, 0 = timer disabled
+*  uint phase: timer offset in microseconds
 *
 * SOURCE
 */
-void configure_timer1 (uint time)
+void configure_timer1 (uint time, uint phase)
 {
   // do not enable yet!
   tc[T1_CONTROL] = 0;
   tc[T1_INT_CLR] = 1;
-  tc[T1_LOAD] = sv->cpu_clk * time;
+  tc[T1_LOAD] = sv->cpu_clk * (time + phase);
   tc[T1_BG_LOAD] = sv->cpu_clk * time;
 }
 /*
@@ -389,7 +391,7 @@ void configure_vic (uint enable_timer)
 void spin1_pause()
 {
   vic[VIC_DISABLE] = (1 << TIMER1_INT);
-  configure_timer1(timer_tick);
+  configure_timer1(timer_tick, timer_phase);
   sark_cpu_state (CPU_STATE_PAUSE);
   paused = 1;
 }
@@ -745,22 +747,24 @@ void spin1_exit (uint error)
 *******/
 
 
-/****f* spin1_api.c/spin1_set_timer_tick
+/****f* spin1_api.c/spin1_set_timer_tick_and_phase
 *
 * SUMMARY
-*  This function sets the period of the timer tick
+*  This function sets the period and phase of the timer tick
 *
 * SYNOPSIS
-*  void set_timer_tick(uint time)
+*  void set_timer_tick_and_phase(uint time)
 *
 * INPUTS
 *  uint time: timer tick period (in microseconds)
+*  uint phase: timer phase offset (in microseconds)
 *
 * SOURCE
 */
-void spin1_set_timer_tick (uint time)
+void spin1_set_timer_tick_and_phase (uint time, uint phase)
 {
   timer_tick = time;
+  timer_phase = phase;
 }
 /*
 *******/
@@ -931,7 +935,7 @@ uint start (sync_bool sync, uint start_paused)
 
   configure_communications_controller();
   configure_dma_controller();
-  configure_timer1 (timer_tick);
+  configure_timer1 (timer_tick, timer_phase);
   configure_vic(!paused);
 
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)

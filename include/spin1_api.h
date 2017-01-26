@@ -73,7 +73,13 @@ typedef void (*callback_t) (uint, uint);  // callbacks
 uint spin1_start (sync_bool sync);
 uint spin1_start_paused (void);
 void spin1_exit (uint error);
-void spin1_set_timer_tick(uint time);
+void spin1_set_timer_tick_and_phase(uint time, uint phase);
+
+static inline void spin1_set_timer_tick(uint time)
+{
+  spin1_set_timer_tick_and_phase(time, 0);
+}
+
 uint spin1_get_simulation_time(void);
 void spin1_delay_us (uint n);
 void spin1_pause (void);
