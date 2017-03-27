@@ -21,7 +21,7 @@ fi
 # used during the building of SpiNNaker applications. The subdirectory
 # "tools" contains locally developed tools for building applications.
 
-SPINN_DIRS="$(readlink -e "$(dirname "${BASH_SOURCE[0]}")")"
+SPINN_DIRS=`cd "$(dirname "${BASH_SOURCE[0]}")";pwd -P`
 
 #-------------------------------------------------------------------------------
 
