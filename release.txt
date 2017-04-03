@@ -4,6 +4,45 @@
 #
 #-------------------------------------------------------------------------------
 
+
+Version 3.1.0 - Lots of bug fixes and some new features.
+
+New Features:
+
+* tools/bmpc: Printing of additional register in bmpc fstat command
+
+* Spin1 API: New function spin1_set_timer_tick_and_phase allows the timer to
+  be instantiated with a phase offset
+
+* SARK: New function sark_io_buf_reset clears the IO_BUF buffer and frees any
+  buffers allocated for the calling core 
+
+ 
+Bug Fixes:
+
+* tools/ybug: rtr_diag command now prints unsigned values rather than signed
+  values
+
+* tools/bmpc: led command now works
+
+* Spin1 API: Make fixed to allow the removal of unused functions when linking
+
+* SCAMP: When booting a 4-chip board, the board now only reports as ready when
+  the Ethernet on chip 0, 0 is ready
+
+* SCAMP: Fix to reduce the number of false-positive timeouts received when using
+  SDP over Ethernet
+  
+* SCAMP: Fix the flood-fill mechanism
+
+* General: Make fixed to work with ARM compiler on Windows
+
+* General: Fixed the use of integer division when using newer versions of GNU
+  gcc
+
+#-------------------------------------------------------------------------------
+
+
 Version 3.0.1 - Bugfix of barriers used during boot.
 
 This version fixes an issue where a random set of chips would not appear after

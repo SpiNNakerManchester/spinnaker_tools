@@ -106,6 +106,9 @@ uint tag_tto = 9;	// 2.56s = 10ms * (1 << (9-1))
 // The network initialisation process phase currently in progress
 volatile enum netinit_phase_e netinit_phase;
 
+// The Ethernet initialisation process phase currently in progress
+volatile enum ethinit_phase_e ethinit_phase;
+
 // Number of 10ms ticks ellapsed since the last P2PC_NEW arrived
 volatile uint ticks_since_last_p2pc_new;
 // Number of 10ms ticks ellapsed since the last P2PC_DIMS arrived
@@ -1036,7 +1039,24 @@ void proc_1hz (uint a1, uint a2)
     {
       uint s = phy_read (PHY_STATUS);
       sv->eth_up = (s & 4) >> 2;
+
+      // If the Ethernet is up now, we are done
+      if (sv->eth_up)
+        {
+          ethinit_phase = ETHINIT_PHASE_DONE;
+        }
     }
+
+  switch (ethinit_phase) {
+    case ETHINIT_PHASE_WAIT_1:
+        ethinit_phase = ETHINIT_PHASE_WAIT_2;
+        break;
+    case ETHINIT_PHASE_WAIT_2:
+        ethinit_phase = ETHINIT_PHASE_DONE;
+        break;
+    default:
+        break;
+}
 }
 
 
@@ -1077,6 +1097,7 @@ void soft_wdog (uint max)
 void netinit_start(void)
 {
   sv->netinit_phase = netinit_phase = NETINIT_PHASE_P2P_ADDR;
+  ethinit_phase = ETHINIT_PHASE_WAIT_1;
   
   // Initial P2P address guess
   if (sv->root_chip)
@@ -1285,6 +1306,10 @@ void proc_100hz (uint a1, uint a2)
                   {
                     uint s = phy_read (PHY_STATUS);
                     sv->eth_up = (s & 4) >> 2;
+                    if (sv->eth_up)
+                      {
+                        ethinit_phase = ETHINIT_PHASE_DONE;
+                      }
                   }
               }
           }
@@ -1476,7 +1501,11 @@ void eth_setup ()
 	  uint s = phy_read (PHY_STATUS);	// Read PHY status
 	  sv->eth_up = (s & 4) >> 2;		// Bit 2 says link up
 	  if (sv->eth_up)
-	    break;
+	    {
+	      ethinit_phase = ETHINIT_PHASE_DONE;
+	      break;
+	    }
+	  ethinit_phase = ETHINIT_PHASE_WAIT_1;
 	  event_run (1);
 	}
     }

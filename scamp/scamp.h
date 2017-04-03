@@ -202,8 +202,21 @@ enum netinit_phase_e
   NETINIT_PHASE_BIFF,
   // Construct the P2P routing tables
   NETINIT_PHASE_P2P_TABLE,
+  // Setting the Ethernet address
+  NETINIT_PHASE_SET_ETHERNET_ADDR,
   // The boot process is complete and the system is ready for use
   NETINIT_PHASE_DONE = 0xFF,
+};
+
+// Phases of the Ethernet initialisation process, in order
+enum ethinit_phase_e
+{
+  // FIRST PHASE - wait for Ethernet to come up
+  ETHINIT_PHASE_WAIT_1,
+  // SECOND_PHASE - wait for Ethernet to come up
+  ETHINIT_PHASE_WAIT_2,
+  // Ethernet either up or timed out
+  ETHINIT_PHASE_DONE = 0xFF,
 };
 
 //------------------------------------------------------------------------------
@@ -355,6 +368,7 @@ extern uchar core_app[MAX_CPUS];
 extern uint app_mask[256];
 
 extern volatile enum netinit_phase_e netinit_phase;
+extern volatile enum ethinit_phase_e ethinit_phase;
 extern volatile uint ticks_since_last_p2pc_new;
 extern volatile uint ticks_since_last_p2pc_dims;
 extern volatile int p2p_addr_guess_x;

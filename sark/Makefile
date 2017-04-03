@@ -28,7 +28,7 @@ SARKLIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
 # SARK objects
 
 SARKOBJS := sark_alib.o sark_base.o sark_event.o sark_timer.o \
-	sark_hw.o sark_isr.o sark_alloc.o sark_io.o sark_pkt.o
+	sark_hw.o sark_isr.o sark_alloc.o sark_io.o sark_pkt.o sark_div0.o
 SARK_ASM_OBJS := sark_alib.end spinnaker.end sark.end
 SARKOBJ = $(SARKOBJS:%.o=$(BUILD_DIR)/%.o)
 SARK_ASM_OBJ = $(SARK_ASM_OBJS:%.end=$(BUILD_DIR)/%.$(AS_END))
@@ -86,6 +86,9 @@ $(BUILD_DIR)/%.o: %.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h $(SPI
 	$(CC_THUMB) $(CFLAGS) -o $@ $<
 	
 $(BUILD_DIR)/sark_isr.o: sark_isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h $(SPINN_INC_DIR)/spin1_api.h
+	$(CC) $(CFLAGS) -o $@ $<
+	
+$(BUILD_DIR)/sark_div0.o: sark_div0.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 #-------------------------------------------------------------------------------

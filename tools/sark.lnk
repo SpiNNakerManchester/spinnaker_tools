@@ -30,7 +30,7 @@ SECTIONS
     APLX_ENTRY = 16;
 
     . = ITCM_BASE;
-
+    
     RO_DATA :
     {
           * (_alib_reset);
@@ -46,8 +46,19 @@ SECTIONS
 
     . = ALIGN (4);
 
-    RO_LENGTH = . - ITCM_BASE;
+    /*
+      Attempt to deal with .ARM.exdix* sections. Ideally we probably
+      want to throw these away but for now they go into the RO binary
+      See also "objcopy" lines in make file...
+    */     
 
+    EX_DATA :
+    {
+        * (.ARM.exidx*);
+    } > ITCM
+
+    RO_LENGTH = . - ITCM_BASE;
+    
     . = DTCM_BASE;
 
     RW_DATA  :

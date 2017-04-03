@@ -461,6 +461,7 @@ sub led
 
     $self->scp_cmd ($CMD_LED,
                     arg1 => $leds,
+		    arg2 => 1 << $self->{C},
                     %opts);
 }
 
