@@ -1578,7 +1578,7 @@ void c_main (void)
 
   while (1)				// Run event loop (forever...)
     {
-      event_run (0);
+      event_run (1);
       cpu_wfi ();
     }
 }
