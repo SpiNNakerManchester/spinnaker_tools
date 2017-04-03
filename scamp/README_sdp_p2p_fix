@@ -22,8 +22,10 @@ A. SDP/SCP handling
 
 [sark_event.c]	event_run (restart)
 [scamp-3.c]	 proc_route_msg (msg, srce_ip)
-[scamp-3.c]	  p2p_send_msg (msg->dest_addr, msg)	// if other chip
-[scamp-3.c]	  scamp_debug (msg, srce_ip)		// if this chip
+		  if (to other chip)
+[scamp-3.c]	   p2p_send_msg (msg->dest_addr, msg)
+		  else // to this chip
+[scamp-3.c]	   scamp_debug (msg, srce_ip)
 [scamp-3.c]	  return_msg (msg, rc)
 
 
