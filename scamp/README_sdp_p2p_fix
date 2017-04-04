@@ -1,25 +1,15 @@
 A. SDP/SCP handling
 
+queue msg
+---------
 [scamp-isr.c]	eth_rx_int ()
 [scamp-3.c]	 eth_receive ()
 [scamp-3.c]	  udp_pkt (rx_pkt, rx_len)
 [scamp-3.c]	   msg_queue_insert (msg, srce_ip)
 [sark_event.c]	    event_queue_proc (proc_route_msg, msg, srce_ip, PRIO_0)
 
-- event_queue_proc allocates an event. It returns FAILURE if it fails
-  to allocate a free event.
-- msg_queue_insert does *not* check the event_queue_proc return value!
-
-- udp_pkt allocates SDP msg buffer. If it fails to allocate a free msg
-  buffer it discards the Ethernet frame and fails silently.
-
-- proc_route_msg sends the return msg if needed. If event_queue_proc
-  fails, proc_route_msg never runs and no return msg is sent.
-
-- either udp_pkt, proc_route_msg or return_msg free SDP msg buffer. If
-  event_queue_proc fails, proc_route_msg/return_msg never run and the
-  SDP msg buffer is not freed!
-
+process msg
+-----------
 [sark_event.c]	event_run (restart)
 [scamp-3.c]	 proc_route_msg (msg, srce_ip)
 		  if (to other chip)
@@ -28,6 +18,20 @@ A. SDP/SCP handling
 [scamp-3.c]	   scamp_debug (msg, srce_ip)
 [scamp-3.c]	  return_msg (msg, rc)
 
+- event_queue_proc allocates an event. It returns FAILURE if it fails
+  to allocate one. msg_queue_insert does *not* check the
+  event_queue_proc return value.
+
+- udp_pkt allocates an SDP msg buffer. If it fails to allocate a free
+  msg buffer it discards the Ethernet frame and fails silently.
+
+- proc_route_msg processes the received msg and sends a return msg if
+  needed. If event_queue_proc fails, proc_route_msg never runs and no
+  return msg is sent.
+
+- either udp_pkt, proc_route_msg or return_msg free the SDP msg
+  buffer. If event_queue_proc fails, proc_route_msg/return_msg never
+  run and the SDP msg buffer is not freed!
 
 
 B. SDP windowing problem
@@ -96,11 +100,11 @@ missed:
   problems.
 
 - proc_1khz is short but is the most frequently called. It is likely
-  consuming a lot of events that are not freed if it is starving.
+  to consume a lot of events that are not freed if it starves.
 
 - proc_100hz has a lot of work and is frequently called. It is likely
-  consuming a lot of events that are not free if it is starving and
-  also takes a long time to execute..
+  to consume a lot of events that are not free if it starves and
+  also takes a long time to execute.
 
 8. proc_1hz
    every 1s:
