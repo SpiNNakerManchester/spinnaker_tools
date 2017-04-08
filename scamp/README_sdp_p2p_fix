@@ -63,7 +63,35 @@ B. SDP windowing problem
 
    * proc_1hz/PRIO_2		ms_timer_int ()
 
-3. These are the scheduled events that go into timer_queue:
+- Proc_1hz is short and very infrequently called. Unlikely to cause
+  problems.
+
+- proc_1khz is short but is the most frequently called. It is likely
+  to consume a lot of events that are not freed if it starves.
+
+- proc_100hz has a lot of work and is frequently called. It is likely
+  to consume a lot of events that are not freed if it starves and
+  also takes a long time to execute.
+
+3. proc_1hz
+   every 1s:
+   	 - read PHY_STATUS
+   	 - set sv->eth_up
+
+4. proc_100hz
+   every 10ms:
+   	 - process netinit_phase (boot up only!)
+	 - adjust disp_load (led blinking ??) -- this could be in step above.
+	 - sample core state: schedule update_load (sark_rand () % 9999)
+	 - process iptag timeouts: iptag_timer ()
+	 - ping app cpus: soft_sdog ()
+	 - send local time-phase control (LTPC) pkt: ff_nn_send ()
+
+5. proc_1khz
+   every 1ms:
+   	 - blink led0
+
+6. These are the scheduled events that go into timer_queue:
    * update_load
    * p2pb_nn_send
    * proc_send
@@ -75,53 +103,27 @@ B. SDP windowing problem
    * p2p_data_timeout
    * p2p_close_timeout
 
-4. event_run (restart) processes events in event_queue according to
+7. event_run (restart) processes events in event_queue according to
 priority. Starts at priority 0, processes all events in order, then
 does priority 1, and so on, unless restart = 1, which makes it check
 the priority 0 queue again every time it finishes any priority
 level.
 
-5. This works fine if SDP messages are sent one-at-a-time, i.e., no
+8. This works fine if SDP messages are sent one-at-a-time, i.e., no
 windowing is used. This results in low throughput. SDP windowing fails
 because scamp runs out of free events and fails to respond, causing
 communication with the host to timesout.
 
-6. The problem manifest with restart = 1. If SDP windowing is allowed,
+9. The problem manifest with restart = 1. If SDP windowing is allowed,
 many top-priority SDP events are queued and the queued non-SDP events
 (mainly proc_1khz, proc_100hz, proc_1hz) starve, i.e., are never
 processed. These accumulate in the queue without being freed, which
 leads to running out of free events and, thus, failure.
 
-7. If restart = 0, non-SDP events do not starve and SDP windowing
+10. If restart = 0, non-SDP events do not starve and SDP windowing
 works correctly but there is very little throughput gain with respect
-to non-windowing SDP. This needs better understanding but suggests
-that there is too much work to do so real-time deadlines will be
-missed:
-
-- Proc_1hz is short and very infrequently called. Unlikely to cause
-  problems.
-
-- proc_1khz is short but is the most frequently called. It is likely
-  to consume a lot of events that are not freed if it starves.
-
-- proc_100hz has a lot of work and is frequently called. It is likely
-  to consume a lot of events that are not freed if it starves and
-  also takes a long time to execute.
-
-8. proc_1hz
-   every 1s:
-   	 - read PHY_STATUS
-   	 - set sv->eth_up
-
-9. proc_100hz
-   every 10ms:
-   	 - process netinit_phase (boot up only!)
-	 - adjust disp_load (led blinking ??) -- this could be in step above.
-	 - sample core state: schedule update_load (sark_rand () % 9999)
-	 - process iptag timeouts: iptag_timer ()
-	 - ping app cpus: soft_sdog ()
-	 - send local time-phase control (LTPC) pkt: ff_nn_send ()
-
-10. proc_1khz
-   every 1ms:
-   	 - blink led0
+to non-windowing SDP. This seems to be caused by going to WFI after
+completion of event_run. This function will not be called again until
+a new interrupt arrives. If the priority 0 queue has events, there may
+not be a new interrupt at this level, which means that these events
+will not be serviced until a timer-related interrupt happens.
