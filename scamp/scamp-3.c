@@ -1578,8 +1578,11 @@ void c_main (void)
 
   while (1)				// Run event loop (forever...)
     {
-      event_run (1);
-      cpu_wfi ();
+      event_run (0);
+      if (event.proc_queue->proc_head == NULL)
+        {
+          cpu_wfi ();
+	}
     }
 }
 
