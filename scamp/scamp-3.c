@@ -237,7 +237,11 @@ void proc_route_msg (uint arg1, uint arg2);
 
 void msg_queue_insert (sdp_msg_t *msg, uint srce_ip)
 {
-  event_queue_proc (proc_route_msg, (uint) msg, srce_ip, PRIO_0);
+  if (event_queue_proc (proc_route_msg, (uint) msg, srce_ip, PRIO_0) == 0)
+    {
+      // if no event is queued free SDP msg buffer
+      sark_msg_free (msg);
+    }
 }
 
 
