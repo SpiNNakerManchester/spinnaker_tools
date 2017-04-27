@@ -6,17 +6,44 @@
 */
 #include <sark_cpp.h>
 
-extern "C" void c_main()
-{
-  char buf[64];
 
-  io_printf (IO_STD, "Hello world from C++! (via SDP)\n");
+class AbstractHello {
 
-  io_printf (IO_BUF, "Hello world from C++! (via SDRAM)\n");
+    public:
+        virtual void hello(const char* str) = 0;
+};
 
-  // io_printf can also do sprintf!
 
-  io_printf (buf, "Hello world from C++! (via printf...)\n");
+class HelloSDP : public AbstractHello {
+    public:
+        void hello(const char* str) {
+            io_printf(IO_STD, "%s (via SDP)\n", str);
+        }
+};
 
-  io_printf (IO_BUF, buf);
+
+class HelloSDRAM : public AbstractHello {
+    public:
+        void hello(const char* str) {
+            io_printf(IO_BUF, "%s (via SDRAM)\n", str);
+        }
+};
+
+
+class HelloBuf : public AbstractHello {
+    public:
+        void hello(const char* str) {
+            char buf[64];
+            io_printf(buf, "%s (via printf...)\n", str);
+            io_printf(IO_BUF, buf);
+        }
+};
+
+
+extern "C" void c_main() {
+
+    AbstractHello *hellos[] = {new HelloSDP(), new HelloSDRAM(), new HelloBuf()};
+    for (AbstractHello *hello : hellos) {
+        hello->hello("Hello world from C++!");
+    }
 }
