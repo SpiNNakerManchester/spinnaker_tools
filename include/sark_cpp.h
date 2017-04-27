@@ -38,8 +38,3 @@ inline void* operator new[](size_t size, std::nothrow_t) noexcept {
 inline void operator delete[](void *p,  std::nothrow_t) noexcept {
     operator delete(p); // Same as regular delete
 }
-
-extern "C" inline void __cxa_pure_virtual() {
-    io_printf(IO_BUF, "Pure Virtual Function called");
-    rt_error(RTE_SWERR);
-}

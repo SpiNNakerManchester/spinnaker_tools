@@ -28,7 +28,8 @@ SARKLIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
 # SARK objects
 
 SARKOBJS := sark_alib.o sark_base.o sark_event.o sark_timer.o \
-	sark_hw.o sark_isr.o sark_alloc.o sark_io.o sark_pkt.o sark_div0.o
+	sark_hw.o sark_isr.o sark_alloc.o sark_io.o sark_pkt.o sark_div0.o \
+	sark_cpp.o
 SARK_ASM_OBJS := sark_alib.end spinnaker.end sark.end
 SARKOBJ = $(SARKOBJS:%.o=$(BUILD_DIR)/%.o)
 SARK_ASM_OBJ = $(SARK_ASM_OBJS:%.end=$(BUILD_DIR)/%.$(AS_END))
