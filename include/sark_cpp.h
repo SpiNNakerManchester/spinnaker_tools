@@ -8,7 +8,11 @@ extern "C"
 #include <new>
 
 inline void* operator new(size_t size) noexcept {
-    return sark_alloc(1, size);
+    void *p = sark_alloc(1, size);
+    while (p == nullptr) {
+	rt_error(RTE_SWERR);
+    }
+    return p;
 }
 
 inline void operator delete(void *p) noexcept {
@@ -24,7 +28,7 @@ inline void operator delete[](void *p) noexcept {
 }
 
 inline void* operator new(size_t size, std::nothrow_t) noexcept {
-    return operator new(size); // Same as regular new
+    return sark_alloc(1, size);
 }
 
 inline void operator delete(void *p,  std::nothrow_t) noexcept {
@@ -32,7 +36,7 @@ inline void operator delete(void *p,  std::nothrow_t) noexcept {
 }
 
 inline void* operator new[](size_t size, std::nothrow_t) noexcept {
-    return operator new(size); // Same as regular new
+    return sark_alloc(1, size);
 }
 
 inline void operator delete[](void *p,  std::nothrow_t) noexcept {
