@@ -8,7 +8,6 @@
 
 
 class AbstractHello {
-
     public:
         virtual void hello(const char* str) = 0;
 };
@@ -40,8 +39,7 @@ class HelloBuf : public AbstractHello {
 };
 
 
-extern "C" void c_main() {
-
+void cpp_main() {
     AbstractHello *hellos[] = {new HelloSDP(), new HelloSDRAM(), new HelloBuf()};
     for (AbstractHello *hello : hellos) {
         hello->hello("Hello world from C++!");
