@@ -1155,7 +1155,9 @@ void proc_pkt_bc (uint i_pkt, uint count)
 	  if ((1 << p) & link_en)
 	    {
 	      if (! pkt_tx (pkt->pkt.ctrl + (p << 18), pkt->pkt.data, pkt->pkt.key))
-		sw_error (SW_OPT);
+		{
+		  sw_error (SW_OPT);
+		}
 	    }
 	}
     }
@@ -1165,7 +1167,9 @@ void proc_pkt_bc (uint i_pkt, uint count)
   if (count != 0)
     {
       if (!timer_schedule_proc (proc_pkt_bc, (uint) pkt, count, pkt->delay))
-	sw_error (SW_OPT);
+	{
+	  sw_error (SW_OPT);
+	}
     }
   else
     {

@@ -101,7 +101,8 @@ uint spin1_trigger_user_event(uint arg0, uint arg1);
 // ------------------------------------------------------------------------
 //  data transfer functions
 // ------------------------------------------------------------------------
-uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address, uint direction, uint length);
+uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
+	uint direction, uint length);
 void spin1_memcpy(void *dst, void const *src, uint len);
 // ------------------------------------------------------------------------
 
@@ -157,8 +158,7 @@ uint  spin1_rand  (void);
 // ------------------------------------------------------------------------
 //  diagnostic data available to the application
 // ------------------------------------------------------------------------
-typedef struct
-{
+typedef struct {
   uint exit_code;                                       // simulation exit code
   uint warnings;                                        // warnings type bit map
   uint total_mc_packets;                                // total routed MC packets during simulation

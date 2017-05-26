@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // bmp_hw.c	    Low-level hardware interface code for BMP LPC1768
@@ -244,12 +243,12 @@ __asm uint32_t cpu_int_off (void)
   mrs     r0, primask
   cpsid   i
   bx      lr
-} 
+}
 
 __asm void cpu_int_restore (uint32_t cpsr)
 {
-  msr     primask, r0 
-  bx      lr 
+  msr     primask, r0
+  bx      lr
 }
 
 
@@ -528,7 +527,7 @@ void configure_pwm (uint32_t period, uint32_t width)
   LPC_PWM1->PCR = 1 << 14;		// Enable PWM6 output
   LPC_PWM1->MR0 = period;		// Period
   LPC_PWM1->MR6 = width;		// Pulse width
-  LPC_PWM1->MCR = 2;			// Reset TC on MR0 
+  LPC_PWM1->MCR = 2;			// Reset TC on MR0
   LPC_PWM1->LER = (1 << 0) + (1 << 6);	// Enable match copy
 
   LPC_PWM1->TCR = 9;			// Enable everything...

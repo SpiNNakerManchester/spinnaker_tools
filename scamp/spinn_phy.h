@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // spinn_phy.h	    Spinnaker support routines for SMC PHY chip

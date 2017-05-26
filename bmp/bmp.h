@@ -142,8 +142,7 @@
 #define SDPF_REPLY		0x80
 
 
-typedef struct 			// IPTAG entry (24 bytes)
-{
+typedef struct {		// IPTAG entry (24 bytes)
   uint8_t ip[4];
   uint8_t mac[6];
   uint16_t port;
@@ -172,8 +171,7 @@ typedef struct 			// IPTAG entry (24 bytes)
 // the checksum. It will be a minimum of 8 as the SDP header
 // should always be present.
 
-typedef struct sdp_msg		// SDP message (=292 bytes)
-{
+typedef struct sdp_msg {	// SDP message (=292 bytes)
   struct sdp_msg *next;		// Next in free list
   uint16_t length;		// length
   uint16_t checksum;		// checksum (if used)
@@ -226,8 +224,7 @@ typedef struct sdp_msg		// SDP message (=292 bytes)
 #define FL_FPGA      	3
 #define FL_XREG      	4
 
-typedef struct	// 128 bytes
-{
+typedef struct {	// 128 bytes
   uint8_t type;
   uint8_t size;
   uint16_t flags;
@@ -242,8 +239,7 @@ typedef struct	// 128 bytes
 } fl_dir_t;
 
 
-typedef struct	// 256 bytes
-{
+typedef struct {	// 256 bytes
   uint8_t marker;		// 0 0x96
   uint8_t sw_ver;		// 1 EE Data format version
   uint8_t hw_ver;		// 2 Backplane HW version (0..7)
@@ -278,8 +274,7 @@ typedef struct	// 256 bytes
 } ee_data_t;
 
 
-typedef struct	// 48 bytes
-{
+typedef struct {	// 48 bytes
   uint16_t adc[8];
   int16_t t_int[4];
   int16_t t_ext[4];
@@ -289,8 +284,7 @@ typedef struct	// 48 bytes
 } board_stat_t;
 
 
-typedef struct	// 32 bytes
-{
+typedef struct {	// 32 bytes
   uint16_t flags;
   uint8_t mac_addr[6];
   uint8_t ip_addr[4];
@@ -311,8 +305,7 @@ typedef void (*handler) (void);
 typedef void (*proc4) (uint32_t, uint32_t, uint32_t, uint32_t);
 typedef void (*main_proc) (void *, uint32_t, uint32_t, uint32_t);
 
-typedef struct
-{
+typedef struct {
   uint32_t *stack_top;	// 0
   main_proc main;
 
@@ -332,42 +325,42 @@ typedef struct
   handler SysTickH;
 
   handler WDT;       	// 16
-  handler TIMER0;      
-  handler TIMER1;      
-  handler TIMER2;      
-  handler TIMER3;      
-  handler UART0;       
-  handler UART1;       
-  handler UART2;       
-  handler UART3;       
-  handler PWM1;        
-  handler I2C0;        
-  handler I2C1;        
-  handler I2C2;        
-  handler SPI;         
-  handler SSP0;        
-  handler SSP1; 
-       
+  handler TIMER0;
+  handler TIMER1;
+  handler TIMER2;
+  handler TIMER3;
+  handler UART0;
+  handler UART1;
+  handler UART2;
+  handler UART3;
+  handler PWM1;
+  handler I2C0;
+  handler I2C1;
+  handler I2C2;
+  handler SPI;
+  handler SSP0;
+  handler SSP1;
+
   handler PLL0;        	// 32
-  handler RTC;         
-  handler EINT0;       
-  handler EINT1;       
-  handler EINT2;       
-  handler EINT3;       
-  handler ADC;         
-  handler BOD;         
-  handler USB;         
-  handler CAN;         
-  handler DMA;         
-  handler I2S;         
-  handler ENET;        
-  handler RIT;         
-  handler MCPWM;       
-  handler QEI;         
+  handler RTC;
+  handler EINT0;
+  handler EINT1;
+  handler EINT2;
+  handler EINT3;
+  handler ADC;
+  handler BOD;
+  handler USB;
+  handler CAN;
+  handler DMA;
+  handler I2S;
+  handler ENET;
+  handler RIT;
+  handler MCPWM;
+  handler QEI;
 
   handler PLL1;        	// 48
-  handler USBActivity; 
-  handler CANActivity; 
+  handler USBActivity;
+  handler CANActivity;
 
   handler Rsvd_51;   	// 51
   handler Rsvd_52;
@@ -387,8 +380,7 @@ typedef struct
 } cortex_vec_t;
 
 
-typedef struct
-{
+typedef struct {
   uint32_t *stack_top;	// 0
   handler boot_proc;	// 1
   proc4 flash_copy;	// 2
@@ -437,8 +429,7 @@ static uint32_t * const uni_vec = (uint32_t *) 0x10001000;
 
 typedef void (*event_proc) (uint32_t, uint32_t);
 
-typedef struct event
-{
+typedef struct event {
   event_proc proc;	// Proc to be called or NULL
   uint32_t arg1;	// First arg to proc
   uint32_t arg2;	// Second arg to proc
@@ -581,7 +572,7 @@ void     crc32_buf (void *buf, uint32_t len);
 //------------------------------------------------------------------------------
 // bmp_io.c
 
-void io_printf (char *stream, char *f, ...) ;
+void io_printf (char *stream, char *f, ...);
 
 //------------------------------------------------------------------------------
 // bmp_ssp.c

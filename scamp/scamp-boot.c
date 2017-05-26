@@ -106,7 +106,7 @@ void nn_tx (uint key, uint data)
         {
 	  continue;
         }
-	
+
       cc[CC_TCR] = 0x00820000 | link << 18;
       cc[CC_TXDATA] = data;
       cc[CC_TXKEY] = key;

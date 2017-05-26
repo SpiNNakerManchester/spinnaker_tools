@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // spinn_net.c	    Ethernet/IP support routines for Spinnaker

@@ -193,8 +193,6 @@ void configure_communications_controller()
 /*
 *******/
 
-
-
 /****f* spin1_api.c/configure_dma_controller
 *
 * SUMMARY
@@ -228,8 +226,6 @@ void configure_dma_controller()
 }
 /*
 *******/
-
-
 
 /****f* spin1_api.c/configure_timer1
 *
@@ -267,8 +263,6 @@ void configure_timer1 (uint time, uint phase)
 }
 /*
 *******/
-
-
 
 /****f* spin1_api.c/configure_vic
 *
@@ -872,8 +866,6 @@ void report_debug ()
 /*
 *******/
 
-
-
 /****f* spin1_api.c/report_warns
 *
 * SUMMARY
@@ -1125,7 +1117,7 @@ uint spin1_dma_transfer (uint tag, void *system_address, void *tcm_address,
       dma_queue.queue[dma_queue.end].description = desc;
 
       /* if dmac is available and dma_queue empty trigger transfer now */
-      if(!(dma[DMA_STAT] & 4) && (dma_queue.start == dma_queue.end))
+      if (!(dma[DMA_STAT] & 4) && (dma_queue.start == dma_queue.end))
         {
 	  dma[DMA_ADRS] = (uint) system_address;
 	  dma[DMA_ADRT] = (uint) tcm_address;
@@ -1240,7 +1232,7 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
 
   if (cc[CC_TCR] & TX_FULL_MASK)
     {
-      if((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE == tx_packet_queue.start)
+      if ((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE == tx_packet_queue.start)
         {
 	  /* if queue full cannot do anything -- report failure */
 	  rc = FAILURE;
@@ -1264,7 +1256,7 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
     }
   else
     {
-      if((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE == tx_packet_queue.start)
+      if ((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE == tx_packet_queue.start)
         {
 	  /* if queue full, dequeue and send packet at the */
 	  /* head of the queue to make room for new packet */
@@ -1283,7 +1275,7 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
 	  cc[CC_TXKEY]  = hkey;
         }
 
-      if(tx_packet_queue.start == tx_packet_queue.end)
+      if (tx_packet_queue.start == tx_packet_queue.end)
         {
 	  // If queue empty send packet
 
@@ -1633,8 +1625,6 @@ uint spin1_get_id(void)
 /*
 *******/
 
-
-
 /****f* spin1_api.c/spin1_get_core_id
 *
 * SUMMARY
@@ -1655,8 +1645,6 @@ uint spin1_get_core_id (void)
 /*
 *******/
 
-
-
 /****f* spin1_api.c/spin1_get_chip_id
 *
 * SUMMARY
@@ -1676,8 +1664,6 @@ uint spin1_get_chip_id (void)
 }
 /*
 *******/
-
-
 
 /****f* spin1_api.c/spin1_set_mc_table_entry
 *

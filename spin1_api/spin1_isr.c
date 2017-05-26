@@ -59,7 +59,7 @@ INT_HANDLER cc_rx_ready_isr (void)
     {
       uint rx_key = cc[CC_RXKEY];  // also clears interrupt
 
-      if(callback[MC_PACKET_RECEIVED].cback != NULL)
+      if (callback[MC_PACKET_RECEIVED].cback != NULL)
 	{
 	  schedule (MC_PACKET_RECEIVED, rx_key, 0);
 	}
@@ -281,7 +281,8 @@ INT_HANDLER cc_tx_empty_isr ()
 
   // Drain queue: send packets while queue not empty and CC not full
 
-  while(tx_packet_queue.start != tx_packet_queue.end && ~cc[CC_TCR] & 0x40000000)
+  while (tx_packet_queue.start != tx_packet_queue.end
+	  && ~cc[CC_TCR] & 0x40000000)
     {
       // Dequeue packet
 

@@ -87,7 +87,7 @@ static void sf_scan (void)
 
   // Reset line high, wait a while then process "xreg" blocks
 
-  fpga_reset (1);			
+  fpga_reset (1);
 
   ssp1_slow ();
 
@@ -841,25 +841,25 @@ uint32_t debug (sdp_msg_t *msg)
     case CMD_VER:
       return cmd_ver (msg);
 
-    case CMD_READ: 
+    case CMD_READ:
       return cmd_read (msg);
 
-    case CMD_WRITE: 
+    case CMD_WRITE:
       return cmd_write (msg);
 
-    case CMD_FILL: 
+    case CMD_FILL:
       return cmd_fill (msg);
 
-    case CMD_LED: 
+    case CMD_LED:
       return cmd_led (msg);
 
-    case CMD_FLASH_ERASE: 
+    case CMD_FLASH_ERASE:
       return cmd_flash_erase (msg);
 
-    case CMD_FLASH_WRITE: 
+    case CMD_FLASH_WRITE:
       return cmd_flash_write (msg);
 
-    case CMD_FLASH_COPY: 
+    case CMD_FLASH_COPY:
       boot_vec->flash_copy (msg->arg1, msg->arg2, msg->arg3, 0);
       return 0;
 
@@ -869,13 +869,13 @@ uint32_t debug (sdp_msg_t *msg)
     case CMD_FPGA_WRITE:
       return cmd_fpga_write (msg);
 
-    case CMD_XILINX: 
+    case CMD_XILINX:
       return cmd_xilinx (msg);
 
-    case CMD_RESET: 
+    case CMD_RESET:
       return cmd_reset (msg);
 
-    case CMD_POWER: 
+    case CMD_POWER:
       return cmd_power (msg);
 
     case CMD_IPTAG:

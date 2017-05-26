@@ -49,7 +49,7 @@ INT_HANDLER pkt_tx_int () // SPIN2 - optimise for register order??
   pkt_queue_t *txq = &tx_pkt_queue;
 
   txq->remove = (txq->remove + 1) % PKT_QUEUE_SIZE;
-  
+
   pkt_t *pkt = txq->queue + txq->remove;
 
   cc[CC_TCR] = pkt->ctrl;
@@ -251,7 +251,7 @@ INT_HANDLER ms_timer_int ()
 	  sw_error (SW_OPT);
         }
     }
-  
+
   if (!event_queue_proc (proc_1khz, 0, 0, PRIO_1)) // !!const
     {
       sw_error (SW_OPT);
@@ -301,7 +301,7 @@ INT_HANDLER ap_int ()
     {
       sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);
     }
-	  
+
   sark_lock_free (cpsr, LOCK_MBOX);
 
   if (cmd == SHM_MSG)
@@ -309,7 +309,7 @@ INT_HANDLER ap_int ()
       vcpu->mbox_mp_cmd = SHM_IDLE;
 
       sdp_msg_t *msg = sark_msg_get ();
-	  
+
       if (msg != NULL)
 	{
 	  sark_msg_cpy (msg, shm_msg);

@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // spinn_net.h	    Ethernet/IP support routines for Spinnaker
@@ -37,8 +36,7 @@
 #define ICMP_ECHO_REQ 		8
 
 
-typedef struct
-{
+typedef struct {
   ushort htype;
   ushort ptype;
   uchar hlen;
@@ -51,8 +49,7 @@ typedef struct
 } arp_pkt_t;
 
 
-typedef struct
-{
+typedef struct {
   ushort srce;
   ushort dest;
   ushort length;
@@ -60,8 +57,7 @@ typedef struct
 } udp_hdr_t;
 
 
-typedef struct
-{
+typedef struct {
   uchar type;
   uchar code;
   ushort checksum;
@@ -70,16 +66,14 @@ typedef struct
 } icmp_hdr_t;
 
 
-typedef struct
-{
+typedef struct {
   uchar dest[6];
   uchar srce[6];
   ushort type;
 } mac_hdr_t;
 
 
-typedef struct
-{
+typedef struct {
   uchar ver_len;
   uchar DS;
   ushort length;

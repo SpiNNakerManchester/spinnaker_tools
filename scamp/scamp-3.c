@@ -199,8 +199,6 @@ uint iptag_new ()
   return TAG_NONE;
 }
 
-
-
 uint transient_tag (uchar *ip, uchar *mac, uint port, uint timeout)
 {
   uint tag = iptag_new ();
@@ -215,7 +213,9 @@ uint transient_tag (uchar *ip, uchar *mac, uint port, uint timeout)
       copy_ip (ip, tt->ip);
       copy_mac (mac, tt->mac);
       if (timeout != 0)
-	timeout = 1 << (timeout - 1);
+	{
+	  timeout = 1 << (timeout - 1);
+	}
       tt->timeout = timeout;
     }
 
@@ -223,8 +223,6 @@ uint transient_tag (uchar *ip, uchar *mac, uint port, uint timeout)
 }
 
 //------------------------------------------------------------------------------
-
-
 
 void queue_init ()
 {
@@ -393,7 +391,9 @@ void udp_pkt (uchar *rx_pkt, uint rx_len)
        while (i < TAG_FIXED_SIZE)
 	 {
 	   if (tag_table[i].flags != 0 && tag_table[i].rx_port == udp_dest)
-	     break;
+	     {
+	       break;
+	     }
 	   i++;
 	 }
 
@@ -523,7 +523,7 @@ void eth_send_msg (uint tag, sdp_msg_t *msg)
     {
       udp_hdr->srce = htons (srom.udp_port);
     }
-    
+
   copy_ip_hdr (iptag->ip, PROT_UDP, ip_hdr,
 	       len + pad + IP_HDR_SIZE + UDP_HDR_SIZE);
 
@@ -638,7 +638,9 @@ uint shm_send_msg (uint dest, sdp_msg_t *msg) // Send msg AP
   timer_schedule (e, 1000); // !! const??
 
   while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0)
-    continue;
+    {
+      continue;
+    }
 
   if (flag != 0)
     {
@@ -804,7 +806,7 @@ void assign_virt_cpu (uint phys_cpu)
   sv->p2v_map[phys_cpu] = sark.virt_cpu = 0;
   sv->v2p_map[0] = phys_cpu;
   sark.vcpu = sv_vcpu + 0;
- 
+
   uint virt = 1;
 
   for (uint phys = 0; phys < NUM_CPUS; phys++)
@@ -903,7 +905,7 @@ uint ram_size (void *mem)
     {
       return 0;
     }
-      
+
   return 1 << (i + 1);
 }
 
@@ -931,7 +933,7 @@ void get_board_info (void)
       sv->board_info = sv_board_info;
     }
 }
-  
+
 
 void sv_init (void)
 {
@@ -1083,18 +1085,18 @@ void update_load(uint arg1, uint arg2)
   uint num_working = 0;
   uint num_with_apps = 0;
   uint num_awake = 0;
-  
+
   uint sleeping_cpus = sc[SC_SLEEP];
-  
+
   for (uint cpu = 1; cpu < NUM_CPUS; cpu++)
     {
       vcpu_t *vcpu = sv_vcpu + cpu;
-      
+
       if (vcpu->cpu_state != CPU_STATE_DEAD)
         {
 	  num_working++;
         }
-      
+
       // NB: Ignores cores not running apps
       if (vcpu->app_id > 0)
         {
@@ -1105,7 +1107,7 @@ void update_load(uint arg1, uint arg2)
             }
         }
     }
-  
+
   // Load is simply the proportion of application processors which are awake
   // with the load clamped at a minimum of zero if any applications are loaded.
   uint new_load = (num_awake * 255) / (num_working);
@@ -1223,7 +1225,7 @@ void compute_st (void)
   // Work out the position of the p2p_root in the P2P routing table.
   uint word = p2p_root >> P2P_LOG_EPW;
   uint offset = P2P_BPE * (p2p_root & P2P_EMASK);
-  
+
   // Definately route here
   uint route = MC_CORE_ROUTE (0);
 
@@ -1288,7 +1290,7 @@ void proc_100hz (uint a1, uint a2)
       if (ticks_since_last_p2pc_new++ > (uint)sv->netinit_bc_wait)
         {
           netinit_phase = NETINIT_PHASE_P2P_DIMS;
-          
+
           p2p_min_x = (p2p_addr_guess_x < 0) ? p2p_addr_guess_x : 0;
           p2p_min_y = (p2p_addr_guess_y < 0) ? p2p_addr_guess_y : 0;
           p2p_max_x = (p2p_addr_guess_x > 0) ? p2p_addr_guess_x : 0;
@@ -1317,18 +1319,18 @@ void proc_100hz (uint a1, uint a2)
           sv->p2p_dims = p2p_dims = ((1 + p2p_max_x - p2p_min_x) << 8) |
                                     ((1 + p2p_max_y - p2p_min_y) << 0);
           sv->p2p_root = p2p_root = (-p2p_min_x << 8) | -p2p_min_y;
-          
+
           sv->p2p_active += 1;
-          
+
           // Reseed uniquely for each chip
           sark_srand (p2p_addr);
-          
+
           // Set our P2P addr in the comms controller
           cc[CC_SAR] = 0x07000000 + p2p_addr;
-          
+
           // Work out the local Ethernet connected chip coordinates
           compute_eth ();
-          
+
           netinit_biff_tick_counter = 0;
           netinit_phase = NETINIT_PHASE_BIFF;
         }
@@ -1347,9 +1349,9 @@ void proc_100hz (uint a1, uint a2)
       // "tick" before moving to the next state should deal with the problem. A
       // third tick is left to allow extra leeway accounting for the fact that
       // the timers are not necessarily *perfectly* aligned to within 10ms...
-      
+
       netinit_biff_tick_counter++;
-      
+
       if (netinit_biff_tick_counter == 1)
         {
           if (sv->board_info)
