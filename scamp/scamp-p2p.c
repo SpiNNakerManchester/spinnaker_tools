@@ -175,7 +175,9 @@ void p2p_send_data (uint data, uint addr)
 #ifdef STATS
   uint r = pkt_tx (PKT_P2P_PL, data, addr + (P2P_DATA << 16));
   if (r == 0)
-    p2p_stats[TX_FAIL]++;
+    {
+      p2p_stats[TX_FAIL]++;
+    }
 #else
   (void) pkt_tx (PKT_P2P_PL, data, addr + (P2P_DATA << 16));
 #endif
@@ -188,7 +190,9 @@ void p2p_send_ctl (uint ctrl, uint addr, uint data)
 #ifdef STATS
   uint r = pkt_tx (PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
   if (r == 0)
-    p2p_stats[TX_FAIL]++;
+    {
+      p2p_stats[TX_FAIL]++;
+    }
 #else
   (void) pkt_tx (PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
 #endif
@@ -344,10 +348,14 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
       p2p_send_ctl (P2P_OPEN_REQ, addr, (len << 8) + ctrl);
 
       while (desc->ack == 0) //const - returns 1 for OK, 2 for timeout
-	continue;
+        {
+	  continue;
+        }
 
       if (desc->ack == 1)
-	break;
+        {
+	  break;
+        }
 
 #ifdef STATS
       p2p_stats[OPEN_TO]++;
@@ -355,13 +363,17 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 #endif
 
       if (desc->tcount == 0)
-	return desc->rc;
+	{
+	  return desc->rc;
+	}
 
       desc->tcount--;
    }
 
   if (desc->rc != RC_OK)
-    return desc->rc;
+    {
+      return desc->rc;
+    }
 
   //-------
 
@@ -400,7 +412,7 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 		}
 
 	      uint data = (desc->rid << 29) + (desc->phase << 28) + (seq << 24) + //##
-		(p[2] << 16) + (p[1] << 8) + p[0];
+		      (p[2] << 16) + (p[1] << 8) + p[0];
 
 	      p2p_send_data (data, addr);
 	    }
@@ -414,16 +426,22 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 	  mask = next_mask;
 
 	  if (mask == 0)
-	    break;
+	    {
+	      break;
+	    }
 	}
 
       while (desc->ack == 0) //const - 1 data_ack, 2 timeout, 3 close_req
-	continue;
+        {
+	  continue;
+        }
 
       mask = desc->mask;
 
       if (desc->done && mask == 0)
-	break;
+        {
+	  break;
+        }
     }
 
   return desc->rc;
@@ -654,7 +672,7 @@ void p2p_close_timeout (uint rxd, uint rid)
   desc->tcount--;
 
   p2p_send_ctl (P2P_CLOSE_REQ, desc->srce, (rid << 21) + (desc->tid << 16)); //##
-  
+
   event_t* e = event_new (p2p_close_timeout, (uint) desc, rid);
 
   if (e != NULL)
@@ -825,19 +843,31 @@ void p2p_rcv_ctrl (uint data, uint addr)
   uint t = chksum_32 (data);
 
   if (t != 0)
-    return;
+    {
+      return;
+    }
 
   uint cmd = (data >> 24) & 15;
 
   if (cmd == P2P_OPEN_REQ >> 24)
-    p2p_open_req (data, addr);
+    {
+      p2p_open_req (data, addr);
+    }
   else if (cmd == P2P_OPEN_ACK >> 24)
-    p2p_open_ack (data, addr);
+    {
+      p2p_open_ack (data, addr);
+    }
   else if (cmd == P2P_DATA_ACK >> 24)
-    p2p_data_ack (data, addr);
+    {
+      p2p_data_ack (data, addr);
+    }
   else if (cmd == P2P_CLOSE_REQ >> 24)
-    p2p_close_req (data, addr);
+    {
+      p2p_close_req (data, addr);
+    }
   else if (cmd == P2P_CLOSE_ACK >> 24)
-    p2p_close_ack (data, addr);
+    {
+      p2p_close_ack (data, addr);
+    }
 }
 #endif

@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // spinn_srom.c	    Serial ROM interface routines for Spinnaker
@@ -65,9 +64,13 @@ static void send (uint v, uint n)
   do
     {
       if (v & 0x80000000)
-	sc[GPIO_SET] = SERIAL_SI;
+        {
+	  sc[GPIO_SET] = SERIAL_SI;
+        }
       else
-	sc[GPIO_CLR] = SERIAL_SI;
+        {
+	  sc[GPIO_CLR] = SERIAL_SI;
+        }
 
       clock ();
 
@@ -89,7 +92,9 @@ static uint read8 ()
     {
       uint p = sc[GPIO_READ];
       if (p & SERIAL_SO)
-	r |= 1;
+        {
+	  r |= 1;
+        }
 
       clock ();
 
@@ -97,7 +102,7 @@ static uint read8 ()
       n--;
     }
   while (n != 0);
-  
+
   return r >> 1;
 }
 
@@ -142,9 +147,13 @@ uint cmd_srom (sdp_msg_t *msg)
   while (len)
     {
       if (arg1 & WRITE)
-	send (*wbuf++ << 24, 8);
+        {
+	  send (*wbuf++ << 24, 8);
+        }
       else
-	*rbuf++ = read8 ();
+        {
+	  *rbuf++ = read8 ();
+        }
 
       len--;
     }
@@ -159,13 +168,17 @@ uint cmd_srom (sdp_msg_t *msg)
       ncs_high ();
 
       if ((sr & 1) == 0)
-	break;
+        {
+	  break;
+        }
     }
 
   sc[GPIO_PORT] = port;
 
   if (arg1 & WRITE)
-    return 0;
+    {
+      return 0;
+    }
 
   return arg1 >> 16;
 }

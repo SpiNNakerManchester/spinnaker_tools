@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // sark_pkt.c	    Packet handling routines for SARK
@@ -61,12 +60,16 @@ uint pkt_tx_kdc (uint key, uint data, uint ctrl)
     }
 
   if (event.pkt_count == 0)
-    vic[VIC_ENABLE] = 1 << CC_TNF_INT;
+    {
+      vic[VIC_ENABLE] = 1 << CC_TNF_INT;
+    }
 
   event.pkt_count++;
 
   if (event.pkt_count > event.pkt_max)
-    event.pkt_max = event.pkt_count;
+    {
+      event.pkt_max = event.pkt_count;
+    }
 
   event.pkt_queue[event.pkt_insert] = pkt;
   event.pkt_insert = (event.pkt_insert + 1) & (event.pkt_size - 1);
@@ -90,12 +93,16 @@ uint pkt_tx_kd (uint key, uint data)
     }
 
   if (event.pkt_count == 0)
-    vic[VIC_ENABLE] = 1 << CC_TNF_INT;
+    {
+      vic[VIC_ENABLE] = 1 << CC_TNF_INT;
+    }
 
   event.pkt_count++;
 
   if (event.pkt_count > event.pkt_max)
-    event.pkt_max = event.pkt_count;
+    {
+      event.pkt_max = event.pkt_count;
+    }
 
   event.pkt_queue[event.pkt_insert] = pkt;
   event.pkt_insert = (event.pkt_insert + 1) & (event.pkt_size - 1);
@@ -119,12 +126,15 @@ uint pkt_tx_k (uint key)
     }
 
   if (event.pkt_count == 0)
-    vic[VIC_ENABLE] = 1 << CC_TNF_INT;
+    {
+      vic[VIC_ENABLE] = 1 << CC_TNF_INT;
+    }
 
   event.pkt_count++;
-
   if (event.pkt_count > event.pkt_max)
-    event.pkt_max = event.pkt_count;
+    {
+      event.pkt_max = event.pkt_count;
+    }
 
   event.pkt_queue[event.pkt_insert] = pkt;
   event.pkt_insert = (event.pkt_insert + 1) & (event.pkt_size - 1);
@@ -148,12 +158,16 @@ uint pkt_tx_kc (uint key, uint ctrl)
     }
 
   if (event.pkt_count == 0)
-    vic[VIC_ENABLE] = 1 << CC_TNF_INT;
+    {
+      vic[VIC_ENABLE] = 1 << CC_TNF_INT;
+    }
 
   event.pkt_count++;
 
   if (event.pkt_count > event.pkt_max)
-    event.pkt_max = event.pkt_count;
+    {
+      event.pkt_max = event.pkt_count;
+    }
 
   event.pkt_queue[event.pkt_insert] = pkt;
   event.pkt_insert = (event.pkt_insert + 1) & (event.pkt_size - 1);

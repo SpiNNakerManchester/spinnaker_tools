@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // spinn_phy.c	    Spinnaker support routines for SMC PHY chip
@@ -29,9 +28,13 @@ static void phy_shift_out (uint data, uint len)
   while (len--)
     {
       if (data & 0x80000000)
-	c |= PHY_CTRL_DOUT;
+        {
+	  c |= PHY_CTRL_DOUT;
+        }
       else
-	c &= ~PHY_CTRL_DOUT;
+        {
+	  c &= ~PHY_CTRL_DOUT;
+        }
 
       er[ETH_PHY_CTRL] = c;
       sark_delay_us (1);
@@ -54,7 +57,9 @@ static uint phy_shift_in (uint len)
       sark_delay_us (1);
       r = r << 1;
       if (er[ETH_PHY_CTRL] & PHY_CTRL_DIN)
-	r |= 1;
+        {
+	  r |= 1;
+        }
       er[ETH_PHY_CTRL] = c | PHY_CTRL_CLK;
       sark_delay_us (1);
       er[ETH_PHY_CTRL] = c;
@@ -93,5 +98,3 @@ uint phy_read (uint addr)
 
   return phy_shift_in (16);
 }
-
-

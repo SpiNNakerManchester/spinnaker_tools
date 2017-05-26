@@ -148,14 +148,14 @@ uint my_chip, my_x, my_y;
 uint board_loc;
 
 #ifdef MAP_2x2_on_4
-  #define NUMBER_OF_XCHIPS 2
-  #define NUMBER_OF_YCHIPS 2
-  uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+#define NUMBER_OF_XCHIPS 2
+#define NUMBER_OF_YCHIPS 2
+uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe}
   };
-  uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {SWCh, NWCh},
     {SECh, NECh}
@@ -163,9 +163,9 @@ uint board_loc;
 #endif
 
 #ifdef MAP_5x4_on_48
-  #define NUMBER_OF_XCHIPS 5
-  #define NUMBER_OF_YCHIPS 4
-  uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+#define NUMBER_OF_XCHIPS 5
+#define NUMBER_OF_YCHIPS 4
+uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
@@ -173,7 +173,7 @@ uint board_loc;
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe}
   };
-  uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {SWCh, WCh,  WCh,  NWCh},
     {SCh,  0,    0,    NCh},
@@ -184,9 +184,9 @@ uint board_loc;
 #endif
 
 #ifdef MAP_8x8_on_48
-  #define NUMBER_OF_XCHIPS 8
-  #define NUMBER_OF_YCHIPS 8
-  uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+#define NUMBER_OF_XCHIPS 8
+#define NUMBER_OF_YCHIPS 8
+uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0,       0,       0,       0},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0,       0,       0},
@@ -197,7 +197,7 @@ uint board_loc;
     {0,       0,       0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0,       0,       0,       0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe}
   };
-  uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {SWCh, WCh,  WCh,  NWCh, 0,    0,    0,    0},
     {SCh,  0,    0,    0,    NWCh, 0,    0,    0},
@@ -211,9 +211,9 @@ uint board_loc;
 #endif
 
 #ifdef MAP_12x12_on_144
-  #define NUMBER_OF_XCHIPS 12
-  #define NUMBER_OF_YCHIPS 12
-  uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+#define NUMBER_OF_XCHIPS 12
+#define NUMBER_OF_YCHIPS 12
+uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
@@ -228,7 +228,7 @@ uint board_loc;
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe}
   };
-  uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {SWCh, WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  NWCh},
     {SCh,  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    NCh},
@@ -246,9 +246,9 @@ uint board_loc;
 #endif
 
 #ifdef MAP_24x12_on_288
-  #define NUMBER_OF_XCHIPS 24
-  #define NUMBER_OF_YCHIPS 12
-  uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+#define NUMBER_OF_XCHIPS 24
+#define NUMBER_OF_YCHIPS 12
+uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
@@ -275,7 +275,7 @@ uint board_loc;
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe}
   };
-  uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {SWCh, WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  NWCh},
     {SCh,  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    NCh},
@@ -305,9 +305,9 @@ uint board_loc;
 #endif
 
 #ifdef MAP_24x24_on_576
-  #define NUMBER_OF_XCHIPS 24
-  #define NUMBER_OF_YCHIPS 24
-  uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+#define NUMBER_OF_XCHIPS 24
+#define NUMBER_OF_YCHIPS 24
+uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
@@ -334,7 +334,7 @@ uint board_loc;
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe}
   };
-  uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {SWCh, WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  NWCh},
     {SCh,  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    NCh},
@@ -364,9 +364,9 @@ uint board_loc;
 #endif
 
 #ifdef MAP_48x24_on_1152
-  #define NUMBER_OF_XCHIPS 48
-  #define NUMBER_OF_YCHIPS 24
-  uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+#define NUMBER_OF_XCHIPS 48
+#define NUMBER_OF_YCHIPS 24
+uint core_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
@@ -417,7 +417,7 @@ uint board_loc;
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe},
     {0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe, 0x1fffe}
   };
-  uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
+uint chip_map[NUMBER_OF_XCHIPS][NUMBER_OF_YCHIPS] =
   {
     {SWCh, WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  WCh,  NWCh},
     {SCh,  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    NCh},
@@ -515,19 +515,19 @@ sdp_msg_t my_msg;
 static volatile int *core_temp;
 #else
 #ifdef USE_SDRAM
-  static volatile int * const core_temp =
-                     (int *) (SPINN_SDRAM_BASE + 0x1000 + 16 * sizeof(uint));
+static volatile int * const core_temp =
+	(int *) (SPINN_SDRAM_BASE + 0x1000 + 16 * sizeof(uint));
 #else  //SYSRAM
-  static volatile int * const core_temp =
-                     (int *) (SPINN_SYSRAM_BASE + (SPINN_SYSRAM_SIZE / 2));
+static volatile int * const core_temp =
+	(int *) (SPINN_SYSRAM_BASE + (SPINN_SYSRAM_SIZE / 2));
 #endif
 #endif
 
 #ifdef DEBUG
-  uint   dbg_packs_recv = 0;
-  uint * dbg_keys_recv;
-  uint   dbg_timeouts = 0;
-  uint * dbg_stime;
+uint   dbg_packs_recv = 0;
+uint * dbg_keys_recv;
+uint   dbg_timeouts = 0;
+uint * dbg_stime;
 #endif
 
 /****f* heat_demo.c/routing_table_init
@@ -553,120 +553,120 @@ void routing_table_init ()
   init_arrived = NONE_ARRIVED;
 
   if (IS_NORTHERNMOST_CORE(coreID))
-  {
-    if (IS_NORTHERNMOST_CHIP(my_x, my_y))
     {
-      // don't send packets north
-      // don't expect packets from north
-      north_key = DONT_ROUTE_KEY;
-      /* adjust for 16.16 fixed-point representation  */
-      neighbours_temp[now][NORTH]  = NORTH_INIT;
-      neighbours_temp[next][NORTH] = NORTH_INIT;
-      init_arrived |= NORTH_ARRIVED;
+      if (IS_NORTHERNMOST_CHIP(my_x, my_y))
+	{
+	  // don't send packets north
+	  // don't expect packets from north
+	  north_key = DONT_ROUTE_KEY;
+	  /* adjust for 16.16 fixed-point representation  */
+	  neighbours_temp[now][NORTH]  = NORTH_INIT;
+	  neighbours_temp[next][NORTH] = NORTH_INIT;
+	  init_arrived |= NORTH_ARRIVED;
+	}
+      else
+	{
+	  // send packets to chip to the north
+	  my_route |= ROUTE_TO_LINK(NORTH_LINK);
+	  // expect packets from chip to the north (southernmost core)
+	  route_from_north = TRUE;
+	  north_key = ROUTING_KEY(CHIP_TO_NORTH(chipID), SOUTHERNMOST_CORE(coreID));
+	}
     }
-    else
-    {
-      // send packets to chip to the north
-      my_route |= ROUTE_TO_LINK(NORTH_LINK);
-      // expect packets from chip to the north (southernmost core)
-      route_from_north = TRUE;
-      north_key = ROUTING_KEY(CHIP_TO_NORTH(chipID), SOUTHERNMOST_CORE(coreID));
-    }
-  }
   else
-  {
-    // expect packets from north
-    north_key = ROUTING_KEY(chipID, CORE_TO_NORTH(coreID));
-    // send to north core
-    my_route |= ROUTE_TO_CORE(CORE_TO_NORTH(coreID));
-  }
+    {
+      // expect packets from north
+      north_key = ROUTING_KEY(chipID, CORE_TO_NORTH(coreID));
+      // send to north core
+      my_route |= ROUTE_TO_CORE(CORE_TO_NORTH(coreID));
+    }
 
   if (IS_SOUTHERNMOST_CORE(coreID))
-  {
-    if (IS_SOUTHERNMOST_CHIP(my_x, my_y))
     {
-      // don't send packets south
-      // don't expect packets from south
-      south_key = DONT_ROUTE_KEY;
-      /* adjust for 16.16 fixed-point representation  */
-      neighbours_temp[now][SOUTH]  = SOUTH_INIT;
-      neighbours_temp[next][SOUTH] = SOUTH_INIT;
-      init_arrived |= SOUTH_ARRIVED;
+      if (IS_SOUTHERNMOST_CHIP(my_x, my_y))
+	{
+	  // don't send packets south
+	  // don't expect packets from south
+	  south_key = DONT_ROUTE_KEY;
+	  /* adjust for 16.16 fixed-point representation  */
+	  neighbours_temp[now][SOUTH]  = SOUTH_INIT;
+	  neighbours_temp[next][SOUTH] = SOUTH_INIT;
+	  init_arrived |= SOUTH_ARRIVED;
+	}
+      else
+	{
+	  // send packets to chip to the south
+	  my_route |= ROUTE_TO_LINK(SOUTH_LINK);
+	  // expect packets from chip to the south (northernmost core)
+	  route_from_south = TRUE;
+	  south_key = ROUTING_KEY(CHIP_TO_SOUTH(chipID), NORTHERNMOST_CORE(coreID));
+	}
     }
-    else
-    {
-      // send packets to chip to the south
-      my_route |= ROUTE_TO_LINK(SOUTH_LINK);
-      // expect packets from chip to the south (northernmost core)
-      route_from_south = TRUE;
-      south_key = ROUTING_KEY(CHIP_TO_SOUTH(chipID), NORTHERNMOST_CORE(coreID));
-    }
-  }
   else
-  {
-    // expect packets from south
-    south_key = ROUTING_KEY(chipID, CORE_TO_SOUTH(coreID));
-    // send to south core
-    my_route |= ROUTE_TO_CORE(CORE_TO_SOUTH(coreID));
-  }
+    {
+      // expect packets from south
+      south_key = ROUTING_KEY(chipID, CORE_TO_SOUTH(coreID));
+      // send to south core
+      my_route |= ROUTE_TO_CORE(CORE_TO_SOUTH(coreID));
+    }
 
   if (IS_EASTERNMOST_CORE(coreID))
-  {
-    if (IS_EASTERNMOST_CHIP(my_x, my_y))
     {
-      // don't send packets east
-      // don't expect packets from east
-      east_key = DONT_ROUTE_KEY;
-      /* adjust for 16.16 fixed-point representation  */
-      neighbours_temp[now][EAST]  = EAST_INIT;
-      neighbours_temp[next][EAST] = EAST_INIT;
-      init_arrived |= EAST_ARRIVED;
+      if (IS_EASTERNMOST_CHIP(my_x, my_y))
+	{
+	  // don't send packets east
+	  // don't expect packets from east
+	  east_key = DONT_ROUTE_KEY;
+	  /* adjust for 16.16 fixed-point representation  */
+	  neighbours_temp[now][EAST]  = EAST_INIT;
+	  neighbours_temp[next][EAST] = EAST_INIT;
+	  init_arrived |= EAST_ARRIVED;
+	}
+      else
+	{
+	  // send packets to chip to the east
+	  my_route |= ROUTE_TO_LINK(EAST_LINK);
+	  // expect packets from chip to the east (westernmost core)
+	  route_from_east = TRUE;
+	  east_key = ROUTING_KEY(CHIP_TO_EAST(chipID), WESTERNMOST_CORE(coreID));
+	}
     }
-    else
-    {
-      // send packets to chip to the east
-      my_route |= ROUTE_TO_LINK(EAST_LINK);
-      // expect packets from chip to the east (westernmost core)
-      route_from_east = TRUE;
-      east_key = ROUTING_KEY(CHIP_TO_EAST(chipID), WESTERNMOST_CORE(coreID));
-    }
-  }
   else
-  {
-    // send to east core
-    my_route |= ROUTE_TO_CORE(CORE_TO_EAST(coreID));
-    // expect packets from east
-    east_key = ROUTING_KEY(chipID, CORE_TO_EAST(coreID));
-  }
+    {
+      // send to east core
+      my_route |= ROUTE_TO_CORE(CORE_TO_EAST(coreID));
+      // expect packets from east
+      east_key = ROUTING_KEY(chipID, CORE_TO_EAST(coreID));
+    }
 
   if (IS_WESTERNMOST_CORE(coreID))
-  {
-    if (IS_WESTERNMOST_CHIP(my_x, my_y))
     {
-      // don't send packets west
-      // don't expect packets from west
-      west_key = DONT_ROUTE_KEY;
-      /* adjust for 16.16 fixed-point representation  */
-      neighbours_temp[now][WEST]  = WEST_INIT;
-      neighbours_temp[next][WEST] = WEST_INIT;
-      init_arrived |= WEST_ARRIVED;
+      if (IS_WESTERNMOST_CHIP(my_x, my_y))
+	{
+	  // don't send packets west
+	  // don't expect packets from west
+	  west_key = DONT_ROUTE_KEY;
+	  /* adjust for 16.16 fixed-point representation  */
+	  neighbours_temp[now][WEST]  = WEST_INIT;
+	  neighbours_temp[next][WEST] = WEST_INIT;
+	  init_arrived |= WEST_ARRIVED;
+	}
+      else
+	{
+	  // send packets to chip to the west
+	  my_route |= ROUTE_TO_LINK(WEST_LINK);
+	  // expect packets from chip to the west (easternmost core)
+	  route_from_west = TRUE;
+	  west_key = ROUTING_KEY(CHIP_TO_WEST(chipID), EASTERNMOST_CORE(coreID));
+	}
     }
-    else
-    {
-      // send packets to chip to the west
-      my_route |= ROUTE_TO_LINK(WEST_LINK);
-      // expect packets from chip to the west (easternmost core)
-      route_from_west = TRUE;
-      west_key = ROUTING_KEY(CHIP_TO_WEST(chipID), EASTERNMOST_CORE(coreID));
-    }
-  }
   else
-  {
-    // expect packets from west
-    west_key = ROUTING_KEY(chipID, CORE_TO_WEST(coreID));
-    // send to west core
-    my_route |= ROUTE_TO_CORE(CORE_TO_WEST(coreID));
-  }
+    {
+      // expect packets from west
+      west_key = ROUTING_KEY(chipID, CORE_TO_WEST(coreID));
+      // send to west core
+      my_route |= ROUTE_TO_CORE(CORE_TO_WEST(coreID));
+    }
 
   /* prepare for first update */
   arrived[now]  = init_arrived;
@@ -682,187 +682,177 @@ void routing_table_init ()
   uint e = rtr_alloc (5); // Get 5 router entries
 
   if (e == 0)
-    rt_error (RTE_ABORT);
+    {
+      rt_error (RTE_ABORT);
+    }
 
   rtr_mc_set (e, 			// entry
-	      my_key,             	// key
-	      0xffffffff,         	// mask
-	      my_route            	// route
-	      );
+	  my_key,       	      	// key
+	  0xffffffff,	         	// mask
+	  my_route);            	// route
 
   /* set MC routing table entries to get packets from neighbour chips */
   /* north */
   if (route_from_north)
-  {
-    rtr_mc_set (e + 1,     		// entry
-		north_key,            	// key
-		0xffffffff,           	// mask
-		ROUTE_TO_CORE(coreID) 	// route
-		);
-  }
+    {
+      rtr_mc_set (e + 1,     		// entry
+	      north_key,            	// key
+	      0xffffffff,           	// mask
+	      ROUTE_TO_CORE(coreID)); 	// route
+    }
 
   /* south */
   if (route_from_south)
-  {
-    rtr_mc_set (e + 2,     		// entry
-		south_key,            	// key
-		0xffffffff,           	// mask
-		ROUTE_TO_CORE(coreID) 	// route
-		);
-  }
+    {
+      rtr_mc_set (e + 2,     		// entry
+	      south_key,            	// key
+	      0xffffffff,           	// mask
+	      ROUTE_TO_CORE(coreID)); 	// route
+    }
 
   /* east */
   if (route_from_east)
-  {
-    rtr_mc_set (e + 3,     		// entry
-		east_key,             	// key
-		0xffffffff,           	// mask
-		ROUTE_TO_CORE(coreID) 	// route
-		);
-  }
+    {
+      rtr_mc_set (e + 3,     		// entry
+	      east_key,             	// key
+	      0xffffffff,           	// mask
+	      ROUTE_TO_CORE(coreID)); 	// route
+    }
 
   /* west */
   if (route_from_west)
-  {
-    rtr_mc_set (e + 4,     		// entry
-		west_key,             	// key
-		0xffffffff,           	// mask
-		ROUTE_TO_CORE(coreID) 	// route
-		);
-  }
+    {
+      rtr_mc_set (e + 4,     		// entry
+	      west_key,             	// key
+	      0xffffffff,           	// mask
+	      ROUTE_TO_CORE(coreID)); 	// route
+    }
 
   /* ------------------------------------------------------------------- */
   /* initialise routing entries for host data and commands               */
   /* ------------------------------------------------------------------- */
   /* avoid duplication                                                   */
   if (leadAp)
-  {
-    // setup routing entries for synchronization barrier
-    // setup the local (on-chip) routes
-    uint loc_route = core_map[my_x][my_y] & 0xfffffffe;
-
-    // TODO: needs fixing -- fault-tolerant tree
-    // setup off-chip routes -- check for borders!
-    uint off_route = 0;
-
-    // north
-    if ((my_x == 0) && (my_y < (NUMBER_OF_YCHIPS - 1)) &&
-        ((core_map[my_x][my_y + 1] & 0xfffffffe) != 0))
     {
-      off_route |= ROUTE_TO_LINK(NORTH_LINK);
-    }
+      // setup routing entries for synchronization barrier
+      // setup the local (on-chip) routes
+      uint loc_route = core_map[my_x][my_y] & 0xfffffffe;
 
-    // east
-    if ((my_x < (NUMBER_OF_XCHIPS - 1)) && (my_y == 0) &&
-        ((core_map[my_x + 1][my_y] & 0xfffffffe) != 0))
-    {
-      off_route |= ROUTE_TO_LINK(EAST_LINK);
-    }
+      // TODO: needs fixing -- fault-tolerant tree
+      // setup off-chip routes -- check for borders!
+      uint off_route = 0;
 
-    // north-east
-    if ((my_y < (NUMBER_OF_YCHIPS - 1)) && (my_x < (NUMBER_OF_XCHIPS - 1)) &&
-        ((core_map[my_x + 1][my_y + 1] & 0xfffffffe) != 0))
-    {
-      off_route |= ROUTE_TO_LINK(NORTH_EAST_LINK);
-    }
+      // north
+      if ((my_x == 0) && (my_y < (NUMBER_OF_YCHIPS - 1)) &&
+	      ((core_map[my_x][my_y + 1] & 0xfffffffe) != 0))
+	{
+	  off_route |= ROUTE_TO_LINK(NORTH_LINK);
+	}
 
-    uint e = rtr_alloc (5);
-    if (e == 0)
-      rt_error (RTE_ABORT);
+      // east
+      if ((my_x < (NUMBER_OF_XCHIPS - 1)) && (my_y == 0) &&
+	      ((core_map[my_x + 1][my_y] & 0xfffffffe) != 0))
+	{
+	  off_route |= ROUTE_TO_LINK(EAST_LINK);
+	}
 
-    // command entry (matches any command -- not just STOP!)
-    rtr_mc_set (e,                           	// entry
-		STOP_KEY,                       // key
-		CMD_MASK,                       // mask
-		((loc_route << 6) | off_route)  // route
-		);
+      // north-east
+      if ((my_y < (NUMBER_OF_YCHIPS - 1)) && (my_x < (NUMBER_OF_XCHIPS - 1)) &&
+	      ((core_map[my_x + 1][my_y + 1] & 0xfffffffe) != 0))
+	{
+	  off_route |= ROUTE_TO_LINK(NORTH_EAST_LINK);
+	}
 
-    // northern border temperature
-    if (IS_NORTHERNMOST_CHIP(my_x, my_y))
-    {
-      // send only to local northern-most cores
-      rtr_mc_set (e+1,                         	// entry
+      uint e = rtr_alloc (5);
+      if (e == 0)
+	{
+	  rt_error (RTE_ABORT);
+	}
+
+      // command entry (matches any command -- not just STOP!)
+      rtr_mc_set (e,				// entry
+	      STOP_KEY,				// key
+	      CMD_MASK,				// mask
+	      ((loc_route << 6) | off_route));	// route
+
+      // northern border temperature
+      if (IS_NORTHERNMOST_CHIP(my_x, my_y))
+	{
+	  // send only to local northern-most cores
+	  rtr_mc_set (e+1,			// entry
 		  TEMP_NORTH_KEY,              	// key
 		  0xffffffff,                  	// mask
-		  ((loc_route & 0x11110) << 6 | off_route) // route
-		  );
-    }
-    else
-    {
-      // send only to other chips
-      rtr_mc_set (e+1,                         	// entry
-		  TEMP_NORTH_KEY,              	// key
-		  0xffffffff,                   // mask
-		  off_route                     // route
-		  );
-    }
+		  ((loc_route & 0x11110) << 6 | off_route)); // route
+	}
+      else
+	{
+	  // send only to other chips
+	  rtr_mc_set (e+1,			// entry
+		  TEMP_NORTH_KEY,		// key
+		  0xffffffff,			// mask
+		  off_route);			// route
+	}
 
-    // eastern border temperature
-    if (IS_EASTERNMOST_CHIP(my_x, my_y))
-    {
-      // send only to local eastern-most cores
-      rtr_mc_set (e+2,                         	// entry
-		  TEMP_EAST_KEY,                // key
-		  0xffffffff,                   // mask
-		  ((loc_route & 0x1e000) << 6 | off_route) // route
-		  );
-    }
-    else
-    {
-      // send only to other chips
-      rtr_mc_set (e+2,                         	// entry
-		  TEMP_EAST_KEY,                // key
-		  0xffffffff,                   // mask
-		  off_route                     // route
-		  );
-    }
+      // eastern border temperature
+      if (IS_EASTERNMOST_CHIP(my_x, my_y))
+	{
+	  // send only to local eastern-most cores
+	  rtr_mc_set (e+2,			// entry
+		  TEMP_EAST_KEY,		// key
+		  0xffffffff,			// mask
+		  ((loc_route & 0x1e000) << 6 | off_route)); // route
+	}
+      else
+	{
+	  // send only to other chips
+	  rtr_mc_set (e+2,			// entry
+		  TEMP_EAST_KEY,		// key
+		  0xffffffff,			// mask
+		  off_route);			// route
+	}
 
-    // southern border temperature
-    // NOTE: currently temperatures never travel south!
-    if (IS_SOUTHERNMOST_CHIP(my_x, my_y))
-    {
-      // send only to local southern-most cores
-      rtr_mc_set (e+3,                         	// entry
-		  TEMP_SOUTH_KEY,               // key
-		  0xffffffff,                   // mask
-		  ((loc_route & 0x02222) << 6 | off_route) // route
-		  );
-    }
-    else
-    {
-      // send only to other chips
-      rtr_mc_set (e+3,                         	// entry
-		  TEMP_SOUTH_KEY,               // key
-		  0xffffffff,                   // mask
-		  off_route                     // route
-		  );
-    }
+      // southern border temperature
+      // NOTE: currently temperatures never travel south!
+      if (IS_SOUTHERNMOST_CHIP(my_x, my_y))
+	{
+	  // send only to local southern-most cores
+	  rtr_mc_set (e+3,			// entry
+		  TEMP_SOUTH_KEY,		// key
+		  0xffffffff,			// mask
+		  ((loc_route & 0x02222) << 6 | off_route)); // route
+	}
+      else
+	{
+	  // send only to other chips
+	  rtr_mc_set (e+3,			// entry
+		  TEMP_SOUTH_KEY,		// key
+		  0xffffffff,			// mask
+		  off_route);			// route
+	}
 
-    // western border temperature
-    // NOTE: currently temperatures never travel west!
-    if (IS_WESTERNMOST_CHIP(my_x, my_y))
-    {
-      // send only to local western-most cores
-      rtr_mc_set (e+4,                          // entry
-		  TEMP_WEST_KEY,                // key
-		  0xffffffff,                   // mask
-		  ((loc_route & 0x0001e) << 6 | off_route) // route
-		  );
-    }
-    else
-    {
-      // send only to other chips
-      rtr_mc_set (e+4,                         	// entry
-		  TEMP_WEST_KEY,                // key
-		  0xffffffff,                   // mask
-		  off_route                     // route
-		  );
-    }
+      // western border temperature
+      // NOTE: currently temperatures never travel west!
+      if (IS_WESTERNMOST_CHIP(my_x, my_y))
+	{
+	  // send only to local western-most cores
+	  rtr_mc_set (e+4,			// entry
+		  TEMP_WEST_KEY,		// key
+		  0xffffffff,			// mask
+		  ((loc_route & 0x0001e) << 6 | off_route)); // route
+	}
+      else
+	{
+	  // send only to other chips
+	  rtr_mc_set (e+4,			// entry
+		  TEMP_WEST_KEY,		// key
+		  0xffffffff,			// mask
+		  off_route);			// route
+	}
 
-    // configure router to use emergency routing
-    rtr_conf = rtr[RTR_CONTROL];  // save for later
-    rtr[RTR_CONTROL] = (rtr_conf & 0x0000ffff) | 0x31310000;
-  }
+      // configure router to use emergency routing
+      rtr_conf = rtr[RTR_CONTROL];  // save for later
+      rtr[RTR_CONTROL] = (rtr_conf & 0x0000ffff) | 0x31310000;
+    }
 }
 /*
 *******/
@@ -937,14 +927,14 @@ void report_temp (uint ticks)
   // send results to host
   // only the lead application core does this
   if (leadAp)
-  {
-    // spread out the reporting to avoid SDP packet drop
-    //##    if ((ticks % (NUMBER_OF_XCHIPS * NUMBER_OF_YCHIPS)) == my_chip)
-    if ((ticks % 64) == board_loc)
     {
-      send_temps_to_host();
+      // spread out the reporting to avoid SDP packet drop
+      //##    if ((ticks % (NUMBER_OF_XCHIPS * NUMBER_OF_YCHIPS)) == my_chip)
+      if ((ticks % 64) == board_loc)
+	{
+	  send_temps_to_host();
+	}
     }
-  }
 }
 /*
 *******/
@@ -995,125 +985,121 @@ void receive_data (uint key, uint payload)
 {
   sark.vcpu->user1++;
 
-  #ifdef DEBUG
-    dbg_keys_recv[dbg_packs_recv++] = key;
-    if (dbg_packs_recv == DEBUG_KEYS)
+#ifdef DEBUG
+  dbg_keys_recv[dbg_packs_recv++] = key;
+  if (dbg_packs_recv == DEBUG_KEYS)
     {
       dbg_packs_recv = 0;
     }
-  #endif
+#endif
 
   if (key == north_key)
-  {
-    if (arrived[now] & NORTH_ARRIVED)
     {
-      neighbours_temp[next][NORTH] = payload;
-      arrived[next] |= NORTH_ARRIVED;
+      if (arrived[now] & NORTH_ARRIVED)
+	{
+	  neighbours_temp[next][NORTH] = payload;
+	  arrived[next] |= NORTH_ARRIVED;
+	}
+      else
+	{
+	  neighbours_temp[now][NORTH] = payload;
+	  arrived[now] |= NORTH_ARRIVED;
+	}
     }
-    else
-    {
-      neighbours_temp[now][NORTH] = payload;
-      arrived[now] |= NORTH_ARRIVED;
-    }
-  }
   else if (key == south_key)
-  {
-    if (arrived[now] & SOUTH_ARRIVED)
     {
-      neighbours_temp[next][SOUTH] = payload;
-      arrived[next] |= SOUTH_ARRIVED;
+      if (arrived[now] & SOUTH_ARRIVED)
+	{
+	  neighbours_temp[next][SOUTH] = payload;
+	  arrived[next] |= SOUTH_ARRIVED;
+	}
+      else
+	{
+	  neighbours_temp[now][SOUTH] = payload;
+	  arrived[now] |= SOUTH_ARRIVED;
+	}
     }
-    else
-    {
-      neighbours_temp[now][SOUTH] = payload;
-      arrived[now] |= SOUTH_ARRIVED;
-    }
-  }
   else if (key == east_key)
-  {
-    if (arrived[now] & EAST_ARRIVED)
     {
-      neighbours_temp[next][EAST] = payload;
-      arrived[next] |= EAST_ARRIVED;
+      if (arrived[now] & EAST_ARRIVED)
+	{
+	  neighbours_temp[next][EAST] = payload;
+	  arrived[next] |= EAST_ARRIVED;
+	}
+      else
+	{
+	  neighbours_temp[now][EAST] = payload;
+	  arrived[now] |= EAST_ARRIVED;
+	}
     }
-    else
-    {
-      neighbours_temp[now][EAST] = payload;
-      arrived[now] |= EAST_ARRIVED;
-    }
-  }
   else if (key == west_key)
-  {
-    if (arrived[now] & WEST_ARRIVED)
     {
-      neighbours_temp[next][WEST] = payload;
-      arrived[next] |= WEST_ARRIVED;
+      if (arrived[now] & WEST_ARRIVED)
+	{
+	  neighbours_temp[next][WEST] = payload;
+	  arrived[next] |= WEST_ARRIVED;
+	}
+      else
+	{
+	  neighbours_temp[now][WEST] = payload;
+	  arrived[now] |= WEST_ARRIVED;
+	}
     }
-    else
-    {
-      neighbours_temp[now][WEST] = payload;
-      arrived[now] |= WEST_ARRIVED;
-    }
-  }
   else if (key == TEMP_NORTH_KEY)
-  {
-    if ((IS_NORTHERNMOST_CHIP(my_x, my_y)) &&
-        (IS_NORTHERNMOST_CORE(coreID))
-       )
     {
-      neighbours_temp[now][NORTH]  = payload;
-      neighbours_temp[next][NORTH] = payload;
+      if ((IS_NORTHERNMOST_CHIP(my_x, my_y)) &&
+	      (IS_NORTHERNMOST_CORE(coreID)))
+        {
+	  neighbours_temp[now][NORTH]  = payload;
+	  neighbours_temp[next][NORTH] = payload;
+        }
     }
-  }
   else if (key == TEMP_EAST_KEY)
-  {
-    if ((IS_EASTERNMOST_CHIP(my_x, my_y)) &&
-        (IS_EASTERNMOST_CORE(coreID))
-       )
     {
-      neighbours_temp[now][EAST]  = payload;
-      neighbours_temp[next][EAST] = payload;
+      if ((IS_EASTERNMOST_CHIP(my_x, my_y)) &&
+	      (IS_EASTERNMOST_CORE(coreID)))
+	{
+	  neighbours_temp[now][EAST]  = payload;
+	  neighbours_temp[next][EAST] = payload;
+	}
     }
-  }
   else if (key == TEMP_SOUTH_KEY)
-  {
-    if ((IS_SOUTHERNMOST_CHIP(my_x, my_y)) &&
-        (IS_SOUTHERNMOST_CORE(coreID))
-       )
     {
-      neighbours_temp[now][SOUTH]  = payload;
-      neighbours_temp[next][SOUTH] = payload;
+      if ((IS_SOUTHERNMOST_CHIP(my_x, my_y)) &&
+	      (IS_SOUTHERNMOST_CORE(coreID)))
+	{
+	  neighbours_temp[now][SOUTH]  = payload;
+	  neighbours_temp[next][SOUTH] = payload;
+	}
     }
-  }
   else if (key == TEMP_WEST_KEY)
-  {
-    if ((IS_WESTERNMOST_CHIP(my_x, my_y)) &&
-        (IS_WESTERNMOST_CORE(coreID))
-       )
     {
-      neighbours_temp[now][WEST]  = payload;
-      neighbours_temp[next][WEST] = payload;
+      if ((IS_WESTERNMOST_CHIP(my_x, my_y)) &&
+	      (IS_WESTERNMOST_CORE(coreID)))
+	{
+	  neighbours_temp[now][WEST]  = payload;
+	  neighbours_temp[next][WEST] = payload;
+	}
     }
-  }
   else if (key == STOP_KEY)
-  {
-    spin1_exit (0);
-  }
+    {
+      spin1_exit (0);
+    }
   else if (key == PAUSE_KEY)
-  {
-    updating = FALSE;
-  }
+    {
+      updating = FALSE;
+    }
   else if (key == RESUME_KEY)
-  {
-    updating = TRUE;
-  }
+    {
+      updating = TRUE;
+    }
   else
-  {
-    // unexpected packet!
-    #ifdef DEBUG
+    {
+      // unexpected packet!
+#ifdef DEBUG
       io_printf (IO_STD, "!\n");
-    #endif
-  }
+#endif
+    }
 }
 /*
 *******/
@@ -1130,8 +1116,8 @@ void receive_data (uint key, uint payload)
 */
 void send_first_value (uint a, uint b)
 {
-    /* send data to neighbours */
-    spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD);
+  /* send data to neighbours */
+  spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD);
 }
 /*
 *******/
@@ -1151,68 +1137,68 @@ void update (uint ticks, uint b)
   sark.vcpu->user0++;
 
   if (updating)
-  {
-    /* report if not all neighbours' data arrived */
-    #ifdef DEBUG
-      if (arrived[now] != ALL_ARRIVED)
-      {
-        io_printf (IO_STD, "@\n");
-        dbg_timeouts++;
-      }
-    #endif
-
-    // if a core does not receive temperature from a neighbour
-    // it uses it's own as an estimate for the nieghbour's.
-    if (arrived[now] != ALL_ARRIVED)
     {
-      if (!(arrived[now] & NORTH_ARRIVED))
-      {
-        neighbours_temp[now][NORTH] = my_temp;
-      }
+      /* report if not all neighbours' data arrived */
+#ifdef DEBUG
+      if (arrived[now] != ALL_ARRIVED)
+        {
+	  io_printf (IO_STD, "@\n");
+	  dbg_timeouts++;
+        }
+#endif
 
-      if (!(arrived[now] & SOUTH_ARRIVED))
-      {
-        neighbours_temp[now][SOUTH] = my_temp;
-      }
+      // if a core does not receive temperature from a neighbour
+      // it uses it's own as an estimate for the nieghbour's.
+      if (arrived[now] != ALL_ARRIVED)
+	{
+	  if (!(arrived[now] & NORTH_ARRIVED))
+	    {
+	      neighbours_temp[now][NORTH] = my_temp;
+	    }
 
-      if (!(arrived[now] & EAST_ARRIVED))
-      {
-        neighbours_temp[now][EAST] = my_temp;
-      }
+	  if (!(arrived[now] & SOUTH_ARRIVED))
+	    {
+	      neighbours_temp[now][SOUTH] = my_temp;
+	    }
 
-      if (!(arrived[now] & WEST_ARRIVED))
-      {
-        neighbours_temp[now][WEST] = my_temp;
-      }
-    }
+	  if (!(arrived[now] & EAST_ARRIVED))
+	    {
+	      neighbours_temp[now][EAST] = my_temp;
+	    }
 
-    /* compute new temperature */
-    /* adjust for 16.16 fixed-point representation  */
-    int tmp1 = neighbours_temp[now][EAST] + neighbours_temp[now][WEST]
-               - 2 * my_temp;
-    int tmp2 = neighbours_temp[now][NORTH] + neighbours_temp[now][SOUTH]
-               - 2 * my_temp;
-    /* adjust for 16.16 fixed-point representation  */
-    int tmp3 = (int) (((long long) cx_adj * (long long) tmp1) >> 16);
-    int tmp4 = (int) (((long long) cy_adj * (long long) tmp2) >> 16);
-    my_temp = my_temp + tmp3 + tmp4;
+	  if (!(arrived[now] & WEST_ARRIVED))
+	    {
+	      neighbours_temp[now][WEST] = my_temp;
+	    }
+	}
 
-    #ifdef POSITIVE_TEMP
+      /* compute new temperature */
+      /* adjust for 16.16 fixed-point representation  */
+      int tmp1 = neighbours_temp[now][EAST] + neighbours_temp[now][WEST]
+	      - 2 * my_temp;
+      int tmp2 = neighbours_temp[now][NORTH] + neighbours_temp[now][SOUTH]
+              - 2 * my_temp;
+      /* adjust for 16.16 fixed-point representation  */
+      int tmp3 = (int) (((long long) cx_adj * (long long) tmp1) >> 16);
+      int tmp4 = (int) (((long long) cy_adj * (long long) tmp2) >> 16);
+      my_temp = my_temp + tmp3 + tmp4;
+
+#ifdef POSITIVE_TEMP
       // avoids a problem with negative temps in the visualiser!
       my_temp = (my_temp > 0) ? my_temp : 0;
-    #endif
+#endif
 
-    /* send new data to neighbours */
-    spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD);
+      /* send new data to neighbours */
+      spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD);
 
-    /* prepare for next iteration */
-    arrived[now] = init_arrived;
-    now  = 1 - now;
-    next = 1 - next;
+      /* prepare for next iteration */
+      arrived[now] = init_arrived;
+      now  = 1 - now;
+      next = 1 - next;
 
-    /* report current temp */
-    report_temp(ticks);
-  }
+      /* report current temp */
+      report_temp(ticks);
+    }
 }
 /*
 *******/
@@ -1236,19 +1222,19 @@ void host_data (uint mailbox, uint port)
   sdp_msg_t *msg = (sdp_msg_t *) mailbox;
   uint *data = (uint *) msg->data;
 
-  #ifdef DEBUG
-    io_printf (IO_STD, "cmd: %d\n", msg->cmd_rc);
-    if (msg->cmd_rc == 1)
+#ifdef DEBUG
+  io_printf (IO_STD, "cmd: %d\n", msg->cmd_rc);
+  if (msg->cmd_rc == 1)
     {
       io_printf (IO_STD, "N: %7.3f\n", data[0]);
       io_printf (IO_STD, "E: %7.3f\n", data[1]);
       io_printf (IO_STD, "S: %7.3f\n", data[2]);
       io_printf (IO_STD, "W: %7.3f\n", data[3]);
     }
-  #endif
+#endif
 
   switch (msg->cmd_rc)
-  {
+    {
     case 0: // stop
       spin1_send_mc_packet(STOP_KEY, 0, NO_PAYLOAD);
       break;
@@ -1270,11 +1256,11 @@ void host_data (uint mailbox, uint port)
 
     default:
       // unexpected packet!
-      #ifdef DEBUG
-        io_printf (IO_STD, "!SDP\n");
-      #endif
+#ifdef DEBUG
+      io_printf (IO_STD, "!SDP\n");
+#endif
       break;
-  }
+    }
 
   spin1_msg_free (msg);
 }
@@ -1295,10 +1281,10 @@ void host_data (uint mailbox, uint port)
 */
 void c_main()
 {
-  #ifdef VERBOSE
-    // say hello
-    io_printf (IO_BUF, "starting heat_demo\n");
-  #endif
+#ifdef VERBOSE
+  // say hello
+  io_printf (IO_BUF, "starting heat_demo\n");
+#endif
 
   // get this core's ID
   coreID = spin1_get_core_id();
@@ -1313,66 +1299,65 @@ void c_main()
 
   // operate only if in core map!
   if ((my_x < NUMBER_OF_XCHIPS) && (my_y < NUMBER_OF_YCHIPS)
-       && ((core_map[my_x][my_y] & (1 << coreID)) != 0)
-     )
-  {
-    // set the core map for the simulation
-    //##    spin1_application_core_map(NUMBER_OF_XCHIPS, NUMBER_OF_YCHIPS, core_map);
-
-    // set timer tick value to 1ms (in microseconds)
-    // slow down simulation to alow users to appreciate changes
-    spin1_set_timer_tick (TIMER_TICK_PERIOD);
-
-    // register callbacks
-    spin1_callback_on (MCPL_PACKET_RECEIVED, receive_data, 0);
-    spin1_callback_on (TIMER_TICK, update, 0);
-    spin1_callback_on (SDP_PACKET_RX, host_data, 0);
-
-    // initialise routing tables
-    routing_table_init ();
-
-    // initialise SDP message buffer
-    sdp_init ();
-
-    // initialise temperatures (for absent cores!)
-
-    core_temp = (volatile int *) sv->sysram_base; //##
-
-    if (leadAp)
+       && ((core_map[my_x][my_y] & (1 << coreID)) != 0))
     {
-      for (uint i = 1; i <= 16; i++)
-      {
-        core_temp[i - 1] = 0;
-      }
-    }
+      // set the core map for the simulation
+      //##    spin1_application_core_map(NUMBER_OF_XCHIPS, NUMBER_OF_YCHIPS, core_map);
 
-    #ifdef DEBUG
+      // set timer tick value to 1ms (in microseconds)
+      // slow down simulation to alow users to appreciate changes
+      spin1_set_timer_tick (TIMER_TICK_PERIOD);
+
+      // register callbacks
+      spin1_callback_on (MCPL_PACKET_RECEIVED, receive_data, 0);
+      spin1_callback_on (TIMER_TICK, update, 0);
+      spin1_callback_on (SDP_PACKET_RX, host_data, 0);
+
+      // initialise routing tables
+      routing_table_init ();
+
+      // initialise SDP message buffer
+      sdp_init ();
+
+      // initialise temperatures (for absent cores!)
+
+      core_temp = (volatile int *) sv->sysram_base; //##
+
+      if (leadAp)
+	{
+	  for (uint i = 1; i <= 16; i++)
+	    {
+	      core_temp[i - 1] = 0;
+	    }
+	}
+
+#ifdef DEBUG
       // initialise variables
       dbg_keys_recv = spin1_malloc(DEBUG_KEYS * 4 * sizeof(uint));
       // record start time somewhere in SDRAM
       dbg_stime = (uint *) (SPINN_SDRAM_BASE + 4 * coreID);
       *dbg_stime = sv->clock_ms;
-    #endif
+#endif
 
-    // kick-start the update process
-    spin1_schedule_callback(send_first_value, 0, 0, 3);
+      // kick-start the update process
+      spin1_schedule_callback(send_first_value, 0, 0, 3);
 
-    // go
-    spin1_start (SYNC_WAIT);	//##
+      // go
+      spin1_start (SYNC_WAIT);	//##
 
-    // restore router configuration
-    rtr[RTR_CONTROL] = rtr_conf;
+      // restore router configuration
+      rtr[RTR_CONTROL] = rtr_conf;
 
-    #ifdef VERBOSE
+#ifdef VERBOSE
       // report results
       report_results();
-    #endif
-  }
+#endif
+    }
 
-  #ifdef VERBOSE
+#ifdef VERBOSE
     // say goodbye
     io_printf (IO_BUF, "stopping heat_demo\n");
-  #endif
+#endif
 }
 /*
 *******/

@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // scamp-isr.c	    SC&MP interrupt routines
@@ -56,14 +55,18 @@ INT_HANDLER pkt_tx_int () // SPIN2 - optimise for register order??
   cc[CC_TCR] = pkt->ctrl;
 
   if (pkt->ctrl & PKT_PL)
-    cc[CC_TXDATA] = pkt->data;
+    {
+      cc[CC_TXDATA] = pkt->data;
+    }
 
   cc[CC_TXKEY] = pkt->key;
 
   txq->count--;
 
   if (txq->count == 0)
-    vic[VIC_DISABLE] = 1 << CC_TMT_INT;
+    {
+      vic[VIC_DISABLE] = 1 << CC_TMT_INT;
+    }
 
   vic[VIC_VADDR] = (uint) vic;
 }
@@ -144,7 +147,9 @@ INT_HANDLER pkt_mc_int ()
   // Checksum ??
 
   if (key == 0xffff5555)
-    signal_app (data);
+    {
+      signal_app (data);
+    }
 
 #if MC_SLOT != SLOT_FIQ
   vic[VIC_VADDR] = (uint) vic;
@@ -228,7 +233,9 @@ INT_HANDLER ms_timer_int ()
       sv->unix_time++;
 
       if (!event_queue_proc (proc_1hz, 0, 0, PRIO_2)) // !!const
-	sw_error (SW_OPT);
+        {
+	  sw_error (SW_OPT);
+        }
     }
 
   sv->time_ms = ms;
@@ -240,11 +247,15 @@ INT_HANDLER ms_timer_int ()
       cs = 0;
 
       if (!event_queue_proc (proc_100hz, 0, 0, PRIO_1)) // !!const
-	sw_error (SW_OPT);
+        {
+	  sw_error (SW_OPT);
+        }
     }
   
   if (!event_queue_proc (proc_1khz, 0, 0, PRIO_1)) // !!const
-    sw_error (SW_OPT);
+    {
+      sw_error (SW_OPT);
+    }
 
   centi_ms = cs;
 
@@ -271,7 +282,9 @@ INT_HANDLER ap_int ()
     {
       next_box++;
       if (next_box >= num_cpus)
-	next_box = 0;
+        {
+	  next_box = 0;
+        }
     }
   while ((sv->mbox_flags & (1 << next_box)) == 0);
 
@@ -285,7 +298,9 @@ INT_HANDLER ap_int ()
   sv->mbox_flags &= ~(1 << next_box);
 
   if (sv->mbox_flags == 0)
-    sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);
+    {
+      sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);
+    }
 	  
   sark_lock_free (cpsr, LOCK_MBOX);
 
@@ -301,7 +316,9 @@ INT_HANDLER ap_int ()
 	  msg_queue_insert (msg, 0);
 	}
       else
-	sw_error (SW_OPT);
+        {
+	  sw_error (SW_OPT);
+        }
 
       sark_shmsg_free (shm_msg);
     }

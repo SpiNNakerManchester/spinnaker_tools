@@ -45,10 +45,14 @@ INT_HANDLER cc_rx_ready_isr (void)
       // If application callback registered schedule it
 
       if (callback[MCPL_PACKET_RECEIVED].cback != NULL)
-        schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
+	{
+	  schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
+	}
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-        diagnostics.discarded_mc_packets++;
+	{
+	  diagnostics.discarded_mc_packets++;
+	}
 #endif
     }
   else
@@ -56,10 +60,14 @@ INT_HANDLER cc_rx_ready_isr (void)
       uint rx_key = cc[CC_RXKEY];  // also clears interrupt
 
       if(callback[MC_PACKET_RECEIVED].cback != NULL)
-        schedule (MC_PACKET_RECEIVED, rx_key, 0);
+	{
+	  schedule (MC_PACKET_RECEIVED, rx_key, 0);
+	}
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-        diagnostics.discarded_mc_packets++;
+	{
+	  diagnostics.discarded_mc_packets++;
+	}
 #endif
     }
 
@@ -144,21 +152,29 @@ INT_HANDLER cc_fr_ready_isr (void)
       // If application callback registered schedule it
 
       if (callback[FRPL_PACKET_RECEIVED].cback != NULL)
-        schedule (FRPL_PACKET_RECEIVED, rx_key, rx_data);
+	{
+	  schedule (FRPL_PACKET_RECEIVED, rx_key, rx_data);
+	}
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-        diagnostics.discarded_fr_packets++;
+	{
+	  diagnostics.discarded_fr_packets++;
+	}
 #endif
     }
   else
     {
       uint rx_key = cc[CC_RXKEY];  // also clears interrupt
 
-      if(callback[FR_PACKET_RECEIVED].cback != NULL)
-        schedule (FR_PACKET_RECEIVED, rx_key, 0);
+      if (callback[FR_PACKET_RECEIVED].cback != NULL)
+	{
+	  schedule (FR_PACKET_RECEIVED, rx_key, 0);
+	}
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
       else
-        diagnostics.discarded_fr_packets++;
+	{
+	  diagnostics.discarded_fr_packets++;
+	}
 #endif
     }
 
@@ -266,29 +282,33 @@ INT_HANDLER cc_tx_empty_isr ()
   // Drain queue: send packets while queue not empty and CC not full
 
   while(tx_packet_queue.start != tx_packet_queue.end && ~cc[CC_TCR] & 0x40000000)
-  {
-    // Dequeue packet
+    {
+      // Dequeue packet
 
-    uint key = tx_packet_queue.queue[tx_packet_queue.start].key;
-    uint data = tx_packet_queue.queue[tx_packet_queue.start].data;
-    uint TCR = tx_packet_queue.queue[tx_packet_queue.start].TCR;
+      uint key = tx_packet_queue.queue[tx_packet_queue.start].key;
+      uint data = tx_packet_queue.queue[tx_packet_queue.start].data;
+      uint TCR = tx_packet_queue.queue[tx_packet_queue.start].TCR;
 
-    tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
+      tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
 
-    // Send the packet
+      // Send the packet
 
-    cc[CC_TCR] = TCR;
+      cc[CC_TCR] = TCR;
 
-    if (TCR & PKT_PL)
-      cc[CC_TXDATA] = data;
+      if (TCR & PKT_PL)
+	{
+	  cc[CC_TXDATA] = data;
+	}
 
-    cc[CC_TXKEY]  = key;
-  }
+      cc[CC_TXKEY]  = key;
+    }
 
   // If queue empty turn off tx_empty interrupt
 
   if (tx_packet_queue.start == tx_packet_queue.end)
-    vic[VIC_DISABLE] = 1 << CC_TMT_INT;
+    {
+      vic[VIC_DISABLE] = 1 << CC_TMT_INT;
+    }
 
   // ack VIC
 
@@ -330,23 +350,23 @@ INT_HANDLER dma_done_isr ()
 
   dma_queue.start = (dma_queue.start + 1) % DMA_QUEUE_SIZE;
 
-  if(dma_queue.start != dma_queue.end)
-  {
-    uint *system_address = dma_queue.queue[dma_queue.start].system_address;
-    uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
-    uint  description = dma_queue.queue[dma_queue.start].description;
+  if (dma_queue.start != dma_queue.end)
+    {
+      uint *system_address = dma_queue.queue[dma_queue.start].system_address;
+      uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
+      uint  description = dma_queue.queue[dma_queue.start].description;
 
-    dma[DMA_ADRS] = (uint) system_address;
-    dma[DMA_ADRT] = (uint) tcm_address;
-    dma[DMA_DESC] = description;
-  }
+      dma[DMA_ADRS] = (uint) system_address;
+      dma[DMA_ADRT] = (uint) tcm_address;
+      dma[DMA_DESC] = description;
+    }
 
   // If application callback registered schedule it
 
-  if(callback[DMA_TRANSFER_DONE].cback != NULL)
-  {
-    schedule (DMA_TRANSFER_DONE, completed_id, completed_tag);
-  }
+  if (callback[DMA_TRANSFER_DONE].cback != NULL)
+    {
+      schedule (DMA_TRANSFER_DONE, completed_id, completed_tag);
+    }
 
   // Ack VIC
 
@@ -390,15 +410,15 @@ INT_HANDLER dma_done_fiqsr ()
   dma_queue.start = (dma_queue.start + 1) % DMA_QUEUE_SIZE;
 
   if (dma_queue.start != dma_queue.end)
-  {
-    uint *system_address = dma_queue.queue[dma_queue.start].system_address;
-    uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
-    uint  description = dma_queue.queue[dma_queue.start].description;
+    {
+      uint *system_address = dma_queue.queue[dma_queue.start].system_address;
+      uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
+      uint  description = dma_queue.queue[dma_queue.start].description;
 
-    dma[DMA_ADRS] = (uint) system_address;
-    dma[DMA_ADRT] = (uint) tcm_address;
-    dma[DMA_DESC] = description;
-  }
+      dma[DMA_ADRS] = (uint) system_address;
+      dma[DMA_ADRT] = (uint) tcm_address;
+      dma[DMA_DESC] = description;
+    }
 
   // Execute preeminent callback
 
@@ -461,25 +481,25 @@ INT_HANDLER timer1_isr ()
 
   // If application callback registered schedule it
   if (callback[TIMER_TICK].cback != NULL)
-  {
-
-    // check for timer tic overload and store in diagnostics
-    if (diagnostics.in_timer_callback != 0)
     {
 
-      // if in timer tic callback already, add to tracker for total failures
-      diagnostics.total_times_tick_tic_callback_overran += 1;
+      // check for timer tic overload and store in diagnostics
+      if (diagnostics.in_timer_callback != 0)
+	{
 
-      // if number of timer callbacks in queue is greater than previously seen
-      if (diagnostics.number_timer_tic_in_queue >
-          diagnostics.largest_number_of_concurrent_timer_tic_overruns)
-      {
-        diagnostics.largest_number_of_concurrent_timer_tic_overruns =
-        diagnostics.number_timer_tic_in_queue;
-      }
+	  // if in timer tic callback already, add to tracker for total failures
+	  diagnostics.total_times_tick_tic_callback_overran += 1;
+
+	  // if number of timer callbacks in queue is greater than previously seen
+	  if (diagnostics.number_timer_tic_in_queue >
+	      diagnostics.largest_number_of_concurrent_timer_tic_overruns)
+	    {
+	      diagnostics.largest_number_of_concurrent_timer_tic_overruns =
+		      diagnostics.number_timer_tic_in_queue;
+	    }
+	}
+      schedule(TIMER_TICK, ticks, NULL);
     }
-    schedule(TIMER_TICK, ticks, NULL);
-  }
 
   // Ack VIC
 
@@ -538,7 +558,9 @@ INT_HANDLER soft_int_isr ()
   // If application callback registered schedule it
 
   if (callback[USER_EVENT].cback != NULL)
-    schedule (USER_EVENT, user_arg0, user_arg1);
+    {
+      schedule (USER_EVENT, user_arg0, user_arg1);
+    }
 
   // Clear flag to indicate event has been serviced
 

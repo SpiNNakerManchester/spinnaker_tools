@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // scamp-app.c	    Application support for SC&MP
@@ -25,9 +24,13 @@ void clock_ap (uint phys_mask, uint enable)
   uint state = sc[SC_CPU_DIS];
 
   if (enable)
-    state &= ~phys_mask;
+    {
+      state &= ~phys_mask;
+    }
   else
-    state |= phys_mask;
+    {
+      state |= phys_mask;
+    }
 
   sc[SC_CPU_DIS] = SC_CODE + state;
 }
@@ -113,7 +116,9 @@ uint find_lead (uint mask)
   uint count = 0;
 
   while ((mask != 0) && ((mask & (1 << count)) == 0))
-    count++;
+    {
+      count++;
+    }
 
   return count;
 }
@@ -125,7 +130,9 @@ void proc_start_app (uint aplx_addr, uint id_op_mask)
   uint virt_mask = id_op_mask & 0x0003ffff;
 
   if (virt_mask == 0)
-    return;
+    {
+      return;
+    }
 
   uint app_id = id_op_mask >> 24;
   uint app_flags = (id_op_mask >> 18) & 63;
@@ -161,7 +168,9 @@ void clean_app_id (uint app_id)
   app_data_t *app = sv->app_data + app_id;
 
   if (app->clean)
-    return;
+    {
+      return;
+    }
 
   sark_xfree_id (sv->sdram_heap,  app_id, 1);
   sark_xfree_id (sv->sysram_heap, app_id, 1);
@@ -249,7 +258,8 @@ void signal_app (uint data)
       break;
 
     case SIG_STOP:
-      event_queue_proc (proc_stop_app, (app_id << 24) | virt_mask, (app_mask << 24) | phys_mask, PRIO_0);
+      event_queue_proc (proc_stop_app, (app_id << 24) | virt_mask,
+	      (app_mask << 24) | phys_mask, PRIO_0);
       break;
 
     case SIG_SYNC0:
