@@ -71,8 +71,9 @@ void eth_update_tx (void)
   uint32_t idx = LPC_EMAC->TxProduceIndex + 1;
 
   if (idx == ETH_TX_BUFS)
-    idx = 0;
-
+    {
+      idx = 0;
+    }
   LPC_EMAC->TxProduceIndex = idx;
 }
 
@@ -81,8 +82,9 @@ void eth_rx_discard (void)
   uint32_t idx = LPC_EMAC->RxConsumeIndex + 1;
 
   if (idx == ETH_RX_BUFS)
-    idx = 0;
-
+    {
+      idx = 0;
+    }
   LPC_EMAC->RxConsumeIndex = idx;
 }
 
@@ -160,11 +162,12 @@ static void tx_desc_init (void)
 void configure_eth (uint8_t *mac_addr)
 {
   // Reset all EMAC internal modules
-  LPC_EMAC->MAC1 = EMAC_MAC1_RES_TX | EMAC_MAC1_RES_MCS_TX | EMAC_MAC1_RES_RX |
-    EMAC_MAC1_RES_MCS_RX | EMAC_MAC1_SIM_RES | EMAC_MAC1_SOFT_RES;
+  LPC_EMAC->MAC1 = EMAC_MAC1_RES_TX | EMAC_MAC1_RES_MCS_TX
+	  | EMAC_MAC1_RES_RX | EMAC_MAC1_RES_MCS_RX | EMAC_MAC1_SIM_RES
+	  | EMAC_MAC1_SOFT_RES;
 
-  LPC_EMAC->Command = EMAC_CR_REG_RES | EMAC_CR_TX_RES | EMAC_CR_RX_RES |
-    EMAC_CR_PASS_RUNT_FRM;
+  LPC_EMAC->Command = EMAC_CR_REG_RES | EMAC_CR_TX_RES | EMAC_CR_RX_RES
+	  | EMAC_CR_PASS_RUNT_FRM;
 
   delay_us (5);
 
@@ -206,7 +209,8 @@ void configure_eth (uint8_t *mac_addr)
   tx_desc_init ();
 
   // Set Receive Filter register: enable broadcast and multicast
-  LPC_EMAC->RxFilterCtrl = EMAC_RFC_MCAST_EN | EMAC_RFC_BCAST_EN | EMAC_RFC_PERFECT_EN;
+  LPC_EMAC->RxFilterCtrl = EMAC_RFC_MCAST_EN | EMAC_RFC_BCAST_EN
+	  | EMAC_RFC_PERFECT_EN;
 
   // Enable Rx Done and Tx Done interrupt for EMAC
   //!!  LPC_EMAC->IntEnable = EMAC_INT_RX_DONE | EMAC_INT_TX_DONE;

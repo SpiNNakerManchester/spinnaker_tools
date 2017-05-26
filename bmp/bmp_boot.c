@@ -61,14 +61,20 @@ static void __attribute__((noreturn)) die (uint32_t code)
   uint32_t bits = LED_7;
 
   for (uint32_t i = 0; i < 4; i++)
-    if (code & (1 << i))
-      bits |= led_bit[i];
+    {
+      if (code & (1 << i))
+	{
+	  bits |= led_bit[i];
+	}
+    }
 
   LPC_GPIO0->FIOCLR = LED_MASK;
   LPC_GPIO0->FIOSET = bits;
 
   while (1)
-    continue;
+    {
+      continue;
+    }
 }
 
 
@@ -93,7 +99,9 @@ void __attribute__((noreturn)) boot_proc (void)
   uint32_t boot_size = (uint32_t) &RO_LENGTH;
 
   if (crc32_chk (boot_vec, boot_size + 4) != 0)
-    die (14);
+    {
+      die (14);
+    }
 
   // Check CRC of Code/Data section of Flash. Four 64KB blocks are
   // used, starting at 0x10000. They are checked in sequence until
@@ -112,10 +120,13 @@ void __attribute__((noreturn)) boot_proc (void)
       // Check length < 256KB
 
       if (length < 0x40000 && crc32_chk (cortex_vec, length) == 0)
-	break;
-
+	{
+	  break;
+	}
       if (boot_sec++ == 4)
-	die (13);
+	{
+	  die (13);
+	}
     }
 
   // Check CRC of Data sector unless blank. If CRC is bad we leave
@@ -126,7 +137,7 @@ void __attribute__((noreturn)) boot_proc (void)
   LPC_GPIO0->FIOCLR = LED_6 + LED_5 + LED_4 + LED_3;
 
   if (is_blank ((void *) 0x1000, 4096) ||
-      crc32_chk ((void *) 0x1000, 4096) == 0)
+	  crc32_chk ((void *) 0x1000, 4096) == 0)
     {
       data_ok = true;
       LPC_GPIO0->FIOCLR = LED_7;
@@ -139,7 +150,9 @@ void __attribute__((noreturn)) boot_proc (void)
   uint32_t *limit = cortex_vec->RW_limit;
 
   while (base < limit)
-    *base++ = *from++;
+    {
+      *base++ = *from++;
+    }
 
   // Clear ZI/BSS section
 
@@ -147,7 +160,9 @@ void __attribute__((noreturn)) boot_proc (void)
   limit = cortex_vec->ZI_limit;
 
   while (base < limit)
-    *base++ = 0;
+    {
+      *base++ = 0;
+    }
 
   // Fill stack with 0xdeaddead
 
@@ -155,11 +170,13 @@ void __attribute__((noreturn)) boot_proc (void)
   limit = cortex_vec->stack_limit;
 
   while (base < limit)
-    *base++ = 0xdeaddead;
+    {
+      *base++ = 0xdeaddead;
+    }
 
   // Initialise heap if needed
 
-// heap_init (cortex_vec->ZI_limit, cortex_vec->stack_base);
+  // heap_init (cortex_vec->ZI_limit, cortex_vec->stack_base);
 
   // Set Cortex vectors at start of image
 
@@ -169,8 +186,7 @@ void __attribute__((noreturn)) boot_proc (void)
 
   cortex_vec->main (cortex_vec, data_ok, 0, 0);
 
-  while (1)
-    die (11);
+  die (11);
 }
 
 
@@ -184,7 +200,9 @@ void __attribute__((noreturn)) boot_proc (void)
 static void mem_copy (uint32_t *to, uint32_t *from, uint32_t n)
 {
   while (n--)
-    *to++ = *from++;
+    {
+      *to++ = *from++;
+    }
 }
 
 
@@ -233,16 +251,15 @@ static void __attribute__ ((section (".flash_copy"))) flash_copy
 // booting. The checksum at word 7 needs to be computed and filled in by
 // someone. The "openocd" JTAG application can do this as can "sum.pl"
 
-static const boot_vec_t boot_data __attribute__ ((section (".boot_vec"))) =
-{
-  &STACK_LIMIT,   		// 0: Boot stack pointer
-  boot_proc,			// 1; Boot routine
-  (proc4) flash_copy,		// 2: Flash copy routine
-  (proc4) 0,   			// 3:
-  (proc4) 0,         		// 4:
-  BUILD_DATE,  			// 5: Build date
-  BMP_VER_NUM,        		// 6: Version
-  0				// 7: Checksum
+static const boot_vec_t boot_data __attribute__ ((section (".boot_vec"))) = {
+    &STACK_LIMIT,   		// 0: Boot stack pointer
+    boot_proc,			// 1; Boot routine
+    (proc4) flash_copy,		// 2: Flash copy routine
+    (proc4) 0,   		// 3:
+    (proc4) 0,         		// 4:
+    BUILD_DATE,  		// 5: Build date
+    BMP_VER_NUM,        	// 6: Version
+    0				// 7: Checksum
 };
 
 

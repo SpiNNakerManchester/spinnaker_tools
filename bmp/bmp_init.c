@@ -54,7 +54,9 @@ extern void c_main (void);
 void  __attribute__((noreturn)) error_han (void)
 {
   while (1)
-    die (12);
+    {
+      die (12);
+    }
 }
 
 // Cortex M3 core interrupt handlers
@@ -108,8 +110,7 @@ void USBActivity_IRQHandler (void) __attribute__ ((weak, alias ("error_han")));
 void CANActivity_IRQHandler (void) __attribute__ ((weak, alias ("error_han")));
 
 
-const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) =
-  {
+const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) = {
     (uint32_t *) &STACK_LIMIT,	   // 0:  Stack top
     (main_proc) c_main,            // 1:  Entry point
 
@@ -180,7 +181,7 @@ const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) =
     &ZI_LIMIT,	 		   // 61: ZI_limit
     &STACK_BASE, 		   // 62: stack_base
     &STACK_LIMIT 		   // 63: stack_limit
-  };
+};
 
 
 //------------------------------------------------------------------------------

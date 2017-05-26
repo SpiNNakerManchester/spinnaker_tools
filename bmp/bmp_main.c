@@ -54,13 +54,21 @@ static void set_text (const char *s, uint32_t mask)
   strcpy (text, s);
 
   if ((mask & 0x000ff) == 0) // Volts
-    text[5] = ' ';
+    {
+      text[5] = ' ';
+    }
   if ((mask & 0x00f00) == 0) // T_int
-    text[6] = ' ';
+    {
+      text[6] = ' ';
+    }
   if ((mask & 0x0f000) == 0) // T_ext
-    text[7] = ' ';
+    {
+      text[7] = ' ';
+    }
   if ((mask & 0xf0000) == 0) // Fan
-    text[8] = ' ';
+    {
+      text[8] = ' ';
+    }
 }
 
  
@@ -77,11 +85,17 @@ static void update_lcd (void)
 	     LCD_POS(10, 0));
 
   if (hours < 10)
-    io_printf (IO_LCD, "%2u:%02u:%02u\n", hours, mins % 60, up_time % 60);
+    {
+      io_printf (IO_LCD, "%2u:%02u:%02u\n", hours, mins % 60, up_time % 60);
+    }
   else if (hours < 100)
-    io_printf (IO_LCD, "%4uh%02um\n", hours, mins % 60);
+    {
+      io_printf (IO_LCD, "%4uh%02um\n", hours, mins % 60);
+    }
   else
-    io_printf (IO_LCD, "%4ud%02uh\n", days, hours % 24);
+    {
+      io_printf (IO_LCD, "%4ud%02uh\n", days, hours % 24);
+    }
 
   // Print status on second line
 
@@ -102,33 +116,49 @@ static void update_lcd (void)
 	  uint32_t count = 0;
 
 	  for (uint32_t i = 0; i < CAN_SIZE; i++)
-	    if (can_status[i])
-	      count++;
+	    {
+	      if (can_status[i])
+	        {
+		  count++;
+	        }
+	    }
 
 	  uint32_t v = cortex_vec->sw_ver;
 	  if (v < 65535)
-	    io_printf (IO_LCD, "%qBMP %d.%02d  %4u slots\n",
-		       LCD_POS(0, 1), v / 100, v % 100, count);
+	    {
+	      io_printf (IO_LCD, "%qBMP %d.%02d  %4u slots\n",
+		      LCD_POS(0, 1), v / 100, v % 100, count);
+	    }
 	  else
-	    io_printf (IO_LCD, "%qBMP %d.%d.%d %q%4u slots\n",
-		       LCD_POS(0, 1), (v >> 16) & 255 , (v >> 8) & 255, v & 255,
-		       LCD_POS(10, 1), count);
+	    {
+	      io_printf (IO_LCD, "%qBMP %d.%d.%d %q%4u slots\n",
+		      LCD_POS(0, 1), (v >> 16) & 255 , (v >> 8) & 255, v & 255,
+		      LCD_POS(10, 1), count);
+	    }
 	  break;
 	}
 
       if (scan_next == CAN_SIZE + 1)
-	scan_next = 0;
+	{
+	  scan_next = 0;
+	}
 
       if (can_status[scan_next])
 	{
-	   board_stat_t *stat = &board_stat[scan_next];
+	  board_stat_t *stat = &board_stat[scan_next];
 
 	  if (stat->shutdown)
-	    set_text ("Shut VIEF ", stat->shutdown);
+	    {
+	      set_text ("Shut VIEF ", stat->shutdown);
+	    }
 	  else if (stat->warning)
-	    set_text ("Warn VIEF ", stat->warning);
+	    {
+	      set_text ("Warn VIEF ", stat->warning);
+	    }
 	  else
-	    continue;
+	    {
+	      continue;
+	    }
 
 	  io_printf (IO_LCD, "%qSlot %u  %q%s\n",
 		     LCD_POS(0, 1), can2board[scan_next],
@@ -153,25 +183,41 @@ static void fan_control (void)
       board_stat_t *stat = &board_stat[can_ID + i];
 
       for (uint32_t t = 0; t < 4; t++)
-	if (stat->t_int[t] > max)
-	  max = stat->t_int[t];
+        {
+	  if (stat->t_int[t] > max)
+	    {
+	      max = stat->t_int[t];
+	    }
+        }
     }
 
   max /= 256;
 
   if (max > 70 && fan == 2)
-    fan = 3;
+    {
+      fan = 3;
+    }
   else if (max > 55 && fan == 1)
-    fan = 2;
+    {
+      fan = 2;
+    }
   else if (max > 40 && fan == 0)
-    fan = 1;
+    {
+      fan = 1;
+    }
 
   if (max <= 35 && fan == 1)
-    fan = 0;
+    {
+      fan = 0;
+    }
   else if (max <= 50 && fan == 2)
-    fan = 1;
+    {
+      fan = 1;
+    }
   else if (max <= 65 && fan == 3)
-    fan = 2;
+    {
+      fan = 2;
+    }
 
   //  io_printf (IO_STD, "Fan max %d fan %d\n", max, fan);
 
@@ -194,12 +240,16 @@ static void check_status (void)
       uint32_t volts = stat->adc[i];
 
       if (volts == UINT16_MAX)	// Ignore unused channels
-	continue;
+        {
+	  continue;
+        }
 
       // Ignore all except V33, VPWR if power off
 
       if (i < 6 && power_state == POWER_OFF)
-	continue;
+        {
+	  continue;
+        }
 
       uint32_t wv = ee_data.warn_vhigh[i] << 4;
       uint32_t sv = ee_data.shut_vhigh[i] << 4;
@@ -267,12 +317,16 @@ static void check_status (void)
 	}
     }
   else
-    shut_count = 0;
+    {
+      shut_count = 0;
+    }
 
   led2_period = (stat->shutdown) ? 10 : (warning) ? 25 : 0;
 
   if (lcd_active)
-    update_lcd ();
+    {
+      update_lcd ();
+    }
 }
 
 
@@ -281,7 +335,9 @@ static void proc_100hz (uint32_t arg1, uint32_t arg2)
   refresh_wdt ();
 
   if (can_ID < CAN_SIZE)
-    can_timer ();
+    {
+      can_timer ();
+    }
 
   iptag_timer ();
 
@@ -302,7 +358,9 @@ static void proc_100hz (uint32_t arg1, uint32_t arg2)
     }
 
   if (ticks % 8 == 0)	// Every 80ms
-    read_adc ();
+    {
+      read_adc ();
+    }
 
   if (--led2_timer == 0)
     {
@@ -311,7 +369,9 @@ static void proc_100hz (uint32_t arg1, uint32_t arg2)
     }
 
   if (eth_timeout && --eth_timeout == 0)
-    LPC_GPIO0->FIOCLR = LED_6;
+    {
+      LPC_GPIO0->FIOCLR = LED_6;
+    }
 
   if (ticks++ == 99)
     {
@@ -324,7 +384,9 @@ static void proc_100hz (uint32_t arg1, uint32_t arg2)
 void SysTick_Handler (void)
 {
   if (fan_sense)
-    read_fans ();
+    {
+      read_fans ();
+    }
 
   if (ms_tens++ == 9)
     {
@@ -333,7 +395,9 @@ void SysTick_Handler (void)
       event_t *e = event_new (proc_100hz, 0, 0);
 
       if (e != NULL)
-	proc_queue_add (e);
+        {
+	  proc_queue_add (e);
+        }
     }
 }
 
@@ -355,7 +419,9 @@ void c_main (cortex_vec_t *cortex_vec_tmp,
   while (1)
     {
       if (msg_queue_size () != 0)
-	route_msg (msg_queue_remove ());
+        {
+	  route_msg (msg_queue_remove ());
+        }
 
       if (eth_rx_rdy ())
 	{

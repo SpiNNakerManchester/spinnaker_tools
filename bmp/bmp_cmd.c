@@ -56,9 +56,10 @@ static void fpga_xreg (uint32_t count, uint8_t *data)
       for (uint32_t f = 0; f < 3; f++)
 	{
 	  if (fpga & (1 << f))
-	    fpga_word (addr, f, data, FPGA_WRITE);
+	    {
+	      fpga_word (addr, f, data, FPGA_WRITE);
+	    }
 	}
-
     }
 }
 
@@ -69,8 +70,9 @@ static void fpga_xreg (uint32_t count, uint8_t *data)
 static void sf_scan (void)
 {
   if (! data_ok)
-    return;
-
+    {
+      return;
+    }
   ssp1_fast ();
 
   for (uint32_t i = 0; i < FL_DIR_SIZE; i++)
@@ -109,7 +111,9 @@ static void sf_scan (void)
 void flash_buf_init (void)
 {
   for (uint32_t i = 0; i < FLASH_WORDS; i++)
-    flash_buf[i] = 0xffffffff;
+    {
+      flash_buf[i] = 0xffffffff;
+    }
 }
 
 
@@ -123,10 +127,13 @@ static uint32_t cmd_flash_erase (sdp_msg_t *msg)
   flash_buf_init ();
 
   if (msg->arg1 == 0)
-    msg->arg1 = (uint32_t) flash_buf;
+    {
+      msg->arg1 = (uint32_t) flash_buf;
+    }
   else
-    msg->cmd_rc = RC_ARG;
-
+    {
+      msg->cmd_rc = RC_ARG;
+    }
   return 4;
 }
 
@@ -157,8 +164,9 @@ static uint32_t cmd_flash_write (sdp_msg_t *msg)
   flash_buf_init ();
 
   if (msg->arg1 == 0)
-    return 0;
-
+    {
+      return 0;
+    }
   msg->cmd_rc = RC_ARG;
   return 4;
 }
@@ -183,14 +191,20 @@ static uint32_t cmd_xilinx (sdp_msg_t *msg)
   else if (op == 1)	// Initialise FPGA
     {
       if (! fpga_init  (msg->arg2))
-	msg->cmd_rc = RC_TIMEOUT;
+	{
+	  msg->cmd_rc = RC_TIMEOUT;
+	}
     }
   else if (op == 2)	// Reset FPGA
     {
       if (msg->arg2 <= 2)
-	fpga_reset (msg->arg2);
+	{
+	  fpga_reset (msg->arg2);
+	}
       else
-	msg->cmd_rc = RC_ARG;
+	{
+	  msg->cmd_rc = RC_ARG;
+	}
     }
   else
     {
@@ -323,8 +337,9 @@ static uint32_t cmd_ee (sdp_msg_t *msg)
   if (op == 0)
     {
       if (read_ee (addr, len, &msg->arg1))
-	return len;
-
+	{
+	  return len;
+	}
       msg->cmd_rc = RC_TIMEOUT;
       return 0;
     }
@@ -360,7 +375,9 @@ static uint32_t cmd_ee (sdp_msg_t *msg)
 void proc_led (uint32_t arg, uint32_t mask)
 {
   if (mask & (1 << board_ID))
-    led_set (arg);
+    {
+      led_set (arg);
+    }
 }
 
 
@@ -369,8 +386,9 @@ static uint32_t cmd_led (sdp_msg_t *msg)
   uint32_t mask = msg->arg2 & ~(1 << board_ID);
 
   if (mask)
-    can_proc_cmd (31, PROC_LED, msg->arg1, mask);
-
+    {
+      can_proc_cmd (31, PROC_LED, msg->arg1, mask);
+    }
   proc_led (msg->arg1, msg->arg2);
 
   return 0;
@@ -387,8 +405,9 @@ void proc_reset (uint32_t arg, uint32_t mask)
   if (mask & (1 << board_ID))
     {
       if (delay)
-	delay_ms (delay);
-
+	{
+	  delay_ms (delay);
+	}
       reset_spin (reset);
     }
 }
@@ -405,8 +424,9 @@ static uint32_t cmd_reset (sdp_msg_t *msg)
   uint32_t mask = msg->arg2 & ~(1 << board_ID);
 
   if (mask)
-    can_proc_cmd (31, PROC_RESET, msg->arg1, mask);
-
+    {
+      can_proc_cmd (31, PROC_RESET, msg->arg1, mask);
+    }
   proc_reset (msg->arg1, msg->arg2);
 
   return 0;
@@ -427,8 +447,9 @@ void proc_power (uint32_t arg, uint32_t mask)
   if (mask & (1 << board_ID))
     {
       if (delay)
-	delay_ms (delay);
-
+	{
+	  delay_ms (delay);
+	}
       if (on)
 	{
 	  set_power (POWER_ON);	// Sets POR
@@ -440,7 +461,9 @@ void proc_power (uint32_t arg, uint32_t mask)
 	  reset_spin (0);	// Clear POR
 	}
       else
-	set_power (POWER_OFF);
+	{
+	  set_power (POWER_OFF);
+	}
     }
 }
 
@@ -456,8 +479,9 @@ static uint32_t cmd_power (sdp_msg_t *msg)
   uint32_t mask = msg->arg2 & ~(1 << board_ID);
 
   if (mask)
-    can_proc_cmd (31, PROC_POWER, msg->arg1, mask);
-
+    {
+      can_proc_cmd (31, PROC_POWER, msg->arg1, mask);
+    }
   proc_power (msg->arg1, msg->arg2);
 
   return 0;
@@ -472,7 +496,7 @@ static uint32_t cmd_ver (sdp_msg_t *msg)
   uint32_t cv = (uint32_t) cortex_vec / 0x10000;
 
   msg->arg1 = (cv << 24) + (ee_data.frame_ID << 16) +
-              (can_ID << 8) + board_ID;
+	  (can_ID << 8) + board_ID;
 
   msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
 
@@ -592,7 +616,9 @@ static uint32_t cmd_read (sdp_msg_t *msg)
       uint8_t *buf = (uint8_t *) buffer;
 
       for (uint32_t i = 0; i < len; i++)
-	buf[i] = mem[i];
+	{
+	  buf[i] = mem[i];
+	}
     }
   else if (type == TYPE_HALF)
     {
@@ -600,8 +626,9 @@ static uint32_t cmd_read (sdp_msg_t *msg)
       uint16_t *buf = (uint16_t *) buffer;
 
       for (uint32_t i = 0; i < len / 2; i++)
-	buf[i] = mem[i];
-
+	{
+	  buf[i] = mem[i];
+	}
     }
   else
     {
@@ -609,7 +636,9 @@ static uint32_t cmd_read (sdp_msg_t *msg)
       uint32_t *buf = (uint32_t *) buffer;
 
       for (uint32_t i = 0; i < len / 4; i++)
-	buf[i] = mem[i];
+	{
+	  buf[i] = mem[i];
+	}
     }
 
   return len;
@@ -638,7 +667,9 @@ static uint32_t cmd_write (sdp_msg_t *msg)
       uint8_t *buf = (uint8_t *) buffer;
 
       for (uint32_t i = 0; i < len; i++)
-	mem[i] = buf[i];
+	{
+	  mem[i] = buf[i];
+	}
     }
   else if (type == TYPE_HALF)
     {
@@ -646,7 +677,9 @@ static uint32_t cmd_write (sdp_msg_t *msg)
       uint16_t *buf = (uint16_t *) buffer;
 
       for (uint32_t i = 0; i < len / 2; i++)
-	mem[i] = buf[i];
+	{
+	  mem[i] = buf[i];
+	}
     }
   else
     {
@@ -654,7 +687,9 @@ static uint32_t cmd_write (sdp_msg_t *msg)
       uint32_t *buf = (uint32_t *) buffer;
 
       for (uint32_t i = 0; i < len / 4; i++)
-	mem[i] = buf[i];
+	{
+	  mem[i] = buf[i];
+	}
     }
 
   return 0;
@@ -681,8 +716,9 @@ static uint32_t cmd_iptag (sdp_msg_t *msg)
   if (op == IPTAG_NEW || op == IPTAG_SET)
     {
       if (op == IPTAG_NEW)
-	tag = iptag_new ();
-
+	{
+	  tag = iptag_new ();
+	}
       if (tag != TAG_NONE)
 	{
 	  iptag_t *tt = tag_table + tag;
@@ -690,7 +726,9 @@ static uint32_t cmd_iptag (sdp_msg_t *msg)
 	  uint32_t timeout = (msg->arg2 >> 16) & 15;
 
 	  if (timeout != 0)
-	    timeout = 1 << (timeout - 1);
+	    {
+	      timeout = 1 << (timeout - 1);
+	    }
 	  tt->timeout = timeout;
 
 	  tt->port = msg->arg2 & 0xffff;
@@ -726,8 +764,9 @@ static uint32_t cmd_iptag (sdp_msg_t *msg)
       msg->arg1 = (TAG_FIXED_SIZE << 24) + (TAG_POOL_SIZE << 16) + tag_tto;
 
       if (msg->arg2 < 16)
-	tag_tto = msg->arg2;
-
+	{
+	  tag_tto = msg->arg2;
+	}
       return 4;
     }
   else // IPTAG_CLR

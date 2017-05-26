@@ -169,8 +169,9 @@ void configure_clocks ()
   // Wait for Osc ready
 
   while ((LPC_SC->SCS & OSC_UP) == 0)
-    continue;
-
+    {
+      continue;
+    }
   LPC_SC->CCLKCFG   = CCLKCFG_V; 	// Set PLL0->CCLK divider
 
   // Peripheral Clock Selection doesn't seem to work here!
@@ -191,8 +192,9 @@ void configure_clocks ()
   // Wait for PLL to lock
 
   while ((LPC_SC->PLL0STAT & PLL_LOCK) == 0)
-    continue;
-
+    {
+      continue;
+    }
   LPC_SC->PLL0CON   = 0x03;             // PLL0 Enable & Connect
   LPC_SC->PLL0FEED  = 0xaa;
   LPC_SC->PLL0FEED  = 0x55;
@@ -200,8 +202,9 @@ void configure_clocks ()
   // Wait for PLLC0_STAT & PLLE0_STAT
 
   while ((LPC_SC->PLL0STAT & PLL_UP) != PLL_UP)
-    continue;
-
+    {
+      continue;
+    }
   LPC_SC->FLASHCFG  = FLASHCFG_V;	// Configure flash accelerator
 
   LPC_SC->PCONP     = PCONP_V;          // Power Control for Peripherals
@@ -209,7 +212,9 @@ void configure_clocks ()
   uint32_t n = 32 * 1024;		// Wait about 1ms
 
   while (n--)
-    continue;
+    {
+      continue;
+    }
 }
 
 //------------------------------------------------------------------------------

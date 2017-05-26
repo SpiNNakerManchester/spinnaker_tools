@@ -57,7 +57,9 @@ void configure_i2c ()
 static void wait_i2c (LPC_I2C_TypeDef *i2c)
 {
   while ((i2c->I2CONSET & 0x08) == 0)
-    continue;
+    {
+      continue;
+    }
 }
 
 
@@ -76,14 +78,15 @@ uint32_t i2c_poll (LPC_I2C_TypeDef *i2c, uint32_t ctrl)
   i2c->I2CONCLR = 0x08;		// Clear SI
 
   while (i2c->I2CONSET & 0x10)	// Wait for STO to clear
-    continue;
-
+    {
+      continue;
+    }
   return status == 0x18;	// Return 1 if ACK received
 }
 
 
 uint32_t i2c_send (LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
-		   uint32_t length, void *buf)
+	uint32_t length, void *buf)
 {
   uint8_t *data = (uint8_t *) buf;
 
@@ -102,8 +105,9 @@ uint32_t i2c_send (LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
       i2c->I2CONCLR = 0x08;		// Clear SI
 
       while (i2c->I2CONSET & 0x10)	// Wait for STO to clear
-	continue;
-
+        {
+	  continue;
+        }
       return 0;
     }
 
@@ -122,8 +126,9 @@ uint32_t i2c_send (LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
   i2c->I2CONCLR = 0x08;		// Clear SI
 
   while (i2c->I2CONSET & 0x10)	// Wait for STO to clear
-    continue;
-
+    {
+      continue;
+    }
   return 1;
 }
 
@@ -148,19 +153,23 @@ uint32_t i2c_receive (LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
       i2c->I2CONCLR = 0x08;		// Clear SI
 
       while (i2c->I2CONSET & 0x10)	// Wait for STO to clear
-	continue;
-
+	{
+	  continue;
+	}
       return 0;
     }
 
   if (length > 1)
-    i2c->I2CONSET = 0x04;	// Set AA
+    {
+      i2c->I2CONSET = 0x04;	// Set AA
+    }
 
   for (uint32_t i = 0; i < length; i++)
     {
       if (i == length - 1)
-	i2c->I2CONCLR = 0x04;	// Clear AA
-
+        {
+	  i2c->I2CONCLR = 0x04;	// Clear AA
+        }
       i2c->I2CONCLR = 0x08;	// Clear SI
       wait_i2c (i2c);
 
@@ -171,8 +180,9 @@ uint32_t i2c_receive (LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
   i2c->I2CONCLR = 0x0c;		// Clear SI, AA
 
   while (i2c->I2CONSET & 0x10)	// Wait for STO to clear
-    continue;
-
+    {
+      continue;
+    }
   return 1;
 }
 
@@ -185,8 +195,9 @@ int16_t read_ts (LPC_I2C_TypeDef *i2c, uint32_t addr)
   uint8_t buf[4];
 
   if (! i2c_send (i2c, addr, 0, 0, NULL))	// Send ctrl & ptr=0
-    return INT16_MIN;
-
+    {
+      return INT16_MIN;
+    }
   i2c_receive (i2c, addr | 1, 0, 2, &buf);	// then read data
 
   return (buf[0] << 8) + buf[1];
@@ -198,11 +209,13 @@ uint32_t read_ee (uint32_t addr, uint32_t count, void *buf)
   uint32_t ctrl = I2C_EE + ((addr >> 7) & 6);		// 24lc08 code
 
   if (! i2c_send (LPC_I2C0, ctrl, addr & 255, 0, NULL))	// Send address
-    return 0;
-
+    {
+      return 0;
+    }
   if (count != 0)
-    i2c_receive (LPC_I2C0, ctrl + 1, 0, count, buf);	// then read data
-
+    {
+      i2c_receive (LPC_I2C0, ctrl + 1, 0, count, buf);	// then read data
+    }
   return 1;
 }
 
@@ -212,11 +225,13 @@ uint32_t write_ee (uint32_t addr, uint32_t count, void *buf)
   uint32_t ctrl = I2C_EE + ((addr >> 7) & 6);		// 24lc08 code
 
   if (! i2c_send (LPC_I2C0, ctrl, addr & 255, count, buf)) // Send addr & data
-    return 0;
-
+    {
+      return 0;
+    }
   while (! i2c_poll (LPC_I2C0, ctrl))			// Wait until done
-    continue;
-
+    {
+      continue;
+    }
   return 1;
 }
 
@@ -241,7 +256,7 @@ static const uint8_t lcd_init[] =
 void configure_lcd (void)
 {
   lcd_active = i2c_send (LPC_I2C0, I2C_LCD, 0x80,
-			 sizeof (lcd_init), (void *) lcd_init);
+	  sizeof (lcd_init), (void *) lcd_init);
   delay_us (1000);
 }
 
@@ -269,10 +284,13 @@ void lcd_ctrl (uint32_t c)
 void lcd_putc (uint32_t c)
 {
   if (c != '\n')
-    lcd_buf[lcd_ptr++] = c;
-
+    {
+      lcd_buf[lcd_ptr++] = c;
+    }
   if (c == '\n' || lcd_ptr == LCD_SIZE)
-    lcd_flush ();
+    {
+      lcd_flush ();
+    }
 }
 
 

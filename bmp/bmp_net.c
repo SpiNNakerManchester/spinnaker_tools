@@ -168,7 +168,9 @@ sdp_msg_t* msg_get ()
 
       msg_count++;
       if (msg_count > msg_max)
-	msg_max = msg_count;
+        {
+	  msg_max = msg_count;
+        }
     }
 
   cpu_int_restore (cpsr);
@@ -204,7 +206,9 @@ uint32_t msg_queue_insert (sdp_msg_t *msg)
   msg_queue.count++;
 
   if (msg_queue.count > msg_queue.max)
-    msg_queue.max = msg_queue.count;
+    {
+      msg_queue.max = msg_queue.count;
+    }
 
   msg_queue.insert = (msg_queue.insert + 1) % MSG_QUEUE_SIZE;
 
@@ -239,13 +243,19 @@ uint32_t msg_queue_size (void)
 uint32_t ipsum (uint8_t *d, uint32_t len, uint32_t sum) // Use shorts for speed??
 {
   if (len & 1)
-    sum += d[--len] << 8;
+    {
+      sum += d[--len] << 8;
+    }
 
   for (uint32_t i = 0; i < len; i += 2)
-    sum += (d[i] << 8) + d[i+1];
+    {
+      sum += (d[i] << 8) + d[i+1];
+    }
 
   while (sum >> 16)
-    sum = (sum >> 16) + (sum & 0xffff);
+    {
+      sum = (sum >> 16) + (sum & 0xffff);
+    }
 
   return sum;
 }
@@ -294,7 +304,9 @@ void iptag_timer ()
 	{
 	  tag->timeout--;
 	  if (tag->timeout == 0)
-	    tag->flags = 0;
+	    {
+	      tag->flags = 0;
+	    }
 	}
       tag++;
     }
@@ -304,8 +316,12 @@ void iptag_timer ()
 uint32_t iptag_new ()
 {
   for (uint32_t i = FIRST_POOL_TAG; i <= LAST_POOL_TAG; i++)
-    if (tag_table[i].flags == 0)
-      return i;
+    {
+      if (tag_table[i].flags == 0)
+        {
+	  return i;
+        }
+    }
 
   return TAG_NONE;
 }
@@ -324,7 +340,9 @@ uint32_t transient_tag (uint8_t *ip, uint8_t *mac, uint32_t port, uint32_t timeo
       copy_ip (ip, tt->ip);
       copy_mac (mac, tt->mac);
       if (timeout != 0)
-	timeout = 1 << (timeout - 1);
+        {
+	  timeout = 1 << (timeout - 1);
+        }
       tt->timeout = timeout;
     }
 
@@ -385,10 +403,14 @@ void eth_transmit (uint8_t *buf, uint32_t len, uint32_t type,
   mac_hdr->type = htons (type);
 
   if (len < 60)
-    len = 60;
+    {
+      len = 60;
+    }
 
   while (! eth_tx_rdy ())
-    continue;
+    {
+      continue;
+    }
 
   eth_copy_txbuf ((uint32_t *) buf, len);
   eth_update_tx ();
@@ -421,7 +443,9 @@ void arp_pkt (uint8_t *buf, uint32_t rx_len)
   arp_pkt_t *arp = (arp_pkt_t *) (buf + MAC_HDR_SIZE);
 
   if (! cmp_ip (arp->tpa, bmp_ip.ip_addr)) // Ignore unless TPA matches
-    return;
+    {
+      return;
+    }
 
   uint32_t op = ntohs (arp->op);
 
@@ -456,7 +480,9 @@ void icmp_pkt (uint8_t *buf, uint32_t rx_len)
    ip_hdr_t *ip_hdr = (ip_hdr_t *) (buf + IP_HDR_OFFSET);
 
    if (!cmp_ip (ip_hdr->dest, bmp_ip.ip_addr))
-     return;
+     {
+       return;
+     }
 
    uint32_t ip_hdr_len = (ip_hdr->ver_len & 15) * 4;
 
@@ -495,18 +521,22 @@ void udp_pkt (uint8_t *rx_pkt, uint32_t rx_len)
    uint32_t udp_dest = ntohs (udp_hdr->dest);
 
    if ((udp_dest == bmp_ip.udp_port) && cmp_ip (ip_hdr->dest, bmp_ip.ip_addr)
-       && rx_len > 52) //const NB 52
+	   && rx_len > 52) //const NB 52
      {
        uint32_t udp_srce = ntohs (udp_hdr->srce);
        int32_t len = ntohs (udp_hdr->length) - 10; //const UDP_HDR + UDP_PAD
 
        if (len > (24 + 256)) // SDP=8, CMD=16
+         {
 	   return;
+         }
 
        sdp_msg_t *msg = msg_get ();
 
        if (msg == NULL) // !! fix this - reply somehow?
-	 return;
+         {
+	   return;
+         }
 
        memcpy (&msg->flags, (uint8_t *) udp_hdr+10, len); //const
 
@@ -518,13 +548,19 @@ void udp_pkt (uint8_t *rx_pkt, uint32_t rx_len)
        uint32_t tag = msg->tag;
 
        if ((tag == TAG_NONE) && (flags & SDPF_REPLY)) // transient tag & reply req
-	 tag = msg->tag = transient_tag (ip_hdr->srce, rx_pkt+6, udp_srce, tag_tto);
+	 {
+	   tag = msg->tag = transient_tag (ip_hdr->srce, rx_pkt+6, udp_srce, tag_tto);
+	 }
 
        if (((flags & SDPF_REPLY) == 0) ||
-	   (tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0))
-	 msg_queue_insert (msg);
+	       (tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0))
+         {
+	   msg_queue_insert (msg);
+         }
        else
-	 msg_free (msg);
+	 {
+	   msg_free (msg);
+	 }
      }
 }
 
@@ -550,11 +586,13 @@ void eth_receive ()
       uint32_t ip_prot = rx_pkt[IP_HDR_OFFSET + 9];
 
       if (ip_prot == PROT_UDP)
-	udp_pkt (rx_pkt, len);
-
+	{
+	  udp_pkt (rx_pkt, len);
+	}
       else if (ip_prot == PROT_ICMP)
-	icmp_pkt (rx_pkt, len);
-
+        {
+	  icmp_pkt (rx_pkt, len);
+        }
     }
   else if (etype == ETYPE_ARP)
     {
@@ -577,11 +615,13 @@ void eth_transmit2 (uint8_t *hdr, uint8_t *buf, uint32_t len, uint8_t *dest)
   len += 44;
 
   if (len < 60)
-    len = 60;
-
+    {
+      len = 60;
+    }
   while (! eth_tx_rdy ())
-    continue;
-
+    {
+      continue;
+    }
   eth_copy_txbuf ((uint32_t *) eth_buf, len);
   eth_update_tx ();
 }
@@ -593,7 +633,9 @@ void eth_send_msg (uint32_t tag, sdp_msg_t *msg)
   iptag_t *iptag = tag_table + tag;
 
   if ((iptag->flags & IPTAG_VALID) == 0)
-    return;
+    {
+      return;
+    }
 
   uint32_t len = msg->length;
 
@@ -621,9 +663,13 @@ void eth_send_msg (uint32_t tag, sdp_msg_t *msg)
   eth_transmit2 (hdr, &msg->flags, len, iptag->mac);
 
   if (iptag->flags & IPTAG_TRANS)	  //transient tag
-    iptag->flags = 0;
+    {
+      iptag->flags = 0;
+    }
   else
-    iptag->count++;
+    {
+      iptag->count++;
+    }
 }
 
 
@@ -658,7 +704,9 @@ void return_msg (sdp_msg_t *msg, uint32_t rc) // Zero "rc" skips updating cmd_hd
       msg_queue_insert (msg);
     }
   else
-    msg_free (msg);
+    {
+      msg_free (msg);
+    }
 }
 
 
@@ -671,10 +719,13 @@ void route_msg (sdp_msg_t *msg)
       uint32_t rc = can_send_msg (dest, msg);
 
       if (rc == RC_OK)
-	msg_free (msg);
+        {
+	  msg_free (msg);
+        }
       else
-	return_msg (msg, rc);
-
+	{
+	  return_msg (msg, rc);
+	}
       return;
     }
 
@@ -691,7 +742,9 @@ void route_msg (sdp_msg_t *msg)
       msg_free (msg);
     }
   else
-    return_msg (msg, RC_PORT);
+    {
+      return_msg (msg, RC_PORT);
+    }
 }
 
 
@@ -708,7 +761,9 @@ void arp_lookup (iptag_t *iptag)
   const uint8_t *target_ip = addr;
 
   if ((*my_ip & *mask) != (*ip & *mask))
-    target_ip = bmp_ip.gw_addr;
+    {
+      target_ip = bmp_ip.gw_addr;
+    }
 
   copy_ip (target_ip, iptag->mac); // !! Bodge - target IP in MAC field!
 
@@ -745,7 +800,7 @@ void eth_putc (uint32_t c)
 	  ip_hdr_t *ip_hdr = (ip_hdr_t *) (tube_buf + IP_HDR_OFFSET);
 
 	  copy_ip_hdr (tag->ip, PROT_UDP, ip_hdr,
-		       IP_HDR_SIZE + UDP_HDR_SIZE + 14 + tube_ptr);
+		  IP_HDR_SIZE + UDP_HDR_SIZE + 14 + tube_ptr);
 
 	  copy_udp (tube_buf, UDP_HDR_SIZE + 14 + tube_ptr, tag->port, 0);
 

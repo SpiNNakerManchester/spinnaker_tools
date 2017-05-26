@@ -156,15 +156,17 @@ void can_dump (void)
 static void can_tx1 (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 {
   while ((LPC_CAN1->SR & (1<<2)) == 0)	// Wait for TxBuf1
-    continue;
-
+    {
+      continue;
+    }
   LPC_CAN1->TID1 = (dest << 24) | (can_ID << 19) | id;
   LPC_CAN1->TDA1 = d1;
   LPC_CAN1->TDB1 = d2;
 
   while ((LPC_CAN1->SR & (1<<3)) == 0)	// Wait for Tx1 complete
-    continue;
-
+    {
+      continue;
+    }
   LPC_CAN1->CMR = 0x21;			// Send TxBuf1
 }
 
@@ -172,15 +174,17 @@ static void can_tx1 (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 static void can_tx2 (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 {
   while ((LPC_CAN1->SR & (1<<10)) == 0)	// Wait for TxBuf2
-    continue;
-
+    {
+      continue;
+    }
   LPC_CAN1->TID2 = (dest << 24) | (can_ID << 19) | id;
   LPC_CAN1->TDA2 = d1;
   LPC_CAN1->TDB2 = d2;
 
   while ((LPC_CAN1->SR & (1<<11)) == 0)	// Wait for Tx2 complete
-    continue;
- 
+    {
+      continue;
+    }
   LPC_CAN1->CMR = 0x41;			// Send TxBuf2
 }
 
@@ -188,8 +192,9 @@ static void can_tx2 (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 static void can_tx3_nr (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 {
   while ((LPC_CAN1->SR & (1<<18)) == 0)	// Wait for TxBuf3
-    continue;
-
+    {
+      continue;
+    }
   LPC_CAN1->TID3 = (dest << 24) | (can_ID << 19) | id;
   LPC_CAN1->TDA3 = d1;
   LPC_CAN1->TDB3 = d2;
@@ -246,7 +251,9 @@ static void can_open_ack (uint32_t id)
 	  tx_desc->ack = 1;
 	}
       else
-	tx_desc->delay = 100;
+        {
+	  tx_desc->delay = 100;
+        }
     }
 }
 
@@ -261,8 +268,8 @@ static void can_close_req (uint32_t id)
   uint32_t srce = (id >> 19) & 31;
 
   if (tx_desc->state == TX_DATA &&
-      tx_desc->tid == tid &&
-      tx_desc->dest == srce)
+	  tx_desc->tid == tid &&
+	  tx_desc->dest == srce)
     {
       STAT(close_req)
       tx_desc->ack = 1;
@@ -281,8 +288,8 @@ static void can_nack (uint32_t id)
   uint32_t tid = (id >> 11) & 31;
 
   if (tx_desc->state == TX_DATA &&
-      tx_desc->tid == tid &&
-      tx_desc->dest == srce)
+	  tx_desc->tid == tid &&
+	  tx_desc->dest == srce)
     {
       STAT(can_nack)
       tx_desc->ack = 2;
@@ -351,8 +358,9 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
 
       uint32_t ack;
       while ((ack = tx_desc->ack) == 0)
-	continue;
-
+        {
+	  continue;
+        }
       if (ack == 1)	// Received CAN_OPEN_ACK
 	{
 	  STAT(open_ack)
@@ -393,7 +401,7 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
       if ((seq = tx_desc->seq) < pkts)
 	{
 	  uint32_t id = (CAN_DATA << 16) + (tx_desc->tid << 11) +
-	                (tx_desc->rid << 8) + seq;
+		  (tx_desc->rid << 8) + seq;
 	  uint32_t d1 = buf[2 * seq];
 	  uint32_t d2 = buf[2 * seq + 1];
 
@@ -416,7 +424,7 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
       else if (ack == 2)	// NACK received (tx_desc->seq updated)
 	{
 	  timeout_event (tx_desc, can_data_timeout, 3,
-			 1000 * (pkts - tx_desc->seq));
+		  1000 * (pkts - tx_desc->seq));
 	}
       else if (ack == 3) 	// Data timeout
 	{
@@ -429,7 +437,7 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
 	  tx_desc->seq--;	// Force a data packet transmission
 
 	  timeout_event (tx_desc, can_data_timeout, 3,
-			 1000 * (pkts - tx_desc->seq));
+		  1000 * (pkts - tx_desc->seq));
 	}
     }
 
@@ -456,7 +464,7 @@ static void can_open_req (uint32_t id)
   if (len > SDP_BUF_SIZE + 8 + 16)
     {
       can_tx2 (srce, (CAN_OPEN_ACK << 16) + (tid << 11) + RC_SDP_REJECT,
-		    0, 0);
+	      0, 0);
       STAT(reject)
       return;
     }
@@ -469,20 +477,21 @@ static void can_open_req (uint32_t id)
   for (uint32_t i = 0; i < CAN_NUM_STR; i++)
     {
       if (rx_desc->state == RX_DATA &&	// Already open (duplicate request)
-	  rx_desc->srce == srce &&
-	  rx_desc->tid == tid)
+	      rx_desc->srce == srce &&
+	      rx_desc->tid == tid)
 	{
 //##	  event_cancel (rx_desc->event, rx_desc->event_id); // can_data_timeout
           can_tx2 (srce, (CAN_OPEN_ACK << 16) + (tid << 11) + (i << 8) + 
-			RC_OK, 0, 0);
+        	  RC_OK, 0, 0);
 
 	  //	  timeout_event (rx_desc, can_xxx_timeout, 0, 1000);
 	  return;
 	}
 
       if (rx_desc->state == RX_IDLE)	// Free slot
-	rid = i;
-
+	{
+	  rid = i;
+	}
       rx_desc++;
     }
 
@@ -536,8 +545,8 @@ static void can_close_ack (uint32_t id)
   rx_desc_t *rx_desc = rx_desc_table + rid;
 
   if (rx_desc->state == RX_CLOSE_REQ &&
-      rx_desc->tid == tid &&
-      rx_desc->srce == srce)
+	  rx_desc->tid == tid &&
+	  rx_desc->srce == srce)
     {
       STAT(close_ack)
       rx_desc->state = RX_IDLE;
@@ -564,7 +573,7 @@ static void can_close_timeout (uint32_t arg1, uint32_t arg2)
     }
 
   can_tx2 (rx_desc->srce, (CAN_CLOSE_REQ << 16) + (rx_desc->tid << 11) +
-		(rid << 8), 0, 0);
+	  (rid << 8), 0, 0);
   
   timeout_event (rx_desc, can_close_timeout, rid, CAN_CLOSE_TO);
 }
@@ -581,8 +590,8 @@ static void can_data (uint32_t id, uint32_t d1, uint32_t d2)
   rx_desc_t *rx_desc = rx_desc_table + rid;
 
   if (rx_desc->state == RX_DATA &&
-      rx_desc->srce == srce &&
-      rx_desc->tid == tid)
+	  rx_desc->srce == srce &&
+	  rx_desc->tid == tid)
     {
       uint32_t seq = id & 255;
 
@@ -605,7 +614,7 @@ static void can_data (uint32_t id, uint32_t d1, uint32_t d2)
 	      can_timeout = 25;
 
 	      can_tx2 (srce, (CAN_CLOSE_REQ << 16) + (tid << 11) +
-			    (rid << 8), 0, 0);
+		      (rid << 8), 0, 0);
 
 	      timeout_event (rx_desc, can_close_timeout, rid, CAN_CLOSE_TO);
 	    }
@@ -614,7 +623,7 @@ static void can_data (uint32_t id, uint32_t d1, uint32_t d2)
 	{
 	  STAT(rxseq_error);
 	  can_tx2 (srce, (CAN_NACK << 16) + (tid << 11) + (rid << 8) +
-			rx_desc->seq, 0, 0);
+		  rx_desc->seq, 0, 0);
 	}
     }
 }
@@ -623,12 +632,11 @@ static void can_data (uint32_t id, uint32_t d1, uint32_t d2)
 //------------------------------------------------------------------------------
 
 
-static const event_proc proc_list[] =
-  {
+static const event_proc proc_list[] = {
     proc_reset,
     proc_power,
     proc_led
-  };
+};
 
 #define MAX_PROC 1	// UPB of "proc_list" array
 
@@ -642,7 +650,9 @@ static void can_proc (uint32_t id, uint32_t d1, uint32_t d2)
       event_t *e = event_new (proc_list[op], d1, d2);
 
       if (e != NULL)
-	proc_queue_add (e);
+	{
+	  proc_queue_add (e);
+	}
     }
 }
 
@@ -738,14 +748,17 @@ static uint32_t can_seq;
 void can_timer (void)
 {
   if (bus_timeout && --bus_timeout == 0)
-    LPC_GPIO0->FIOCLR = LED_3;
-
+    {
+      LPC_GPIO0->FIOCLR = LED_3;
+    }
   if (can_timeout && --can_timeout == 0)
-    LPC_GPIO0->FIOCLR = LED_5;
-
+    {
+      LPC_GPIO0->FIOCLR = LED_5;
+    }
   if (can_ID != 0)
-    return;
-
+    {
+      return;
+    }
   can_status[0] = 1;
 
   while (1)
@@ -758,11 +771,15 @@ void can_timer (void)
 
 	  can_seq += 2;
 	  if (can_seq == sizeof (board_stat_t) / 4)
-	    can_seq = 0;
+	    {
+	      can_seq = 0;
+	    }
 	}
 
       if (can2board[can_next] != 0)		// Skip unused CAN addresses
-	break;
+        {
+	  break;
+        }
     }
 
 /*
@@ -853,8 +870,9 @@ void configure_can (uint32_t id)
   // Set up address filters
 
   for (uint32_t i = 0; i < 512; i++)
-    LPC_CANAF_RAM->mask[i] = 0;
-
+    {
+      LPC_CANAF_RAM->mask[i] = 0;
+    }
   LPC_CANAF_RAM->mask[0] = id << 24;
   LPC_CANAF_RAM->mask[1] = (id << 24) + 0xffffff;
   LPC_CANAF_RAM->mask[2] = 31 << 24;

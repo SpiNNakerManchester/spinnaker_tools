@@ -36,7 +36,9 @@
 static void delay (uint32_t n)		// 30ns per loop?
 {
   while (n--)
-    continue;
+    {
+      continue;
+    }
 }
 
 
@@ -45,7 +47,9 @@ void ssp1_copy (uint32_t count, uint8_t *buf)
   while (count--)
     {
       while ((LPC_SSP1->SR & 2) == 0)	// Loop while full
-	continue;
+	{
+	  continue;
+	}
 
       LPC_SSP1->DR = *buf++;
     }
@@ -60,12 +64,17 @@ void fpga_word (uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
   // Assert select
 
   if (fpga == 0)
-    LPC_GPIO3->FIOCLR = XFSEL_0;
+    {
+      LPC_GPIO3->FIOCLR = XFSEL_0;
+    }
   else if (fpga == 1)
-    LPC_GPIO3->FIOCLR = XFSEL_1;
+    {
+      LPC_GPIO3->FIOCLR = XFSEL_1;
+    }
   else
-    LPC_GPIO4->FIOCLR = XFSEL_2;
-
+    {
+      LPC_GPIO4->FIOCLR = XFSEL_2;
+    }
   delay (10);
 
   // Clean up address, add write bit, get data
@@ -83,10 +92,13 @@ void fpga_word (uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
   // Wait until TxFIFO empties & flush RxFIFO
 
   while ((LPC_SSP1->SR & 1) == 0)
-    continue;
-
+    {
+      continue;
+    }
   while ((LPC_SSP1->SR & 4) != 0)
-    (void) LPC_SSP1->DR;
+    {
+      (void) LPC_SSP1->DR;
+    }
 
   // Send address word
 
@@ -107,15 +119,18 @@ void fpga_word (uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
   // Wait until TxFIFO empties
 
   while ((LPC_SSP1->SR & 1) == 0)
-    continue;
+    {
+      continue;
+    }
 
   // Throw away returned address
 
   for (uint32_t i = 0; i < 4; i++)
     {
       while ((LPC_SSP1->SR & 4) == 0)	// Wait for NotEmpty
-	continue;
-
+	{
+	  continue;
+	}
       (void) LPC_SSP1->DR;
     }
 
@@ -124,15 +139,17 @@ void fpga_word (uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
   for (uint32_t i = 0; i < 4; i++)
     {
       while ((LPC_SSP1->SR & 4) == 0)	// Wait for NotEmpty
-	continue;
-
+	{
+	  continue;
+	}
       data <<= 8;
       data |= LPC_SSP1->DR;
     }
 
   if (dir == FPGA_READ)
-    *buf = data;
-
+    {
+      *buf = data;
+    }
   delay (30);
 
   LPC_GPIO3->FIOSET = XFSEL_0 + XFSEL_1;
@@ -159,7 +176,9 @@ void ssp0_write (uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
   ssp0_send (0x06);			// Sent write enable
 
   while ((LPC_SSP0->SR & 1) == 0)	// Wait until TxFIFO empties
-    continue;
+    {
+      continue;
+    }
 
   delay (10);
   LPC_GPIO0->FIOSET = SF_NCS;		// Deassert NCS
@@ -179,14 +198,16 @@ void ssp0_write (uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
   while (len--)
     {
       while ((LPC_SSP0->SR & 2) == 0)	// Loop while full
-	continue;
-
+        {
+	  continue;
+        }
       LPC_SSP0->DR = *buf++;
     }
 
   while ((LPC_SSP0->SR & 1) == 0)	// Wait until TxFIFO empties
-    continue;
-
+    {
+      continue;
+    }
   delay (10);
   LPC_GPIO0->FIOSET = SF_NCS;		// Deassert NCS
 }
@@ -206,24 +227,28 @@ void ssp0_read (uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
     }
 
   while ((LPC_SSP0->SR & 1) == 0)	// Wait until TxFIFO empties
-    continue;
-
+    {
+      continue;
+    }
   while ((LPC_SSP0->SR & 4) != 0)	// Flush RxFIFO
-    (void) LPC_SSP0->DR;
-
+    {
+      (void) LPC_SSP0->DR;
+    }
   while (len--)
     {
       LPC_SSP0->DR = 0;			// Trigger read
 
       while ((LPC_SSP0->SR & 4) == 0)	// Loop while empty
-	continue;
-
+        {
+	  continue;
+        }
       *buf++ = LPC_SSP0->DR;
     }
 
   while ((LPC_SSP0->SR & 1) == 0)	// Wait until TxFIFO empties
-    continue;
-
+    {
+      continue;
+    }
   delay (10);
   LPC_GPIO0->FIOSET = SF_NCS;		// Deassert NCS
 }
@@ -244,24 +269,28 @@ void ssp0_copy (uint32_t addr, uint32_t len)
   ssp0_send (addr);
 
   while ((LPC_SSP0->SR & 1) == 0)	// Wait until TxFIFO empties
-    continue;
-
+    {
+      continue;
+    }
   while ((LPC_SSP0->SR & 4) != 0)	// Flush RxFIFO
-    (void) LPC_SSP0->DR;
-
+    {
+      (void) LPC_SSP0->DR;
+    }
   while (len--)
     {
       LPC_SSP0->DR = 0;			// Trigger read
 
       while ((LPC_SSP0->SR & 4) == 0)	// Loop while empty
-	continue;
-
+        {
+	  continue;
+        }
       LPC_SSP1->DR = LPC_SSP0->DR;	// Copy to SSP1
     }
 
   while ((LPC_SSP0->SR & 1) == 0)	// Wait until TxFIFO empties
-    continue;
-
+    {
+      continue;
+    }
   delay (10);
   LPC_GPIO0->FIOSET = SF_NCS;		// Deassert NCS
 }
@@ -281,25 +310,22 @@ void sf_write (uint32_t addr, uint32_t len, uint8_t *buf)
 	  ssp0_write (0x39, addr, 0, NULL);	// Unprotect sector
 	  ssp0_write (0x20, addr, 0, NULL);	// Erase 4K sector
 
-	  while (1)
+	  do
 	    {
 	      ssp0_read (0x05, 0xffffffff, 4, status);
-	      if ((status[0] & 1) == 0)
-		break;
 	    }
+	  while (status[0] & 1);
 	}
 
       uint32_t bytes = (len > 256) ? 256 : len;
 
       ssp0_write (0x02, addr, bytes, buf);
 
-      while (1)
+      do
 	{
 	  ssp0_read (0x05, 0xffffffff, 4, status);
-	  if ((status[0] & 1) == 0)
-	    break;
 	}
-
+      while (status[0] & 1);
       len -= bytes;
       addr += bytes;
       buf += bytes;
