@@ -1,0 +1,21 @@
+dist: trusty
+language: c
+
+addons:
+  apt:
+    packages:
+      - vera++
+      #- gcc-arm-none-eabi
+      #- libnewlib-arm-none-eabi
+
+install:
+  - git clone https://github.com/SpiNNakerManchester/SupportScripts.git support
+# TODO: Add actually building the code
+
+script:
+  - support/run-vera.sh sark
+  - support/run-vera.sh scamp
+  - support/run-vera.sh spin1_api
+  - support/run-vera.sh apps
+  - support/run-vera.sh bmp
+  - support/run-vera.sh include
