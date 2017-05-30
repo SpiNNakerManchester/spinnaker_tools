@@ -23,7 +23,7 @@ int upper8  = ~((int)((1<<8)-1));
 // Only look at bits 15:8 for control
 int multicastControlMask = ((1<<16)-1)^((1<<8)-1);
 
-// key for packets to be routed to chip (0,0), processor 1 (pixel packets)
+// key for packets to be routed to chip (0, 0), processor 1 (pixel packets)
 int proc001Key = (1<<10)+(1<<9);
 
 const uint firstByte  = 0xff;
@@ -33,7 +33,8 @@ const uint fourthByte = 0xff000000;
 
 
 
-int abs(int a)
+int abs(
+	int a)
 {
   return (a<0 ? -a : a);
 }
@@ -48,7 +49,9 @@ int abs(int a)
 
 // Multiplies two numbers between -1.0 and 1.0
 
-int fp_unit_mul(int a, int b)
+int fp_unit_mul(
+	int a,
+	int b)
 {
   int sign = (a<0?-1:1)*(b<0?-1:1);
   unsigned int a1 = (unsigned int)(a<0?-a:a);
@@ -111,7 +114,7 @@ int fp_frac(int a, int b)
 
 int fp_mul(int a, int b)
 {
-  int sign = (a<0?-1:1)*(b<0?-1:1);
+  int sign = (a<0?-1:1) * (b<0?-1:1);
   unsigned int a1 = (unsigned int)(a<0?-a:a);
   unsigned int b1 = (unsigned int)(b<0?-b:b);
 
@@ -124,7 +127,7 @@ int fp_mul(int a, int b)
   int mult2 = (int)(lowera*upperb + lowerb*uppera);
   int mult3 = (int)(((uppera*upperb) & lower16)<<16);
 
-  return (mult1+mult2+mult3)*sign;
+  return (mult1 + mult2 + mult3)*sign;
 }
 
 // Estimate the reciprocal using the Newton-Raphson method of finding zeroes
@@ -136,11 +139,11 @@ int fp_recip(int a)
 {
   // This is the optimal starting estimate for the reciprocal of values known
   // to be in the range 0.5 to 1.0
-  int estimate    = 185043 - fp_frac(123362, a);
+  int estimate = 185043 - fp_frac(123362, a);
 
   // Two iterations of the method should suffice.
-  estimate        = fp_mul(estimate, 131072 - fp_frac(estimate, a));
-  estimate        = fp_mul(estimate, 131072 - fp_frac(estimate, a));
+  estimate     = fp_mul(estimate, 131072 - fp_frac(estimate, a));
+  estimate     = fp_mul(estimate, 131072 - fp_frac(estimate, a));
 
   return estimate;
 }
@@ -148,7 +151,9 @@ int fp_recip(int a)
 // Find the reciprocal of a number by shifting it until it lies between
 // 0.5 and 1.0, then call the function above to use Newton's method
 
-int fp_recip_gen(int a, int id)
+int fp_recip_gen(
+	int a,
+	int id)
 {
   if (a == 0)
     {
@@ -156,8 +161,8 @@ int fp_recip_gen(int a, int id)
       //##        io_printf(IO_STD, "Fixed-point arithmetic error: div by 0 in fp_recip_gen %d.\n", id);
     }
 
-  int sign = (a<0?-1:1);
-  unsigned int a1 = (unsigned int)(a<0?-a:a);
+  int sign = (a<0 ? -1 : 1);
+  unsigned int a1 = (unsigned int) (a<0 ? -a : a);
 
   int shifted = 0;
 
@@ -172,8 +177,8 @@ int fp_recip_gen(int a, int id)
       shifted +=1 ;
     }
   a1 = fp_recip(a1);
-  a1 = (shifted>0 ? (a1<<shifted) : (a1>>-(shifted)) );
-  return sign*((int)a1);
+  a1 = (shifted>0 ? (a1<<shifted) : (a1>>-shifted));
+  return sign * ((int) a1);
 }
 
 // To divide the numerator by the denominator, estimate the reciprocal of the
@@ -181,7 +186,9 @@ int fp_recip_gen(int a, int id)
 // only works on denominators between 0.5 and 1, so we have to bitshift both
 // arguments until it lies in this range.
 
-int fp_div(int num, int denom)
+int fp_div(
+	int num,
+	int denom)
 {
   if (denom == 0)
     {
@@ -197,12 +204,12 @@ int fp_div(int num, int denom)
     }
 
   // fp_recip works only on values in range 0.5 to 1.0
-  while(denom > 65536) // while greater than 1
+  while (denom > 65536) // while greater than 1
     {
       num>>=1;
       denom>>=1;
     }
-  while(denom <= 32768) // while less than half
+  while (denom <= 32768) // while less than half
     {
       num<<=1;
       denom<<=1;
@@ -216,7 +223,8 @@ int fp_div(int num, int denom)
 // (Note: square roots are still expensive Anyone looking to optimize
 // should start here)
 
-int fp_sqrt(int x)
+int fp_sqrt(
+	int x)
 {
   unsigned int root, remHi, remLo, testDiv, count;
 
@@ -238,7 +246,7 @@ int fp_sqrt(int x)
         }
     }
   while (count-- != 0);
-  return(root);
+  return root;
 }
 
 
@@ -263,16 +271,17 @@ int cos_lookup[101] = {65536, 65527, 65503, 65463, 65406, 65333, 65245, 65140,
 // 1/4 of the cycle of the cos function.  For the other quarters, either
 // the looked-up value, the look-up index, or both are flipped.
 
-int fp_cos(int a)
+int fp_cos(
+	int a)
 {
   int lookup_size = 100;
-  int factor = (65535/(lookup_size*4-1));
+  int factor = 65535 / (lookup_size*4 - 1);
 
   // a is an angle in rads
   // We only care about it in the range 0 -> 2*pi
 
   // this is between 0 and 65536
-  int unscaledIndex = (fp_frac(a, ONE_OVER_2_PI) & lower16);
+  int unscaledIndex = fp_frac(a, ONE_OVER_2_PI) & lower16;
 
   int indexFraction = unscaledIndex % factor;
   // This is now a lookup index between 0 and lookup_size*4-1
@@ -321,8 +330,8 @@ int fp_cos(int a)
   int value2 = sign2 * cos_lookup[index2];
 
   // Interpolate between the two values
-  return (value2*indexFraction)/factor +
-	  (value*(factor-indexFraction))/factor;
+  return (value2*indexFraction) / factor +
+	  (value*(factor-indexFraction)) / factor;
 }
 
 // End of arithmetic.c
@@ -331,49 +340,60 @@ int fp_cos(int a)
 // geometry.h
 // Points, directions, colours
 
-struct Vector3
-{      
+typedef struct {
     int x, y, z;
-};
+} Vector3;
 
-struct Ray
-{
-    struct Vector3 origin;
-    struct Vector3 direction; // unit vector
-};
+typedef struct {
+    Vector3	origin;
+    Vector3	direction;	// unit vector
+} Ray;
 
-struct Sphere
-{
-    struct Vector3  position;
-    int             radius;
-    struct Vector3  colourT;     // transmitted colour (0->1)
-    struct Vector3  colourE;     // emitted colour     (0->255)
-    int             specularity;
-    int             specularTightness;
-    int             transparency;
-    int             refractiveIndex;
-    int             reflectivity;
-};
+typedef struct {
+    Vector3	position;
+    int		radius;
+    Vector3	colourT;	// transmitted colour (0->1)
+    Vector3	colourE;	// emitted colour     (0->255)
+    int		specularity;
+    int		specularTightness;
+    int		transparency;
+    int		refractiveIndex;
+    int		reflectivity;
+} Sphere;
 
 // geometry.c
 
 //-------- Vector functions ---------------------------------------------------
 
-struct Vector3 vecInvert(struct Vector3 a)
+Vector3 vecInvert(
+	Vector3 a)
 {
-  struct Vector3 result = {-a.x, -a.y, -a.z};
+  Vector3 result = {
+	  -a.x,
+	  -a.y,
+	  -a.z };
   return result;
 }
 
-struct Vector3 vecAdd(struct Vector3 a, struct Vector3 b)
+Vector3 vecAdd(
+	Vector3 a,
+	Vector3 b)
 {
-  struct Vector3 result = {a.x+b.x, a.y+b.y, a.z+b.z};
+  Vector3 result = {
+	  a.x + b.x,
+	  a.y + b.y,
+	  a.z + b.z };
   return result;
 }
 
-struct Vector3 vecSub(struct Vector3 a, struct Vector3 b)
+Vector3 vecSub(
+	Vector3 a,
+	Vector3 b)
 {
-  struct Vector3 result = {a.x-b.x, a.y-b.y, a.z-b.z};
+  Vector3 result = {
+	  a.x - b.x,
+	  a.y - b.y,
+	  a.z - b.z };
   return result;
 }
 
@@ -385,51 +405,70 @@ struct Vector3 vecSub(struct Vector3 a, struct Vector3 b)
 
 // Multiply a vector by a scalar value between 0.0 and 1.0
 
-struct Vector3 vecScalarFrac(struct Vector3 a, int b)
+Vector3 vecScalarFrac(Vector3 a, int b)
 {
-  struct Vector3 result = {fp_frac(a.x,b), fp_frac(a.y,b), fp_frac(a.z,b)};
+  Vector3 result = {
+	  fp_frac(a.x, b),
+	  fp_frac(a.y, b),
+	  fp_frac(a.z, b) };
   return result;
 }
 
 // Multiply a vector by a scalar value
 
-struct Vector3 vecScalarMul(struct Vector3 a, int b)
+Vector3 vecScalarMul(
+	Vector3 a,
+	int b)
 {
-  struct Vector3 result = {fp_mul(a.x,b), fp_mul(a.y,b), fp_mul(a.z,b)};
+  Vector3 result = {
+	  fp_mul(a.x, b),
+	  fp_mul(a.y, b),
+	  fp_mul(a.z, b) };
   return result;
 }
 
 // Element-wise multiplication of two vectors where the elements of vector b
 // are between 0.0 and 1.0
 
-struct Vector3 vecFrac(struct Vector3 a, struct Vector3 b)
+Vector3 vecFrac(
+	Vector3 a,
+	Vector3 b)
 {
-  struct Vector3 result =
-        {fp_frac(a.x, b.x), fp_frac(a.y, b.y), fp_frac(a.z, b.z)};
+  Vector3 result = {
+	  fp_frac(a.x, b.x),
+	  fp_frac(a.y, b.y),
+	  fp_frac(a.z, b.z) };
   return result;
 }
 
 // Element-wise multiplication of two vectors
 
-struct Vector3 vecMul(struct Vector3 a, struct Vector3 b)
+Vector3 vecMul(
+	Vector3 a,
+	Vector3 b)
 {
-  struct Vector3 result =
-        {fp_mul(a.x, b.x), fp_mul(a.y, b.y), fp_mul(a.z, b.z)};
+  Vector3 result = {
+	  fp_mul(a.x, b.x),
+	  fp_mul(a.y, b.y),
+	  fp_mul(a.z, b.z) };
   return result;
 }
 
-int vecMagnitude(struct Vector3 in)
+int vecMagnitude(
+	Vector3 in)
 {
-  return fp_sqrt(fp_mul(in.x, in.x)+fp_mul(in.y, in.y)+fp_mul(in.z, in.z));
+  return fp_sqrt(fp_mul(in.x, in.x) + fp_mul(in.y, in.y) + fp_mul(in.z, in.z));
 }
 
-struct Vector3 vecNorm(struct Vector3 in, int id)
+Vector3 vecNorm(
+	Vector3 in,
+	int id)
 {
   int vecMagnitudeReciprocal = fp_recip_gen(vecMagnitude(in), id);
 
   if (vecMagnitudeReciprocal>(1<<16))
     {
-      struct Vector3 result = {
+      Vector3 result = {
 	      fp_mul(in.x, vecMagnitudeReciprocal),
 	      fp_mul(in.y, vecMagnitudeReciprocal),
 	      fp_mul(in.z, vecMagnitudeReciprocal) };
@@ -437,7 +476,7 @@ struct Vector3 vecNorm(struct Vector3 in, int id)
     }
   else
     {
-      struct Vector3 result = {
+      Vector3 result = {
 	      fp_frac(in.x, vecMagnitudeReciprocal),
 	      fp_frac(in.y, vecMagnitudeReciprocal),
 	      fp_frac(in.z, vecMagnitudeReciprocal) };
@@ -447,85 +486,97 @@ struct Vector3 vecNorm(struct Vector3 in, int id)
 
 // The dot product of two vectors
 
-int vecDotProd(struct Vector3 a, struct Vector3 b)
+int vecDotProd(
+	Vector3 a,
+	Vector3 b)
 {
   return fp_mul(a.x, b.x) + fp_mul(a.y, b.y) + fp_mul(a.z, b.z);
 }
 
 // The dot product of two vectors that we know to be unit vectors
 
-int vecUnitDotProd(struct Vector3 a, struct Vector3 b)
+int vecUnitDotProd(
+	Vector3 a,
+	Vector3 b)
 {
-  return fp_unit_mul(a.x,b.x) +
-	  fp_unit_mul(a.y,b.y) + fp_unit_mul(a.z,b.z);
+  return fp_unit_mul(a.x, b.x) +
+	  fp_unit_mul(a.y, b.y) + fp_unit_mul(a.z, b.z);
 }
 
 // The dot product of two vectors where b is known to be a unit vector
 
-int vecUnitDotProd2(struct Vector3 a, struct Vector3 b)
+int vecUnitDotProd2(
+	Vector3 a,
+	Vector3 b)
 {
-  return fp_unit_mul2(a.x,b.x) +
-	  fp_unit_mul2(a.y,b.y) + fp_unit_mul2(a.z,b.z);
+  return fp_unit_mul2(a.x, b.x) +
+	  fp_unit_mul2(a.y, b.y) + fp_unit_mul2(a.z, b.z);
 }
 
 // The cross product of two vectors
 
-struct Vector3 vecCrossProd(struct Vector3 a, struct Vector3 b)
+Vector3 vecCrossProd(
+	Vector3 a,
+	Vector3 b)
 {
-  struct Vector3 result = {
+  Vector3 result = {
 	  fp_mul(a.y, b.z)-fp_mul(a.z, b.y),
 	  fp_mul(a.z, b.x)-fp_mul(a.x, b.z),
-	  fp_mul(a.x, b.y)-fp_mul(a.y, b.x)
-  };
+	  fp_mul(a.x, b.y)-fp_mul(a.y, b.x) };
   return result;
 }
 
 // Rotate the first vector around the second (amount is in degrees)
 
-struct Vector3 vecRotate(struct Vector3 rotated,
-	struct Vector3 rotateAbout,int amount, int id)
+Vector3 vecRotate(
+	Vector3 rotated,
+	Vector3 rotateAbout,
+	int amount,
+	int id)
 {
-  amount = fp_mul(amount,FP_PI)/180;
+  amount = fp_mul(amount, FP_PI)/180;
   int c = fp_cos(amount);
   int s = fp_cos(amount - (FP_PI>>1));
   int t = (1<<16)-c;
 
   // The rotation (sorry about the readability!)
 
-  struct Vector3 result;
+  Vector3 result;
   result.x =
-        fp_mul(rotated.x,(fp_mul(t,fp_mul(rotateAbout.x,rotateAbout.x))+c))
-        + fp_mul(rotated.y,(fp_mul(t,fp_mul(rotateAbout.x,rotateAbout.y))
-            + fp_mul(s,rotateAbout.z))) +
-        fp_mul(rotated.z,(fp_mul(t,fp_mul(rotateAbout.x,rotateAbout.z))
-            - fp_mul(s,rotateAbout.y)));
+        fp_mul(rotated.x, (fp_mul(t, fp_mul(rotateAbout.x, rotateAbout.x))+c))
+        + fp_mul(rotated.y, (fp_mul(t, fp_mul(rotateAbout.x, rotateAbout.y))
+            + fp_mul(s, rotateAbout.z))) +
+        fp_mul(rotated.z, (fp_mul(t, fp_mul(rotateAbout.x, rotateAbout.z))
+            - fp_mul(s, rotateAbout.y)));
 
   result.y =
-        fp_mul(rotated.x,(fp_mul(t,fp_mul(rotateAbout.x,rotateAbout.y))
-            - fp_mul(s,rotateAbout.z))) +
-        fp_mul(rotated.y,(fp_mul(t,fp_mul(rotateAbout.y,rotateAbout.y)) + c)) +
-        fp_mul(rotated.z,(fp_mul(t,fp_mul(rotateAbout.y,rotateAbout.z))
-            + fp_mul(s,rotateAbout.x)));
+        fp_mul(rotated.x, (fp_mul(t, fp_mul(rotateAbout.x, rotateAbout.y))
+            - fp_mul(s, rotateAbout.z))) +
+        fp_mul(rotated.y, (fp_mul(t, fp_mul(rotateAbout.y, rotateAbout.y)) + c)) +
+        fp_mul(rotated.z, (fp_mul(t, fp_mul(rotateAbout.y, rotateAbout.z))
+            + fp_mul(s, rotateAbout.x)));
 
   result.z =
-        fp_mul(rotated.x,(fp_mul(t,fp_mul(rotateAbout.z,rotateAbout.x))
-            + fp_mul(s,rotateAbout.y))) +
-        fp_mul(rotated.y,(fp_mul(t,fp_mul(rotateAbout.y,rotateAbout.z))
-            - fp_mul(s,rotateAbout.x))) +
-        fp_mul(rotated.z,(fp_mul(t,fp_mul(rotateAbout.z,rotateAbout.z))+c));
+        fp_mul(rotated.x, (fp_mul(t, fp_mul(rotateAbout.z, rotateAbout.x))
+            + fp_mul(s, rotateAbout.y))) +
+        fp_mul(rotated.y, (fp_mul(t, fp_mul(rotateAbout.y, rotateAbout.z))
+            - fp_mul(s, rotateAbout.x))) +
+        fp_mul(rotated.z, (fp_mul(t, fp_mul(rotateAbout.z, rotateAbout.z))+c));
 
   return vecNorm(result, id);
 }
 
 // Clamp the elements of a vector between a lower and upper value
 
-struct Vector3 vecClamp(struct Vector3 in, int loClamp, int hiClamp)
+Vector3 vecClamp(
+	Vector3 in,
+	int loClamp,
+	int hiClamp)
 {
-  struct Vector3 clamped = {
+  Vector3 clamped = {
 	  (in.x > hiClamp) ? hiClamp : ((in.x < loClamp) ? loClamp : in.x),
 	  (in.y > hiClamp) ? hiClamp : ((in.y < loClamp) ? loClamp : in.y),
-	  (in.z > hiClamp) ? hiClamp : ((in.z < loClamp) ? loClamp : in.z)
-  };
+	  (in.z > hiClamp) ? hiClamp : ((in.z < loClamp) ? loClamp : in.z) };
 
   return clamped;
 }
@@ -536,23 +587,27 @@ struct Vector3 vecClamp(struct Vector3 in, int loClamp, int hiClamp)
 // inverse of the collision-object surface normal depending on if the ray is
 // entering or exiting the object)
 
-struct Vector3 vecRefract(struct Vector3 n1,
-	struct Vector3 s, int mu1, int mu2)
+Vector3 vecRefract(
+	Vector3 n1,
+	Vector3 s,
+	int mu1,
+	int mu2)
 {
-  int n1DotS      = vecUnitDotProd(n1,s);
-  struct Vector3 firstTerm   = vecScalarMul(s,n1DotS);
-  int sqrtTerm    = fp_sqrt(  (fp_mul(mu2,mu2)) -
-	  (fp_mul(mu1, mu1)) +
-	  (fp_mul(n1DotS, n1DotS)) );
-    struct Vector3 result =
-        vecAdd(vecSub(n1, firstTerm), vecScalarMul(s, sqrtTerm) );
+  int n1DotS	    = vecUnitDotProd(n1, s);
+  Vector3 firstTerm = vecScalarMul(s, n1DotS);
+  int sqrtTerm	    = fp_sqrt(fp_mul(mu2, mu2) -
+	  fp_mul(mu1, mu1) + fp_mul(n1DotS, n1DotS));
 
-    return result;
+  Vector3 result =
+	  vecAdd(vecSub(n1, firstTerm), vecScalarMul(s, sqrtTerm));
+
+  return result;
 }
 
-int vecSum(struct Vector3 inVector)
+int vecSum(
+	Vector3 inVector)
 {
-  return inVector.x+inVector.y+inVector.z;
+  return inVector.x + inVector.y + inVector.z;
 }
 
 //-------- Vectors ------------------------------------------------------------
@@ -564,7 +619,8 @@ int vecSum(struct Vector3 inVector)
 // from the surfaces on which they have just reflected/refracted to avoid re-
 // interacting with the same surface
 
-struct Ray rayNudge(struct Ray ray)
+Ray rayNudge(
+	Ray ray)
 {
   ray.origin =
 	  vecAdd(ray.origin, vecScalarFrac(ray.direction, 1<<10));
@@ -579,7 +635,9 @@ struct Ray rayNudge(struct Ray ray)
 // If the ray intersects the sphere, return nearest distance along ray at which
 // it happens. If it doesn't, return -1
 
-int sphereIntersection(struct Sphere sphere, struct Ray ray)
+int sphereIntersection(
+	Sphere sphere,
+	Ray ray)
 {
   // The intersection algorithm assumes that the ray starts at the origin,
   // so translate the sphere first.
@@ -587,9 +645,9 @@ int sphereIntersection(struct Sphere sphere, struct Ray ray)
 
   int directionDotPosition =
 	  vecUnitDotProd2(sphere.position, ray.direction);
-  int sqrtTerm = fp_mul(directionDotPosition,directionDotPosition)
+  int sqrtTerm = fp_mul(directionDotPosition, directionDotPosition)
 	- vecDotProd(sphere.position, sphere.position)
-	+ fp_mul(sphere.radius,sphere.radius);
+	+ fp_mul(sphere.radius, sphere.radius);
 
   int result = -1; // Return value for no intersection
 
@@ -627,49 +685,48 @@ int sphereIntersection(struct Sphere sphere, struct Ray ray)
 
 // Camera, with viewplane
 
-struct ViewPlane
-{
+typedef struct {
   // these are unit vectors and represent the direction to the four
   // corners of the view plane from the camera
-    struct Vector3 topLeft;
-    struct Vector3 topRight;
-    struct Vector3 bottomLeft;
-    struct Vector3 bottomRight;
-};
+    Vector3	topLeft;
+    Vector3	topRight;
+    Vector3	bottomLeft;
+    Vector3	bottomRight;
+} ViewPlane;
 
-struct Camera
-{
-    struct Vector3      position;
-    struct Vector3      lookDirection;
-    struct Vector3      upDirection;
+typedef struct {
+    Vector3	position;
+    Vector3	lookDirection;
+    Vector3	upDirection;
 
-    int                 horizontalFieldOfView;
-    int                 verticalFieldOfView;
-    int                 horizontalPixels;
-    int                 verticalPixels;
+    int		horizontalFieldOfView;
+    int		verticalFieldOfView;
+    int		horizontalPixels;
+    int		verticalPixels;
 
-    int                 antialiasing;
+    int		antialiasing;
 
-    struct Vector3      rightDirection;
-    struct ViewPlane    viewPlane;  // The two view angles are used to construct the viewplane
-};
+    Vector3	rightDirection;
+    ViewPlane	viewPlane;  // The two view angles are used to construct the viewplane
+} Camera;
 
 // scene.c
 
 // Given a camera with a valid position, look vector, up vector, fields of view and horizontal pixel resolution,
 // construct a view plane in front of the camera and calculate a right vector
 
-struct Camera setupCamera(struct Camera camera)
+Camera setupCamera(
+	Camera camera)
 {
-    struct Vector3 rightDirection = vecCrossProd(camera.lookDirection,camera.upDirection);
+    Vector3 rightDirection = vecCrossProd(camera.lookDirection, camera.upDirection);
     camera.rightDirection = rightDirection; 
 
-    struct ViewPlane viewPlane;
+    ViewPlane viewPlane;
     // The look direction needs to be rotated to the four corners of the viewPlane
     // TODO: this method distorts the image so we've had to move the camera back and narrow its field of view.
     //   Fix it, then tidy it up.
-    struct Vector3 corner = camera.lookDirection;
-    struct Vector3 right  = camera.rightDirection;
+    Vector3 corner = camera.lookDirection;
+    Vector3 right  = camera.rightDirection;
     corner = vecRotate(corner, camera.upDirection, -camera.horizontalFieldOfView/2, 1013);
     right  = vecCrossProd(corner, camera.upDirection);
     corner = vecRotate(corner, right, -camera.verticalFieldOfView/2, 1014);
@@ -697,28 +754,35 @@ struct Camera setupCamera(struct Camera camera)
 // end of scene.c
 
 
-int random2()
+int random2(void)
 {
-  return (int) (sark_rand () % (1 << 16));
+  return (int) (sark_rand() % (1 << 16));
 }
 
-int random1()
+int random1(void)
 {
-  return ((int) sark_rand () % (1 << 16)) - (1 << 15); 
+  return ((int) sark_rand() % (1 << 16)) - (1 << 15);
 }
 
 
-int diffuseBDRF(struct Vector3 in, struct Vector3 out, struct Vector3 collisionPoint, struct Vector3 surfaceNormal)
+int diffuseBDRF(
+	Vector3 in,
+	Vector3 out,
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal)
 {
-    return vecDotProd(surfaceNormal,out);
+    return vecDotProd(surfaceNormal, out);
 }
 
 // Cosine-weighted diffuse reflection
 
-struct Ray diffuseReflectanceFunction(
-	struct Vector3 collisionPoint, struct Vector3 surfaceNormal, struct Vector3 inwardVector, int *BDRF)
+Ray diffuseReflectanceFunction(
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal,
+	Vector3 inwardVector,
+	int *BDRF)
 {
-  struct Ray outwardRay;
+  Ray outwardRay;
   outwardRay.origin = collisionPoint;
 
   outwardRay.direction.x = random1();
@@ -743,11 +807,15 @@ struct Ray diffuseReflectanceFunction(
   return outwardRay;
 }
 
-int specularBDRF(struct Vector3 in, struct Vector3 out,
-	struct Vector3 collisionPoint, struct Vector3 surfaceNormal, int tightness)
+int specularBDRF(
+	Vector3 in,
+	Vector3 out,
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal,
+	int tightness)
 {
-  struct Vector3 reflectedOut = vecSub(out,
-	  vecScalarMul(surfaceNormal, 2*vecUnitDotProd(out,surfaceNormal)));
+  Vector3 reflectedOut = vecSub(out,
+	  vecScalarMul(surfaceNormal, 2*vecUnitDotProd(out, surfaceNormal)));
 
   int phongTerm   = vecUnitDotProd(in, reflectedOut);
 
@@ -756,7 +824,7 @@ int specularBDRF(struct Vector3 in, struct Vector3 out,
   int i;
   for (i=0; i<tightness; i++)
     {
-      phongTerm = fp_frac(phongTerm,phongTerm);
+      phongTerm = fp_frac(phongTerm, phongTerm);
     }
 
   return phongTerm;
@@ -765,9 +833,12 @@ int specularBDRF(struct Vector3 in, struct Vector3 out,
 
 // Perfectly specular reflection
 
-struct Ray specularReflectanceFunction (
-	struct Vector3 collisionPoint, struct Vector3 surfaceNormal,
-	struct Vector3 inwardVector, int tightness, int *BDRF)
+Ray specularReflectanceFunction (
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal,
+	Vector3 inwardVector,
+	int tightness,
+	int *BDRF)
 {
   // First, find a vector that's perpendicular to the surface normal (there are an infinite number of these...)
   // All methods require conditional logic.  One method is to find the element of the surface normal vector that's closest to zero
@@ -782,29 +853,31 @@ struct Ray specularReflectanceFunction (
     {
       minimumElement = 2;
     }
-  struct Vector3 crossProdVector = {
+  Vector3 crossProdVector = {
 	(minimumElement==0 ? (1<<16) : 0),
 	(minimumElement==1 ? (1<<16) : 0),
 	(minimumElement==2 ? (1<<16) : 0)};
-  struct Vector3 perpendicularVector = vecNorm(vecCrossProd(surfaceNormal, crossProdVector), 1040);
+  Vector3 perpendicularVector = vecNorm(vecCrossProd(surfaceNormal, crossProdVector), 1040);
 
   // Set the outward ray to be the same as the surface normal
-  struct Ray outwardRay;
+  Ray outwardRay;
   outwardRay.origin = collisionPoint;
   outwardRay.direction = surfaceNormal;
-  // Rotate the outward ray about the perpendicular vector by theta (random2() 0.0 and 1.0.. raise it to power to produce specular effect)
+  // Rotate the outward ray about the perpendicular vector by theta
+  // (random2() 0.0 and 1.0.. raise it to power to produce specular effect)
   // result is actually random2()^(2^power)
   int theta = random2();
   int i;
   for (i=0; i<tightness; i++)
     {
-      theta = fp_mul(theta,theta);
+      theta = fp_mul(theta, theta);
     }
 
   outwardRay.direction = vecRotate(outwardRay.direction, perpendicularVector, theta*60, 1030);
 
   // Rotate the outward ray about the surface normal by phi (0 to 360)
-  outwardRay.direction = vecNorm(vecRotate(outwardRay.direction, surfaceNormal, random2()*360, 1031), 1007);
+  outwardRay.direction = vecNorm(
+	  vecRotate(outwardRay.direction, surfaceNormal, random2()*360, 1031), 1007);
 
   *BDRF = specularBDRF(inwardVector, outwardRay.direction, collisionPoint, surfaceNormal, tightness);
 
@@ -812,8 +885,11 @@ struct Ray specularReflectanceFunction (
   return outwardRay;
 }
 
-int mirrorBDRF(struct Vector3 in, struct Vector3 out, struct Vector3 collisionPoint,
-	struct Vector3 surfaceNormal)
+int mirrorBDRF(
+	Vector3 in,
+	Vector3 out,
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal)
 {
   return (1<<16);
 }
@@ -821,12 +897,15 @@ int mirrorBDRF(struct Vector3 in, struct Vector3 out, struct Vector3 collisionPo
 
 // Perfect mirror reflection
 
-struct Ray mirrorReflectanceFunction (struct Vector3 collisionPoint, struct Vector3 surfaceNormal,
-				      struct Vector3 inwardVector, int *BDRF)
+Ray mirrorReflectanceFunction(
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal,
+	Vector3 inwardVector,
+	int *BDRF)
 {
-    struct Ray reflectedRay = {collisionPoint,
+    Ray reflectedRay = {collisionPoint,
 	    vecNorm(vecSub(inwardVector, vecScalarMul(surfaceNormal,
-		    2*vecUnitDotProd(inwardVector,surfaceNormal))), 1008) };
+		    2*vecUnitDotProd(inwardVector, surfaceNormal))), 1008) };
     reflectedRay = rayNudge(reflectedRay); // Nudge the ray along to stop it re-interacting with the same surface
 
     *BDRF = mirrorBDRF(inwardVector, reflectedRay.direction, collisionPoint, surfaceNormal);
@@ -834,17 +913,23 @@ struct Ray mirrorReflectanceFunction (struct Vector3 collisionPoint, struct Vect
     return reflectedRay;
 }
 
-int refractiveBDRF (
-	struct Vector3 in, struct Vector3 out, struct Vector3 collisionPoint,
-	struct Vector3 surfaceNormal)
+int refractiveBDRF(
+	Vector3 in,
+	Vector3 out,
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal)
 {
     return (1<<16);
 }
 
-struct Ray refractiveReflectanceFunction(
-	struct Vector3 collisionPoint, struct Vector3 surfaceNormal,
-	struct Vector3 inwardVector, int inverted, int refractiveIndex1,
-	int refractiveIndex2, int *BDRF)
+Ray refractiveReflectanceFunction(
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal,
+	Vector3 inwardVector,
+	int inverted,
+	int refractiveIndex1,
+	int refractiveIndex2,
+	int *BDRF)
 {
   // Do entry refraction (inverted surface normal?)
   if (inverted)
@@ -852,7 +937,7 @@ struct Ray refractiveReflectanceFunction(
       surfaceNormal = vecInvert(surfaceNormal);
     }
 
-  struct Ray transmittedRay = {collisionPoint,
+  Ray transmittedRay = {collisionPoint,
 	  vecRefract(inwardVector, surfaceNormal, refractiveIndex1, refractiveIndex2)};
   transmittedRay = rayNudge(transmittedRay);
 
@@ -863,23 +948,26 @@ struct Ray refractiveReflectanceFunction(
 
 // given a collision point, a surface normal, and the direction of the inward ray, produce an outward ray (probabilistic)
 
-struct Ray reflectanceFunction(
-	struct Vector3 collisionPoint, struct Vector3 surfaceNormal,
-	struct Vector3 inwardVector, struct Sphere sphere, int *BDRF)
+Ray reflectanceFunction(
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal,
+	Vector3 inwardVector,
+	Sphere sphere,
+	int *BDRF)
 {
-  struct Ray outwardRay;
+  Ray outwardRay;
 
-  if ( random2() < sphere.specularity )
+  if (random2() < sphere.specularity)
     {
       outwardRay = specularReflectanceFunction(collisionPoint, surfaceNormal,
 	      inwardVector, sphere.specularTightness, BDRF);
     }
-  else if ( random2() < sphere.transparency )
+  else if (random2() < sphere.transparency)
     {
       outwardRay = refractiveReflectanceFunction(collisionPoint, surfaceNormal,
 	      inwardVector, 1, (1<<16), sphere.refractiveIndex, BDRF);
     }
-  else if ( random2() < sphere.reflectivity )
+  else if (random2() < sphere.reflectivity)
     {
       outwardRay = mirrorReflectanceFunction(collisionPoint, surfaceNormal, inwardVector, BDRF);
     }
@@ -893,22 +981,26 @@ struct Ray reflectanceFunction(
 
 // given two vectors and a material, return the BDRF
 
-int materialBDRF(struct Vector3 inward, struct Vector3 outward, struct Sphere sphere,
-		 struct Vector3 collisionPoint, struct Vector3 surfaceNormal)
+int materialBDRF(
+	Vector3 inward,
+	Vector3 outward,
+	Sphere sphere,
+	Vector3 collisionPoint,
+	Vector3 surfaceNormal)
 {
   int BDRF;
 
-  if ( random2() < sphere.specularity )
+  if (random2() < sphere.specularity)
     {
       BDRF = specularBDRF(inward, outward, collisionPoint, surfaceNormal,
 	      sphere.specularTightness);
     }
-  else if ( random2() < sphere.transparency )
+  else if (random2() < sphere.transparency)
     {
       BDRF = fp_mul(sphere.specularity, specularBDRF(inward, outward,
 	      collisionPoint, surfaceNormal, sphere.specularTightness));
     }
-  else if ( random2() < sphere.reflectivity )
+  else if (random2() < sphere.reflectivity)
     {
       BDRF = fp_mul(sphere.specularity, specularBDRF(inward, outward,
 	      collisionPoint, surfaceNormal, sphere.specularTightness));
@@ -921,12 +1013,15 @@ int materialBDRF(struct Vector3 inward, struct Vector3 outward, struct Sphere sp
   return BDRF;
 }
 
-struct Vector3 nilColour = {-1,-1,-1};
-struct Vector3 black     = {0,0,0};
+Vector3 nilColour = {-1, -1, -1};
+Vector3 black     = {0, 0, 0};
 
-struct Vector3 traceRay(struct Ray ray, int depth, int terminationDepth,
-                        struct Sphere *spheres,
-                        int numberOfSpheres)
+Vector3 traceRay(
+	Ray ray,
+	int depth,
+	int terminationDepth,
+	Sphere *spheres,
+	int numberOfSpheres)
 {
   // Determine the closest intersecting sphere.
   int closestIntersection = 0;
@@ -952,13 +1047,13 @@ struct Vector3 traceRay(struct Ray ray, int depth, int terminationDepth,
 
       int nonSpecular = (1<<16) - spheres[intersectingObject].specularity;
       int directLightingFactor = fp_mul((1<<16) -
-	      fp_mul(spheres[intersectingObject].reflectivity,nonSpecular),
-	      (1<<16) - fp_mul(spheres[intersectingObject].transparency,nonSpecular));
+	      fp_mul(spheres[intersectingObject].reflectivity, nonSpecular),
+	      (1<<16) - fp_mul(spheres[intersectingObject].transparency, nonSpecular));
 
-      struct Vector3 colour = {0, 0, 0};
+      Vector3 colour = {0, 0, 0};
 
-      struct Vector3 collisionPoint = vecAdd(ray.origin, vecScalarMul(ray.direction, closestIntersection));
-      struct Vector3 surfaceNormal  = vecSub(collisionPoint, spheres[intersectingObject].position);
+      Vector3 collisionPoint = vecAdd(ray.origin, vecScalarMul(ray.direction, closestIntersection));
+      Vector3 surfaceNormal  = vecSub(collisionPoint, spheres[intersectingObject].position);
       if (vecMagnitude(surfaceNormal) > 0)
 	{
 	  surfaceNormal  = vecNorm(surfaceNormal, 1009);
@@ -968,10 +1063,10 @@ struct Vector3 traceRay(struct Ray ray, int depth, int terminationDepth,
 	  return nilColour;
 	}
 
-      struct Vector3 inwardVector   = ray.direction;
+      Vector3 inwardVector   = ray.direction;
 
       // Catch exit refraction case
-      if (vecMagnitude(vecSub(ray.origin,spheres[intersectingObject].position)) < spheres[intersectingObject].radius)
+      if (vecMagnitude(vecSub(ray.origin, spheres[intersectingObject].position)) < spheres[intersectingObject].radius)
         {
 	  return traceRay(refractiveReflectanceFunction(collisionPoint, surfaceNormal,
 		      inwardVector, 0, spheres[intersectingObject].refractiveIndex, (1<<16), &BDRF),
@@ -987,7 +1082,7 @@ struct Vector3 traceRay(struct Ray ray, int depth, int terminationDepth,
 
 	  // Calculate direct lighting
 	  // Check which lights are visible
-	  struct Vector3 directLighting = {0,0,0};
+	  Vector3 directLighting = {0, 0, 0};
 	  int lightIndex;
 	  for (lightIndex=0; lightIndex<numberOfSpheres; lightIndex++)
             {
@@ -999,7 +1094,7 @@ struct Vector3 traceRay(struct Ray ray, int depth, int terminationDepth,
 	      int lightVisible = 1; // Occlusion check
 
 	      // instead of using the light centre, pick a random point on it's surface
-	      struct Vector3 surfacePoint = {random1(),random1(),random1()};
+	      Vector3 surfacePoint = {random1(), random1(), random1()};
 	      while (vecSum(surfacePoint) < 1000)
                 {
 		  surfacePoint.x = random1();
@@ -1007,12 +1102,12 @@ struct Vector3 traceRay(struct Ray ray, int depth, int terminationDepth,
 		  surfacePoint.z = random1();
                 }
 	      surfacePoint = vecNorm(surfacePoint, 1010);
-	      surfacePoint = vecAdd(spheres[lightIndex].position,vecScalarMul(surfacePoint, spheres[lightIndex].radius));
+	      surfacePoint = vecAdd(spheres[lightIndex].position, vecScalarMul(surfacePoint, spheres[lightIndex].radius));
 
-	      struct Vector3 shadowRayDirection   = vecSub(surfacePoint, collisionPoint);
+	      Vector3 shadowRayDirection   = vecSub(surfacePoint, collisionPoint);
 	      int shadowRayLength                 = vecMagnitude(shadowRayDirection);
 	      shadowRayDirection                  = vecNorm(shadowRayDirection, 1011);
-	      struct Ray shadowRay = {collisionPoint, shadowRayDirection};
+	      Ray shadowRay = {collisionPoint, shadowRayDirection};
 	      shadowRay = rayNudge(shadowRay); // Nudge the ray along to stop it re-interacting with the same surface
 
 	      int visibility = 1<<16; // used to accumulate shadows from TRANSPARENT objects
@@ -1060,12 +1155,12 @@ struct Vector3 traceRay(struct Ray ray, int depth, int terminationDepth,
 	      int sample, numberOfSamples;
 	      numberOfSamples = (depth==0 ? 4 : 1); // Take samples from ten directions on the first bounce, as those first bounces are more important
 
-	      struct Vector3 indirectLighting = {0,0,0};
+	      Vector3 indirectLighting = {0, 0, 0};
 
 	      for (sample = 0; sample<numberOfSamples; sample++)
                 {
 		  // new ray, according to the BRDF
-		  struct Ray reflectedRay = reflectanceFunction(collisionPoint,
+		  Ray reflectedRay = reflectanceFunction(collisionPoint,
 			  surfaceNormal, inwardVector, spheres[intersectingObject], &BDRF);
 
 		  indirectLighting = vecAdd(indirectLighting,
@@ -1092,26 +1187,26 @@ struct Vector3 traceRay(struct Ray ray, int depth, int terminationDepth,
 
 
 // Sphere objects (position, radius, transmitted colour, emitted colour,       specularity, specularTightness, transparency, refractiveIndex, reflectivity
-struct Sphere spheres[12] = {
-    {{0,(150<<9),0},    20<<9,  {0,0,0},     {250<<16,220<<16,170<<16} ,0,2,0,(1<<16),0 } , // light
+Sphere spheres[12] = {
+    {{0, (150<<9), 0},    20<<9,  {0, 0, 0},     {250<<16, 220<<16, 170<<16} , 0, 2, 0, (1<<16), 0 } , // light
 
-    {{30<<9,0,-(40<<9)},    20<<9,  {210<<8,200<<8,200<<8},     {0,0,0} ,(0<<8),2,0,(1<<16),(1<<16) } , // Mirror ball
-    {{-(50<<9),0,-(60<<9)},    20<<9,  {210<<8,150<<8,120<<8},     {0,0,0} ,(200<<8),2,0,(1<<16),0 } , // Brass ball
-    {{(30<<9),0,72<<9},       20<<9,  {1<<16,1<<16,1<<16},        {0,0,0} ,(25<<8),4,(255<<8),(270<<8),0 } , // Glass ball
-    {{-(30<<9),0,(10<<9)}, 20<<9,  {180<<8,180<<8,180<<8},      {0,0,0} ,(25<<8),2,0,(1<<16),0 } , // White ball 1
+    {{30<<9, 0, -(40<<9)},    20<<9,  {210<<8, 200<<8, 200<<8},     {0, 0, 0} , (0<<8), 2, 0, (1<<16), (1<<16) } , // Mirror ball
+    {{-(50<<9), 0, -(60<<9)},    20<<9,  {210<<8, 150<<8, 120<<8},     {0, 0, 0} , (200<<8), 2, 0, (1<<16), 0 } , // Brass ball
+    {{(30<<9), 0, 72<<9},       20<<9,  {1<<16, 1<<16, 1<<16},        {0, 0, 0} , (25<<8), 4, (255<<8), (270<<8), 0 } , // Glass ball
+    {{-(30<<9), 0, (10<<9)}, 20<<9,  {180<<8, 180<<8, 180<<8},      {0, 0, 0} , (25<<8), 2, 0, (1<<16), 0 } , // White ball 1
 
-    {{160<<16,0,0},         (160<<16)-(100<<9), {120<<8,120<<8,120<<8},     {0,0,0} ,0,2,0,(1<<16),0 } ,
-    {{-(160<<16),0,0},      (160<<16)-(300<<9), {120<<8,120<<8,120<<8},     {0,0,0} ,0,2,0,(1<<16),0 } ,
+    {{160<<16, 0, 0},         (160<<16)-(100<<9), {120<<8, 120<<8, 120<<8},     {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
+    {{-(160<<16), 0, 0},      (160<<16)-(300<<9), {120<<8, 120<<8, 120<<8},     {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
 
-    {{0,0,160<<16},         (160<<16)-(100<<9), {30<<8,30<<8,110<<8},       {0,0,0} ,0,2,0,(1<<16),0 } ,
-    {{0,0,-(160<<16)},      (160<<16)-(100<<9), {110<<8,30<<8,30<<8},       {0,0,0} ,0,2,0,(1<<16),0 } ,
+    {{0, 0, 160<<16},         (160<<16)-(100<<9), {30<<8, 30<<8, 110<<8},       {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
+    {{0, 0, -(160<<16)},      (160<<16)-(100<<9), {110<<8, 30<<8, 30<<8},       {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
 
-    {{0,160<<16,0},         (160<<16)-(180<<9), {120<<8,120<<8,120<<8},     {0,0,0} ,0,2,0,(1<<16),0 } ,
-    {{0,-(160<<16),0},      (160<<16)-(22<<9),  {120<<8,120<<8,120<<8},     {0,0,0} ,0,2,0,(1<<16),0 } ,
+    {{0, 160<<16, 0},         (160<<16)-(180<<9), {120<<8, 120<<8, 120<<8},     {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
+    {{0, -(160<<16), 0},      (160<<16)-(22<<9),  {120<<8, 120<<8, 120<<8},     {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
 };
 
-struct Vector3* horizontalInterpolations1;
-struct Vector3* horizontalInterpolations2;
+Vector3* horizontalInterpolations1;
+Vector3* horizontalInterpolations2;
 
 
 
@@ -1125,24 +1220,29 @@ void trace(int horizontalPixels, int verticalPixels, int horizontalFieldOfView,
 	int lookX, int lookY, int lookZ, int upX, int upY, int upZ,
 	int nodeID, int numberOfNodes)
 {
-  int numberOfSpheres = sizeof(spheres) / sizeof(struct Sphere);
+  int numberOfSpheres = sizeof(spheres) / sizeof(Sphere);
 
   // Camera
-  struct Camera camera = { {x,y,z}, {lookX,lookY,lookZ}, {upX,upY,upZ}, horizontalFieldOfView, verticalFieldOfView };
+  Camera camera = {
+    {x, y, z},
+    {lookX, lookY, lookZ},
+    {upX, upY, upZ},
+    horizontalFieldOfView, verticalFieldOfView
+  };
   camera.horizontalPixels = horizontalPixels;
   camera.verticalPixels   = verticalPixels;
   camera.antialiasing = antialiasing;
   camera = setupCamera(camera); // Sets up the right vector and the viewplane
 
   // For use in antialiasing
-  int antialiasingStartPoint  = -(1<<16) + (1<<16)/camera.antialiasing; // antialiasing isn't bitshifted, so normal divide
-  int antialiasingStepSize    = (2<<16)/camera.antialiasing;
+  int antialiasingStartPoint = -(1<<16) + (1<<16) / camera.antialiasing; // antialiasing isn't bitshifted, so normal divide
+  int antialiasingStepSize   = (2<<16) / camera.antialiasing;
 
   // For repeated use in interpolation
-  struct Vector3 topRightMinusTopLeft = vecSub(camera.viewPlane.topRight, camera.viewPlane.topLeft);
-  struct Vector3 bottomRightMinusBottomLeft = vecSub(camera.viewPlane.bottomRight, camera.viewPlane.bottomLeft);
+  Vector3 topRightMinusTopLeft = vecSub(camera.viewPlane.topRight, camera.viewPlane.topLeft);
+  Vector3 bottomRightMinusBottomLeft = vecSub(camera.viewPlane.bottomRight, camera.viewPlane.bottomLeft);
 
-  int i,j;
+  int i, j;
   // Determine the first pixel this node cares about based on its ID
   int iFirst = 0;
   int jFirst = nodeID;
@@ -1167,7 +1267,7 @@ void trace(int horizontalPixels, int verticalPixels, int horizontalFieldOfView,
 	      antialiasingStepSize    = (2<<16)/camera.antialiasing;
 	      aaInc=0;
             }
-	  //io_printf(IO_STD, "%dx%d antialiasing, pass %d.\n", actualAA,actualAA,aaInc);
+	  //io_printf(IO_STD, "%dx%d antialiasing, pass %d.\n", actualAA, actualAA, aaInc);
         }
 
       uint iSegment1 = ((i&upper8)>>8); // for MC transmission
@@ -1186,24 +1286,24 @@ void trace(int horizontalPixels, int verticalPixels, int horizontalFieldOfView,
       j = overshoot;
       while (j<camera.verticalPixels)
         {
-	  struct Vector3 accumulatedColour = {0,0,0}; // to accumulate colours from sub-pixels (antialiasing)
+	  Vector3 accumulatedColour = {0, 0, 0}; // to accumulate colours from sub-pixels (antialiasing)
 	  int numberSuccessful = 0;
 
 	  for (k=0; k<actualAA; k++)
             {
 	      // For repeated use in vertical interpolation
-	      struct Vector3 horizontal2MinusHorizontal1 =
+	      Vector3 horizontal2MinusHorizontal1 =
 		      vecSub(horizontalInterpolations2[k] , horizontalInterpolations1[k]);
 
 	      int l; // vertical antialiasing
 	      for (l=0; l<actualAA; l++)
                 {
-		  struct Vector3 rayDirection = vecNorm(vecAdd(vecScalarMul(horizontal2MinusHorizontal1,
+		  Vector3 rayDirection = vecNorm(vecAdd(vecScalarMul(horizontal2MinusHorizontal1,
 			  ((j<<16)+(antialiasingStartPoint+antialiasingStepSize*l))/camera.verticalPixels),
 			  horizontalInterpolations1[k]), 1012);
-		  struct Ray ray = {camera.position, rayDirection};
+		  Ray ray = {camera.position, rayDirection};
 
-		  struct Vector3 result = traceRay(ray, 0, 4, spheres, numberOfSpheres);
+		  Vector3 result = traceRay(ray, 0, 4, spheres, numberOfSpheres);
 		  if (result.x != -1)
                     {
 		      accumulatedColour = vecAdd(accumulatedColour, result);
@@ -1214,7 +1314,7 @@ void trace(int horizontalPixels, int verticalPixels, int horizontalFieldOfView,
 
 	  if (numberSuccessful != 0)
             {
-	      struct Vector3 colour = vecScalarFrac(vecScalarFrac(accumulatedColour, (1<<16)/(numberSuccessful)),1);
+	      Vector3 colour = vecScalarFrac(vecScalarFrac(accumulatedColour, (1<<16)/(numberSuccessful)), 1);
 
 	      colour = vecClamp(colour, 0, 255);
 
@@ -1364,25 +1464,25 @@ void load_mc_routing_tables()
     case 7:  route = MC_CORE_ROUTE(1); break;
     default: route = MC_LINK_ROUTE(p2p_route); break;
   }
-  rtr_mc_set (e, proc001Key, multicastControlMask, route);
+  rtr_mc_set(e, proc001Key, multicastControlMask, route);
 }
 
-void timer_callback (uint time, uint none)
+void timer_callback(uint time, uint none)
 {
-  io_printf (IO_BUF, "I am alive\n");
+  io_printf(IO_BUF, "I am alive\n");
 }
 
 
 void c_main()
 {
-  io_printf (IO_BUF, "Started tracer\n");
+  io_printf(IO_BUF, "Started tracer\n");
 
-  sark_srand (sark_chip_id() + sark_core_id());
+  sark_srand(sark_chip_id() + sark_core_id());
 
   load_mc_routing_tables();
 
-  horizontalInterpolations1 = sark_alloc (20, sizeof(struct Vector3));
-  horizontalInterpolations2 = sark_alloc (20, sizeof(struct Vector3));
+  horizontalInterpolations1 = sark_alloc (20, sizeof(Vector3));
+  horizontalInterpolations2 = sark_alloc (20, sizeof(Vector3));
 
 #ifdef API
   spin1_set_timer_tick(1000000 + 1000*spin1_get_core_id() + spin1_get_chip_id());
@@ -1390,10 +1490,10 @@ void c_main()
 
   spin1_start (SYNC_NOWAIT);
 #else
-  event_register_queue (sdp_packet_callback, EVENT_SDP, SLOT_1, PRIO_0);
-  event_register_queue (timer_callback, EVENT_TIMER, SLOT_2, PRIO_1);
-  event_register_pkt (64, SLOT_0);
+  event_register_queue(sdp_packet_callback, EVENT_SDP, SLOT_1, PRIO_0);
+  event_register_queue(timer_callback, EVENT_TIMER, SLOT_2, PRIO_1);
+  event_register_pkt(64, SLOT_0);
 
-  event_start (1000000 + 1000*sark_core_id () + sark_chip_id (), 0, SYNC_NOWAIT);
+  event_start(1000000 + 1000*sark_core_id () + sark_chip_id (), 0, SYNC_NOWAIT);
 #endif
 }
