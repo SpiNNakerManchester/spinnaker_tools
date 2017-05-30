@@ -30,8 +30,7 @@
 
 //------------------------------------------------------------------------------
 
-typedef struct nn_desc_t
-{
+typedef struct nn_desc_t {
   uchar state;			// FF state
   uchar error;			// Error flag
   uchar forward;		// Rebroadcast code
@@ -213,14 +212,14 @@ void compute_level (uint p2p_addr)
   uint x = p2p_addr >> 8;
   uint y = p2p_addr & 255;
 
-  for (uint l = 0; l < 4; l++)
+  for (uint lvl = 0; lvl < 4; lvl++)
     {
-      uint shift = 6 - 2 * l;
+      uint shift = 6 - 2 * lvl;
       uint mask = ~((4 << shift) - 1);
       uint bit = ((x >> shift) & 3) + 4 * ((y >> shift) & 3);
       uint nx = x & mask;
       uint ny = y & mask;
-      levels[l].level_addr = (nx << 24) + ((ny + l) << 16) + (1 << bit);
+      levels[lvl].level_addr = (nx << 24) + ((ny + lvl) << 16) + (1 << bit);
     }
 }
 
@@ -1141,11 +1140,11 @@ void proc_pkt_bc (uint i_pkt, uint count)
   uint link = pkt->link;
   uint offset = (forward & 0x40) ? 0 : link;
 
-  for (uint l = 0; l < NUM_LINKS; l++)
+  for (uint lnk = 0; lnk < NUM_LINKS; lnk++)
     {
-      if (forward & (1 << l))
+      if (forward & (1 << lnk))
 	{
-	  uint p = l + offset;
+	  uint p = lnk + offset;
 
 	  if (p >= NUM_LINKS)
 	    {

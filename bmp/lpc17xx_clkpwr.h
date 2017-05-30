@@ -323,9 +323,9 @@ extern "C"
 /** Macro to set peripheral clock of each type
  * p: position of two bits that hold divider of peripheral clock
  * n: value of divider of peripheral clock  to be set */
-#define CLKPWR_PCLKSEL_SET(p,n)		_SBF(p,n)
+#define CLKPWR_PCLKSEL_SET(p, n)	_SBF(p, n)
 /** Macro to mask peripheral clock of each type */
-#define CLKPWR_PCLKSEL_BITMASK(p)	_SBF(p,0x03)
+#define CLKPWR_PCLKSEL_BITMASK(p)	_SBF(p, 0x03)
 /** Macro to get peripheral clock of each type */
 #define CLKPWR_PCLKSEL_GET(p, n)	((uint32_t)((n>>p)&0x03))
 

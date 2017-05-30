@@ -41,33 +41,43 @@
 /**
  * @brief Boolean Type definition
  */
-typedef enum {FALSE = 0, TRUE = !FALSE} Bool;
+typedef enum {
+    FALSE = 0,
+    TRUE = !FALSE
+} Bool;
 
 /**
  * @brief Flag Status and Interrupt Flag Status type definition
  */
-typedef enum {RESET = 0, SET = !RESET} FlagStatus, IntStatus, SetState;
-#define PARAM_SETSTATE(State) ((State==RESET) || (State==SET))
+typedef enum {
+    RESET = 0, SET = !RESET
+} FlagStatus, IntStatus, SetState;
+#define PARAM_SETSTATE(State)	((State==RESET) || (State==SET))
 
 /**
  * @brief Functional State Definition
  */
-typedef enum {DISABLE = 0, ENABLE = !DISABLE} FunctionalState;
-#define PARAM_FUNCTIONALSTATE(State) ((State==DISABLE) || (State==ENABLE))
+typedef enum {
+    DISABLE = 0,
+    ENABLE = !DISABLE
+} FunctionalState;
+#define PARAM_FUNCTIONALSTATE(State)	((State==DISABLE) || (State==ENABLE))
 
 /**
  * @ Status type definition
  */
-typedef enum {ERROR = 0, SUCCESS = !ERROR} Status;
+typedef enum {
+    ERROR = 0,
+    SUCCESS = !ERROR
+} Status;
 
 
 /**
  * Read/Write transfer type mode (Block or non-block)
  */
-typedef enum
-{
-	NONE_BLOCKING = 0,		/**< None Blocking type */
-	BLOCKING,				/**< Blocking type */
+typedef enum {
+    NONE_BLOCKING = 0,		/**< None Blocking type */
+    BLOCKING,			/**< Blocking type */
 } TRANSFER_BLOCK_Type;
 
 
@@ -101,7 +111,7 @@ typedef int32_t(*PFI)();
  */
 #undef _SBF
 /* Set bit field macro */
-#define _SBF(f,v) (v<<f)
+#define _SBF(f, v) (v<<f)
 
 /* _BITMASK constructs a symbol with 'field_width' least significant
  * bits set.
@@ -118,23 +128,23 @@ typedef int32_t(*PFI)();
  */
 #undef _BITMASK
 /* Bitmask creation macro */
-#define _BITMASK(field_width) ( _BIT(field_width) - 1)
+#define _BITMASK(field_width)	(_BIT(field_width) - 1)
 
 /* NULL pointer */
 #ifndef NULL
-#define NULL ((void*) 0)
+#define NULL	((void*) 0)
 #endif
 
 /* Number of elements in an array */
-#define NELEMENTS(array)  (sizeof (array) / sizeof (array[0]))
+#define NELEMENTS(array)	(sizeof (array) / sizeof (array[0]))
 
 /* Static data/function define */
 #define STATIC static
 /* External data/function define */
 #define EXTERN extern
 
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b)	(((a) > (b)) ? (a) : (b))
+#define MIN(a, b)	(((a) < (b)) ? (a) : (b))
 
 /**
  * @}

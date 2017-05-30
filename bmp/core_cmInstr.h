@@ -540,7 +540,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint32_t __REV(uint32_t value
   uint32_t result;
 
   __ASM volatile ("rev %0, %1" : "=r" (result) : "r" (value) );
-  return(result);
+  return result;
 }
 
 
@@ -556,7 +556,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint32_t __REV16(uint32_t val
   uint32_t result;
 
   __ASM volatile ("rev16 %0, %1" : "=r" (result) : "r" (value) );
-  return(result);
+  return result;
 }
 
 
@@ -572,7 +572,7 @@ __attribute__( ( always_inline ) ) static __INLINE int32_t __REVSH(int32_t value
   uint32_t result;
 
   __ASM volatile ("revsh %0, %1" : "=r" (result) : "r" (value) );
-  return(result);
+  return result;
 }
 
 
@@ -590,7 +590,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint32_t __RBIT(uint32_t valu
   uint32_t result;
 
    __ASM volatile ("rbit %0, %1" : "=r" (result) : "r" (value) );
-   return(result);
+   return result;
 }
 
 
@@ -606,7 +606,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint8_t __LDREXB(volatile uin
     uint8_t result;
 
    __ASM volatile ("ldrexb %0, [%1]" : "=r" (result) : "r" (addr) );
-   return(result);
+   return result;
 }
 
 
@@ -622,7 +622,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint16_t __LDREXH(volatile ui
     uint16_t result;
 
    __ASM volatile ("ldrexh %0, [%1]" : "=r" (result) : "r" (addr) );
-   return(result);
+   return result;
 }
 
 
@@ -638,7 +638,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint32_t __LDREXW(volatile ui
     uint32_t result;
 
    __ASM volatile ("ldrex %0, [%1]" : "=r" (result) : "r" (addr) );
-   return(result);
+   return result;
 }
 
 
@@ -656,7 +656,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint32_t __STREXB(uint8_t val
    uint32_t result;
 
    __ASM volatile ("strexb %0, %2, [%1]" : "=r" (result) : "r" (addr), "r" (value) );
-   return(result);
+   return result;
 }
 
 
@@ -674,7 +674,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint32_t __STREXH(uint16_t va
    uint32_t result;
 
    __ASM volatile ("strexh %0, %2, [%1]" : "=r" (result) : "r" (addr), "r" (value) );
-   return(result);
+   return result;
 }
 
 
@@ -692,7 +692,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint32_t __STREXW(uint32_t va
    uint32_t result;
 
    __ASM volatile ("strex %0, %2, [%1]" : "=r" (result) : "r" (addr), "r" (value) );
-   return(result);
+   return result;
 }
 
 
@@ -751,7 +751,7 @@ __attribute__( ( always_inline ) ) static __INLINE uint8_t __CLZ(uint32_t value)
   uint8_t result;
 
   __ASM volatile ("clz %0, %1" : "=r" (result) : "r" (value) );
-  return(result);
+  return result;
 }
 
 #endif /* (__CORTEX_M >= 0x03) */

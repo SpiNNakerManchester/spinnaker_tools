@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // scamp.c	    SC&MP - Spinnaker Control & Monitor Program
@@ -293,7 +292,6 @@ uint pkt_tx (uint tcr, uint data, uint key)
 
 
 //------------------------------------------------------------------------------
-
 
 
 static void timer1_init (uint count)

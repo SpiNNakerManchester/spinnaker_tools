@@ -109,29 +109,29 @@ __asm void eth_rx_int (void)
 	import	eth_receive
 	preserve8
 
-    	sub  	lr, lr, #4		; Adjust LR_irq and save
-    	stmfd  	sp!, {r0, lr}		; with r0
+    	sub  	lr, lr, #4		;; Adjust LR_irq and save
+    	stmfd  	sp!, {r0, lr}		;; with r0
 
-    	mrs    	lr, spsr		; Get SPSR_irq to LR
-    	stmfd  	sp!, {r12, lr}  	; Save SPSR & r12
+    	mrs    	lr, spsr		;; Get SPSR_irq to LR
+    	stmfd  	sp!, {r12, lr}  	;; Save SPSR & r12
 
-    	msr    	cpsr_c, #MODE_SYS    	; Go to SYS mode, interrupts enabled
+    	msr    	cpsr_c, #MODE_SYS    	;; Go to SYS mode, interrupts enabled
 
-    	stmfd  	sp!, {r1-r3, lr} 	; Save working regs and LR_sys
+    	stmfd  	sp!, {r1-r3, lr} 	;; Save working regs and LR_sys
 
     	bl     	eth_receive
 
-    	ldmfd  	sp!, {r1-r3, lr} 	; Restore working regs & LR_sys
+    	ldmfd  	sp!, {r1-r3, lr} 	;; Restore working regs & LR_sys
 
     	msr    	cpsr_c, #MODE_IRQ+IMASK_IRQ ; Back to IRQ mode, IRQ disabled
 
-	mov    	r12, #VIC_BASE		; Tell VIC we are done
+	mov    	r12, #VIC_BASE		;; Tell VIC we are done
 	str    	r12, [r12, #VIC_VADDR * 4]
 
-    	ldmfd  	sp!, {r12, lr} 	      	; Restore r12 & SPSR_irq
+    	ldmfd  	sp!, {r12, lr} 	      	;; Restore r12 & SPSR_irq
     	msr    	spsr_cxsf, lr
 
-    	ldmfd  	sp!, {r0, pc}^       	; and return restoring r0
+    	ldmfd  	sp!, {r0, pc}^       	;; and return restoring r0
 }
 #endif
 

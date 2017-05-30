@@ -123,10 +123,8 @@
 
 /** \brief  Union type to access the Application Program Status Register (APSR).
  */
-typedef union
-{
-  struct
-  {
+typedef union {
+  struct {
 #if (__CORTEX_M != 0x04)
     uint32_t _reserved0:27;              /*!< bit:  0..26  Reserved                           */
 #else
@@ -146,10 +144,8 @@ typedef union
 
 /** \brief  Union type to access the Interrupt Program Status Register (IPSR).
  */
-typedef union
-{
-  struct
-  {
+typedef union {
+  struct {
     uint32_t ISR:9;                      /*!< bit:  0.. 8  Exception number                   */
     uint32_t _reserved0:23;              /*!< bit:  9..31  Reserved                           */
   } b;                                   /*!< Structure used for bit  access                  */
@@ -159,10 +155,8 @@ typedef union
 
 /** \brief  Union type to access the Special-Purpose Program Status Registers (xPSR).
  */
-typedef union
-{
-  struct
-  {
+typedef union {
+  struct {
     uint32_t ISR:9;                      /*!< bit:  0.. 8  Exception number                   */
 #if (__CORTEX_M != 0x04)
     uint32_t _reserved0:15;              /*!< bit:  9..23  Reserved                           */
@@ -185,10 +179,8 @@ typedef union
 
 /** \brief  Union type to access the Control Registers (CONTROL).
  */
-typedef union
-{
-  struct
-  {
+typedef union {
+  struct {
     uint32_t nPRIV:1;                    /*!< bit:      0  Execution privilege in Thread mode */
     uint32_t SPSEL:1;                    /*!< bit:      1  Stack to be used                   */
     uint32_t FPCA:1;                     /*!< bit:      2  FP extension active flag           */
@@ -208,8 +200,7 @@ typedef union
 
 /** \brief  Structure type to access the Nested Vectored Interrupt Controller (NVIC).
  */
-typedef struct
-{
+typedef struct {
   __IO uint32_t ISER[8];                 /*!< Offset: 0x000 (R/W)  Interrupt Set Enable Register           */
        uint32_t RESERVED0[24];
   __IO uint32_t ICER[8];                 /*!< Offset: 0x080 (R/W)  Interrupt Clear Enable Register         */
@@ -236,8 +227,7 @@ typedef struct
 
 /** \brief  Structure type to access the System Control Block (SCB).
  */
-typedef struct
-{
+typedef struct {
   __I  uint32_t CPUID;                   /*!< Offset: 0x000 (R/ )  CPU ID Base Register                                  */
   __IO uint32_t ICSR;                    /*!< Offset: 0x004 (R/W)  Interrupt Control State Register                      */
   __IO uint32_t VTOR;                    /*!< Offset: 0x008 (R/W)  Vector Table Offset Register                          */
@@ -451,8 +441,7 @@ typedef struct
 
 /** \brief  Structure type to access the System Timer (SysTick).
  */
-typedef struct
-{
+typedef struct {
   __IO uint32_t CTRL;                    /*!< Offset: 0x000 (R/W)  SysTick Control and Status Register */
   __IO uint32_t LOAD;                    /*!< Offset: 0x004 (R/W)  SysTick Reload Value Register       */
   __IO uint32_t VAL;                     /*!< Offset: 0x008 (R/W)  SysTick Current Value Register      */
@@ -501,10 +490,8 @@ typedef struct
 
 /** \brief  Structure type to access the Instrumentation Trace Macrocell Register (ITM).
  */
-typedef struct
-{
-  __O  union
-  {
+typedef struct {
+  __O  union {
     __O  uint8_t    u8;                  /*!< Offset: 0x000 ( /W)  ITM Stimulus Port 8-bit                   */
     __O  uint16_t   u16;                 /*!< Offset: 0x000 ( /W)  ITM Stimulus Port 16-bit                  */
     __O  uint32_t   u32;                 /*!< Offset: 0x000 ( /W)  ITM Stimulus Port 32-bit                  */
@@ -603,8 +590,7 @@ typedef struct
 //!! ST
 #define __CM3_REV 0x200
 
-typedef struct
-{
+typedef struct {
        uint32_t RESERVED0;
   __I  uint32_t ICTR;                    /*!< Offset: 0x004 (R/ )  Interrupt Control Type Register */
 #if ((defined __CM3_REV) && (__CM3_REV >= 0x200))
@@ -640,8 +626,7 @@ typedef struct
 
 /** \brief  Structure type to access the Memory Protection Unit (MPU).
  */
-typedef struct
-{
+typedef struct {
   __I  uint32_t TYPE;                    /*!< Offset: 0x000 (R/ )  MPU Type Register                              */
   __IO uint32_t CTRL;                    /*!< Offset: 0x004 (R/W)  MPU Control Register                           */
   __IO uint32_t RNR;                     /*!< Offset: 0x008 (R/W)  MPU Region RNRber Register                     */
@@ -729,8 +714,7 @@ typedef struct
 
 /** \brief  Structure type to access the Core Debug Register (CoreDebug).
  */
-typedef struct
-{
+typedef struct {
   __IO uint32_t DHCSR;                   /*!< Offset: 0x000 (R/W)  Debug Halting Control and Status Register    */
   __O  uint32_t DCRSR;                   /*!< Offset: 0x004 ( /W)  Debug Core Register Selector Register        */
   __IO uint32_t DCRDR;                   /*!< Offset: 0x008 (R/W)  Debug Core Register Data Register            */

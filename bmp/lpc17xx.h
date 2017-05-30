@@ -37,8 +37,7 @@
  */
 
 /** @brief IRQ interrupt source definition */
-typedef enum IRQn
-{
+typedef enum IRQn {
 /******  Cortex-M3 Processor Exceptions Numbers ***************************************************/
   NonMaskableInt_IRQn           = -14,      /*!< 2 Non Maskable Interrupt                         */
   MemoryManagement_IRQn         = -12,      /*!< 4 Cortex-M3 Memory Management Interrupt          */
@@ -115,8 +114,7 @@ extern const uint32_t SystemCoreClock; // !! ST
 
 /*------------- System Control (SC) ------------------------------------------*/
 /** @brief System Control (SC) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t FLASHCFG;               /* Flash Accelerator Module           */
        uint32_t RESERVED0[31];
   __IO uint32_t PLL0CON;                /* Clocking and Power Control         */
@@ -157,8 +155,7 @@ typedef struct
 
 /*------------- Pin Connect Block (PINCON) -----------------------------------*/
 /** @brief Pin Connect Block (PINCON) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t PINSEL0;
   __IO uint32_t PINSEL1;
   __IO uint32_t PINSEL2;
@@ -191,8 +188,7 @@ typedef struct
 
 /*------------- General Purpose Input/Output (GPIO) --------------------------*/
 /** @brief General Purpose Input/Output (GPIO) register structure definition */
-typedef struct
-{
+typedef struct {
   union {
     __IO uint32_t FIODIR;
     struct {
@@ -262,8 +258,7 @@ typedef struct
 } LPC_GPIO_TypeDef;
 
 /** @brief General Purpose Input/Output interrupt (GPIOINT) register structure definition */
-typedef struct
-{
+typedef struct {
   __I  uint32_t IntStatus;
   __I  uint32_t IO0IntStatR;
   __I  uint32_t IO0IntStatF;
@@ -280,8 +275,7 @@ typedef struct
 
 /*------------- Timer (TIM) --------------------------------------------------*/
 /** @brief Timer (TIM) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t IR;
   __IO uint32_t TCR;
   __IO uint32_t TC;
@@ -303,8 +297,7 @@ typedef struct
 
 /*------------- Pulse-Width Modulation (PWM) ---------------------------------*/
 /** @brief Pulse-Width Modulation (PWM) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t IR;
   __IO uint32_t TCR;
   __IO uint32_t TC;
@@ -332,8 +325,7 @@ typedef struct
 
 /*------------- Universal Asynchronous Receiver Transmitter (UART) -----------*/
 /** @brief  Universal Asynchronous Receiver Transmitter (UART) register structure definition */
-typedef struct
-{
+typedef struct {
   union {
   __I  uint8_t  RBR;
   __O  uint8_t  THR;
@@ -365,8 +357,7 @@ typedef struct
 } LPC_UART_TypeDef;
 
 /** @brief  Universal Asynchronous Receiver Transmitter 0 (UART0) register structure definition */
-typedef struct
-{
+typedef struct {
   union {
   __I  uint8_t  RBR;
   __O  uint8_t  THR;
@@ -398,8 +389,7 @@ typedef struct
 } LPC_UART0_TypeDef;
 
 /** @brief  Universal Asynchronous Receiver Transmitter 1 (UART1) register structure definition */
-typedef struct
-{
+typedef struct {
   union {
   __I  uint8_t  RBR;
   __O  uint8_t  THR;
@@ -441,8 +431,7 @@ typedef struct
 
 /*------------- Serial Peripheral Interface (SPI) ----------------------------*/
 /** @brief  Serial Peripheral Interface (SPI) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t SPCR;
   __I  uint32_t SPSR;
   __IO uint32_t SPDR;
@@ -453,8 +442,7 @@ typedef struct
 
 /*------------- Synchronous Serial Communication (SSP) -----------------------*/
 /** @brief  Synchronous Serial Communication (SSP) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t CR0;
   __IO uint32_t CR1;
   __IO uint32_t DR;
@@ -469,8 +457,7 @@ typedef struct
 
 /*------------- Inter-Integrated Circuit (I2C) -------------------------------*/
 /** @brief  Inter-Integrated Circuit (I2C) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t I2CONSET;
   __I  uint32_t I2STAT;
   __IO uint32_t I2DAT;
@@ -491,8 +478,7 @@ typedef struct
 
 /*------------- Inter IC Sound (I2S) -----------------------------------------*/
 /** @brief  Inter IC Sound (I2S) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t I2SDAO;
   __IO uint32_t I2SDAI;
   __O  uint32_t I2STXFIFO;
@@ -511,8 +497,7 @@ typedef struct
 
 /*------------- Repetitive Interrupt Timer (RIT) -----------------------------*/
 /** @brief  Repetitive Interrupt Timer (RIT) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t RICOMPVAL;
   __IO uint32_t RIMASK;
   __IO uint8_t  RICTRL;
@@ -522,8 +507,7 @@ typedef struct
 
 /*------------- Real-Time Clock (RTC) ----------------------------------------*/
 /** @brief  Real-Time Clock (RTC) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint8_t  ILR;
        uint8_t  RESERVED0[7];
   __IO uint8_t  CCR;
@@ -581,8 +565,7 @@ typedef struct
 
 /*------------- Watchdog Timer (WDT) -----------------------------------------*/
 /** @brief  Watchdog Timer (WDT) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint8_t  WDMOD;
        uint8_t  RESERVED0[3];
   __IO uint32_t WDTC;
@@ -594,8 +577,7 @@ typedef struct
 
 /*------------- Analog-to-Digital Converter (ADC) ----------------------------*/
 /** @brief  Analog-to-Digital Converter (ADC) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t ADCR;
   __IO uint32_t ADGDR;
        uint32_t RESERVED0;
@@ -614,8 +596,7 @@ typedef struct
 
 /*------------- Digital-to-Analog Converter (DAC) ----------------------------*/
 /** @brief  Digital-to-Analog Converter (DAC) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t DACR;
   __IO uint32_t DACCTRL;
   __IO uint16_t DACCNTVAL;
@@ -623,8 +604,7 @@ typedef struct
 
 /*------------- Motor Control Pulse-Width Modulation (MCPWM) -----------------*/
 /** @brief  Motor Control Pulse-Width Modulation (MCPWM) register structure definition */
-typedef struct
-{
+typedef struct {
   __I  uint32_t MCCON;
   __O  uint32_t MCCON_SET;
   __O  uint32_t MCCON_CLR;
@@ -659,8 +639,7 @@ typedef struct
 
 /*------------- Quadrature Encoder Interface (QEI) ---------------------------*/
 /** @brief  Quadrature Encoder Interface (QEI) register structure definition */
-typedef struct
-{
+typedef struct {
   __O  uint32_t QEICON;
   __I  uint32_t QEISTAT;
   __IO uint32_t QEICONF;
@@ -688,14 +667,12 @@ typedef struct
 
 /*------------- Controller Area Network (CAN) --------------------------------*/
 /** @brief  Controller Area Network Acceptance Filter RAM (CANAF_RAM)structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t mask[512];              /* ID Masks                           */
 } LPC_CANAF_RAM_TypeDef;
 
 /** @brief  Controller Area Network Acceptance Filter(CANAF) register structure definition */
-typedef struct                          /* Acceptance Filter Registers        */
-{
+typedef struct {                        /* Acceptance Filter Registers        */
   __IO uint32_t AFMR;
   __IO uint32_t SFF_sa;
   __IO uint32_t SFF_GRP_sa;
@@ -710,16 +687,14 @@ typedef struct                          /* Acceptance Filter Registers        */
 } LPC_CANAF_TypeDef;
 
 /** @brief  Controller Area Network Central (CANCR) register structure definition */
-typedef struct                          /* Central Registers                  */
-{
+typedef struct {                        /* Central Registers                  */
   __I  uint32_t CANTxSR;
   __I  uint32_t CANRxSR;
   __I  uint32_t CANMSR;
 } LPC_CANCR_TypeDef;
 
 /** @brief  Controller Area Network Controller (CAN) register structure definition */
-typedef struct                          /* Controller Registers               */
-{
+typedef struct {                        /* Controller Registers               */
   __IO uint32_t MOD;
   __O  uint32_t CMR;
   __IO uint32_t GSR;
@@ -748,8 +723,7 @@ typedef struct                          /* Controller Registers               */
 
 /*------------- General Purpose Direct Memory Access (GPDMA) -----------------*/
 /** @brief  General Purpose Direct Memory Access (GPDMA) register structure definition */
-typedef struct                          /* Common Registers                   */
-{
+typedef struct {                        /* Common Registers                   */
   __I  uint32_t DMACIntStat;
   __I  uint32_t DMACIntTCStat;
   __O  uint32_t DMACIntTCClear;
@@ -767,8 +741,7 @@ typedef struct                          /* Common Registers                   */
 } LPC_GPDMA_TypeDef;
 
 /** @brief  General Purpose Direct Memory Access Channel (GPDMACH) register structure definition */
-typedef struct                          /* Channel Registers                  */
-{
+typedef struct {                        /* Channel Registers                  */
   __IO uint32_t DMACCSrcAddr;
   __IO uint32_t DMACCDestAddr;
   __IO uint32_t DMACCLLI;
@@ -778,8 +751,7 @@ typedef struct                          /* Channel Registers                  */
 
 /*------------- Universal Serial Bus (USB) -----------------------------------*/
 /** @brief  Universal Serial Bus (USB) register structure definition */
-typedef struct
-{
+typedef struct {
   __I  uint32_t HcRevision;             /* USB Host Registers                 */
   __IO uint32_t HcControl;
   __IO uint32_t HcCommandStatus;
@@ -883,8 +855,7 @@ typedef struct
 
 /*------------- Ethernet Media Access Controller (EMAC) ----------------------*/
 /** @brief  Ethernet Media Access Controller (EMAC) register structure definition */
-typedef struct
-{
+typedef struct {
   __IO uint32_t MAC1;                   /* MAC Registers                      */
   __IO uint32_t MAC2;
   __IO uint32_t IPGT;
