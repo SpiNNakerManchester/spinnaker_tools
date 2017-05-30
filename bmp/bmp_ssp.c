@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // bmp_ssp.c	    SSP peripheral handling for BC&MP
@@ -163,8 +162,9 @@ void fpga_word (uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
 static void ssp0_send (uint32_t d)
 {
   while ((LPC_SSP0->SR & 2) == 0)	// Loop while full
-    continue;
-
+    {
+      continue;
+    }
   LPC_SSP0->DR = d;
 }
 

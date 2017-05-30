@@ -1,4 +1,3 @@
-
 /*
   This example program demonstrates the use of Tubogrid to get simple
   per-core animation. It also shows scheduled timer events and the use

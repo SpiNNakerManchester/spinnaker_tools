@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // bmp_io.c	    Simple character I/O library for BMP
@@ -161,7 +160,10 @@ static void io_put_uint (char *stream, uint32_t n, uint32_t d, uint32_t pad)
     {
       s[i++] = n % 10 + '0';
       n = n / 10;
-      if (n == 0) break;
+      if (n == 0)
+	{
+	  break;
+	}
     }
 
   while (i > 0 && s[--i] == '0')
@@ -197,17 +199,26 @@ static void io_put_hex (char *stream, uint32_t n, uint32_t d, uint32_t pad)
     {
       s[i++] = hex[n & 15];
       n = n >> 4;
-      if (n == 0) break;
+      if (n == 0)
+	{
+	  break;
+	}
     }
 
   while (i > 0 && s[--i] == '0')
-    continue;
+    {
+      continue;
+    }
 
   while (d-- > i + 1)
-    io_put_char (stream, pad);
+    {
+      io_put_char (stream, pad);
+    }
 
   while (i >= 0)
-    io_put_char (stream, s[i--]);
+    {
+      io_put_char (stream, s[i--]);
+    }
 }
 
 
@@ -217,7 +228,9 @@ static void io_put_mac (char *stream, uint8_t *s)
     {
       io_put_zhex (stream, s[i], 2);
       if (i != 5)
-	io_put_char (stream, ':');
+	{
+	  io_put_char (stream, ':');
+	}
     }
 }
 
@@ -228,15 +241,17 @@ static void io_put_ip (char *stream, uint8_t *s)
     {
       io_put_int (stream, s[i], 0, 0);
       if (i != 3)
-	io_put_char (stream, '.');
+	{
+	  io_put_char (stream, '.');
+	}
     }
 }
 
 
-void io_printf (char *stream, char *f, ...) 
+void io_printf (char *stream, char *f, ...)
 {
   va_list ap;
- 
+
   if (stream == IO_NULL || (stream == IO_LCD && ! lcd_active))
     {
       return;

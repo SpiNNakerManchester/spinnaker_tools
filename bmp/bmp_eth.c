@@ -20,27 +20,23 @@
 #define ETH_TX_BUFS 3
 
 
-typedef struct
-{
+typedef struct {
   uint32_t Packet;	// Receive Packet Descriptor
   uint32_t Ctrl;	// Receive Control Descriptor
 } rx_desc_t;
 
 
-typedef struct
-{
+typedef struct {
   uint32_t Info;	// Receive Information Status
   uint32_t HashCRC;	// Receive Hash CRC Status
 } rx_stat_t;
 
-typedef struct
-{
+typedef struct {
   uint32_t Packet;	// Transmit Packet Descriptor
   uint32_t Ctrl;	// Transmit Control Descriptor
 } tx_desc_t;
 
-typedef struct
-{
+typedef struct {
   uint32_t Info;	// Transmit Information Status
 } tx_stat_t;
 

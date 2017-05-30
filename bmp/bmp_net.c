@@ -45,8 +45,7 @@
 #define ICMP_ECHO_REQ 		8
 
 
-typedef struct
-{
+typedef struct {
   uint16_t htype;
   uint16_t ptype;
   uint8_t hlen;
@@ -59,8 +58,7 @@ typedef struct
 } arp_pkt_t;
 
 
-typedef struct
-{
+typedef struct {
   uint16_t srce;
   uint16_t dest;
   uint16_t length;
@@ -68,8 +66,7 @@ typedef struct
 } udp_hdr_t;
 
 
-typedef struct
-{
+typedef struct {
   uint8_t type;
   uint8_t code;
   uint16_t checksum;
@@ -78,16 +75,14 @@ typedef struct
 } icmp_hdr_t;
 
 
-typedef struct
-{
+typedef struct {
   uint8_t dest[6];
   uint8_t srce[6];
   uint16_t type;
 } mac_hdr_t;
 
 
-typedef struct
-{
+typedef struct {
   uint8_t ver_len;
   uint8_t DS;
   uint16_t length;
@@ -108,8 +103,7 @@ typedef struct
 #define MSG_QUEUE_SIZE 		NUM_MSGS
 
 
-typedef struct msg_queue_t
-{
+typedef struct msg_queue_t {
   uint8_t insert;
   uint8_t remove;
   volatile uint8_t count;
@@ -746,7 +740,6 @@ void route_msg (sdp_msg_t *msg)
       return_msg (msg, RC_PORT);
     }
 }
-
 
 
 void arp_lookup (iptag_t *iptag)

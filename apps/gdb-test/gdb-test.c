@@ -1,4 +1,3 @@
-
 // Simple SpiNNaker application to demonstrate use of GDB
 
 #include <spin1_api.h>

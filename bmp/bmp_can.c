@@ -56,8 +56,7 @@
 #define CAN_CLOSE_TO	1000	// Time for sender to return CAN_CLOSE_ACK
 
 
-typedef struct rx_desc
-{
+typedef struct rx_desc {
   event_t* event;	// Event and ID must be first in struct
   uint32_t event_id;
 
@@ -74,8 +73,7 @@ typedef struct rx_desc
 } rx_desc_t;
 
 
-typedef struct
-{
+typedef struct {
   event_t *event;	// Event and ID must be first in struct
   uint32_t event_id;
 
@@ -92,8 +90,7 @@ typedef struct
 } tx_desc_t;
 
 
-typedef struct
-{
+typedef struct {
   uint32_t send_msg;
   uint32_t rc_route;
   uint32_t timeout;
@@ -134,16 +131,16 @@ stat_t stat;
 
 #define IO_CAN IO_DBG
 /*
-void can_dump (void)
+void can_dump(void)
 {
-  io_printf (IO_CAN, "TX - state %d, rid %d, tid %d, seq %d, dest %d, rc %d, delay %d, ack %d\n",
+  io_printf(IO_CAN, "TX - state %d, rid %d, tid %d, seq %d, dest %d, rc %d, delay %d, ack %d\n",
 	     tx_desc->state, tx_desc->rid, tx_desc->tid, tx_desc->seq, tx_desc->dest,
 	     tx_desc->rc, tx_desc->delay, tx_desc->ack);
 
   for (int i = 0; i < 8; i++)
     {
       rx_desc_t *rx_desc = rx_desc_table + i;
-      io_printf (IO_CAN, "RX %d - state %d, tid %d, srce %d, last %d, seq %d, retry %d\n",
+      io_printf(IO_CAN, "RX %d - state %d, tid %d, srce %d, last %d, seq %d, retry %d\n",
 		 i, rx_desc->state, rx_desc->tid, rx_desc->srce, rx_desc->last,
 		 rx_desc->seq, rx_desc->retry);
     }
@@ -153,7 +150,7 @@ void can_dump (void)
 //------------------------------------------------------------------------------
 
 
-static void can_tx1 (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
+static void can_tx1(uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 {
   while ((LPC_CAN1->SR & (1<<2)) == 0)	// Wait for TxBuf1
     {
@@ -171,7 +168,7 @@ static void can_tx1 (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 }
 
 
-static void can_tx2 (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
+static void can_tx2(uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 {
   while ((LPC_CAN1->SR & (1<<10)) == 0)	// Wait for TxBuf2
     {
@@ -189,7 +186,7 @@ static void can_tx2 (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 }
 
 
-static void can_tx3_nr (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
+static void can_tx3_nr(uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 {
   while ((LPC_CAN1->SR & (1<<18)) == 0)	// Wait for TxBuf3
     {
@@ -201,7 +198,7 @@ static void can_tx3_nr (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 
   //  while ((LPC_CAN1->SR & (1<<19)) == 0)	// Wait for Tx3 complete
   //    continue;
- 
+
   LPC_CAN1->CMR = 0x83;			// Send TxBuf3 (no retries)
 }
 
@@ -209,18 +206,18 @@ static void can_tx3_nr (uint32_t dest, uint32_t id, uint32_t d1, uint32_t d2)
 //------------------------------------------------------------------------------
 
 
-static void timeout_event (void *desc, event_proc proc, uint32_t arg2,
-			   uint32_t time)
+static void timeout_event(void *desc, event_proc proc, uint32_t arg2,
+	uint32_t time)
 {
   rx_desc_t *d = (rx_desc_t *) desc;
 
-  event_t *e = event_new (proc, (uint32_t) desc, arg2);
+  event_t *e = event_new(proc, (uint32_t) desc, arg2);
 
   if (e != NULL)
     {
       d->event = e;
       d->event_id = e->ID;
-      event_schedule (e, time);
+      event_schedule(e, time);
     }
 }
 
@@ -231,12 +228,12 @@ static void timeout_event (void *desc, event_proc proc, uint32_t arg2,
 // "busy" move to state TX_DATA and fill in "tx_desc". If busy, set a
 // packet delay and allow more requests to be sent.
 
-static void can_open_ack (uint32_t id)
+static void can_open_ack(uint32_t id)
 {
   uint32_t srce = (id >> 19) & 31;
   uint32_t tid = (id >> 11) & 31;
 
-  if (tx_desc->state == TX_OPEN_REQ && 
+  if (tx_desc->state == TX_OPEN_REQ &&
       tx_desc->tid == tid &&
       tx_desc->dest == srce)
     {
@@ -261,7 +258,7 @@ static void can_open_ack (uint32_t id)
 // Received CLOSE_REQ from receiver. If TX_DATA then signal in "ack".
 // In any case, send a CLOSE_ACK back to receiver.
 
-static void can_close_req (uint32_t id)
+static void can_close_req(uint32_t id)
 {
   uint32_t tid = (id >> 11) & 31;
   uint32_t rid = (id >> 8) & 7;
@@ -275,14 +272,14 @@ static void can_close_req (uint32_t id)
       tx_desc->ack = 1;
     }
 
-  can_tx1 (srce, (CAN_CLOSE_ACK << 16) + (tid << 11) + (rid << 8), 0, 0);
+  can_tx1(srce, (CAN_CLOSE_ACK << 16) + (tid << 11) + (rid << 8), 0, 0);
 }
 
 
 // Received NACK from receiver because it found a packet out of
 // sequence. Restart from the sequence number provided by receiver.
 
-static void can_nack (uint32_t id)
+static void can_nack(uint32_t id)
 {
   uint32_t srce = (id >> 19) & 31;
   uint32_t tid = (id >> 11) & 31;
@@ -300,7 +297,7 @@ static void can_nack (uint32_t id)
 
 // Timed out waiting for CAN_CLOSE_REQ or CAN_NACK. Set "tx_desc->ack" to 3
 
-static void can_data_timeout (uint32_t a1, uint32_t a2)
+static void can_data_timeout(uint32_t a1, uint32_t a2)
 {
   tx_desc_t *tx_desc = (tx_desc_t *) a1;
   tx_desc->ack = a2;
@@ -310,7 +307,7 @@ static void can_data_timeout (uint32_t a1, uint32_t a2)
 
 // Timed out waiting for CAN_OPEN_ACK. Set "tx_desc->ack" to 2
 
-static void can_open_timeout (uint32_t a1, uint32_t a2)
+static void can_open_timeout(uint32_t a1, uint32_t a2)
 {
   tx_desc_t *tx_desc = (tx_desc_t *) a1;
   tx_desc->ack = a2;
@@ -318,8 +315,7 @@ static void can_open_timeout (uint32_t a1, uint32_t a2)
 }
 
 
-
-uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
+uint32_t can_send_msg(uint32_t dest, sdp_msg_t *msg)
 {
   uint32_t len = msg->length;
   uint32_t pkts = (len + 7) / 8;
@@ -351,9 +347,9 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
     {
       tx_desc->ack = 0;
 
-      timeout_event (tx_desc, can_open_timeout, 2, CAN_OPEN_TO);
+      timeout_event(tx_desc, can_open_timeout, 2, CAN_OPEN_TO);
 
-      can_tx1 (can_dest, (CAN_OPEN_REQ << 16) + (tx_desc->tid << 11) + len,
+      can_tx1(can_dest, (CAN_OPEN_REQ << 16) + (tx_desc->tid << 11) + len,
 		    0, 0);
 
       uint32_t ack;
@@ -364,7 +360,7 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
       if (ack == 1)	// Received CAN_OPEN_ACK
 	{
 	  STAT(open_ack)
-	  event_cancel (tx_desc->event, tx_desc->event_id); // can_open_timeout
+	  event_cancel(tx_desc->event, tx_desc->event_id); // can_open_timeout
 	  break;
 	}
     }
@@ -405,7 +401,7 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
 	  uint32_t d1 = buf[2 * seq];
 	  uint32_t d2 = buf[2 * seq + 1];
 
-	  can_tx1 (can_dest, id, d1, d2);
+	  can_tx1(can_dest, id, d1, d2);
 	  tx_desc->seq++;
 	}
 
@@ -413,7 +409,7 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
 
       if (ack)
 	{
-	  event_cancel (tx_desc->event, tx_desc->event_id); // can_data_timeout
+	  event_cancel(tx_desc->event, tx_desc->event_id); // can_data_timeout
 	  tx_desc->ack = 0;
 	}
 
@@ -423,7 +419,7 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
 	}
       else if (ack == 2)	// NACK received (tx_desc->seq updated)
 	{
-	  timeout_event (tx_desc, can_data_timeout, 3,
+	  timeout_event(tx_desc, can_data_timeout, 3,
 		  1000 * (pkts - tx_desc->seq));
 	}
       else if (ack == 3) 	// Data timeout
@@ -436,7 +432,7 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
 
 	  tx_desc->seq--;	// Force a data packet transmission
 
-	  timeout_event (tx_desc, can_data_timeout, 3,
+	  timeout_event(tx_desc, can_data_timeout, 3,
 		  1000 * (pkts - tx_desc->seq));
 	}
     }
@@ -450,7 +446,7 @@ uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg)
 //------------------------------------------------------------------------------
 
 
-static void can_open_req (uint32_t id)
+static void can_open_req(uint32_t id)
 {
   uint32_t len = id & 0x7ff;
   uint32_t srce = (id >> 19) & 31;
@@ -463,7 +459,7 @@ static void can_open_req (uint32_t id)
 
   if (len > SDP_BUF_SIZE + 8 + 16)
     {
-      can_tx2 (srce, (CAN_OPEN_ACK << 16) + (tid << 11) + RC_SDP_REJECT,
+      can_tx2(srce, (CAN_OPEN_ACK << 16) + (tid << 11) + RC_SDP_REJECT,
 	      0, 0);
       STAT(reject)
       return;
@@ -481,7 +477,7 @@ static void can_open_req (uint32_t id)
 	      rx_desc->tid == tid)
 	{
 //##	  event_cancel (rx_desc->event, rx_desc->event_id); // can_data_timeout
-          can_tx2 (srce, (CAN_OPEN_ACK << 16) + (tid << 11) + (i << 8) + 
+          can_tx2(srce, (CAN_OPEN_ACK << 16) + (tid << 11) + (i << 8) +
         	  RC_OK, 0, 0);
 
 	  //	  timeout_event (rx_desc, can_xxx_timeout, 0, 1000);
@@ -499,17 +495,17 @@ static void can_open_req (uint32_t id)
 
   if (rid == CAN_NUM_STR)
     {
-      can_tx2 (srce, (CAN_OPEN_ACK << 16) + (tid << 11) + RC_SDP_BUSY, 0, 0);
+      can_tx2(srce, (CAN_OPEN_ACK << 16) + (tid << 11) + RC_SDP_BUSY, 0, 0);
       return;
     }
 
   // Allocate a message buffer - send busy on failure
 
-  sdp_msg_t *msg = msg_get ();
+  sdp_msg_t *msg = msg_get();
 
   if (msg == NULL)
     {
-      can_tx2 (srce, (CAN_OPEN_ACK << 16) + (tid << 11) + RC_SDP_BUSY, 0, 0);
+      can_tx2(srce, (CAN_OPEN_ACK << 16) + (tid << 11) + RC_SDP_BUSY, 0, 0);
       return;
     }
 
@@ -528,7 +524,7 @@ static void can_open_req (uint32_t id)
   rx_desc->last = (len - 1) / 8;	// Seq num of last data packet
   msg->length = len;
 
-  can_tx2 (srce, (CAN_OPEN_ACK << 16) + (tid << 11) + (rid << 8) + RC_OK, 0, 0);
+  can_tx2(srce, (CAN_OPEN_ACK << 16) + (tid << 11) + (rid << 8) + RC_OK, 0, 0);
 
   //  timeout_event (rx_desc, can_xxx_timeout, 0, 1000);
 }
@@ -536,7 +532,7 @@ static void can_open_req (uint32_t id)
 
 // Received CAN_CLOSE_ACK from sender. Cancel timeout and go to IDLE
 
-static void can_close_ack (uint32_t id)
+static void can_close_ack(uint32_t id)
 {
   uint32_t srce = (id >> 19) & 31;
   uint32_t rid = (id >> 8) & 7;
@@ -551,7 +547,7 @@ static void can_close_ack (uint32_t id)
       STAT(close_ack)
       rx_desc->state = RX_IDLE;
 
-      event_cancel (rx_desc->event, rx_desc->event_id); // can_close_timeout
+      event_cancel(rx_desc->event, rx_desc->event_id); // can_close_timeout
     }
 }
 
@@ -559,7 +555,7 @@ static void can_close_ack (uint32_t id)
 // Receiver timed out waiting for CAN_CLOSE_ACK. Retry a few times
 // and then give up, returning to IDLE
 
-static void can_close_timeout (uint32_t arg1, uint32_t arg2)
+static void can_close_timeout(uint32_t arg1, uint32_t arg2)
 {
   rx_desc_t *rx_desc = (rx_desc_t *) arg1;
   uint32_t rid = arg2;
@@ -572,16 +568,16 @@ static void can_close_timeout (uint32_t arg1, uint32_t arg2)
       return;
     }
 
-  can_tx2 (rx_desc->srce, (CAN_CLOSE_REQ << 16) + (rx_desc->tid << 11) +
+  can_tx2(rx_desc->srce, (CAN_CLOSE_REQ << 16) + (rx_desc->tid << 11) +
 	  (rid << 8), 0, 0);
-  
-  timeout_event (rx_desc, can_close_timeout, rid, CAN_CLOSE_TO);
+
+  timeout_event(rx_desc, can_close_timeout, rid, CAN_CLOSE_TO);
 }
 
 
 // Called when DATA packet arrives
 
-static void can_data (uint32_t id, uint32_t d1, uint32_t d2)
+static void can_data(uint32_t id, uint32_t d1, uint32_t d2)
 {
   uint32_t srce = (id >> 19) & 31;
   uint32_t tid = (id >> 11) & 31;
@@ -608,21 +604,21 @@ static void can_data (uint32_t id, uint32_t d1, uint32_t d2)
 	      rx_desc->state = RX_CLOSE_REQ;
 	      rx_desc->retry = RX_CLOSE_RETRY;
 
-	      msg_queue_insert (rx_desc->msg);
+	      msg_queue_insert(rx_desc->msg);
 
 	      LPC_GPIO0->FIOSET = LED_5;
 	      can_timeout = 25;
 
-	      can_tx2 (srce, (CAN_CLOSE_REQ << 16) + (tid << 11) +
+	      can_tx2(srce, (CAN_CLOSE_REQ << 16) + (tid << 11) +
 		      (rid << 8), 0, 0);
 
-	      timeout_event (rx_desc, can_close_timeout, rid, CAN_CLOSE_TO);
+	      timeout_event(rx_desc, can_close_timeout, rid, CAN_CLOSE_TO);
 	    }
 	}
       else // Send NACK
 	{
 	  STAT(rxseq_error);
-	  can_tx2 (srce, (CAN_NACK << 16) + (tid << 11) + (rid << 8) +
+	  can_tx2(srce, (CAN_NACK << 16) + (tid << 11) + (rid << 8) +
 		  rx_desc->seq, 0, 0);
 	}
     }
@@ -641,17 +637,17 @@ static const event_proc proc_list[] = {
 #define MAX_PROC 1	// UPB of "proc_list" array
 
 
-static void can_proc (uint32_t id, uint32_t d1, uint32_t d2)
+static void can_proc(uint32_t id, uint32_t d1, uint32_t d2)
 {
   uint32_t op = id & 255;
 
   if (op <= MAX_PROC)
     {
-      event_t *e = event_new (proc_list[op], d1, d2);
+      event_t *e = event_new(proc_list[op], d1, d2);
 
       if (e != NULL)
 	{
-	  proc_queue_add (e);
+	  proc_queue_add(e);
 	}
     }
 }
@@ -660,7 +656,7 @@ static void can_proc (uint32_t id, uint32_t d1, uint32_t d2)
 //------------------------------------------------------------------------------
 
 
-extern void proc_setup (uint32_t d1, uint32_t d2);
+extern void proc_setup(uint32_t d1, uint32_t d2);
 
 
 #define CAN_EXEC_NOP	0
@@ -670,7 +666,7 @@ extern void proc_setup (uint32_t d1, uint32_t d2);
 uint32_t can_req[CAN_SIZE];
 uint32_t can_ack[CAN_SIZE];
 
-static void can_exec (uint32_t id, uint32_t d1, uint32_t d2)
+static void can_exec(uint32_t id, uint32_t d1, uint32_t d2)
 {
   uint32_t srce = (id >> 19) & 31;
   uint32_t seq = (id >> 8) & 255;
@@ -685,11 +681,11 @@ static void can_exec (uint32_t id, uint32_t d1, uint32_t d2)
     {
       if (! had_CAN_req)
 	{
-	  event_t *e = event_new (proc_setup, d1, d2);
+	  event_t *e = event_new(proc_setup, d1, d2);
 
 	  if (e != NULL)
 	    {
-	      proc_queue_add (e);
+	      proc_queue_add(e);
 	      had_CAN_req = true;
 	    }
 	}
@@ -705,7 +701,7 @@ static void can_exec (uint32_t id, uint32_t d1, uint32_t d2)
 
       uint32_t *bs = (uint32_t *) &board_stat[can_ID];
 
-      can_tx3_nr (31, (CAN_EXEC << 16) + (seq << 8) + CAN_EXEC_ACK,
+      can_tx3_nr(31, (CAN_EXEC << 16) + (seq << 8) + CAN_EXEC_ACK,
 	       bs[seq + 0], bs[seq + 1]);
     }
   else if (op == CAN_EXEC_ACK)		//++ Process ACK (can_ID == 0)
@@ -728,9 +724,9 @@ static void can_exec (uint32_t id, uint32_t d1, uint32_t d2)
 }
 
 
-void can_proc_cmd (uint32_t dest, uint32_t op, uint32_t arg1, uint32_t arg2)
+void can_proc_cmd(uint32_t dest, uint32_t op, uint32_t arg1, uint32_t arg2)
 {
-  can_tx1 (dest, (CAN_PROC << 16) + op, arg1, arg2);
+  can_tx1(dest, (CAN_PROC << 16) + op, arg1, arg2);
 }
 
 
@@ -745,7 +741,7 @@ void can_proc_cmd (uint32_t dest, uint32_t op, uint32_t arg1, uint32_t arg2)
 static uint32_t can_next;
 static uint32_t can_seq;
 
-void can_timer (void)
+void can_timer(void)
 {
   if (bus_timeout && --bus_timeout == 0)
     {
@@ -770,7 +766,7 @@ void can_timer (void)
 	  can_next = 1;
 
 	  can_seq += 2;
-	  if (can_seq == sizeof (board_stat_t) / 4)
+	  if (can_seq == sizeof(board_stat_t) / 4)
 	    {
 	      can_seq = 0;
 	    }
@@ -791,7 +787,7 @@ void can_timer (void)
 */
   can_req[can_next]++;
 
-  can_tx3_nr (can_next, (CAN_EXEC << 16) + (can_seq << 8) + CAN_EXEC_REQ,
+  can_tx3_nr(can_next, (CAN_EXEC << 16) + (can_seq << 8) + CAN_EXEC_REQ,
 	   config1, config2);
 }
 
@@ -799,7 +795,7 @@ void can_timer (void)
 //------------------------------------------------------------------------------
 
 
-void CAN_IRQHandler ()
+void CAN_IRQHandler()
 {
   uint32_t icr = LPC_CAN1->ICR;
 
@@ -816,35 +812,35 @@ void CAN_IRQHandler ()
       switch (op)
 	{
 	case CAN_DATA:
-	  can_data (id, rda, rdb);
+	  can_data(id, rda, rdb);
 	  break;
 
 	case CAN_OPEN_REQ:
-	  can_open_req (id);
+	  can_open_req(id);
 	  break;
 
 	case CAN_OPEN_ACK:
-	  can_open_ack (id);
+	  can_open_ack(id);
 	  break;
 
 	case CAN_NACK:
-	  can_nack (id);
+	  can_nack(id);
 	  break;
 
 	case CAN_CLOSE_REQ:
-	  can_close_req (id);
+	  can_close_req(id);
 	  break;
 
 	case CAN_CLOSE_ACK:
-	  can_close_ack (id);
+	  can_close_ack(id);
 	  break;
 
 	case CAN_PROC:
-	  can_proc (id, rda, rdb);
+	  can_proc(id, rda, rdb);
 	  break;
 
 	case CAN_EXEC:
-	  can_exec (id, rda, rdb);
+	  can_exec(id, rda, rdb);
 	  break;
 
 	default:
@@ -858,14 +854,14 @@ void CAN_IRQHandler ()
 
 
 // Double speed CAN clock!
-#define CAN_CLOCK CLKPWR_PCLKSEL_CCLK_DIV_2
-//#define CAN_CLOCK CLKPWR_PCLKSEL_CCLK_DIV_1
+#define CAN_CLOCK	CLKPWR_PCLKSEL_CCLK_DIV_2
+//#define CAN_CLOCK	CLKPWR_PCLKSEL_CCLK_DIV_1
 
 void configure_can (uint32_t id)
 {
-  clock_div (CLKPWR_PCLKSEL_CAN1, CAN_CLOCK);
-  clock_div (CLKPWR_PCLKSEL_CAN2, CAN_CLOCK);
-  clock_div (CLKPWR_PCLKSEL_ACF, CAN_CLOCK);
+  clock_div(CLKPWR_PCLKSEL_CAN1, CAN_CLOCK);
+  clock_div(CLKPWR_PCLKSEL_CAN2, CAN_CLOCK);
+  clock_div(CLKPWR_PCLKSEL_ACF, CAN_CLOCK);
 
   // Set up address filters
 
@@ -898,6 +894,6 @@ void configure_can (uint32_t id)
   LPC_CAN1->TFI3 = 0x80080000;  // TX1-2 have equal lower priority
   LPC_CAN1->IER = 1;		// Enable receive interrupt
 
-  NVIC_SetPriority (CAN_IRQn, 1);
-  NVIC_EnableIRQ (CAN_IRQn);
+  NVIC_SetPriority(CAN_IRQn, 1);
+  NVIC_EnableIRQ(CAN_IRQn);
 }

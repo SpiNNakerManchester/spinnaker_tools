@@ -1,4 +1,3 @@
-
 #include <sark.h>
 
 void c_main (void)
@@ -11,5 +10,5 @@ void c_main (void)
 
   rom[0] = data;
 
-  io_printf (IO_STD, "Reading ROM at %08x = %08x\n", (uint) rom, rom[0]);  
+  io_printf (IO_STD, "Reading ROM at %08x = %08x\n", (uint) rom, rom[0]);
 }

@@ -29,9 +29,13 @@ void timer_proc (uint count, uint none)
   io_printf (IO_BUF, "# timer_proc %d\n", count);
 
   if (count > 128)
-    event_stop (0);
+    {
+      event_stop (0);
+    }
   else
-    pkt_tx_kd (core, count + 1);
+    {
+      pkt_tx_kd (core, count + 1);
+    }
 }
 
 
@@ -68,7 +72,7 @@ void c_main (void)
   // Say hello...
 
   io_printf (IO_BUF, "# App \"%s\" on core %d (AppID %d)\n",
-	     app_name, core, app_id);
+	  app_name, core, app_id);
 
   // Initialise User variables
 
@@ -80,7 +84,9 @@ void c_main (void)
   uint e = rtr_alloc (1);
 
   if (e == 0)
-    rt_error (RTE_ABORT);
+    {
+      rt_error (RTE_ABORT);
+    }
 
   uint next = (core == 16) ? 1 : core + 1;
 
@@ -95,7 +101,9 @@ void c_main (void)
   // If we are core 1 then set things going by placing an event on the queue
 
   if (core == 1)
-    event_queue_proc (timer_proc, 0, 0, PRIO_0);
+    {
+      event_queue_proc (timer_proc, 0, 0, PRIO_0);
+    }
 
   // Start event processing but wait for SYNC0
 

@@ -71,7 +71,7 @@ static void set_text (const char *s, uint32_t mask)
     }
 }
 
- 
+
 static void update_lcd (void)
 {
   // Print frame number and up-time on top line
@@ -132,7 +132,7 @@ static void update_lcd (void)
 	  else
 	    {
 	      io_printf (IO_LCD, "%qBMP %d.%d.%d %q%4u slots\n",
-		      LCD_POS(0, 1), (v >> 16) & 255 , (v >> 8) & 255, v & 255,
+		      LCD_POS(0, 1), (v >> 16) & 255, (v >> 8) & 255, v & 255,
 		      LCD_POS(10, 1), count);
 	    }
 	  break;
@@ -173,7 +173,9 @@ static uint8_t fan = 0;
 static void fan_control (void)
 {
   if (!bp_ctrl)
-    return;
+    {
+      return;
+    }
 
   uint32_t size = (ee_data.hw_ver == 0) ? 6 : 8;
   int32_t max = INT32_MIN;
