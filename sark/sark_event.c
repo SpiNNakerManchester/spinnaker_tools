@@ -25,7 +25,7 @@ static const uchar vic_bit[] =
     TIMER1_INT,		// Timer 1
     CC_MC_INT,		// MC pkt
     SARK_MSG_INT,	// SDP msg
-    SOFTWARE_INT,	// User event 
+    SOFTWARE_INT,	// User event
     SARK_SIG_INT,	// Signal
     DMA_DONE_INT	// DMA done
   };

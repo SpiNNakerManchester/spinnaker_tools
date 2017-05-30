@@ -138,8 +138,8 @@ typedef int32_t(*PFI)();
 /* Number of elements in an array */
 #define NELEMENTS(array)	(sizeof (array) / sizeof (array[0]))
 
-#define STATIC	static	/* Static data/function define */
-#define EXTERN	extern	/* External data/function define */
+#define STATIC	static /* Static data/function define */
+#define EXTERN	extern /* External data/function define */
 
 #define MAX(a, b)	(((a) > (b)) ? (a) : (b))
 #define MIN(a, b)	(((a) < (b)) ? (a) : (b))

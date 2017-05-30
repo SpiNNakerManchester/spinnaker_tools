@@ -18,4 +18,4 @@ script:
   - support/run-vera.sh spin1_api
   - support/run-vera.sh apps -P max-line-length=200
   - support/run-vera.sh bmp  -P max-line-length=200 --profile spinnaker-asm.tcl
-  - support/run-vera.sh include
+  - support/run-vera.sh include -P max-line-length=200 -P max-file-length=3000

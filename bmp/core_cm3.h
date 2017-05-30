@@ -984,10 +984,16 @@ static __INLINE uint32_t NVIC_GetActive(IRQn_Type IRQn)
  */
 static __INLINE void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
 {
-  if(IRQn < 0) {
-    SCB->SHP[((uint32_t)(IRQn) & 0xF)-4] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff); } /* set Priority for Cortex-M  System Interrupts */
-  else {
-    NVIC->IP[(uint32_t)(IRQn)] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff);    }        /* set Priority for device specific Interrupts  */
+  if (IRQn < 0)
+    {
+      /* set Priority for Cortex-M  System Interrupts */
+      SCB->SHP[((uint32_t) IRQn & 0xF)-4] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff);
+    }
+  else
+    {
+      /* set Priority for device specific Interrupts  */
+      NVIC->IP[(uint32_t) IRQn] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff);
+    }
 }
 
 
@@ -1006,10 +1012,16 @@ static __INLINE void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
 static __INLINE uint32_t NVIC_GetPriority(IRQn_Type IRQn)
 {
 
-  if(IRQn < 0) {
-    return((uint32_t)(SCB->SHP[((uint32_t)(IRQn) & 0xF)-4] >> (8 - __NVIC_PRIO_BITS)));  } /* get priority for Cortex-M  system interrupts */
-  else {
-    return((uint32_t)(NVIC->IP[(uint32_t)(IRQn)]           >> (8 - __NVIC_PRIO_BITS)));  } /* get priority for device specific interrupts  */
+  if (IRQn < 0)
+    {
+      /* get priority for Cortex-M  system interrupts */
+      return (uint32_t) (SCB->SHP[((uint32_t) IRQn & 0xF)-4] >> (8 - __NVIC_PRIO_BITS));
+    }
+  else
+    {
+      /* get priority for device specific interrupts  */
+      return (uint32_t) (NVIC->IP[(uint32_t) IRQn] >> (8 - __NVIC_PRIO_BITS));
+    }
 }
 
 

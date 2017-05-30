@@ -43,7 +43,7 @@
     \return               Control Register value
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          uint32_t __get_CONTROL(void);
+extern uint32_t __get_CONTROL(void);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE uint32_t __get_CONTROL(void)
 {
@@ -60,7 +60,7 @@ static __INLINE uint32_t __get_CONTROL(void)
     \param [in]    control  Control Register value to set
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          void __set_CONTROL(uint32_t control);
+extern void __set_CONTROL(uint32_t control);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE void __set_CONTROL(uint32_t control)
 {
@@ -77,7 +77,7 @@ static __INLINE void __set_CONTROL(uint32_t control)
     \return               ISPR Register value
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          uint32_t __get_IPSR(void);
+extern uint32_t __get_IPSR(void);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE uint32_t __get_IPSR(void)
 {
@@ -94,7 +94,7 @@ static __INLINE uint32_t __get_IPSR(void)
     \return               APSR Register value
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          uint32_t __get_APSR(void);
+extern uint32_t __get_APSR(void);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE uint32_t __get_APSR(void)
 {
@@ -111,7 +111,7 @@ static __INLINE uint32_t __get_APSR(void)
     \return               xPSR Register value
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          uint32_t __get_xPSR(void);
+extern uint32_t __get_xPSR(void);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE uint32_t __get_xPSR(void)
 {
@@ -128,7 +128,7 @@ static __INLINE uint32_t __get_xPSR(void)
     \return               PSP Register value
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          uint32_t __get_PSP(void);
+extern uint32_t __get_PSP(void);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE uint32_t __get_PSP(void)
 {
@@ -145,7 +145,7 @@ static __INLINE uint32_t __get_PSP(void)
     \param [in]    topOfProcStack  Process Stack Pointer value to set
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          void __set_PSP(uint32_t topOfProcStack);
+extern void __set_PSP(uint32_t topOfProcStack);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE void __set_PSP(uint32_t topOfProcStack)
 {
@@ -162,7 +162,7 @@ static __INLINE void __set_PSP(uint32_t topOfProcStack)
     \return               MSP Register value
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          uint32_t __get_MSP(void);
+extern uint32_t __get_MSP(void);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE uint32_t __get_MSP(void)
 {
@@ -179,7 +179,7 @@ static __INLINE uint32_t __get_MSP(void)
     \param [in]    topOfMainStack  Main Stack Pointer value to set
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          void __set_MSP(uint32_t topOfMainStack);
+extern void __set_MSP(uint32_t topOfMainStack);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE void __set_MSP(uint32_t topOfMainStack)
 {
@@ -196,7 +196,7 @@ static __INLINE void __set_MSP(uint32_t topOfMainStack)
     \return               Priority Mask value
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          uint32_t __get_PRIMASK(void);
+extern uint32_t __get_PRIMASK(void);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE uint32_t __get_PRIMASK(void)
 {
@@ -213,7 +213,7 @@ static __INLINE uint32_t __get_PRIMASK(void)
     \param [in]    priMask  Priority Mask
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          void __set_PRIMASK(uint32_t priMask);
+extern void __set_PRIMASK(uint32_t priMask);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE void __set_PRIMASK(uint32_t priMask)
 {
@@ -248,7 +248,7 @@ static __INLINE void __set_PRIMASK(uint32_t priMask)
     \return               Base Priority register value
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          uint32_t __get_BASEPRI(void);
+extern uint32_t __get_BASEPRI(void);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE uint32_t  __get_BASEPRI(void)
 {
@@ -265,7 +265,7 @@ static __INLINE uint32_t  __get_BASEPRI(void)
     \param [in]    basePri  Base Priority value to set
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          void __set_BASEPRI(uint32_t basePri);
+extern void __set_BASEPRI(uint32_t basePri);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE void __set_BASEPRI(uint32_t basePri)
 {
@@ -282,7 +282,7 @@ static __INLINE void __set_BASEPRI(uint32_t basePri)
     \return               Fault Mask register value
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          uint32_t __get_FAULTMASK(void);
+extern uint32_t __get_FAULTMASK(void);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE uint32_t __get_FAULTMASK(void)
 {
@@ -299,7 +299,7 @@ static __INLINE uint32_t __get_FAULTMASK(void)
     \param [in]    faultMask  Fault Mask value to set
  */
 #if       (__ARMCC_VERSION <  400000)
-extern          void __set_FAULTMASK(uint32_t faultMask);
+extern void __set_FAULTMASK(uint32_t faultMask);
 #else  /* (__ARMCC_VERSION >= 400000) */
 static __INLINE void __set_FAULTMASK(uint32_t faultMask)
 {

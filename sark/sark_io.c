@@ -498,7 +498,7 @@ static void io_put_ufixed (char *stream, uint n, uint d, uint a, uint pad)
 void io_printf (char *stream, char *f, ...)
 {
   va_list ap;
- 
+
   if (stream == IO_NULL)
     {
       return;
