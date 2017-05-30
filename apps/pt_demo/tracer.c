@@ -32,7 +32,6 @@ const uint thirdByte  = 0xff0000;
 const uint fourthByte = 0xff000000;
 
 
-
 int abs(
 	int a)
 {
@@ -70,7 +69,7 @@ int fp_unit_mul(
   unsigned int  lowerb = (b1 & lower16);
 
   return sign * (int)(((lowera*lowerb) & upper16)>>16);
-}   
+}
 
 // Multiplies two numbers where b is between -1.0 and 1.0
 
@@ -174,7 +173,7 @@ int fp_recip_gen(
   while (a1 <= 32768)
     {
       a1 <<= 1;
-      shifted +=1 ;
+      shifted +=1;
     }
   a1 = fp_recip(a1);
   a1 = (shifted>0 ? (a1<<shifted) : (a1>>-shifted));
@@ -719,7 +718,7 @@ Camera setupCamera(
 	Camera camera)
 {
     Vector3 rightDirection = vecCrossProd(camera.lookDirection, camera.upDirection);
-    camera.rightDirection = rightDirection; 
+    camera.rightDirection = rightDirection;
 
     ViewPlane viewPlane;
     // The look direction needs to be rotated to the four corners of the viewPlane
@@ -1186,29 +1185,27 @@ Vector3 traceRay(
 }
 
 
-// Sphere objects (position, radius, transmitted colour, emitted colour,       specularity, specularTightness, transparency, refractiveIndex, reflectivity
+// Sphere objects (position, radius, transmitted colour, emitted colour, specularity, specularTightness, transparency, refractiveIndex, reflectivity
 Sphere spheres[12] = {
-    {{0, (150<<9), 0},    20<<9,  {0, 0, 0},     {250<<16, 220<<16, 170<<16} , 0, 2, 0, (1<<16), 0 } , // light
+    {{0, (150<<9), 0},       20<<9,  {0, 0, 0},     {250<<16, 220<<16, 170<<16}, 0, 2, 0, (1<<16), 0}, // light
 
-    {{30<<9, 0, -(40<<9)},    20<<9,  {210<<8, 200<<8, 200<<8},     {0, 0, 0} , (0<<8), 2, 0, (1<<16), (1<<16) } , // Mirror ball
-    {{-(50<<9), 0, -(60<<9)},    20<<9,  {210<<8, 150<<8, 120<<8},     {0, 0, 0} , (200<<8), 2, 0, (1<<16), 0 } , // Brass ball
-    {{(30<<9), 0, 72<<9},       20<<9,  {1<<16, 1<<16, 1<<16},        {0, 0, 0} , (25<<8), 4, (255<<8), (270<<8), 0 } , // Glass ball
-    {{-(30<<9), 0, (10<<9)}, 20<<9,  {180<<8, 180<<8, 180<<8},      {0, 0, 0} , (25<<8), 2, 0, (1<<16), 0 } , // White ball 1
+    {{30<<9, 0, -(40<<9)},   20<<9,  {210<<8, 200<<8, 200<<8}, {0, 0, 0}, (0<<8), 2, 0, (1<<16), (1<<16)}, // Mirror ball
+    {{-(50<<9), 0, -(60<<9)},20<<9,  {210<<8, 150<<8, 120<<8}, {0, 0, 0}, (200<<8), 2, 0, (1<<16), 0}, // Brass ball
+    {{(30<<9), 0, 72<<9},    20<<9,  {1<<16, 1<<16, 1<<16},    {0, 0, 0}, (25<<8), 4, (255<<8), (270<<8), 0}, // Glass ball
+    {{-(30<<9), 0, (10<<9)}, 20<<9,  {180<<8, 180<<8, 180<<8}, {0, 0, 0}, (25<<8), 2, 0, (1<<16), 0}, // White ball 1
 
-    {{160<<16, 0, 0},         (160<<16)-(100<<9), {120<<8, 120<<8, 120<<8},     {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
-    {{-(160<<16), 0, 0},      (160<<16)-(300<<9), {120<<8, 120<<8, 120<<8},     {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
+    {{160<<16, 0, 0},        (160<<16)-(100<<9), {120<<8, 120<<8, 120<<8}, {0, 0, 0}, 0, 2, 0, (1<<16), 0},
+    {{-(160<<16), 0, 0},     (160<<16)-(300<<9), {120<<8, 120<<8, 120<<8}, {0, 0, 0}, 0, 2, 0, (1<<16), 0},
 
-    {{0, 0, 160<<16},         (160<<16)-(100<<9), {30<<8, 30<<8, 110<<8},       {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
-    {{0, 0, -(160<<16)},      (160<<16)-(100<<9), {110<<8, 30<<8, 30<<8},       {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
+    {{0, 0, 160<<16},        (160<<16)-(100<<9), {30<<8, 30<<8, 110<<8},   {0, 0, 0}, 0, 2, 0, (1<<16), 0},
+    {{0, 0, -(160<<16)},     (160<<16)-(100<<9), {110<<8, 30<<8, 30<<8},   {0, 0, 0}, 0, 2, 0, (1<<16), 0},
 
-    {{0, 160<<16, 0},         (160<<16)-(180<<9), {120<<8, 120<<8, 120<<8},     {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
-    {{0, -(160<<16), 0},      (160<<16)-(22<<9),  {120<<8, 120<<8, 120<<8},     {0, 0, 0} , 0, 2, 0, (1<<16), 0 } ,
+    {{0, 160<<16, 0},        (160<<16)-(180<<9), {120<<8, 120<<8, 120<<8}, {0, 0, 0}, 0, 2, 0, (1<<16), 0},
+    {{0, -(160<<16), 0},     (160<<16)-(22<<9),  {120<<8, 120<<8, 120<<8}, {0, 0, 0}, 0, 2, 0, (1<<16), 0},
 };
 
 Vector3* horizontalInterpolations1;
 Vector3* horizontalInterpolations2;
-
-
 
 
 int actualAA = 1;
@@ -1276,7 +1273,7 @@ void trace(int horizontalPixels, int verticalPixels, int horizontalFieldOfView,
       // This gets a little messy because of the antialiasing, but we're really just iterating over sub-pixels, casting rays, and averaging over pixels
       int k;
       for (k=0; k<actualAA; k++)
-        {   
+        {
 	  horizontalInterpolations1[k] = vecAdd(vecScalarMul(topRightMinusTopLeft,
 		  ((i<<16)+(antialiasingStartPoint+antialiasingStepSize*k))/camera.horizontalPixels), camera.viewPlane.topLeft);
 	  horizontalInterpolations2[k] = vecAdd(vecScalarMul(bottomRightMinusBottomLeft,
@@ -1293,13 +1290,13 @@ void trace(int horizontalPixels, int verticalPixels, int horizontalFieldOfView,
             {
 	      // For repeated use in vertical interpolation
 	      Vector3 horizontal2MinusHorizontal1 =
-		      vecSub(horizontalInterpolations2[k] , horizontalInterpolations1[k]);
+		      vecSub(horizontalInterpolations2[k], horizontalInterpolations1[k]);
 
-	      int l; // vertical antialiasing
-	      for (l=0; l<actualAA; l++)
+	      int va; // vertical antialiasing
+	      for (va=0; va<actualAA; va++)
                 {
 		  Vector3 rayDirection = vecNorm(vecAdd(vecScalarMul(horizontal2MinusHorizontal1,
-			  ((j<<16)+(antialiasingStartPoint+antialiasingStepSize*l))/camera.verticalPixels),
+			  ((j<<16)+(antialiasingStartPoint+antialiasingStepSize*va))/camera.verticalPixels),
 			  horizontalInterpolations1[k]), 1012);
 		  Ray ray = {camera.position, rayDirection};
 
@@ -1352,7 +1349,7 @@ void sdp_packet_callback(uint msg, uint port)
 
   io_printf (IO_BUF, "SDP cmd %d\n", sdp_msg->cmd_rc);
 
-  if (sdp_msg->cmd_rc == 4) // if it's a trace message   
+  if (sdp_msg->cmd_rc == 4) // if it's a trace message
     {
       int camx = 0, camy = 0, camz = 0, lookx = 0, looky = 0, lookz = 0, upx = 0;
       int upy = 0, upz = 0, width = 0, height = 0, hField = 0, vField = 0;
@@ -1364,9 +1361,9 @@ void sdp_packet_callback(uint msg, uint port)
 	  var += (sdp_msg->data[i*4]<<0);
 	  var += (sdp_msg->data[i*4+1]<<8);
 	  var += (sdp_msg->data[i*4+2]<<16);
-	  var += (sdp_msg->data[i*4+3]<<24);      
+	  var += (sdp_msg->data[i*4+3]<<24);
 
-	  switch(i)
+	  switch (i)
             {
 	    case 0: camx = var; break;
 	    case 1: camy = var; break;
@@ -1387,9 +1384,11 @@ void sdp_packet_callback(uint msg, uint port)
             }
         }
 
-      //io_printf(IO_STD, "x %d \ny %d \nz  %d \nx  %d \ny  %d \nz  %d \nx  %d \ny  %d \nz  %d \nw  %d \nh  %d \nhF  %d \nvF  %d \naa  %d \nid  %d \nnum  %d \n ", camx, camy, camz, lookx, looky, lookz, upx, upy, upz, width, height, hField, vField, antialiasing, nodeID, numberOfNodes);
+      //io_printf(IO_STD, "x %d \ny %d \nz  %d \nx  %d \ny  %d \nz  %d \nx  %d \ny  %d \nz  %d \nw  %d \nh  %d \nhF  %d \nvF  %d \naa  %d \nid  %d \nnum  %d \n ",
+      //          camx, camy, camz, lookx, looky, lookz, upx, upy, upz, width, height, hField, vField, antialiasing, nodeID, numberOfNodes);
 
-      //io_printf(IO_STD, "I am core %d %d %d.  I've been told I'm node %d of %d.\n", (spin1_get_chip_id()&secondByte)>>8, spin1_get_chip_id()&firstByte, spin1_get_core_id(), nodeID, numberOfNodes );
+      //io_printf(IO_STD, "I am core %d %d %d.  I've been told I'm node %d of %d.\n",
+      //          (spin1_get_chip_id()&secondByte)>>8, spin1_get_chip_id()&firstByte, spin1_get_core_id(), nodeID, numberOfNodes);
 
       sark_delay_us (1000 * sark_core_id ());
 
@@ -1432,7 +1431,6 @@ void sdp_packet_callback(uint msg, uint port)
 }
 
 
-
 void load_mc_routing_tables()
 {
   if (sark_core_id () != sark_app_lead ())
@@ -1446,7 +1444,7 @@ void load_mc_routing_tables()
   uint x = CHIP_X (xy);
   uint y = CHIP_Y (xy);
 
-  uint destination;    
+  uint destination;
 
   uint e = rtr_alloc (1);
   if (e == 0)

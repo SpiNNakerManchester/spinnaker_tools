@@ -56,7 +56,6 @@ typedef struct rx_desc {
 } rx_desc_t;
 
 
-
 typedef struct tx_desc {
   uchar seq_len;
   uchar seq;
@@ -196,7 +195,6 @@ void p2p_send_ctl(uint ctrl, uint addr, uint data)
 }
 
 #endif
-
 
 
 // Received ACK from receiver. Cancel ack timeout and update tx_desc

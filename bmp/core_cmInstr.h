@@ -259,7 +259,6 @@ extern void __CLREX(void);
 #endif /* (__CORTEX_M >= 0x03) */
 
 
-
 #elif (defined (__ICCARM__)) /*---------------- ICC Compiler ---------------------*/
 /* IAR iccarm specific functions */
 
@@ -446,7 +445,6 @@ static __INLINE void __CLREX(void)
 #endif /* (__CORTEX_M >= 0x03) */
 
 #pragma diag_default=Pe940
-
 
 
 #elif (defined (__GNUC__)) /*------------------ GNU Compiler ---------------------*/
@@ -715,7 +713,7 @@ __attribute__( ( always_inline ) ) static __INLINE void __CLREX(void)
     \param [in]    sat  Bit position to saturate to (1..32)
     \return             Saturated value
  */
-#define __SSAT(ARG1,ARG2) \
+#define __SSAT(ARG1, ARG2) \
 ({                          \
   uint32_t __RES, __ARG1 = (ARG1); \
   __ASM ("ssat %0, %1, %2" : "=r" (__RES) :  "I" (ARG2), "r" (__ARG1) ); \
@@ -731,7 +729,7 @@ __attribute__( ( always_inline ) ) static __INLINE void __CLREX(void)
     \param [in]    sat  Bit position to saturate to (0..31)
     \return             Saturated value
  */
-#define __USAT(ARG1,ARG2) \
+#define __USAT(ARG1, ARG2) \
 ({                          \
   uint32_t __RES, __ARG1 = (ARG1); \
   __ASM ("usat %0, %1, %2" : "=r" (__RES) :  "I" (ARG2), "r" (__ARG1) ); \
@@ -755,8 +753,6 @@ __attribute__( ( always_inline ) ) static __INLINE uint8_t __CLZ(uint32_t value)
 }
 
 #endif /* (__CORTEX_M >= 0x03) */
-
-
 
 
 #elif (defined (__TASKING__)) /*--------------- TASKING Compiler -----------------*/

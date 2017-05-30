@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // bmp_init.c	    System initialisation code for BMP LPC1768
@@ -167,8 +166,8 @@ const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) = {
     USBActivity_IRQHandler,    	   // 49: USB Activity
     CANActivity_IRQHandler,        // 50: CAN Activity
 
-    (handler) 0,		   // 51: 
-    (handler) 0,		   // 52: 
+    (handler) 0,		   // 51:
+    (handler) 0,		   // 52:
     BUILD_DATE,			   // 53: Build date
     BMP_VER_NUM,		   // 54: Version number
 

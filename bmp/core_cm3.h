@@ -101,7 +101,6 @@
 /*@} end of group CMSIS_core_definitions */
 
 
-
 /*******************************************************************************
  *                 Register Abstraction
  ******************************************************************************/
@@ -835,7 +834,6 @@ typedef struct {
 /*@} */
 
 
-
 /*******************************************************************************
  *                Hardware Abstraction Layer
  ******************************************************************************/
@@ -846,7 +844,6 @@ typedef struct {
   - Core Debug Functions
   - Core Register Access Functions
 */
-
 
 
 /* ##########################   NVIC functions  #################################### */
@@ -890,7 +887,7 @@ static __INLINE void NVIC_SetPriorityGrouping(uint32_t PriorityGroup)
  */
 static __INLINE uint32_t NVIC_GetPriorityGrouping(void)
 {
-  return ((SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) >> SCB_AIRCR_PRIGROUP_Pos);   /* read priority grouping field */
+  return (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) >> SCB_AIRCR_PRIGROUP_Pos;   /* read priority grouping field */
 }
 
 
@@ -931,7 +928,7 @@ static __INLINE void NVIC_DisableIRQ(IRQn_Type IRQn)
  */
 static __INLINE uint32_t NVIC_GetPendingIRQ(IRQn_Type IRQn)
 {
-  return((uint32_t) ((NVIC->ISPR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0)); /* Return 1 if pending else 0 */
+  return (uint32_t) ((NVIC->ISPR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0); /* Return 1 if pending else 0 */
 }
 
 
@@ -970,7 +967,7 @@ static __INLINE void NVIC_ClearPendingIRQ(IRQn_Type IRQn)
  */
 static __INLINE uint32_t NVIC_GetActive(IRQn_Type IRQn)
 {
-  return((uint32_t)((NVIC->IABR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0)); /* Return 1 if active else 0 */
+  return (uint32_t) ((NVIC->IABR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0); /* Return 1 if active else 0 */
 }
 
 
@@ -1039,10 +1036,8 @@ static __INLINE uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t P
   PreemptPriorityBits = ((7 - PriorityGroupTmp) > __NVIC_PRIO_BITS) ? __NVIC_PRIO_BITS : 7 - PriorityGroupTmp;
   SubPriorityBits     = ((PriorityGroupTmp + __NVIC_PRIO_BITS) < 7) ? 0 : PriorityGroupTmp - 7 + __NVIC_PRIO_BITS;
 
-  return (
-           ((PreemptPriority & ((1 << (PreemptPriorityBits)) - 1)) << SubPriorityBits) |
-           ((SubPriority     & ((1 << (SubPriorityBits    )) - 1)))
-         );
+  return ((PreemptPriority & ((1 << (PreemptPriorityBits)) - 1)) << SubPriorityBits) |
+         ((SubPriority     & ((1 << (SubPriorityBits    )) - 1)));
 }
 
 
@@ -1086,7 +1081,7 @@ static __INLINE void NVIC_SystemReset(void)
                  (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) |
                  SCB_AIRCR_SYSRESETREQ_Msk);                   /* Keep priority group unchanged */
   __DSB();                                                     /* Ensure completion of memory access */
-  while(1);                                                    /* wait until reset */
+  while (1) {}                                                 /* wait until reset */
 }
 
 /*@} end of CMSIS_Core_NVICFunctions */
@@ -1116,7 +1111,10 @@ static __INLINE void NVIC_SystemReset(void)
  */
 static __INLINE uint32_t SysTick_Config(uint32_t ticks)
 {
-  if (ticks > SysTick_LOAD_RELOAD_Msk)  return (1);            /* Reload value impossible */
+  if (ticks > SysTick_LOAD_RELOAD_Msk)                         /* Reload value impossible */
+    {
+      return 1;
+    }
 
   SysTick->LOAD  = (ticks & SysTick_LOAD_RELOAD_Msk) - 1;      /* set reload register */
   NVIC_SetPriority (SysTick_IRQn, (1<<__NVIC_PRIO_BITS) - 1);  /* set Priority for Cortex-M0 System Interrupts */
@@ -1124,13 +1122,12 @@ static __INLINE uint32_t SysTick_Config(uint32_t ticks)
   SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
                    SysTick_CTRL_TICKINT_Msk   |
                    SysTick_CTRL_ENABLE_Msk;                    /* Enable SysTick IRQ and SysTick Timer */
-  return (0);                                                  /* Function successful */
+  return 0;                                                    /* Function successful */
 }
 
 #endif
 
 /*@} end of CMSIS_Core_SysTickFunctions */
-
 
 
 /* ##################################### Debug In/Output function ########################################### */
@@ -1152,16 +1149,16 @@ extern volatile int32_t ITM_RxBuffer;                    /*!< external variable 
     \param [in]     ch  Character to transmit
     \return             Character to transmit
  */
-static __INLINE uint32_t ITM_SendChar (uint32_t ch)
+static __INLINE uint32_t ITM_SendChar(uint32_t ch)
 {
   if ((CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk)  &&      /* Trace enabled */
       (ITM->TCR & ITM_TCR_ITMENA_Msk)                  &&      /* ITM enabled */
       (ITM->TER & (1UL << 0)        )                    )     /* ITM Port #0 enabled */
-  {
-    while (ITM->PORT[0].u32 == 0);
-    ITM->PORT[0].u8 = (uint8_t) ch;
-  }
-  return (ch);
+    {
+      while (ITM->PORT[0].u32 == 0) {}
+      ITM->PORT[0].u8 = (uint8_t) ch;
+    }
+  return ch;
 }
 
 
@@ -1174,15 +1171,16 @@ static __INLINE uint32_t ITM_SendChar (uint32_t ch)
     \return             Received character
     \return         -1  No character received
  */
-static __INLINE int32_t ITM_ReceiveChar (void) {
+static __INLINE int32_t ITM_ReceiveChar(void)
+{
   int32_t ch = -1;                           /* no character available */
 
-  if (ITM_RxBuffer != ITM_RXBUFFER_EMPTY) {
-    ch = ITM_RxBuffer;
-    ITM_RxBuffer = ITM_RXBUFFER_EMPTY;       /* ready for next character */
-  }
-
-  return (ch);
+  if (ITM_RxBuffer != ITM_RXBUFFER_EMPTY)
+    {
+      ch = ITM_RxBuffer;
+      ITM_RxBuffer = ITM_RXBUFFER_EMPTY;     /* ready for next character */
+    }
+  return ch;
 }
 
 
@@ -1194,13 +1192,16 @@ static __INLINE int32_t ITM_ReceiveChar (void) {
     \return          0  No character available
     \return          1  Character available
  */
-static __INLINE int32_t ITM_CheckChar (void) {
-
-  if (ITM_RxBuffer == ITM_RXBUFFER_EMPTY) {
-    return (0);                                 /* no character available */
-  } else {
-    return (1);                                 /*    character available */
-  }
+static __INLINE int32_t ITM_CheckChar(void)
+{
+  if (ITM_RxBuffer == ITM_RXBUFFER_EMPTY)
+    {
+      return 0;                               /* no character available */
+    }
+  else
+    {
+      return 1;                               /*    character available */
+    }
 }
 
 /*@} end of CMSIS_core_DebugFunctions */
