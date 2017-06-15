@@ -10,7 +10,7 @@
 
 uchar leadAp;                    	// lead appl. core has special functions
 
-static volatile uint run;           	// controls simulation start/stop
+static volatile uint run;           	// controls simulation start/exit
 static volatile uint paused;            // indicates when paused
 static volatile uint resume_sync;       // controls re-synchronisation
 uint ticks;              		// number of elapsed timer periods
@@ -487,8 +487,8 @@ void dispatch()
   volatile callback_t cback;
   resume_sync = 0;
 
-  // dispatch callbacks from queues until spin1_stop () or
-  // spin1_kill () are called (run = 0)
+  // dispatch callbacks from queues until
+  // spin1_exit () is called (run = 0)
   while (run)
   {
     i = 0;
@@ -729,7 +729,7 @@ uint spin1_get_simulation_time()
 */
 void spin1_exit (uint error)
 {
-  // Disable API-enabled interrupts to allow simulation to stop,
+  // Disable API-enabled interrupts to allow simulation to exit,
 
   vic[VIC_DISABLE] = (1 << CC_MC_INT)   |
                      (1 << CC_FR_INT)   |
@@ -738,7 +738,7 @@ void spin1_exit (uint error)
                      (1 << DMA_ERR_INT)  |
                      (1 << DMA_DONE_INT);
 
-  // Report back the return code and stop the simulation
+  // Report back the return code and exit the simulation
 
   run = 0;
   diagnostics.exit_code = error;
@@ -773,7 +773,7 @@ void spin1_set_timer_tick_and_phase (uint time, uint phase)
 /****f* spin1_api.c/clean_up
 *
 * SUMMARY
-*  This function is called after simulation stops to configure
+*  This function is called after simulation exits to configure
 *  hardware for idle operation. It cleans up interrupt lines.
 *
 * SYNOPSIS
