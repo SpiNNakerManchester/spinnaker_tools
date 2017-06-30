@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // scamp-p2p.c	    P2P packet handling for SC&MP
@@ -33,8 +32,7 @@
 #define RX_CLOSE_REQ 2
 
 
-typedef struct rx_desc
-{
+typedef struct rx_desc {
   uchar state;
   uchar seq_len;
   uchar done;
@@ -58,9 +56,7 @@ typedef struct rx_desc
 } rx_desc_t;
 
 
-
-typedef struct tx_desc
-{
+typedef struct tx_desc {
   uchar seq_len;
   uchar seq;
   uchar odd;
@@ -136,66 +132,69 @@ uint close_ack_time = 250;
 // #define ASM
 
 #ifdef ASM // !! Needs updating
-extern void p2p_send_pkt (uint data, uint addr);
+extern void p2p_send_pkt(uint data, uint addr);
 
-__asm void p2p_send_ctl (uint ctrl, uint addr, uint data)
+__asm void p2p_send_ctl(uint ctrl, uint addr, uint data)
 {
 	code32
 	import	chksum_32
 	import	pkt_tx
 	export	p2p_send_pkt
 
-	orr	r0, r0, r2	; (r0) data = data | ctrl
-	mov	r2, r0		; r2 = data
-	mov	r3, lr		; Save lr
-	bl	chksum_32	; sum = chksum (data)
-	mov	lr, r3		; Restore lr
-	orr	r0, r0, r2	; data |= sum
+	orr	r0, r0, r2		;// (r0) data = data | ctrl
+	mov	r2, r0			;// r2 = data
+	mov	r3, lr			;// Save lr
+	bl	chksum_32		;// sum = chksum(data)
+	mov	lr, r3			;// Restore lr
+	orr	r0, r0, r2		;// data |= sum
 
 p2p_send_pkt
-	tst	r1, #BIT_31		; if addr & BIT_31
+	tst	r1, #BIT_31		;// if addr & BIT_31
 
-	moveq	r2, r1			; r2 = addr
-	moveq	r1, r0			; r1 = data
-	moveq	r0, #TCR_P2P_P		; r0 = TCR_P2P_P
-	beq	pkt_tx			; pkt_tx (TCR_P2P_P, data, addr);
+	moveq	r2, r1			;// r2 = addr
+	moveq	r1, r0			;// r1 = data
+	moveq	r0, #TCR_P2P_P		;// r0 = TCR_P2P_P
+	beq	pkt_tx			;// pkt_tx(TCR_P2P_P, data, addr);
 
-	mov	r2, r1, lsl #18		; r2 = addr << 18
-	mov	r1, r0	    		; r1 = data
-	orr	r0, r2, #TCR_NN_P	; r0 = TCR_NN_P + (addr << 18)
-	mov	r2, #NN_SDP_KEY		; r2 = NN_SDP_KEY
+	mov	r2, r1, lsl #18		;// r2 = addr << 18
+	mov	r1, r0	    		;// r1 = data
+	orr	r0, r2, #TCR_NN_P	;// r0 = TCR_NN_P + (addr << 18)
+	mov	r2, #NN_SDP_KEY		;// r2 = NN_SDP_KEY
 	b	pkt_tx
 
 }
 
 #else
 
-void p2p_send_data (uint data, uint addr)
+void p2p_send_data(uint data, uint addr)
 {
 #ifdef STATS
-  uint r = pkt_tx (PKT_P2P_PL, data, addr + (P2P_DATA << 16));
+  uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_DATA << 16));
   if (r == 0)
-    p2p_stats[TX_FAIL]++;
+    {
+      p2p_stats[TX_FAIL]++;
+    }
 #else
-  (void) pkt_tx (PKT_P2P_PL, data, addr + (P2P_DATA << 16));
+  (void) pkt_tx(PKT_P2P_PL, data, addr + (P2P_DATA << 16));
 #endif
 }
 
-void p2p_send_ctl (uint ctrl, uint addr, uint data)
+void p2p_send_ctl(uint ctrl, uint addr, uint data)
 {
   data |= ctrl;
-  data |= chksum_32 (data);
+  data |= chksum_32(data);
 #ifdef STATS
-  uint r = pkt_tx (PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
+  uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
   if (r == 0)
-    p2p_stats[TX_FAIL]++;
+    {
+      p2p_stats[TX_FAIL]++;
+    }
 #else
-  (void) pkt_tx (PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
+  (void) pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
 #endif
 }
 
 #endif
-
 
 
 // Received ACK from receiver. Cancel ack timeout and update tx_desc
@@ -207,7 +206,7 @@ void p2p_send_ctl (uint ctrl, uint addr, uint data)
 	+-------+-----+-+---+-+---------+---------------+---------------+
 */
 
-void p2p_data_ack (uint data, uint srce)
+void p2p_data_ack(uint data, uint srce)
 {
   uint tid = (data >> 16) & 31;
   uint phase = (data >> 21) & 1;
@@ -215,7 +214,7 @@ void p2p_data_ack (uint data, uint srce)
 
   if (desc->state == TX_OPEN && desc->tid == tid && desc->dest == srce)
     {
-      timer_cancel (desc->event, desc->event_id); // p2p_ack_timeout
+      timer_cancel(desc->event, desc->event_id); // p2p_ack_timeout
 
       if (phase != desc->phase)
 	{
@@ -232,28 +231,28 @@ void p2p_data_ack (uint data, uint srce)
 // Received CLOSE_REQ from receiver. If TX_OPEN then tidy up tx_desc.
 // In any case, send a CLOSE_ACK back to receiver.
 
-void p2p_close_req (uint data, uint srce)
+void p2p_close_req(uint data, uint srce)
 {
   uint tid = (data >> 16) & 31;
   tx_desc_t *desc = &tx_desc;
 
   if (desc->state == TX_OPEN && desc->tid == tid && desc->dest == srce)
     {
-      timer_cancel (desc->event, desc->event_id); // p2p_ack_timeout
+      timer_cancel(desc->event, desc->event_id); // p2p_ack_timeout
 
       desc->mask = 0;
       desc->state = TX_IDLE;
       desc->ack = 3; //const
     }
 
-  p2p_send_ctl (P2P_CLOSE_ACK, srce, data & 0x00ffffff);
+  p2p_send_ctl(P2P_CLOSE_ACK, srce, data & 0x00ffffff);
 }
 
 
 // Timed out waiting for data ACK from receiver. This suggests
 // receiver has died so close the connection.
 
-void p2p_ack_timeout (uint txd, uint a2)
+void p2p_ack_timeout(uint txd, uint a2)
 {
   tx_desc_t *desc = (tx_desc_t *) txd;
 
@@ -275,7 +274,7 @@ void p2p_ack_timeout (uint txd, uint a2)
 */
 
 
-void p2p_open_timeout (uint a, uint b)
+void p2p_open_timeout(uint a, uint b)
 {
   tx_desc_t *desc = (tx_desc_t *) a;
   desc->ack = b;
@@ -285,7 +284,7 @@ void p2p_open_timeout (uint a, uint b)
 }
 
 
-uint p2p_send_msg (uint addr, sdp_msg_t *msg)
+uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 {
   uchar *buf = (uchar *) &msg->length;	// Point to len/sum
   uint len = msg->length;	// 'Real' length
@@ -326,28 +325,32 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
     {
       desc->ack = 0;
 
-      //##event_t* e = event_new (proc_byte_set, (uint) &desc->ack, 2);
-      event_t* e = event_new (p2p_open_timeout, (uint) desc, 2);
+      //##event_t* e = event_new(proc_byte_set, (uint) &desc->ack, 2);
+      event_t* e = event_new(p2p_open_timeout, (uint) desc, 2);
 
       desc->event = e;
 
       if (e != NULL)
 	{
 	  desc->event_id = e->ID;
-	  timer_schedule (e, open_ack_time);
+	  timer_schedule(e, open_ack_time);
 	}
       else
 	{
-	  sw_error (SW_OPT);
+	  sw_error(SW_OPT);
 	}
 
-      p2p_send_ctl (P2P_OPEN_REQ, addr, (len << 8) + ctrl);
+      p2p_send_ctl(P2P_OPEN_REQ, addr, (len << 8) + ctrl);
 
       while (desc->ack == 0) //const - returns 1 for OK, 2 for timeout
-	continue;
+        {
+	  continue;
+        }
 
       if (desc->ack == 1)
-	break;
+        {
+	  break;
+        }
 
 #ifdef STATS
       p2p_stats[OPEN_TO]++;
@@ -355,13 +358,17 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 #endif
 
       if (desc->tcount == 0)
-	return desc->rc;
+	{
+	  return desc->rc;
+	}
 
       desc->tcount--;
    }
 
   if (desc->rc != RC_OK)
-    return desc->rc;
+    {
+      return desc->rc;
+    }
 
   //-------
 
@@ -385,24 +392,24 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 		{
 		  desc->ack = 0;
 
-		  event_t* e = event_new (p2p_ack_timeout, (uint) desc, 0);
+		  event_t* e = event_new(p2p_ack_timeout, (uint) desc, 0);
 
 		  if (e != NULL)
 		    {
 		      desc->event = e;
 		      desc->event_id = e->ID;
-		      timer_schedule (e, data_ack_time);
+		      timer_schedule(e, data_ack_time);
 		    }
 		  else
 		    {
-		      sw_error (SW_OPT);
+		      sw_error(SW_OPT);
 		    }
 		}
 
 	      uint data = (desc->rid << 29) + (desc->phase << 28) + (seq << 24) + //##
-		(p[2] << 16) + (p[1] << 8) + p[0];
+		      (p[2] << 16) + (p[1] << 8) + p[0];
 
-	      p2p_send_data (data, addr);
+	      p2p_send_data(data, addr);
 	    }
 
 	  if (is_last_seq)
@@ -414,16 +421,22 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 	  mask = next_mask;
 
 	  if (mask == 0)
-	    break;
+	    {
+	      break;
+	    }
 	}
 
       while (desc->ack == 0) //const - 1 data_ack, 2 timeout, 3 close_req
-	continue;
+        {
+	  continue;
+        }
 
       mask = desc->mask;
 
       if (desc->done && mask == 0)
-	break;
+        {
+	  break;
+        }
     }
 
   return desc->rc;
@@ -436,7 +449,7 @@ uint p2p_send_msg (uint addr, sdp_msg_t *msg)
 // Timed out waiting for "seq_len" data packets. Send P2P_DATA_ACK
 // with current mask and restart timeout.
 
-void p2p_data_timeout (uint rxd, uint a2)
+void p2p_data_timeout(uint rxd, uint a2)
 {
   rx_desc_t *desc = (rx_desc_t *) rxd;
 
@@ -449,27 +462,27 @@ void p2p_data_timeout (uint rxd, uint a2)
 
       if (desc->tcount == 0)
 	{
-	  sark_msg_free (desc->msg);
+	  sark_msg_free(desc->msg);
 	  desc->state = RX_IDLE;
 	  return;
 	}
 
       desc->tcount--;
 
-      p2p_send_ctl (P2P_DATA_ACK, desc->srce,
-		    (desc->phase << 21) + (desc->tid << 16) + desc->mask);
+      p2p_send_ctl(P2P_DATA_ACK, desc->srce,
+	      (desc->phase << 21) + (desc->tid << 16) + desc->mask);
 
-      event_t* e = event_new (p2p_data_timeout, (uint) desc, 0);
+      event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
 
       if (e != NULL)
 	{
 	  desc->event = e;
 	  desc->event_id = e->ID;
-	  timer_schedule (e, data_time);
+	  timer_schedule(e, data_time);
 	}
       else
 	{
-	  sw_error (SW_OPT);
+	  sw_error(SW_OPT);
 	}
     }
 }
@@ -479,7 +492,7 @@ void p2p_data_timeout (uint rxd, uint a2)
 // will expire (and we keep trying). Otherwise update tx_desc and
 // cancel timeout.
 
-void p2p_open_ack (uint data, uint srce)
+void p2p_open_ack(uint data, uint srce)
 {
   uint tid = (data >> 16) & 31;
   uint rc = data & 255;
@@ -495,7 +508,7 @@ void p2p_open_ack (uint data, uint srce)
       desc->rc = rc;
       desc->ack = 1; //const
 
-      timer_cancel (desc->event, desc->event_id);
+      timer_cancel(desc->event, desc->event_id);
     }
 }
 
@@ -511,7 +524,7 @@ void p2p_open_ack (uint data, uint srce)
 	+-------+-----+-+-----+---------+---------------+---------------+
 */
 
-void p2p_open_req (uint data, uint addr)
+void p2p_open_req(uint data, uint addr)
 {
   uint len = (data >> 8) & 0xffff; // Real length from SDP hdr on...
   uint ctrl = data & 255;
@@ -521,7 +534,7 @@ void p2p_open_req (uint data, uint addr)
 
   if (len > (SDP_BUF_SIZE + 8 + 16) || seq_len > 16) //const
     {
-      p2p_send_ctl (P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_REJECT);
+      p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_REJECT);
 #ifdef STATS
       p2p_stats[P2P_REJECTS]++;
 #endif
@@ -535,25 +548,25 @@ void p2p_open_req (uint data, uint addr)
     {
       if (desc->state == RX_OPEN && desc->srce == addr && desc->tid == tid) // Already open
 	{
-	  timer_cancel (desc->event, desc->event_id); // p2p_data_timeout
+	  timer_cancel(desc->event, desc->event_id); // p2p_data_timeout
 #ifdef STATS
 	  p2p_stats[OPEN_DUP]++;
 #endif
-          p2p_send_ctl (P2P_OPEN_ACK, addr, (tid << 16) + (i << 22) + RC_OK);
+          p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + (i << 22) + RC_OK);
 
 	  desc->tcount = open_ack_retry;
 
-	  event_t* e = event_new (p2p_data_timeout, (uint) desc, 0);
+	  event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
 
 	  if (e != NULL)
 	    {
 	      desc->event = e;
 	      desc->event_id = e->ID;
-	      timer_schedule (e, data_time);
+	      timer_schedule(e, data_time);
 	    }
 	  else
 	    {
-	      sw_error (SW_OPT);
+	      sw_error(SW_OPT);
 	    }
 
 	  return;
@@ -569,7 +582,7 @@ void p2p_open_req (uint data, uint addr)
 
   if (rid == P2P_NUM_STR)  // No free streams - send busy
     {
-      p2p_send_ctl (P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
+      p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
 #ifdef STATS
       p2p_stats[P2P_BUSY1]++;
 #endif
@@ -578,11 +591,11 @@ void p2p_open_req (uint data, uint addr)
 
   desc = rx_desc_table + rid;
 
-  sdp_msg_t *msg = sark_msg_get ();
+  sdp_msg_t *msg = sark_msg_get();
 
   if (msg == NULL)
     {
-      p2p_send_ctl (P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
+      p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
 #ifdef STATS
       p2p_stats[P2P_BUSY2]++;
 #endif
@@ -608,7 +621,7 @@ void p2p_open_req (uint data, uint addr)
   ptr[-2] = len;
   ptr[-1] = len >> 8;
 
-  p2p_send_ctl (P2P_OPEN_ACK, addr, (tid << 16) + (rid << 21) + RC_OK); //##
+  p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + (rid << 21) + RC_OK); //##
 
   desc->tcount = open_ack_retry;
 
@@ -617,17 +630,17 @@ void p2p_open_req (uint data, uint addr)
   p2p_stats[P2P_OPENS]++;
 #endif
 
-  event_t* e = event_new (p2p_data_timeout, (uint) desc, 0);
+  event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
 
   if (e != NULL)
     {
       desc->event = e;
       desc->event_id = e->ID;
-      timer_schedule (e, data_time);
+      timer_schedule(e, data_time);
     }
   else
     {
-      sw_error (SW_OPT);
+      sw_error(SW_OPT);
     }
 }
 
@@ -636,7 +649,7 @@ void p2p_open_req (uint data, uint addr)
 // then give up
 // State should be RX_CLOSE_REQ
 
-void p2p_close_timeout (uint rxd, uint rid)
+void p2p_close_timeout(uint rxd, uint rid)
 {
   rx_desc_t *desc = (rx_desc_t *) rxd;
 
@@ -646,31 +659,32 @@ void p2p_close_timeout (uint rxd, uint rid)
 
   if (desc->tcount == 0)
     {
-      sark_msg_free (desc->msg);
+      sark_msg_free(desc->msg);
       desc->state = RX_IDLE;
       return;
     }
 
   desc->tcount--;
 
-  p2p_send_ctl (P2P_CLOSE_REQ, desc->srce, (rid << 21) + (desc->tid << 16)); //##
-  
-  event_t* e = event_new (p2p_close_timeout, (uint) desc, rid);
+  p2p_send_ctl(P2P_CLOSE_REQ, desc->srce,
+	  (rid << 21) + (desc->tid << 16)); //##
+
+  event_t* e = event_new(p2p_close_timeout, (uint) desc, rid);
 
   if (e != NULL)
     {
       desc->event = e;
       desc->event_id = e->ID;
-      timer_schedule (e, close_ack_time);
+      timer_schedule(e, close_ack_time);
     }
   else
     {
-      sw_error (SW_OPT);
+      sw_error(SW_OPT);
     }
 }
 
 
-void p2p_close_ack (uint data, uint srce)
+void p2p_close_ack(uint data, uint srce)
 {
   uint rid = (data >> 21) & 7; //##
   rx_desc_t *desc = rx_desc_table + rid;
@@ -680,9 +694,9 @@ void p2p_close_ack (uint data, uint srce)
   if (desc->state == RX_CLOSE_REQ && desc->tid == tid && desc->srce == srce)
     {
       desc->state = RX_IDLE;
-      timer_cancel (desc->event, desc->event_id); // p2p_close_timeout
+      timer_cancel(desc->event, desc->event_id); // p2p_close_timeout
 
-      msg_queue_insert (desc->msg, 0);
+      msg_queue_insert(desc->msg, 0);
     }
 }
 
@@ -698,7 +712,7 @@ void p2p_close_ack (uint data, uint srce)
 	+---+-+---------+---------------+---------------+---------------+
 */
 
-void p2p_rcv_data (uint data, uint addr)
+void p2p_rcv_data(uint data, uint addr)
 {
   uint rid = (data >> 29) & 7; //##
   uint phase = (data >> 28) & 1; //##
@@ -724,28 +738,29 @@ void p2p_rcv_data (uint data, uint addr)
 
       if (desc->mask == 0) // Advance
 	{
-	  timer_cancel (desc->event, desc->event_id); // p2p_data_timeout
+	  timer_cancel(desc->event, desc->event_id); // p2p_data_timeout
 
 	  if (desc->done) // Close
 	    {
 	      desc->state = RX_CLOSE_REQ;
 	      desc->tcount = close_req_retry;
 
-	      p2p_send_ctl (P2P_CLOSE_REQ, desc->srce, (rid << 21) + (desc->tid << 16)); //##
+	      p2p_send_ctl(P2P_CLOSE_REQ, desc->srce,
+		      (rid << 21) + (desc->tid << 16)); //##
 
 	      // start close timout - mustn't exit until have CLOSE_ACK
 
-	      event_t* e = event_new (p2p_close_timeout, (uint) desc, rid);
+	      event_t* e = event_new(p2p_close_timeout, (uint) desc, rid);
 
 	      if (e != NULL)
 		{
 		  desc->event = e;
 		  desc->event_id = e->ID;
-		  timer_schedule (e, close_ack_time);
+		  timer_schedule(e, close_ack_time);
 		}
 	      else
 		{
-		  sw_error (SW_OPT);
+		  sw_error(SW_OPT);
 		}
 	    }
 	  else // more to do
@@ -754,22 +769,22 @@ void p2p_rcv_data (uint data, uint addr)
 	      desc->base += (3 * desc->seq_len);
 	      desc->mask = desc->new_mask;
 
-	      p2p_send_ctl (P2P_DATA_ACK, desc->srce, (phase << 21) + (desc->tid << 16) +
-			    desc->mask);
+	      p2p_send_ctl(P2P_DATA_ACK, desc->srce,
+		      (phase << 21) + (desc->tid << 16) + desc->mask);
 
 	      desc->tcount = data_ack_retry;
 
-	      event_t* e = event_new (p2p_data_timeout, (uint) desc, 0);
+	      event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
 
 	      if (e != NULL)
 		{
 		  desc->event = e;
 		  desc->event_id = e->ID;
-		  timer_schedule (e, data_time);
+		  timer_schedule(e, data_time);
 		}
 	      else
 		{
-		  sw_error (SW_OPT);
+		  sw_error(SW_OPT);
 		}
 	    }
 	}
@@ -778,7 +793,7 @@ void p2p_rcv_data (uint data, uint addr)
 
 #ifdef ASM // !! Needs updating
 
-__asm void p2p_rcv_pkt (uint data, uint addr)
+__asm void p2p_rcv_pkt(uint data, uint addr)
 {
 	code32
 	import	p2p_data_pkt
@@ -788,21 +803,21 @@ __asm void p2p_rcv_pkt (uint data, uint addr)
 	import	p2p_close_req
 	import	p2p_close_ack
 
-	tst	r0, #P2P_CTRL		; SDP control packet?
-	beq	p2p_data_pkt		; Deal with data if not
+	tst	r0, #P2P_CTRL		;// SDP control packet?
+	beq	p2p_data_pkt		;// Deal with data if not
 
-	mov	r3, lr			; Save lr
-	mov	r2, r0			; Save data in r2 while
-	bl	chksum_32		; we checksum data field
-	mov	lr, r3			; Restore lr
+	mov	r3, lr			;// Save lr
+	mov	r2, r0			;// Save data in r2 while
+	bl	chksum_32		;// we checksum data field
+	mov	lr, r3			;// Restore lr
 
-	cmp	r0, #0			; Non-zero means error
-	bxne	lr  			; so return
+	cmp	r0, #0			;// Non-zero means error
+	bxne	lr  			;// so return
 
-	mov	r0, r2			; Restore data to r0
-	and	r2, r2, #0x0f000000	; and mask ctrl type field
+	mov	r0, r2			;// Restore data to r0
+	and	r2, r2, #0x0f000000	;// and mask ctrl type field
 
-	cmp	r2, #P2P_DATA_ACK	; Check for each type
+	cmp	r2, #P2P_DATA_ACK	;// Check for each type
 	beq	p2p_data_ack
 
 	cmp	r2, #P2P_OPEN_REQ
@@ -817,27 +832,39 @@ __asm void p2p_rcv_pkt (uint data, uint addr)
 	cmp	r2, #P2P_CLOSE_ACK
 	beq	p2p_close_ack
 
-	bx	lr			; None of the above
+	bx	lr			;// None of the above
 }
 #else
-void p2p_rcv_ctrl (uint data, uint addr)
+void p2p_rcv_ctrl(uint data, uint addr)
 {
-  uint t = chksum_32 (data);
+  uint t = chksum_32(data);
 
   if (t != 0)
-    return;
+    {
+      return;
+    }
 
   uint cmd = (data >> 24) & 15;
 
   if (cmd == P2P_OPEN_REQ >> 24)
-    p2p_open_req (data, addr);
+    {
+      p2p_open_req(data, addr);
+    }
   else if (cmd == P2P_OPEN_ACK >> 24)
-    p2p_open_ack (data, addr);
+    {
+      p2p_open_ack(data, addr);
+    }
   else if (cmd == P2P_DATA_ACK >> 24)
-    p2p_data_ack (data, addr);
+    {
+      p2p_data_ack(data, addr);
+    }
   else if (cmd == P2P_CLOSE_REQ >> 24)
-    p2p_close_req (data, addr);
+    {
+      p2p_close_req(data, addr);
+    }
   else if (cmd == P2P_CLOSE_ACK >> 24)
-    p2p_close_ack (data, addr);
+    {
+      p2p_close_ack(data, addr);
+    }
 }
 #endif

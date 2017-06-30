@@ -41,7 +41,7 @@ void swap_sdp_hdr (sdp_msg_t *msg)
 }
 
 
-// Callback for SDP message received - 
+// Callback for SDP message received -
 // Print the message via Tubotron then...
 //   Port 1 - return to sender
 //   Port 2 - return to IPTag 1
@@ -74,7 +74,9 @@ void process_sdp (uint m, uint port)
   spin1_msg_free (msg);
 
   if (port == 7)
-    spin1_exit (0);
+    {
+      spin1_exit (0);
+    }
 }
 
 

@@ -157,8 +157,7 @@
 // ----------------
 /* data transfer */
 // ----------------
-typedef struct
-{
+typedef struct {
   uint id;
   uint tag;
   uint* system_address;
@@ -167,8 +166,7 @@ typedef struct
 } copy_t;
 
 
-typedef struct
-{
+typedef struct {
   uint start;
   uint end;
   copy_t queue[DMA_QUEUE_SIZE];
@@ -178,15 +176,13 @@ typedef struct
 // -----------------
 /* communications */
 // -----------------
-typedef struct
-{
+typedef struct {
   uint key;
   uint data;
   uint TCR;
 } packet_t;
 
-typedef struct
-{
+typedef struct {
   uint start;
   uint end;
   packet_t queue[TX_PACKET_QUEUE_SIZE];
@@ -196,21 +192,18 @@ typedef struct
 // -----------------------
 /* scheduler/dispatcher */
 // -----------------------
-typedef struct
-{
+typedef struct {
   callback_t cback;
   int priority;
 } cback_t;
 
-typedef struct
-{
+typedef struct {
   callback_t cback;
   uint arg0;
   uint arg1;
 } task_t;
 
-typedef struct
-{
+typedef struct {
   uint start;
   uint end;
   task_t queue[TASK_QUEUE_SIZE];

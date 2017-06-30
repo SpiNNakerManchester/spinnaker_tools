@@ -27,14 +27,13 @@ unsigned char *viewingFrame;
 unsigned int *receivedFrame;
 
 
-struct Vector3
-{
+typedef struct {
     float x, y, z;
-};
+} Vector3;
 
-struct Vector3 position = {-220.0, 50.0, 0.0};
-struct Vector3 look = {1.0, 0.0, 0.0};
-struct Vector3 up = {0.0, 1.0, 0.0};
+Vector3 position = {-220.0, 50.0, 0.0};
+Vector3 look = {1.0, 0.0, 0.0};
+Vector3 up = {0.0, 1.0, 0.0};
 
 int moving = 0;
 int strafing = 0;
@@ -51,27 +50,32 @@ float horizontalFieldOfView = 60.0;
 
 // Called every time OpenGL needs to update the display
 
-void display (void)
+void display(void)
 {
-  glClearColor (1.0, 1.0, 1.0, 0.001);
-  glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-  glDrawPixels (windowWidth, windowHeight, GL_RGB, GL_UNSIGNED_BYTE, viewingFrame);
-  glutSwapBuffers ();
+  glClearColor(1.0, 1.0, 1.0, 0.001);
+  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+  glDrawPixels(windowWidth, windowHeight, GL_RGB, GL_UNSIGNED_BYTE, viewingFrame);
+  glutSwapBuffers();
 }
 
 
-void reshape (int width, int height)
+void reshape(
+	int width,
+	int height)
 {
   windowWidth = MIN(width, frameWidth);
   windowHeight = MIN(height, frameHeight);
-  glViewport (0, 0, (GLsizei) width, (GLsizei) height);
-  glLoadIdentity ();
+  glViewport(0, 0, (GLsizei) width, (GLsizei) height);
+  glLoadIdentity();
 }
 
 
-void special (int key, int x, int y)
+void special(
+	int key,
+	int x,
+	int y)
 {
-  switch(key)
+  switch (key)
     {
     case GLUT_KEY_UP:
       turningUpDown = -1;
@@ -89,7 +93,10 @@ void special (int key, int x, int y)
 }
 
 
-void specialUp (int key, int x, int y)
+void specialUp(
+	int key,
+	int x,
+	int y)
 {
   switch (key)
     {
@@ -109,9 +116,12 @@ void specialUp (int key, int x, int y)
 }
 
 
-void keyPressed (unsigned char key, int x, int y)
+void keyPressed(
+	unsigned char key,
+	int x,
+	int y)
 {
-  switch(key)
+  switch (key)
     {
     case 'w':
       moving = 1;
@@ -135,9 +145,12 @@ void keyPressed (unsigned char key, int x, int y)
 }
 
 
-void keyReleased (unsigned char key, int x, int y)
+void keyReleased(
+	unsigned char key,
+	int x,
+	int y)
 {
-  switch(key)
+  switch (key)
     {
     case 'w':
       moving = 0;
@@ -161,34 +174,42 @@ void keyReleased (unsigned char key, int x, int y)
 }
 
 
-struct Vector3 fVectorNormalise(struct Vector3 in)
+Vector3 fVectorNormalise(
+	Vector3 in)
 {
-  float magnitudeReciprocal = 1.0 / sqrt (in.x * in.x + in.y * in.y + in.z * in.z);
-  struct Vector3 result = {in.x * magnitudeReciprocal,
-            in.y * magnitudeReciprocal,
-            in.z * magnitudeReciprocal};
+  float magnitudeReciprocal = 1.0 / sqrt(in.x*in.x + in.y*in.y + in.z*in.z);
+  Vector3 result = {
+	  in.x * magnitudeReciprocal,
+	  in.y * magnitudeReciprocal,
+	  in.z * magnitudeReciprocal};
   return result;
 }
 
 
-struct Vector3 fVectorCrossProduct(struct Vector3 a, struct Vector3 b)
+Vector3 fVectorCrossProduct(
+	Vector3 a,
+	Vector3 b)
 {
-  struct Vector3 result = {a.y * b.z - a.z * b.y,
-            a.z * b.x - a.x * b.z,
-            a.x * b.y - a.y * b.x};
+  Vector3 result = {
+	  a.y * b.z - a.z * b.y,
+	  a.z * b.x - a.x * b.z,
+	  a.x * b.y - a.y * b.x};
   return result;
 }
 
 
 // Rotate the first vector around the second
 
-struct Vector3 fVectorRotate (struct Vector3 rotated, struct Vector3 rotateAbout, float amount)
+Vector3 fVectorRotate(
+	Vector3 rotated,
+	Vector3 rotateAbout,
+	float amount)
 {
-  float c = cos (amount);
-  float s = sin (amount);
-  float t = 1-cos (amount);
+  float c = cos(amount);
+  float s = sin(amount);
+  float t = 1 - cos(amount);
 
-  struct Vector3 result;
+  Vector3 result;
 
   result.x = rotated.x * (t * rotateAbout.x * rotateAbout.x + c) +
     rotated.y * (t * rotateAbout.x * rotateAbout.y + s * rotateAbout.z) +
@@ -202,12 +223,13 @@ struct Vector3 fVectorRotate (struct Vector3 rotated, struct Vector3 rotateAbout
     rotated.y * (t * rotateAbout.y * rotateAbout.z - s * rotateAbout.x) +
     rotated.z * (t * rotateAbout.z * rotateAbout.z + c);
 
-  result = fVectorNormalise (result);
+  result = fVectorNormalise(result);
   return result;
 }
 
 
-void calculateMovement (int timestep)
+void calculateMovement(
+	int timestep)
 {
   // Forward movement
 
@@ -215,7 +237,7 @@ void calculateMovement (int timestep)
   position.y += look.y * timestep * moveAmount * moving;
   position.z += look.z * timestep * moveAmount * moving;
 
-  struct Vector3 right = fVectorCrossProduct (up,look);
+  Vector3 right = fVectorCrossProduct(up, look);
 
   // Strafing movement
 
@@ -240,18 +262,18 @@ void calculateMovement (int timestep)
 
 clock_t prevTime;
 
-void idleFunctionLoop ()
+void idleFunctionLoop(void)
 {
-  //reshape (frameWidth,frameHeight);
+  //reshape(frameWidth, frameHeight);
 
-  clock_t currTime = clock ();
+  clock_t currTime = clock();
 
   // Calculate movement ten times a second
 
   if (currTime > prevTime + 10000)
     {
       int timeSinceLastUpdate = currTime - prevTime;
-      calculateMovement (timeSinceLastUpdate);
+      calculateMovement(timeSinceLastUpdate);
 
       prevTime = currTime;
       display();
@@ -259,7 +281,9 @@ void idleFunctionLoop ()
 }
 
 
-int main (int argc, char **argv)
+int main(
+	int argc,
+	char **argv)
 {
 
 #ifdef WIN32
@@ -272,39 +296,41 @@ int main (int argc, char **argv)
 
   pthread_t p1;				// this sets up the thread that can come back to here from type
 
-  init_udp_server_spinnaker ();		//initialization of the port for receiving SpiNNaker frames
+  init_udp_server_spinnaker();		//initialization of the port for receiving SpiNNaker frames
 
   frameHeight = (argc > 1 ? atoi (argv[1]) : 256);
   frameWidth = (int) ((((int) horizontalFieldOfView * frameHeight)) / verticalFieldOfView);
 
-  prevTime = clock ();
-  viewingFrame = (unsigned char*) malloc (sizeof(unsigned char) * frameWidth * frameHeight * 3);
+  prevTime = clock();
+  viewingFrame = (unsigned char*) malloc(sizeof(unsigned char) * frameWidth * frameHeight * 3);
 
-  receivedFrame = (unsigned int*) malloc (sizeof(unsigned int) * frameWidth * frameHeight);
+  receivedFrame = (unsigned int*) malloc(sizeof(unsigned int) * frameWidth * frameHeight);
 
   int i;
   for (i = 0; i < frameWidth * frameHeight; i++)
-    receivedFrame[i] = 0;
+    {
+      receivedFrame[i] = 0;
+    }
 
-  pthread_create (&p1, NULL, input_thread, NULL);	// away it goes
+  pthread_create(&p1, NULL, input_thread, NULL); // away it goes
 
-  glutInit (&argc, argv);               // Initialise OpenGL
-  glutInitDisplayMode (GLUT_DOUBLE);    // Set the display mode
-  glutInitWindowSize (frameWidth, frameHeight);         // Set the window size
-  glutInitWindowPosition (0, 0);    	// Set the window position
-  glutCreateWindow ("Path Tracer");  	// Create the window
+  glutInit(&argc, argv);		// Initialise OpenGL
+  glutInitDisplayMode(GLUT_DOUBLE);	// Set the display mode
+  glutInitWindowSize(frameWidth, frameHeight); // Set the window size
+  glutInitWindowPosition(0, 0);		// Set the window position
+  glutCreateWindow("Path Tracer");	// Create the window
 
-  glEnable (GL_BLEND);
-  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable (GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_DEPTH_TEST);
 
-  glutDisplayFunc (display);             // Register the "display" function
-  glutReshapeFunc (reshape);             // Register the "reshape" function
-  glutSpecialFunc (special);
-  glutSpecialUpFunc (specialUp);
-  glutKeyboardFunc (keyPressed);
-  glutKeyboardUpFunc (keyReleased);
-  glutIdleFunc (idleFunctionLoop);
+  glutDisplayFunc(display);		// Register the "display" function
+  glutReshapeFunc(reshape);		// Register the "reshape" function
+  glutSpecialFunc(special);
+  glutSpecialUpFunc(specialUp);
+  glutKeyboardFunc(keyPressed);
+  glutKeyboardUpFunc(keyReleased);
+  glutIdleFunc(idleFunctionLoop);
 
   glutMainLoop(); // Enter the main OpenGL loop
 

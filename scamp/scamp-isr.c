@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // scamp-isr.c	    SC&MP interrupt routines
@@ -50,20 +49,24 @@ INT_HANDLER pkt_tx_int () // SPIN2 - optimise for register order??
   pkt_queue_t *txq = &tx_pkt_queue;
 
   txq->remove = (txq->remove + 1) % PKT_QUEUE_SIZE;
-  
+
   pkt_t *pkt = txq->queue + txq->remove;
 
   cc[CC_TCR] = pkt->ctrl;
 
   if (pkt->ctrl & PKT_PL)
-    cc[CC_TXDATA] = pkt->data;
+    {
+      cc[CC_TXDATA] = pkt->data;
+    }
 
   cc[CC_TXKEY] = pkt->key;
 
   txq->count--;
 
   if (txq->count == 0)
-    vic[VIC_DISABLE] = 1 << CC_TMT_INT;
+    {
+      vic[VIC_DISABLE] = 1 << CC_TMT_INT;
+    }
 
   vic[VIC_VADDR] = (uint) vic;
 }
@@ -106,29 +109,29 @@ __asm void eth_rx_int (void)
 	import	eth_receive
 	preserve8
 
-    	sub  	lr, lr, #4		; Adjust LR_irq and save
-    	stmfd  	sp!, {r0, lr}		; with r0
+    	sub  	lr, lr, #4		;; Adjust LR_irq and save
+    	stmfd  	sp!, {r0, lr}		;; with r0
 
-    	mrs    	lr, spsr		; Get SPSR_irq to LR
-    	stmfd  	sp!, {r12, lr}  	; Save SPSR & r12
+    	mrs    	lr, spsr		;; Get SPSR_irq to LR
+    	stmfd  	sp!, {r12, lr}  	;; Save SPSR & r12
 
-    	msr    	cpsr_c, #MODE_SYS    	; Go to SYS mode, interrupts enabled
+    	msr    	cpsr_c, #MODE_SYS    	;; Go to SYS mode, interrupts enabled
 
-    	stmfd  	sp!, {r1-r3, lr} 	; Save working regs and LR_sys
+    	stmfd  	sp!, {r1-r3, lr} 	;; Save working regs and LR_sys
 
     	bl     	eth_receive
 
-    	ldmfd  	sp!, {r1-r3, lr} 	; Restore working regs & LR_sys
+    	ldmfd  	sp!, {r1-r3, lr} 	;; Restore working regs & LR_sys
 
     	msr    	cpsr_c, #MODE_IRQ+IMASK_IRQ ; Back to IRQ mode, IRQ disabled
 
-	mov    	r12, #VIC_BASE		; Tell VIC we are done
+	mov    	r12, #VIC_BASE		;; Tell VIC we are done
 	str    	r12, [r12, #VIC_VADDR * 4]
 
-    	ldmfd  	sp!, {r12, lr} 	      	; Restore r12 & SPSR_irq
+    	ldmfd  	sp!, {r12, lr} 	      	;; Restore r12 & SPSR_irq
     	msr    	spsr_cxsf, lr
 
-    	ldmfd  	sp!, {r0, pc}^       	; and return restoring r0
+    	ldmfd  	sp!, {r0, pc}^       	;; and return restoring r0
 }
 #endif
 
@@ -144,7 +147,9 @@ INT_HANDLER pkt_mc_int ()
   // Checksum ??
 
   if (key == 0xffff5555)
-    signal_app (data);
+    {
+      signal_app (data);
+    }
 
 #if MC_SLOT != SLOT_FIQ
   vic[VIC_VADDR] = (uint) vic;
@@ -228,7 +233,9 @@ INT_HANDLER ms_timer_int ()
       sv->unix_time++;
 
       if (!event_queue_proc (proc_1hz, 0, 0, PRIO_2)) // !!const
-	sw_error (SW_OPT);
+        {
+	  sw_error (SW_OPT);
+        }
     }
 
   sv->time_ms = ms;
@@ -240,11 +247,15 @@ INT_HANDLER ms_timer_int ()
       cs = 0;
 
       if (!event_queue_proc (proc_100hz, 0, 0, PRIO_1)) // !!const
-	sw_error (SW_OPT);
+        {
+	  sw_error (SW_OPT);
+        }
     }
-  
+
   if (!event_queue_proc (proc_1khz, 0, 0, PRIO_1)) // !!const
-    sw_error (SW_OPT);
+    {
+      sw_error (SW_OPT);
+    }
 
   centi_ms = cs;
 
@@ -271,7 +282,9 @@ INT_HANDLER ap_int ()
     {
       next_box++;
       if (next_box >= num_cpus)
-	next_box = 0;
+        {
+	  next_box = 0;
+        }
     }
   while ((sv->mbox_flags & (1 << next_box)) == 0);
 
@@ -285,8 +298,10 @@ INT_HANDLER ap_int ()
   sv->mbox_flags &= ~(1 << next_box);
 
   if (sv->mbox_flags == 0)
-    sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);
-	  
+    {
+      sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);
+    }
+
   sark_lock_free (cpsr, LOCK_MBOX);
 
   if (cmd == SHM_MSG)
@@ -294,14 +309,16 @@ INT_HANDLER ap_int ()
       vcpu->mbox_mp_cmd = SHM_IDLE;
 
       sdp_msg_t *msg = sark_msg_get ();
-	  
+
       if (msg != NULL)
 	{
 	  sark_msg_cpy (msg, shm_msg);
 	  msg_queue_insert (msg, 0);
 	}
       else
-	sw_error (SW_OPT);
+        {
+	  sw_error (SW_OPT);
+        }
 
       sark_shmsg_free (shm_msg);
     }

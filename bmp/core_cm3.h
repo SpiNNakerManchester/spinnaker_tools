@@ -101,7 +101,6 @@
 /*@} end of group CMSIS_core_definitions */
 
 
-
 /*******************************************************************************
  *                 Register Abstraction
  ******************************************************************************/
@@ -123,10 +122,8 @@
 
 /** \brief  Union type to access the Application Program Status Register (APSR).
  */
-typedef union
-{
-  struct
-  {
+typedef union {
+  struct {
 #if (__CORTEX_M != 0x04)
     uint32_t _reserved0:27;              /*!< bit:  0..26  Reserved                           */
 #else
@@ -146,10 +143,8 @@ typedef union
 
 /** \brief  Union type to access the Interrupt Program Status Register (IPSR).
  */
-typedef union
-{
-  struct
-  {
+typedef union {
+  struct {
     uint32_t ISR:9;                      /*!< bit:  0.. 8  Exception number                   */
     uint32_t _reserved0:23;              /*!< bit:  9..31  Reserved                           */
   } b;                                   /*!< Structure used for bit  access                  */
@@ -159,10 +154,8 @@ typedef union
 
 /** \brief  Union type to access the Special-Purpose Program Status Registers (xPSR).
  */
-typedef union
-{
-  struct
-  {
+typedef union {
+  struct {
     uint32_t ISR:9;                      /*!< bit:  0.. 8  Exception number                   */
 #if (__CORTEX_M != 0x04)
     uint32_t _reserved0:15;              /*!< bit:  9..23  Reserved                           */
@@ -185,10 +178,8 @@ typedef union
 
 /** \brief  Union type to access the Control Registers (CONTROL).
  */
-typedef union
-{
-  struct
-  {
+typedef union {
+  struct {
     uint32_t nPRIV:1;                    /*!< bit:      0  Execution privilege in Thread mode */
     uint32_t SPSEL:1;                    /*!< bit:      1  Stack to be used                   */
     uint32_t FPCA:1;                     /*!< bit:      2  FP extension active flag           */
@@ -208,8 +199,7 @@ typedef union
 
 /** \brief  Structure type to access the Nested Vectored Interrupt Controller (NVIC).
  */
-typedef struct
-{
+typedef struct {
   __IO uint32_t ISER[8];                 /*!< Offset: 0x000 (R/W)  Interrupt Set Enable Register           */
        uint32_t RESERVED0[24];
   __IO uint32_t ICER[8];                 /*!< Offset: 0x080 (R/W)  Interrupt Clear Enable Register         */
@@ -236,8 +226,7 @@ typedef struct
 
 /** \brief  Structure type to access the System Control Block (SCB).
  */
-typedef struct
-{
+typedef struct {
   __I  uint32_t CPUID;                   /*!< Offset: 0x000 (R/ )  CPU ID Base Register                                  */
   __IO uint32_t ICSR;                    /*!< Offset: 0x004 (R/W)  Interrupt Control State Register                      */
   __IO uint32_t VTOR;                    /*!< Offset: 0x008 (R/W)  Vector Table Offset Register                          */
@@ -451,8 +440,7 @@ typedef struct
 
 /** \brief  Structure type to access the System Timer (SysTick).
  */
-typedef struct
-{
+typedef struct {
   __IO uint32_t CTRL;                    /*!< Offset: 0x000 (R/W)  SysTick Control and Status Register */
   __IO uint32_t LOAD;                    /*!< Offset: 0x004 (R/W)  SysTick Reload Value Register       */
   __IO uint32_t VAL;                     /*!< Offset: 0x008 (R/W)  SysTick Current Value Register      */
@@ -501,10 +489,8 @@ typedef struct
 
 /** \brief  Structure type to access the Instrumentation Trace Macrocell Register (ITM).
  */
-typedef struct
-{
-  __O  union
-  {
+typedef struct {
+  __O  union {
     __O  uint8_t    u8;                  /*!< Offset: 0x000 ( /W)  ITM Stimulus Port 8-bit                   */
     __O  uint16_t   u16;                 /*!< Offset: 0x000 ( /W)  ITM Stimulus Port 16-bit                  */
     __O  uint32_t   u32;                 /*!< Offset: 0x000 ( /W)  ITM Stimulus Port 32-bit                  */
@@ -603,8 +589,7 @@ typedef struct
 //!! ST
 #define __CM3_REV 0x200
 
-typedef struct
-{
+typedef struct {
        uint32_t RESERVED0;
   __I  uint32_t ICTR;                    /*!< Offset: 0x004 (R/ )  Interrupt Control Type Register */
 #if ((defined __CM3_REV) && (__CM3_REV >= 0x200))
@@ -640,8 +625,7 @@ typedef struct
 
 /** \brief  Structure type to access the Memory Protection Unit (MPU).
  */
-typedef struct
-{
+typedef struct {
   __I  uint32_t TYPE;                    /*!< Offset: 0x000 (R/ )  MPU Type Register                              */
   __IO uint32_t CTRL;                    /*!< Offset: 0x004 (R/W)  MPU Control Register                           */
   __IO uint32_t RNR;                     /*!< Offset: 0x008 (R/W)  MPU Region RNRber Register                     */
@@ -729,8 +713,7 @@ typedef struct
 
 /** \brief  Structure type to access the Core Debug Register (CoreDebug).
  */
-typedef struct
-{
+typedef struct {
   __IO uint32_t DHCSR;                   /*!< Offset: 0x000 (R/W)  Debug Halting Control and Status Register    */
   __O  uint32_t DCRSR;                   /*!< Offset: 0x004 ( /W)  Debug Core Register Selector Register        */
   __IO uint32_t DCRDR;                   /*!< Offset: 0x008 (R/W)  Debug Core Register Data Register            */
@@ -851,7 +834,6 @@ typedef struct
 /*@} */
 
 
-
 /*******************************************************************************
  *                Hardware Abstraction Layer
  ******************************************************************************/
@@ -862,7 +844,6 @@ typedef struct
   - Core Debug Functions
   - Core Register Access Functions
 */
-
 
 
 /* ##########################   NVIC functions  #################################### */
@@ -906,7 +887,7 @@ static __INLINE void NVIC_SetPriorityGrouping(uint32_t PriorityGroup)
  */
 static __INLINE uint32_t NVIC_GetPriorityGrouping(void)
 {
-  return ((SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) >> SCB_AIRCR_PRIGROUP_Pos);   /* read priority grouping field */
+  return (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) >> SCB_AIRCR_PRIGROUP_Pos;   /* read priority grouping field */
 }
 
 
@@ -947,7 +928,7 @@ static __INLINE void NVIC_DisableIRQ(IRQn_Type IRQn)
  */
 static __INLINE uint32_t NVIC_GetPendingIRQ(IRQn_Type IRQn)
 {
-  return((uint32_t) ((NVIC->ISPR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0)); /* Return 1 if pending else 0 */
+  return (uint32_t) ((NVIC->ISPR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0); /* Return 1 if pending else 0 */
 }
 
 
@@ -986,7 +967,7 @@ static __INLINE void NVIC_ClearPendingIRQ(IRQn_Type IRQn)
  */
 static __INLINE uint32_t NVIC_GetActive(IRQn_Type IRQn)
 {
-  return((uint32_t)((NVIC->IABR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0)); /* Return 1 if active else 0 */
+  return (uint32_t) ((NVIC->IABR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0); /* Return 1 if active else 0 */
 }
 
 
@@ -1003,10 +984,16 @@ static __INLINE uint32_t NVIC_GetActive(IRQn_Type IRQn)
  */
 static __INLINE void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
 {
-  if(IRQn < 0) {
-    SCB->SHP[((uint32_t)(IRQn) & 0xF)-4] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff); } /* set Priority for Cortex-M  System Interrupts */
-  else {
-    NVIC->IP[(uint32_t)(IRQn)] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff);    }        /* set Priority for device specific Interrupts  */
+  if (IRQn < 0)
+    {
+      /* set Priority for Cortex-M  System Interrupts */
+      SCB->SHP[((uint32_t) IRQn & 0xF)-4] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff);
+    }
+  else
+    {
+      /* set Priority for device specific Interrupts  */
+      NVIC->IP[(uint32_t) IRQn] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff);
+    }
 }
 
 
@@ -1025,10 +1012,16 @@ static __INLINE void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
 static __INLINE uint32_t NVIC_GetPriority(IRQn_Type IRQn)
 {
 
-  if(IRQn < 0) {
-    return((uint32_t)(SCB->SHP[((uint32_t)(IRQn) & 0xF)-4] >> (8 - __NVIC_PRIO_BITS)));  } /* get priority for Cortex-M  system interrupts */
-  else {
-    return((uint32_t)(NVIC->IP[(uint32_t)(IRQn)]           >> (8 - __NVIC_PRIO_BITS)));  } /* get priority for device specific interrupts  */
+  if (IRQn < 0)
+    {
+      /* get priority for Cortex-M  system interrupts */
+      return (uint32_t) (SCB->SHP[((uint32_t) IRQn & 0xF)-4] >> (8 - __NVIC_PRIO_BITS));
+    }
+  else
+    {
+      /* get priority for device specific interrupts  */
+      return (uint32_t) (NVIC->IP[(uint32_t) IRQn] >> (8 - __NVIC_PRIO_BITS));
+    }
 }
 
 
@@ -1055,10 +1048,8 @@ static __INLINE uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t P
   PreemptPriorityBits = ((7 - PriorityGroupTmp) > __NVIC_PRIO_BITS) ? __NVIC_PRIO_BITS : 7 - PriorityGroupTmp;
   SubPriorityBits     = ((PriorityGroupTmp + __NVIC_PRIO_BITS) < 7) ? 0 : PriorityGroupTmp - 7 + __NVIC_PRIO_BITS;
 
-  return (
-           ((PreemptPriority & ((1 << (PreemptPriorityBits)) - 1)) << SubPriorityBits) |
-           ((SubPriority     & ((1 << (SubPriorityBits    )) - 1)))
-         );
+  return ((PreemptPriority & ((1 << (PreemptPriorityBits)) - 1)) << SubPriorityBits) |
+         ((SubPriority     & ((1 << (SubPriorityBits    )) - 1)));
 }
 
 
@@ -1102,7 +1093,7 @@ static __INLINE void NVIC_SystemReset(void)
                  (SCB->AIRCR & SCB_AIRCR_PRIGROUP_Msk) |
                  SCB_AIRCR_SYSRESETREQ_Msk);                   /* Keep priority group unchanged */
   __DSB();                                                     /* Ensure completion of memory access */
-  while(1);                                                    /* wait until reset */
+  while (1) {}                                                 /* wait until reset */
 }
 
 /*@} end of CMSIS_Core_NVICFunctions */
@@ -1132,7 +1123,10 @@ static __INLINE void NVIC_SystemReset(void)
  */
 static __INLINE uint32_t SysTick_Config(uint32_t ticks)
 {
-  if (ticks > SysTick_LOAD_RELOAD_Msk)  return (1);            /* Reload value impossible */
+  if (ticks > SysTick_LOAD_RELOAD_Msk)                         /* Reload value impossible */
+    {
+      return 1;
+    }
 
   SysTick->LOAD  = (ticks & SysTick_LOAD_RELOAD_Msk) - 1;      /* set reload register */
   NVIC_SetPriority (SysTick_IRQn, (1<<__NVIC_PRIO_BITS) - 1);  /* set Priority for Cortex-M0 System Interrupts */
@@ -1140,13 +1134,12 @@ static __INLINE uint32_t SysTick_Config(uint32_t ticks)
   SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
                    SysTick_CTRL_TICKINT_Msk   |
                    SysTick_CTRL_ENABLE_Msk;                    /* Enable SysTick IRQ and SysTick Timer */
-  return (0);                                                  /* Function successful */
+  return 0;                                                    /* Function successful */
 }
 
 #endif
 
 /*@} end of CMSIS_Core_SysTickFunctions */
-
 
 
 /* ##################################### Debug In/Output function ########################################### */
@@ -1168,16 +1161,16 @@ extern volatile int32_t ITM_RxBuffer;                    /*!< external variable 
     \param [in]     ch  Character to transmit
     \return             Character to transmit
  */
-static __INLINE uint32_t ITM_SendChar (uint32_t ch)
+static __INLINE uint32_t ITM_SendChar(uint32_t ch)
 {
   if ((CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk)  &&      /* Trace enabled */
       (ITM->TCR & ITM_TCR_ITMENA_Msk)                  &&      /* ITM enabled */
       (ITM->TER & (1UL << 0)        )                    )     /* ITM Port #0 enabled */
-  {
-    while (ITM->PORT[0].u32 == 0);
-    ITM->PORT[0].u8 = (uint8_t) ch;
-  }
-  return (ch);
+    {
+      while (ITM->PORT[0].u32 == 0) {}
+      ITM->PORT[0].u8 = (uint8_t) ch;
+    }
+  return ch;
 }
 
 
@@ -1190,15 +1183,16 @@ static __INLINE uint32_t ITM_SendChar (uint32_t ch)
     \return             Received character
     \return         -1  No character received
  */
-static __INLINE int32_t ITM_ReceiveChar (void) {
+static __INLINE int32_t ITM_ReceiveChar(void)
+{
   int32_t ch = -1;                           /* no character available */
 
-  if (ITM_RxBuffer != ITM_RXBUFFER_EMPTY) {
-    ch = ITM_RxBuffer;
-    ITM_RxBuffer = ITM_RXBUFFER_EMPTY;       /* ready for next character */
-  }
-
-  return (ch);
+  if (ITM_RxBuffer != ITM_RXBUFFER_EMPTY)
+    {
+      ch = ITM_RxBuffer;
+      ITM_RxBuffer = ITM_RXBUFFER_EMPTY;     /* ready for next character */
+    }
+  return ch;
 }
 
 
@@ -1210,13 +1204,16 @@ static __INLINE int32_t ITM_ReceiveChar (void) {
     \return          0  No character available
     \return          1  Character available
  */
-static __INLINE int32_t ITM_CheckChar (void) {
-
-  if (ITM_RxBuffer == ITM_RXBUFFER_EMPTY) {
-    return (0);                                 /* no character available */
-  } else {
-    return (1);                                 /*    character available */
-  }
+static __INLINE int32_t ITM_CheckChar(void)
+{
+  if (ITM_RxBuffer == ITM_RXBUFFER_EMPTY)
+    {
+      return 0;                               /* no character available */
+    }
+  else
+    {
+      return 1;                               /*    character available */
+    }
 }
 
 /*@} end of CMSIS_core_DebugFunctions */

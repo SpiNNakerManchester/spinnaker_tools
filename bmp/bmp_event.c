@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // bmp_event.c	    Event handling routines for BMP LPC1768
@@ -142,8 +141,9 @@ void TIMER3_IRQHandler (void)
   while (eq != NULL)			// Run the execute queue
     {
       if (eq->proc != NULL)		// Execute proc if non-NULL
-      	eq->proc (eq->arg1, eq->arg2);
-
+	{
+	  eq->proc (eq->arg1, eq->arg2);
+	}
       event_t* next = eq->next;
 
       eq->next = event_list;		// Return to free queue
@@ -188,8 +188,9 @@ void event_cancel (event_t *e, uint32_t ID)
 		  pq->next = e->next;
 
 		  if (e->next != NULL)	// Add our time to next in queue
-		    e->next->time += e->time;
-
+		    {
+		      e->next->time += e->time;
+		    }
 		  e->next = event_list;	// Return to free queue
 		  event_list = e;
 		  e->ID = 0;
@@ -223,8 +224,9 @@ event_t* event_new (event_proc proc, uint32_t arg1, uint32_t arg2)
       uint32_t next_id = event_id + 1;
 
       if (next_id == 0)
-	next_id = 1;
-
+	{
+	  next_id = 1;
+	}
       event_list = e->next;
       e->next = NULL;
 
@@ -237,7 +239,9 @@ event_t* event_new (event_proc proc, uint32_t arg1, uint32_t arg2)
 
       event_count++;
       if (event_count > event_max)
-	event_max = event_count;
+	{
+	  event_max = event_count;
+	}
     }
 
   cpu_int_restore (cpsr);

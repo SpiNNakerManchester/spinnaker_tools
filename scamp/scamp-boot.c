@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // scamp-boot.c	    BootROM support for SC&MP
@@ -22,7 +21,7 @@
 
 #define BOOT_BUF (DTCM_BASE + 0x8000)
 
-#define BLOCK_COUNT	28	// From 1-256, 
+#define BLOCK_COUNT	28	// From 1-256,
 #define WORD_COUNT	256	// From 1-256, BLOCK_COUNT * WORD_COUNT must be < 32kB
 #define BYTE_COUNT	(WORD_COUNT * sizeof (uint))
 
@@ -89,7 +88,9 @@ uint crc32 (uchar *buf, uint len)
   uint crc = 0xffffffff;
 
   while (len--)
-    crc = crc_table [(crc ^ (*buf++)) & 0xff] ^ (crc >> 8);
+    {
+      crc = crc_table [(crc ^ (*buf++)) & 0xff] ^ (crc >> 8);
+    }
 
   return crc ^ 0xffffffff;
 }
@@ -102,8 +103,10 @@ void nn_tx (uint key, uint data)
   for (uint link = 0; link < NUM_LINKS; link++)
     {
       while ((cc[CC_TCR] & BIT_31) == 0)
-	continue;
-	
+        {
+	  continue;
+        }
+
       cc[CC_TCR] = 0x00820000 | link << 18;
       cc[CC_TXDATA] = data;
       cc[CC_TXKEY] = key;
@@ -127,14 +130,14 @@ void boot_nn (uint hw_ver)
   uint data = (FF_TARGET_MONITOR << 24) | ((BLOCK_COUNT - 1) << 16);
 
   nn_tx (key, data);
-	
+
   for (uint j = 0; j < BLOCK_COUNT; j++)
     {
       key = FF_BLOCK_START_PHASE_1 | (j << 16) | ((WORD_COUNT - 1) << 8);
       data = j * BYTE_COUNT;
 
       nn_tx (key, data);
-      
+
       for (uint k = 0; k < WORD_COUNT; k++)
 	{
 	  key = FF_BLOCK_DATA_PHASE_1 | (j << 16) | (k << 0x8);
@@ -142,13 +145,13 @@ void boot_nn (uint hw_ver)
 
 	  nn_tx (key, data);
 	}
-      
+
       key = FF_BLOCK_END_PHASE_1 | (j << 16);
       data = crc32 ((uchar *) (image + j * WORD_COUNT), BYTE_COUNT);
-		
+
       nn_tx (key, data);
     }
-	
+
   key = FF_CONTROL_PHASE_1;
 
   nn_tx (key, 0);

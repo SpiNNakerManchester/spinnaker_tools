@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // spinn_net.c	    Ethernet/IP support routines for Spinnaker
@@ -33,7 +32,9 @@ const uchar zero_mac[] = {0, 0, 0, 0, 0, 0};
 static void lock_get (uint lock)
 {
   while (sc[SC_TAS0 + lock] & BIT_31)
-    continue;
+    {
+      continue;
+    }
 }
 
 
@@ -71,13 +72,19 @@ void eth_init (uchar *mac)
 uint ipsum (uchar *d, uint len, uint sum) // Use shorts for speed??
 {
   if (len & 1)
-    sum += d[--len] << 8;
+    {
+      sum += d[--len] << 8;
+    }
 
   for (uint i = 0; i < len; i += 2)
-    sum += (d[i] << 8) + d[i+1];
+    {
+      sum += (d[i] << 8) + d[i+1];
+    }
 
   while (sum >> 16)
-    sum = (sum >> 16) + (sum & 0xffff);
+    {
+      sum = (sum >> 16) + (sum & 0xffff);
+    }
 
   return sum;
 }
@@ -146,12 +153,16 @@ void eth_transmit (uchar *buf, uint len, uint type, const uchar *dest)
 #endif
 
   while (er[ETH_STATUS] & 1)
-    continue;
+    {
+      continue;
+    }
 
   sark_word_cpy (eth_tx_ram, buf, len);
 
   if (len < 60)
-    len = 60;
+    {
+      len = 60;
+    }
 
   er[ETH_TX_LEN] = len;
   er[ETH_TX_CMD] = len;
@@ -169,7 +180,9 @@ void eth_transmit2 (uchar *hdr, uchar *buf, uint hdr_len, uint buf_len)
 #endif
 
   while (er[ETH_STATUS] & 1)
-    continue;
+    {
+      continue;
+    }
 
   memcpy (eth_tx_ram, hdr, hdr_len);
   memcpy (eth_tx_ram + hdr_len, buf, buf_len);
@@ -177,7 +190,9 @@ void eth_transmit2 (uchar *hdr, uchar *buf, uint hdr_len, uint buf_len)
   uint len = buf_len + hdr_len;
 
   if (len < 60)
-    len = 60;
+    {
+      len = 60;
+    }
 
   er[ETH_TX_LEN] = len;
   er[ETH_TX_CMD] = len;
@@ -221,7 +236,9 @@ void arp_lookup (iptag_t *iptag)
   uchar *target_ip = ip_addr;
 
   if ((*my_ip & *mask) != (*ip & *mask))
-    target_ip = srom.gw_addr;
+    {
+      target_ip = srom.gw_addr;
+    }
 
   copy_ip (target_ip, iptag->mac); // !! Bodge - target IP in MAC field!
 
@@ -238,7 +255,9 @@ void arp_pkt (uchar *rx_pkt, uint rx_len, uint tag_table_size)
   eth_discard ();
 
   if (! cmp_ip (arp->tpa, srom.ip_addr)) // Ignore unless TPA matches
-    return;
+    {
+      return;
+    }
 
   uint op = ntohs (arp->op);
 
@@ -282,7 +301,9 @@ void icmp_pkt (uchar *rx_pkt, uint rx_len)
    ip_hdr_t *ip_hdr = (ip_hdr_t *) (buf + IP_HDR_OFFSET);
 
    if (!cmp_ip (ip_hdr->dest, srom.ip_addr))
-     return;
+     {
+       return;
+     }
 
    uint ip_hdr_len = (ip_hdr->ver_len & 15) * 4;
 

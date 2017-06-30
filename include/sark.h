@@ -139,8 +139,7 @@ Largest allowable request (1023 entries)
 Allocations of SysCtl Test & Set registers (locks)
 */
 
-enum spin_lock_e
-{
+enum spin_lock_e {
   LOCK_MSG,             //!< Msg buffers in SysRAM
   LOCK_MBOX,            //!< Mailbox flag variable
   LOCK_ETHER,           //!< Ethernet Tx (unused...)
@@ -165,8 +164,7 @@ For "sark_alib.s" (maintain sync with enum spin_lock_e)
 Flags in app_flags field
 */
 
-enum app_flags_e
-{
+enum app_flags_e {
   APP_FLAG_WAIT         //!< Wait for start signal
 };
 
@@ -177,8 +175,7 @@ enum app_flags_e
 Run time error codes (passed as first arg to "rt_error")
 */
 
-enum rte_code_e
-{
+enum rte_code_e {
   RTE_NONE,             //!< 0 No error
   RTE_RESET,            //!< 1 Branch through zero
   RTE_UNDEF,            //!< 2 Undefined instruction
@@ -228,8 +225,7 @@ Runtime state of a core (limited to 16) Held in "cpu_state" byte of
 respond to anything
 */
 
-enum cpu_state_e
-{
+enum cpu_state_e {
   CPU_STATE_DEAD,       //!< Dead core
   CPU_STATE_PWRDN,      //!< Powered down
   CPU_STATE_RTE,        //!< Died with Run Time Error
@@ -263,8 +259,7 @@ For "sark_alib.s" (maintain sync with enum cpu_state_e)
 Types of event
 */
 
-enum event_type_e
-{
+enum event_type_e {
   EVENT_TIMER,          //!< Timer elapsed
   EVENT_RXPKT,          //!< MC packet received
   EVENT_SDP,            //!< SDP packet received
@@ -286,8 +281,7 @@ For "sark_alib.s" (maintain sync with enum event_type_e)
 State of event execution
 */
 
-enum event_state_e      // RUN must be first (0)
-{
+enum event_state_e {    // RUN must be first (0)
   EVENT_RUN,            //!< Running
   EVENT_PAUSE,          //!< Paused
   EVENT_STOP            //!< Stopped
@@ -299,8 +293,7 @@ typedef enum event_state_e event_state; //!< typedef for enum event_state_e
 Slots in the VIC interrupt controller
 */
 
-enum vic_slot_e
-{
+enum vic_slot_e {
   SLOT_0,  SLOT_1,  SLOT_2,  SLOT_3,
   SLOT_4,  SLOT_5,  SLOT_6,  SLOT_7,
   SLOT_8,  SLOT_9,  SLOT_10, SLOT_11,
@@ -314,8 +307,7 @@ typedef enum vic_slot_e vic_slot;   //!< Typedef for enum vic_slot_e
 Event queue priorities
 */
 
-enum event_priority_e
-{
+enum event_priority_e {
   PRIO_0, PRIO_1, PRIO_2, PRIO_3,
   PRIO_MAX=PRIO_3
 };
@@ -326,8 +318,7 @@ typedef enum event_priority_e event_priority;   //!< Typedef for enum event_prio
 Mode for sw_error calls to decide if rt_error is to be called
 */
 
-enum sw_err_mode_e
-{
+enum sw_err_mode_e {
   SW_OPT,       //!< Optional, controlled by sark.sw_rte
   SW_NEVER,     //!< Never call rt_error
   SW_RTE        //!< Always call rt_error
@@ -361,8 +352,7 @@ typedef enum sync_bool_e sync_bool; //!< Typedef for enum sync_bool_e
 Mailbox commands passed to APs
 */
 
-enum shm_cmd_e
-{
+enum shm_cmd_e {
   SHM_IDLE,     //!< Idle state of mailbox
   SHM_MSG,      //!< Passing SDP message
   SHM_NOP,      //!< Does nothing...
@@ -378,8 +368,7 @@ typedef enum shm_cmd_e shm_cmd; //!< Typedef for enum shm_cmd_e
 Signals passed to applications
 */
 
-enum signal_e
-{
+enum signal_e {
   SIG_INIT,     //!< Initialise cores
   SIG_PWRDN,    //!< Powerdown cores
   SIG_STOP,     //!< Stop application and clean up
@@ -479,8 +468,7 @@ typedef enum signal_e signal;   //!< Typedef for enum signal_e
 Returned (div, mod) from divmod
 */
 
-typedef struct divmod
-{
+typedef struct divmod {
   uint div;         //!< Dividend
   uint mod;         //!< Modulus
 } divmod_t;
@@ -498,8 +486,7 @@ typedef struct mem_link
 Used in the block memory allocator (8 bytes)
 */
 
-typedef struct mem_block
-{
+typedef struct mem_block {
   mem_link_t *free;     //!< Pointer to first free block
   ushort count;         //!< Count of blocks in use
   ushort max;           //!< Maximum blocks used
@@ -510,8 +497,7 @@ typedef struct mem_block
 Contents of SV SROM area (32 bytes)
 */
 
-typedef struct srom_data
-{
+typedef struct srom_data {
   ushort flags;         //!< 16 bit flags
   uchar  mac_addr[6];   //!< MAC address
   uchar  ip_addr[4];    //!< IP address
@@ -527,8 +513,7 @@ typedef struct srom_data
 Copy of router entry (16 bytes)
 */
 
-typedef struct rtr_entry
-{
+typedef struct rtr_entry {
   ushort next;      //!< Index of next block
   ushort free;      //!< Index of next free block (or app_id)
   uint route;       //!< Route word
@@ -541,8 +526,7 @@ Stores info relating to AppIDs. The "cores" field is zero if the ID
 is not in use.
 */
 
-typedef struct app_data
-{
+typedef struct app_data {
   uchar cores;          //!< Number of cores using this ID
   uchar clean;          //!< Set if this ID has been cleaned
   uchar sema;           //!< Semaphore
@@ -571,8 +555,7 @@ checksum. It will be a minimum of 8 as the SDP header should always
 be present.
 */
 
-typedef struct sdp_msg      // SDP message - 292 bytes
-{
+typedef struct sdp_msg {    // SDP message - 292 bytes
   struct sdp_msg *next;     //!< Next in free list
   ushort length;            //!< length
   ushort checksum;          //!< checksum (if used)
@@ -604,8 +587,7 @@ typedef struct sdp_msg      // SDP message - 292 bytes
 
 // Legacy definitions...
 
-typedef struct sdp_hdr      // SDP header
-{
+typedef struct sdp_hdr {    // SDP header
   uchar flags;
   uchar tag;
   uchar dest_port;
@@ -614,8 +596,7 @@ typedef struct sdp_hdr      // SDP header
   ushort srce_addr;
 } sdp_hdr_t;
 
-typedef struct cmd_hdr      // Command header
-{
+typedef struct cmd_hdr {    // Command header
   ushort cmd_rc;
   ushort flags;
   uint arg1;
@@ -633,8 +614,7 @@ block in the heap so each allocation of N bytes in the heap
 requires N+8
 */
 
-typedef struct block
-{
+typedef struct block {
   struct block *next;   //!< Chains all blocks together (in address order)
   struct block *free;   //!< Chains free blocks together (in address order)
 } block_t;
@@ -647,8 +627,7 @@ contains a 'last' block, of zero size, which is used to mark the
 end of the heap.
 */
 
-typedef struct
-{
+typedef struct {
   block_t *free;    //!< Root of free block chain
   block_t *first;   //!< First block
   block_t *last;    //!< Last block (zero size, never used for storage)
@@ -668,8 +647,7 @@ therefore constrained to live in the bottom 64K of the address space
 (ie in ITCM)
 */
 
-typedef struct event_vec
-{
+typedef struct event_vec {
   ushort proc;          //!< Handler address (squeezed into 16 bits!)
   uchar slot;           //!< VIC slot
   uchar priority;       //!< Priority for queued events
@@ -682,8 +660,7 @@ start-up configuration data which can be modified at the appropriate
 point during start-up
 */
 
-typedef struct sark_vec
-{
+typedef struct sark_vec {
   int_handler reset_vec;          //!< 0x20 Reset vector
   int_handler undef_vec;          //!< 0x24 Undefined instruction vector
   int_handler svc_vec;            //!< 0x28 SVC vector
@@ -730,8 +707,7 @@ NUM_CPU of these is based at SV_VCPU in System RAM and pointed to by
 "sv_vcpu"
 */
 
-typedef struct vcpu     // 128 bytes
-{
+typedef struct vcpu {		// 128 bytes
   uint r[8];                    //!<  0 - r0-r7
   uint psr;                     //!< 32 - cpsr
   uint sp;                      //!< 36 - sp
@@ -787,8 +763,7 @@ events which have to occur at a particular time or on a set of
 priority ordered queues for events which are processed by a scheduler.
 */
 
-typedef struct event    // 24 bytes
-{
+typedef struct event {  // 24 bytes
   struct event *next;   //!< Next in Q or NULL
 
   event_proc proc;      //!< Proc to be called or NULL
@@ -803,8 +778,7 @@ typedef struct event    // 24 bytes
 Struct holding head and tail of a list of "event_t"
 */
 
-typedef struct proc_queue
-{
+typedef struct proc_queue {
   event_t *proc_head;       //!< List of queued "proc" events
   event_t *proc_tail;       //!< and tail of that list
 } proc_queue_t;
@@ -813,8 +787,7 @@ typedef struct proc_queue
 Struct holding a packet
 */
 
-typedef struct pkt
-{
+typedef struct pkt {
   uint ctrl;            //!< TCR in 23:16, flags in 1:0
   uint data;            //!< Data (payload) field
   uint key;             //!< Key (non-payload!) field
@@ -825,8 +798,7 @@ Struct holding data for "sark_event" and "sark_timer". This
 holds all the variables needed by these two packages.
 */
 
-typedef struct event_data
-{
+typedef struct event_data {
   event_t *free;            //!< List of free events
   event_t *timer_queue;     //!< List of active timer events
 
@@ -883,8 +855,7 @@ typedef struct event_data
 A struct holding all of the variables maintained by SARK
 */
 
-typedef struct sark_data
-{
+typedef struct sark_data {
   uint virt_cpu;        //!< 00 Virtual CPU number
   uint phys_cpu;        //!< 04 Physical CPU number
 
@@ -980,8 +951,7 @@ Struct holding the System Variables. Placed at the top of System
 RAM at 0xe5007f00
 */
 
-typedef struct sv
-{
+typedef struct sv {
   ushort p2p_addr;          //!< 00 P2P address of this chip
   ushort p2p_dims;          //!< 02 P2P dimensions
 
