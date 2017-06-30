@@ -16,9 +16,9 @@ HEADERS := spinnaker.h sark.h spin1_api.h spin1_api_params.h
 HEADER := $(HEADERS:%.h=$(SPINN_INC_DIR)/%.h)
 
 ifeq ($(GNU),1)
-  LIBNAME := libspin1_api
+    LIBNAME := libspin1_api
 else
-  LIBNAME := spin1_api
+    LIBNAME := spin1_api
 endif
 
 APILIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
@@ -35,7 +35,7 @@ $(APILIB): $(BUILD_DIR)/sark.o $(APIOBJ)
 	$(AR) $@ $^
 
 $(BUILD_DIR)/sark.o:
-	cd ../sark/; $(MAKE) $@
+	@$(MAKE) -C ../sark $@
 
 #-------------------------------------------------------------------------------
 
@@ -51,3 +51,5 @@ $(BUILD_DIR)/spin1_isr.o: spin1_isr.c $(HEADER)
 
 clean:
 	$(RM) $(APILIB) $(APIOBJ) $(BUILD_DIR)/sark.o
+
+.PHONY: clean

@@ -95,3 +95,5 @@ $(BUILD_DIR)/sark_div0.o: sark_div0.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_D
 
 clean:
 	$(RM) $(SARKLIB) $(SARKOBJ) $(SARK_ASM_OBJ)
+
+.PHONY: clean
