@@ -81,13 +81,14 @@ void app_init ()
 
   uint e = rtr_alloc (1);
   if (e == 0)
-    rt_error (RTE_ABORT);
+    {
+      rt_error (RTE_ABORT);
+    }
 
   rtr_mc_set (e,			// entry
-	      coreID, 			// key
-	      0xffffffff,		// mask
-	      MC_CORE_ROUTE (coreID)	// route
-	      );
+	  coreID, 			// key
+	  0xffffffff,			// mask
+	  MC_CORE_ROUTE (coreID));	// route
 
   /* ------------------------------------------------------------------- */
   /* initialize the application processor resources                      */
@@ -100,40 +101,36 @@ void app_init ()
   // Allocate a buffer in System RAM
 
   sysram_buffer = (uint *) sark_xalloc (sv->sysram_heap,
-					BUFFER_SIZE * sizeof(uint),
-					0,
-					ALLOC_LOCK);
+	  BUFFER_SIZE * sizeof(uint), 0, ALLOC_LOCK);
 
   // and a buffer somewhere in SDRAM
 
   sdram_buffer = (uint *) sark_xalloc (sv->sdram_heap,
-					BUFFER_SIZE * sizeof(uint),
-					0,
-					ALLOC_LOCK);
+	  BUFFER_SIZE * sizeof(uint), 0, ALLOC_LOCK);
 
   // and a buffer in DTCM
 
   dtcm_buffer = (uint *) sark_alloc (BUFFER_SIZE, sizeof(uint));
 
   if (dtcm_buffer == NULL ||  sdram_buffer == NULL || sysram_buffer == NULL)
-  {
-    test_DMA = FALSE;
-    io_printf (IO_BUF, "[core %d] error - cannot allocate buffer\n", coreID);
-  }
-  else
-  {
-    test_DMA = TRUE;
-    // initialize sections of DTCM, system RAM and SDRAM
-    for (uint i = 0; i < BUFFER_SIZE; i++)
-      {
-	dtcm_buffer[i]   = i;
-	sysram_buffer[i] = 0xa5a5a5a5;
-	sdram_buffer[i]  = 0x5a5a5a5a;
+    {
+      test_DMA = FALSE;
+      io_printf (IO_BUF, "[core %d] error - cannot allocate buffer\n", coreID);
     }
+  else
+    {
+      test_DMA = TRUE;
+      // initialize sections of DTCM, system RAM and SDRAM
+      for (uint i = 0; i < BUFFER_SIZE; i++)
+	{
+	  dtcm_buffer[i]   = i;
+	  sysram_buffer[i] = 0xa5a5a5a5;
+	  sdram_buffer[i]  = 0x5a5a5a5a;
+	}
 
-    io_printf (IO_BUF, "[core %d] dtcm buffer @ 0x%08x\n", coreID,
-               (uint) dtcm_buffer);
-  }
+      io_printf (IO_BUF, "[core %d] dtcm buffer @ 0x%08x\n", coreID,
+	      (uint) dtcm_buffer);
+    }
 }
 /*
 *******/
@@ -172,12 +169,12 @@ void app_done ()
   io_printf (IO_BUF, "[core %d] failed %d DMA transfers\n", coreID, tfailed);
 
   if (tfailed)
-  {
-    io_printf (IO_BUF, "\t%d : %d @ %d\n", tfvald, tfvals, tfaddr);
+    {
+      io_printf (IO_BUF, "\t%d : %d @ %d\n", tfvald, tfvals, tfaddr);
 
-    io_printf (IO_BUF, "\t%d : %d @ %d\n", dtcm_buffer[tfaddr],
-               sdram_buffer[tfaddr], tfaddr);
-  }
+      io_printf (IO_BUF, "\t%d : %d @ %d\n", dtcm_buffer[tfaddr],
+	      sdram_buffer[tfaddr], tfaddr);
+    }
 
   // say goodbye
   io_printf (IO_BUF, "[core %d] stopping simulation\n", coreID);
@@ -205,10 +202,12 @@ void app_done ()
 void send_packets (uint ticks, uint none)
 {
   for (uint i = 0; i < ITER_TIMES; i++)
-  {
-    if (! spin1_send_mc_packet (coreID, ticks, 1))
-      pfailed++;
-  }
+    {
+      if (! spin1_send_mc_packet (coreID, ticks, 1))
+	{
+	  pfailed++;
+	}
+    }
 }
 /*
 *******/
@@ -235,17 +234,23 @@ void flip_led (uint ticks, uint null)
   // Only 1 core should flip leds!
 
   if (leadAp)
-    spin1_led_control (LED_INV (1));
+    {
+      spin1_led_control (LED_INV (1));
+    }
 
   // trigger user event to send packets
 
   if (spin1_trigger_user_event(ticks, NULL) == FAILURE)
-    ufailed++;
+    {
+      ufailed++;
+    }
 
   // stop if desired number of ticks reached
 
   if (ticks >= TOTAL_TICKS)
-    spin1_exit (0);
+    {
+      spin1_exit (0);
+    }
 }
 /*
 *******/
@@ -269,11 +274,15 @@ void flip_led (uint ticks, uint null)
 void do_transfer (uint val, uint none)
 {
   if (val == 3)
-    spin1_dma_transfer(DMA_WRITE, sysram_buffer, dtcm_buffer, DMA_WRITE,
-                       BUFFER_SIZE*sizeof(uint));
+    {
+      spin1_dma_transfer(DMA_WRITE, sysram_buffer, dtcm_buffer, DMA_WRITE,
+	      BUFFER_SIZE*sizeof(uint));
+    }
   else if (val == 5)
-    spin1_dma_transfer(DMA_WRITE, sdram_buffer, dtcm_buffer, DMA_WRITE,
-		       BUFFER_SIZE*sizeof(uint));
+    {
+      spin1_dma_transfer(DMA_WRITE, sdram_buffer, dtcm_buffer, DMA_WRITE,
+	      BUFFER_SIZE*sizeof(uint));
+    }
 }
 /*
 *******/
@@ -301,10 +310,10 @@ void count_packets (uint key, uint payload)
 
   // if testing DMA trigger transfer requests at the right time
   if (test_DMA)
-  {
-    // schedule task (with priority 1) to trigger DMA
-    spin1_schedule_callback (do_transfer, payload, 0, 1);
-  }
+    {
+      // schedule task (with priority 1) to trigger DMA
+      spin1_schedule_callback (do_transfer, payload, 0, 1);
+    }
 }
 /*
 *******/
@@ -335,32 +344,32 @@ void check_memcopy(uint tid, uint ttag)
   // check if DMA transfer completed correctly
 
   if (tid <= ITER_TIMES)
-  {
-    for (uint i = 0; i < BUFFER_SIZE; i++)
     {
-      if (dtcm_buffer[i] != sysram_buffer[i])
-      {
-        tfailed++;
-        tfaddr = i;
-        break;
-      }
+      for (uint i = 0; i < BUFFER_SIZE; i++)
+	{
+	  if (dtcm_buffer[i] != sysram_buffer[i])
+	    {
+	      tfailed++;
+	      tfaddr = i;
+	      break;
+	    }
+	}
     }
-  }
 
   if (tid > ITER_TIMES)
-  {
-    for (uint i = 0; i < BUFFER_SIZE; i++)
     {
-      tfvald = dtcm_buffer[i];
-      tfvals = sdram_buffer[i];
-      if (tfvald != tfvals)
-      {
-        tfailed++;
-        tfaddr = i;
-        break;
-      }
+      for (uint i = 0; i < BUFFER_SIZE; i++)
+	{
+	  tfvald = dtcm_buffer[i];
+	  tfvals = sdram_buffer[i];
+	  if (tfvald != tfvals)
+	    {
+	      tfailed++;
+	      tfaddr = i;
+	      break;
+	    }
+	}
     }
-  }
 }
 /*
 *******/
@@ -387,7 +396,7 @@ void c_main()
   // Say hello...
 
   io_printf (IO_BUF, ">> simple - chip (%d, %d) core %d\n",
-	     chipID >> 8, chipID & 255, coreID);
+	  chipID >> 8, chipID & 255, coreID);
 
   // set timer tick value (in microseconds)
 

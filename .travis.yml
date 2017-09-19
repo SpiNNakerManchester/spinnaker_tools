@@ -1,0 +1,21 @@
+dist: trusty
+language: c
+
+addons:
+  apt:
+    packages:
+      - vera++
+      #- gcc-arm-none-eabi
+      #- libnewlib-arm-none-eabi
+
+install:
+  - git clone https://github.com/SpiNNakerManchester/SupportScripts.git support
+# TODO: Add actually building the code
+
+script:
+  - support/run-vera.sh sark
+  - support/run-vera.sh scamp --profile spinnaker-asm.tcl
+  - support/run-vera.sh spin1_api
+  - support/run-vera.sh apps -P max-line-length=200
+  - support/run-vera.sh bmp  -P max-line-length=200 --profile spinnaker-asm.tcl
+  - support/run-vera.sh include -P max-line-length=200 -P max-file-length=3000

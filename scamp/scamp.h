@@ -59,7 +59,7 @@
 
 //------------------------------------------------------------------------------
 
-// Failure codes 
+// Failure codes
 
 // Non-zero causes CPU to sleep
 // Bit 6 set causes CPU_OK bit to be cleared
@@ -188,8 +188,7 @@
 //------------------------------------------------------------------------------
 
 // Phases of the network initialisation process, in order
-enum netinit_phase_e
-{
+enum netinit_phase_e {
   // Configure P2P addresses for all chips while waiting for all chips to come
   // online.
   NETINIT_PHASE_P2P_ADDR,
@@ -209,8 +208,7 @@ enum netinit_phase_e
 };
 
 // Phases of the Ethernet initialisation process, in order
-enum ethinit_phase_e
-{
+enum ethinit_phase_e {
   // FIRST PHASE - wait for Ethernet to come up
   ETHINIT_PHASE_WAIT_1,
   // SECOND_PHASE - wait for Ethernet to come up
@@ -221,8 +219,7 @@ enum ethinit_phase_e
 
 //------------------------------------------------------------------------------
 
-enum alloc_cmd_e
-{
+enum alloc_cmd_e {
   ALLOC_SDRAM,		 	//!< Allocate SDRAM
   FREE_SDRAM,		 	//!< Free SDRAM
   FREE_SDRAM_ID,		//!< Free DRAM by ID
@@ -236,8 +233,7 @@ enum alloc_cmd_e
 
 //------------------------------------------------------------------------------
 
-typedef struct 			// IPTAG entry (32 bytes)
-{
+typedef struct {		// IPTAG entry (32 bytes)
   uchar ip[4];
   uchar mac[6];
   ushort tx_port;
@@ -253,8 +249,7 @@ typedef struct 			// IPTAG entry (32 bytes)
 
 #define PKT_QUEUE_SIZE 		32
 
-typedef struct pkt_queue_t	// Queue of packets
-{
+typedef struct pkt_queue_t {	// Queue of packets
   uchar insert;
   uchar remove;
   volatile uchar count;
@@ -263,8 +258,7 @@ typedef struct pkt_queue_t	// Queue of packets
 } pkt_queue_t;
 
 
-typedef struct pkt_buf_t	// Holds a NN packet awaiting transmission
-{
+typedef struct pkt_buf_t {	// Holds a NN packet awaiting transmission
   struct pkt_buf_t *next;
   volatile uchar flags;
   uchar fwd;
@@ -274,8 +268,7 @@ typedef struct pkt_buf_t	// Holds a NN packet awaiting transmission
 } pkt_buf_t;
 
 
-typedef struct		// 64 bytes
-{
+typedef struct {	// 64 bytes
   uint   level_addr;	// 0: This chip's region at this level
   ushort sent;		// 4: Number of requests sent out in this region
   ushort rcvd;		// 6: Number of responses received

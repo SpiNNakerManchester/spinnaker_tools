@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // sark_hw.c	    Spinnaker hardware/peripheral support routines
@@ -51,7 +50,9 @@ void sark_vic_set (vic_slot slot, uint interrupt, uint enable,
     }
 
   if (enable)
-    vic[VIC_ENABLE] = 1 << interrupt;
+    {
+      vic[VIC_ENABLE] = 1 << interrupt;
+    }
 }
 
 
@@ -63,8 +64,12 @@ uint v2p_mask (uint virt_mask)
   uint phys_mask = 0;
 
   for (uint i = 0; i < NUM_CPUS; i++)
-    if (virt_mask & (1 << i))
-      phys_mask |= 1 << sv->v2p_map[i];
+    {
+      if (virt_mask & (1 << i))
+	{
+	  phys_mask |= 1 << sv->v2p_map[i];
+	}
+    }
 
   return phys_mask;
 }
@@ -90,7 +95,9 @@ void led_init (void)
   uint hw_ver = sv->hw_ver;
 
   if (hw_ver < HW_VER_MIN || hw_ver > HW_VER_MAX)
-    hw_ver = 0;
+    {
+      hw_ver = 0;
+    }
 
   sark_memcpy (sv->leds, led_list[hw_ver], 8);  // Point to appropriate table
   sc[GPIO_SET] = led_bits[hw_ver];              // Turn LEDs off
@@ -113,7 +120,9 @@ void sark_led_init (void)
   uint mask = 0;
 
   for (uint i = 1; i <= count; i++)
-    mask |= 1 << get4 (&sv->led0, i);
+    {
+      mask |= 1 << get4 (&sv->led0, i);
+    }
 
   sc[GPIO_SET] = mask;		// Turn LEDs off
   sc[GPIO_DIR] &= ~mask;	// Clear bits in GPIO_DIR
@@ -137,15 +146,23 @@ void sark_led_set (uint leds)
       if (c == 0)
 	{
 	  if (v != 0)
-	    v = sc[GPIO_PORT] & led;
+	    {
+	      v = sc[GPIO_PORT] & led;
+	    }
 	  else
-	    continue;
+	    {
+	      continue;
+	    }
 	}
 
       if (v)
-	sc[GPIO_CLR] = led;
+	{
+	  sc[GPIO_CLR] = led;
+	}
       else
-	sc[GPIO_SET] = led;
+	{
+	  sc[GPIO_SET] = led;
+	}
     }
 }
 
@@ -190,7 +207,9 @@ uint pl340_init (uint mem_clk)
   mc[DLL_CONFIG0] = 0;		// Disable DLL
 
   for (uint i = 0; i < 14; i++)
-    mc[MC_CASL + i] = pl340_data[i];
+    {
+      mc[MC_CASL + i] = pl340_data[i];
+    }
 
   mc[MC_MCFG] = 0x00018012;	// Init Memory_Cfg
 
@@ -233,7 +252,9 @@ uint pl340_init (uint mem_clk)
 uint rtr_mc_clear (uint start, uint count)
 {
   if (start + count > MC_TABLE_SIZE)
-    return 0;
+    {
+      return 0;
+    }
 
   rtr_entry_t *router = sv->rtr_copy;
 
@@ -285,10 +306,14 @@ void rtr_mc_init (uint start)
 uint rtr_mc_load (rtr_entry_t *e, uint count, uint offset, uint app_id)
 {
   if (count == 0)
-    count = e->free;
+    {
+      count = e->free;
+    }
 
   if (count > MC_TABLE_SIZE)
-    return 0;
+    {
+      return 0;
+    }
 
   app_id <<= 24;
 
@@ -297,7 +322,9 @@ uint rtr_mc_load (rtr_entry_t *e, uint count, uint offset, uint app_id)
       uint entry = e->next + offset;
 
       if (entry >= MC_TABLE_SIZE)
-	return 0;
+	{
+	  return 0;
+	}
 
       rtr_mc_set (entry, e->key, e->mask, app_id + e->route);
       e++;
@@ -307,18 +334,22 @@ uint rtr_mc_load (rtr_entry_t *e, uint count, uint offset, uint app_id)
 }
 
 
-// Set a router multicast table entry 
+// Set a router multicast table entry
 
 uint rtr_mc_set (uint entry, uint key, uint mask, uint route)
 {
   if (entry >= MC_TABLE_SIZE)
-    return 0;
+    {
+      return 0;
+    }
 
   rtr_entry_t *copy = sv->rtr_copy + entry;
   uint app_id = route >> 24;
 
   if (app_id == 0)
-    app_id = sark_vec->app_id;
+    {
+      app_id = sark_vec->app_id;
+    }
 
   route &= 0x00ffffff;
 
@@ -339,12 +370,14 @@ uint rtr_mc_set (uint entry, uint key, uint mask, uint route)
 
 
 // Get a router multicast table entry. Fills in a rtr_entry_t
-// whose address is passed in. 
+// whose address is passed in.
 
 uint rtr_mc_get (uint entry, rtr_entry_t *r)
 {
   if (entry >= MC_TABLE_SIZE)
-    return 0;
+    {
+      return 0;
+    }
 
   rtr_entry_t *copy = sv->rtr_copy + entry;
 
@@ -355,7 +388,7 @@ uint rtr_mc_get (uint entry, rtr_entry_t *r)
   return 1;
 }
 
-// Set router fixed-route entry 
+// Set router fixed-route entry
 
 void rtr_fr_set (uint route)
 {
@@ -371,7 +404,7 @@ void rtr_fr_set (uint route)
 }
 
 
-// Get router fixed-route entry 
+// Get router fixed-route entry
 
 uint rtr_fr_get (void)
 {
@@ -384,7 +417,9 @@ uint rtr_fr_get (void)
 void rtr_p2p_init ()
 {
   for (uint i = 0; i < P2P_TABLE_SIZE; i++)
-    rtr_p2p[i] = P2P_INIT;
+    {
+      rtr_p2p[i] = P2P_INIT;
+    }
 }
 
 
@@ -395,7 +430,9 @@ void rtr_p2p_set (uint entry, uint value)
   uint word = entry >> P2P_LOG_EPW;
 
   if (word >= P2P_TABLE_SIZE)
-    return;
+    {
+      return;
+    }
 
   uint offset = P2P_BPE * (entry & P2P_EMASK);
   uint data = rtr_p2p[word];
@@ -414,7 +451,9 @@ uint rtr_p2p_get (uint entry)
   uint word = entry >> P2P_LOG_EPW;
 
   if (word >= P2P_TABLE_SIZE)
-    return 6;
+    {
+      return 6;
+    }
 
   uint offset = P2P_BPE * (entry & P2P_EMASK);
   uint data = rtr_p2p[word];
@@ -451,7 +490,9 @@ void rtr_diag_init (const uint *table)
   volatile uint *rtr_dgf = &rtr[RTR_DGF0];
 
   for (uint i = 0; i < 16; i++)	// Copy filter registers
-    rtr_dgf[i] = table[i];
+    {
+      rtr_dgf[i] = table[i];
+    }
 
   rtr[RTR_DGEN] = 0x0000ffff;	// Enable 16 counters
 }

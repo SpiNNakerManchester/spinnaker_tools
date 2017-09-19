@@ -105,3 +105,5 @@ tar:
 
 clean:
 	$(RM) -r $(BUILD_DIR)* $(APP).boot
+
+.PHONY: tar clean install install-aplx

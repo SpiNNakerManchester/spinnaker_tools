@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // scamp.c	    SC&MP - Spinnaker Control & Monitor Program
@@ -177,7 +176,9 @@ void iptag_timer ()
 	{
 	  tag->timeout--;
 	  if (tag->timeout == 0)
-	    tag->flags = 0;
+	    {
+	      tag->flags = 0;
+	    }
 	}
       tag++;
     }
@@ -187,13 +188,15 @@ void iptag_timer ()
 uint iptag_new ()
 {
   for (uint i = FIRST_POOL_TAG; i <= LAST_POOL_TAG; i++)
-    if (tag_table[i].flags == 0)
-      return i;
+    {
+      if (tag_table[i].flags == 0)
+        {
+	  return i;
+        }
+    }
 
   return TAG_NONE;
 }
-
-
 
 uint transient_tag (uchar *ip, uchar *mac, uint port, uint timeout)
 {
@@ -209,7 +212,9 @@ uint transient_tag (uchar *ip, uchar *mac, uint port, uint timeout)
       copy_ip (ip, tt->ip);
       copy_mac (mac, tt->mac);
       if (timeout != 0)
-	timeout = 1 << (timeout - 1);
+	{
+	  timeout = 1 << (timeout - 1);
+	}
       tt->timeout = timeout;
     }
 
@@ -217,8 +222,6 @@ uint transient_tag (uchar *ip, uchar *mac, uint port, uint timeout)
 }
 
 //------------------------------------------------------------------------------
-
-
 
 void queue_init ()
 {
@@ -266,12 +269,16 @@ uint pkt_tx (uint tcr, uint data, uint key)
     }
 
   if (txq->count == 0)
-    vic[VIC_ENABLE] = 1 << CC_TMT_INT;
+    {
+      vic[VIC_ENABLE] = 1 << CC_TMT_INT;
+    }
 
   txq->count++;
 
   if (txq->count > txq->max)
-    txq->max = txq->count;
+    {
+      txq->max = txq->count;
+    }
 
   txq->queue[txq->insert] = pkt;
   txq->insert = (txq->insert + 1) % PKT_QUEUE_SIZE;
@@ -285,7 +292,6 @@ uint pkt_tx (uint tcr, uint data, uint key)
 
 
 //------------------------------------------------------------------------------
-
 
 
 static void timer1_init (uint count)
@@ -352,15 +358,21 @@ void udp_pkt (uchar *rx_pkt, uint rx_len)
        copy_ip (ip_hdr->srce, (uchar *) &srce_ip);
 
        if ((tag == TAG_NONE) && (flags & SDPF_REPLY)) // transient tag & reply req
-	 tag = msg->tag = transient_tag (ip_hdr->srce, rx_pkt+6, udp_srce, tag_tto);
+         {
+	   tag = msg->tag = transient_tag (ip_hdr->srce, rx_pkt+6, udp_srce, tag_tto);
+         }
 
        eth_discard ();
 
        if (((flags & SDPF_REPLY) == 0) ||
 	   (tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0))
-	 msg_queue_insert (msg, srce_ip);
+         {
+	   msg_queue_insert (msg, srce_ip);
+         }
        else
-	 sark_msg_free (msg);
+         {
+	   sark_msg_free (msg);
+         }
      }
    else // Reverse IPTag...
      {
@@ -377,7 +389,9 @@ void udp_pkt (uchar *rx_pkt, uint rx_len)
        while (i < TAG_FIXED_SIZE)
 	 {
 	   if (tag_table[i].flags != 0 && tag_table[i].rx_port == udp_dest)
-	     break;
+	     {
+	       break;
+	     }
 	   i++;
 	 }
 
@@ -442,19 +456,26 @@ void eth_receive ()
 	  uint ip_prot = rx_pkt[IP_HDR_OFFSET + 9];
 
 	  if (ip_prot == PROT_UDP)
-	    udp_pkt (rx_pkt, rx_len);
-
+	    {
+	      udp_pkt (rx_pkt, rx_len);
+	    }
 	  else if (ip_prot == PROT_ICMP)
-	    icmp_pkt (rx_pkt, rx_len);
-
+	    {
+	      icmp_pkt (rx_pkt, rx_len);
+	    }
 	  else
-	    eth_discard ();
+	    {
+	      eth_discard ();
+	    }
 	}
       else if (etype == ETYPE_ARP)
-	arp_pkt (rx_pkt, rx_len, TAG_TABLE_SIZE);
-
+        {
+	  arp_pkt (rx_pkt, rx_len, TAG_TABLE_SIZE);
+        }
       else
-	eth_discard ();
+        {
+	  eth_discard ();
+        }
     }
 }
 
@@ -467,7 +488,9 @@ void eth_send_msg (uint tag, sdp_msg_t *msg)
   iptag_t *iptag = tag_table + tag;
 
   if ((iptag->flags & IPFLAG_VALID) == 0)
-    return;
+    {
+      return;
+    }
 
   uchar hdr[44];
   ip_hdr_t *ip_hdr = (ip_hdr_t *) (hdr + IP_HDR_OFFSET);
@@ -491,10 +514,14 @@ void eth_send_msg (uint tag, sdp_msg_t *msg)
     }
 
   if (iptag->flags & IPFLAG_REV)
-    udp_hdr->srce = htons (iptag->rx_port);
+    {
+      udp_hdr->srce = htons (iptag->rx_port);
+    }
   else
-    udp_hdr->srce = htons (srom.udp_port);
-    
+    {
+      udp_hdr->srce = htons (srom.udp_port);
+    }
+
   copy_ip_hdr (iptag->ip, PROT_UDP, ip_hdr,
 	       len + pad + IP_HDR_SIZE + UDP_HDR_SIZE);
 
@@ -522,9 +549,13 @@ void eth_send_msg (uint tag, sdp_msg_t *msg)
   sark_delay_us (5); //## !! Trouble with back-to-back packets??
 
   if (iptag->flags & IPFLAG_TRANS)	  //transient tag
-    iptag->flags = 0;
+    {
+      iptag->flags = 0;
+    }
   else
-    iptag->count++;
+    {
+      iptag->count++;
+    }
 }
 
 
@@ -554,10 +585,14 @@ uint shm_ping (uint dest)
   timer_schedule (e, 1000); // !! const??
 
   while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0)
-    continue;
+    {
+      continue;
+    }
 
   if (flag != 0)
-    return 0;
+    {
+      return 0;
+    }
 
   timer_cancel (e, id);
 
@@ -574,7 +609,9 @@ uint shm_send_msg (uint dest, sdp_msg_t *msg) // Send msg AP
   sdp_msg_t *shm_msg = sark_shmsg_get ();
 
   if (shm_msg == NULL)
-    return RC_BUF;
+    {
+      return RC_BUF;
+    }
 
   sark_msg_cpy (shm_msg, msg);
 
@@ -599,7 +636,9 @@ uint shm_send_msg (uint dest, sdp_msg_t *msg) // Send msg AP
   timer_schedule (e, 1000); // !! const??
 
   while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0)
-    continue;
+    {
+      continue;
+    }
 
   if (flag != 0)
     {
@@ -644,7 +683,9 @@ void return_msg (sdp_msg_t *msg, uint rc) // Zero "rc" skips updating cmd_hdr
       msg_queue_insert (msg, 0);
     }
   else
-    sark_msg_free (msg);
+    {
+      sark_msg_free (msg);
+    }
 }
 
 
@@ -669,9 +710,13 @@ void proc_route_msg (uint arg1, uint srce_ip)
 
   // Map (255, 255) to the root chip's coordinates
   if (msg->dest_addr == 0xFFFF)
-    msg->dest_addr = p2p_root;
+    {
+      msg->dest_addr = p2p_root;
+    }
   if (msg->srce_addr == 0xFFFF)
-    msg->srce_addr = p2p_root;
+    {
+      msg->srce_addr = p2p_root;
+    }
 
   // Off-chip via P2P
 
@@ -687,9 +732,13 @@ void proc_route_msg (uint arg1, uint srce_ip)
       uint rc = p2p_send_msg (msg->dest_addr, msg);
 
       if (rc == RC_OK)
-	sark_msg_free (msg);
+        {
+	  sark_msg_free (msg);
+        }
       else
-	return_msg (msg, rc);
+        {
+	  return_msg (msg, rc);
+        }
 
       return;
     }
@@ -714,9 +763,13 @@ void proc_route_msg (uint arg1, uint srce_ip)
       uint rc = shm_send_msg (dest_cpu, msg);
 
       if (rc == RC_OK)
-	sark_msg_free (msg);
+        {
+	  sark_msg_free (msg);
+        }
       else
-	return_msg (msg, rc);
+        {
+	  return_msg (msg, rc);
+        }
 
       return;
     }
@@ -729,7 +782,9 @@ void proc_route_msg (uint arg1, uint srce_ip)
       return_msg (msg, 0);
     }
   else
-    return_msg (msg, RC_PORT); // APs should not do this!!
+    {
+      return_msg (msg, RC_PORT); // APs should not do this!!
+    }
 }
 
 
@@ -742,18 +797,22 @@ void proc_route_msg (uint arg1, uint srce_ip)
 void assign_virt_cpu (uint phys_cpu)
 {
   for (uint phys = 0; phys < MAX_CPUS; phys++)
-    sv->p2v_map[phys] = 255;
+    {
+      sv->p2v_map[phys] = 255;
+    }
 
   sv->p2v_map[phys_cpu] = sark.virt_cpu = 0;
   sv->v2p_map[0] = phys_cpu;
   sark.vcpu = sv_vcpu + 0;
- 
+
   uint virt = 1;
 
   for (uint phys = 0; phys < NUM_CPUS; phys++)
     {
       if (phys == phys_cpu)
-	continue;
+        {
+	  continue;
+        }
 
       if (sc[SC_CPU_OK] & (1 << phys))
 	{
@@ -766,13 +825,17 @@ void assign_virt_cpu (uint phys_cpu)
   sv->num_cpus = num_cpus = virt;
 
   while (virt < MAX_CPUS)
-    sv->v2p_map[virt++] = 255;
+    {
+      sv->v2p_map[virt++] = 255;
+    }
 
   // Turn off clocks of dead cores. If the monitor (this core) is marked as
   // dead, turn off the LED to make deadness more obvious.
   uint cpsr = cpu_int_disable ();
   if (!(sc[SC_CPU_OK] & (1 << phys_cpu)))
-    sark_led_set (LED_OFF(0));
+    {
+      sark_led_set (LED_OFF(0));
+    }
   sc[SC_CPU_DIS] = SC_CODE + (~sc[SC_CPU_OK] & ((1 << NUM_CPUS) - 1));
   cpu_int_restore (cpsr);
 
@@ -829,14 +892,18 @@ uint ram_size (void *mem)
       ram[a] = s;
 
       if ((v != i) || (z != zf))
-	break;
+        {
+	  break;
+        }
     }
 
   ram[0] = s;
 
   if (i == 1)
-    return 0;
-      
+    {
+      return 0;
+    }
+
   return 1 << (i + 1);
 }
 
@@ -860,9 +927,11 @@ void get_board_info (void)
   sark_word_cpy (sv_board_info, &msg.arg1, 256);
 
   if (sv_board_info[0] < 64)
-    sv->board_info = sv_board_info;
+    {
+      sv->board_info = sv_board_info;
+    }
 }
-  
+
 
 void sv_init (void)
 {
@@ -872,10 +941,14 @@ void sv_init (void)
   sark_word_set ((void *) 0xf5007fc0, 0, 64);		// Kludge...
 
   if (srom.flags & SRF_PRESENT)				// Get board_info ??
-    get_board_info ();
+    {
+      get_board_info ();
+    }
 
   if (sv->hw_ver == 0 && srom.flags & SRF_PRESENT)	// Set hardware version
-    sv->hw_ver = (srom.flags >> 4) & 15;
+    {
+      sv->hw_ver = (srom.flags >> 4) & 15;
+    }
 
   sv->sw_ver = SLLT_VER_NUM;				// Set software version
 
@@ -904,7 +977,9 @@ void sv_init (void)
   sark_block_init (sv->shm_buf, sv->num_buf, sizeof (sdp_msg_t));
 
   if (sv->boot_delay == 0 && sv->rom_cpus == 0)
-    sv->root_chip = 1;
+    {
+      sv->root_chip = 1;
+    }
 }
 
 
@@ -990,7 +1065,9 @@ void random_init (void)
       uint rand = 0xa5;					// Set up random seed
 
       for (uint i = 0; i < 256; i++)
-	rand ^= (i & 1) ? rnd[i] : ~rnd[i];
+        {
+	  rand ^= (i & 1) ? rnd[i] : ~rnd[i];
+        }
 
       sv->random = rand;
     }
@@ -1006,30 +1083,36 @@ void update_load(uint arg1, uint arg2)
   uint num_working = 0;
   uint num_with_apps = 0;
   uint num_awake = 0;
-  
+
   uint sleeping_cpus = sc[SC_SLEEP];
-  
+
   for (uint cpu = 1; cpu < NUM_CPUS; cpu++)
     {
       vcpu_t *vcpu = sv_vcpu + cpu;
-      
+
       if (vcpu->cpu_state != CPU_STATE_DEAD)
-        num_working++;
-      
+        {
+	  num_working++;
+        }
+
       // NB: Ignores cores not running apps
       if (vcpu->app_id > 0)
         {
           num_with_apps++;
           if (!(sleeping_cpus & (1 << vcpu->phys_cpu)))
-            num_awake++;
+            {
+              num_awake++;
+            }
         }
     }
-  
+
   // Load is simply the proportion of application processors which are awake
   // with the load clamped at a minimum of zero if any applications are loaded.
   uint new_load = (num_awake * 255) / (num_working);
   if (num_with_apps > 0 && new_load == 0)
-    new_load = 1;
+    {
+      new_load = 1;
+    }
   load = new_load;
 }
 
@@ -1060,7 +1143,7 @@ void proc_1hz (uint a1, uint a2)
         break;
     default:
         break;
-}
+  }
 }
 
 
@@ -1083,10 +1166,14 @@ void soft_wdog (uint max)
 	}
     }
   else
-    watchdog[ping_cpu] = 0;
+    {
+      watchdog[ping_cpu] = 0;
+    }
 
   if (++ping_cpu >= num_cpus)
-    ping_cpu = 1;
+    {
+      ping_cpu = 1;
+    }
 }
 
 
@@ -1102,7 +1189,7 @@ void netinit_start(void)
 {
   sv->netinit_phase = netinit_phase = NETINIT_PHASE_P2P_ADDR;
   ethinit_phase = ETHINIT_PHASE_WAIT_1;
-  
+
   // Initial P2P address guess
   if (sv->root_chip)
     {
@@ -1114,17 +1201,17 @@ void netinit_start(void)
       p2p_addr_guess_x = NO_IDEA;
       p2p_addr_guess_y = NO_IDEA;
     }
-  
+
   // Initial P2P dimension range, initially empty
   p2p_min_x = 0;
   p2p_max_x = 0;
   p2p_min_y = 0;
   p2p_max_y = 0;
-  
+
   // Allocate and clear the P2P addr bitmap
   p2p_addr_table = sark_xalloc (sv->sys_heap, P2P_ADDR_TABLE_BYTES, 0, 0);
   sark_word_set (p2p_addr_table, 0, P2P_ADDR_TABLE_BYTES);
-  
+
   ticks_since_last_p2pc_new = 0;
   ticks_since_last_p2pc_dims = 0;
 }
@@ -1136,7 +1223,7 @@ void compute_st (void)
   // Work out the position of the p2p_root in the P2P routing table.
   uint word = p2p_root >> P2P_LOG_EPW;
   uint offset = P2P_BPE * (p2p_root & P2P_EMASK);
-  
+
   // Definately route here
   uint route = MC_CORE_ROUTE (0);
 
@@ -1146,26 +1233,32 @@ void compute_st (void)
   for (uint link = 0; link < NUM_LINKS; link++)
     {
       if (!((1 << link) & link_en))
-        continue;
-      
+        {
+	  continue;
+        }
+
       // Try to read multiple times if required
       uint attempts_remaining = 2;
       uint remote_rtr_p2p;
       uint rc;
       do
-        rc = link_read_word ((uint)(rtr_p2p + word), link, &remote_rtr_p2p, timeout);
+        {
+	  rc = link_read_word ((uint)(rtr_p2p + word), link, &remote_rtr_p2p, timeout);
+        }
       while (rc != RC_OK && (--attempts_remaining));
-      
+
       // Flag an error if we could not get a p2p entry from a neighbour
       if (rc != RC_OK)
         {
           sw_error (SW_OPT);
           continue;
         }
-      
+
       // Check if p2p_root route from neighbour points at this chip.
       if (((remote_rtr_p2p >> offset) & 0x7) == ((link + 3) % 6))
-        route |= MC_LINK_ROUTE (link);
+        {
+	  route |= MC_LINK_ROUTE (link);
+        }
     }
 
   rtr_mc_set (0, 0xffff5555, 0xffffffff, route);
@@ -1180,7 +1273,7 @@ void proc_100hz (uint a1, uint a2)
   // Counter used to time how long we've been in certain netinit states.
   static uint netinit_biff_tick_counter = 0;
   static uint netinit_p2p_tick_counter = 0;
-  
+
   // Boot-up related packet sending and boot-phase advancing
   switch (netinit_phase)
   {
@@ -1188,57 +1281,59 @@ void proc_100hz (uint a1, uint a2)
       // Periodically re-send the neighbours their P2P address as
       // neighbouring chips may take some time to come online.
       p2pc_addr_nn_send(0, 0);
-      
+
       // If no new P2P addresses have been broadcast for a while we can assume
       // all chips are have a valid P2P address so it is now time to determine
       // the system's dimensions.
       if (ticks_since_last_p2pc_new++ > (uint)sv->netinit_bc_wait)
         {
           netinit_phase = NETINIT_PHASE_P2P_DIMS;
-          
+
           p2p_min_x = (p2p_addr_guess_x < 0) ? p2p_addr_guess_x : 0;
           p2p_min_y = (p2p_addr_guess_y < 0) ? p2p_addr_guess_y : 0;
           p2p_max_x = (p2p_addr_guess_x > 0) ? p2p_addr_guess_x : 0;
           p2p_max_y = (p2p_addr_guess_y > 0) ? p2p_addr_guess_y : 0;
         }
       break;
-    
+
     case NETINIT_PHASE_P2P_DIMS:
       // Periodically re-broadcast the local best guess of system dimensions as
       // a safety net in the event of packet loss.
       p2pc_dims_nn_send(0, 0);
-      
+
       // If no new guesses have been broadcast for a while we can assume the
       // current guess is accurate so its time to move onto the next phase
       if (ticks_since_last_p2pc_dims++ > (uint)sv->netinit_bc_wait)
         {
           // If no coordinate discovered, just shut down this chip
           if (p2p_addr_guess_x == NO_IDEA || p2p_addr_guess_y == NO_IDEA)
-            remap_phys_cores(0x3ffff);
-          
+            {
+              remap_phys_cores(0x3ffff);
+            }
+
           // Record the coordinates/dimensions discovered
           sv->p2p_addr = p2p_addr = ((p2p_addr_guess_x - p2p_min_x) << 8) |
                                     ((p2p_addr_guess_y - p2p_min_y) << 0);
           sv->p2p_dims = p2p_dims = ((1 + p2p_max_x - p2p_min_x) << 8) |
                                     ((1 + p2p_max_y - p2p_min_y) << 0);
           sv->p2p_root = p2p_root = (-p2p_min_x << 8) | -p2p_min_y;
-          
+
           sv->p2p_active += 1;
-          
+
           // Reseed uniquely for each chip
           sark_srand (p2p_addr);
-          
+
           // Set our P2P addr in the comms controller
           cc[CC_SAR] = 0x07000000 + p2p_addr;
-          
+
           // Work out the local Ethernet connected chip coordinates
           compute_eth ();
-          
+
           netinit_biff_tick_counter = 0;
           netinit_phase = NETINIT_PHASE_BIFF;
         }
       break;
-    
+
     case NETINIT_PHASE_BIFF:
       // The board information floodfill is allowed three 100Hz ticks. In the
       // first tick, the board information is actually broadcast. In the second
@@ -1252,9 +1347,9 @@ void proc_100hz (uint a1, uint a2)
       // "tick" before moving to the next state should deal with the problem. A
       // third tick is left to allow extra leeway accounting for the fact that
       // the timers are not necessarily *perfectly* aligned to within 10ms...
-      
+
       netinit_biff_tick_counter++;
-      
+
       if (netinit_biff_tick_counter == 1)
         {
           if (sv->board_info)
@@ -1276,7 +1371,7 @@ void proc_100hz (uint a1, uint a2)
           netinit_phase = NETINIT_PHASE_P2P_TABLE;
         }
       break;
-    
+
     case NETINIT_PHASE_P2P_TABLE:
       // Broadcast P2P table generation packets, staggered by chip to reduce
       // network load.
@@ -1289,23 +1384,22 @@ void proc_100hz (uint a1, uint a2)
             timer_schedule_proc(p2pb_nn_send, 0, 0,
                                 (sark_rand() % p2pb_period) + 1);
           }
-        
+
         // Once all P2P messages have had ample time to send (and the required
         // number of repeats have occurred), compute the level
         // config and signalling broadcast spanning tree.
-        if (netinit_p2p_tick_counter++ >=
-            ((p2pb_period / 10000) + 2))
+        if (netinit_p2p_tick_counter++ >= ((p2pb_period / 10000) + 2))
           {
             netinit_p2p_tick_counter = 0;
-            
+
             if (sv->p2pb_repeats-- == 0)
               {
                 netinit_phase = NETINIT_PHASE_DONE;
-                
+
                 level_config ();
                 compute_st ();
                 sv->p2p_up = p2p_up = 1;
-                
+
                 if (srom.flags & SRF_ETH)
                   {
                     uint s = phy_read (PHY_STATUS);
@@ -1319,35 +1413,38 @@ void proc_100hz (uint a1, uint a2)
           }
         }
       break;
-    
+
     case NETINIT_PHASE_DONE:
     default:
       // Unrecognised or finished state? Do nothing.
       break;
   }
   sv->netinit_phase = netinit_phase;
-  
+
   // Light the LED every-so-often to make it clear that this chip is alive
   if (netinit_phase == NETINIT_PHASE_DONE)
     {
       static uint ticks = 0;
-      
+
       uint p2p_x = p2p_addr >> 8;
       uint p2p_y = p2p_addr & 0xFF;
       uint p2p_dist = p2p_x + p2p_y;
       uint flash_time = ((p2p_dist * LIVENESS_FLASH_SPACING) % LIVENESS_FLASH_INTERVAL);
       if (ticks == flash_time)
-        disp_load = ((load < 128) ? 255 : 0) << LOAD_FRAC_BITS;
-      
+        {
+	  disp_load = ((load < 128) ? 255 : 0) << LOAD_FRAC_BITS;
+        }
+
       if (++ticks >= LIVENESS_FLASH_INTERVAL)
-        ticks = 0;
+        {
+	  ticks = 0;
+        }
     }
-  
-  
+
   // Sample core sleep states at a random interval to estimate chip load.
   timer_schedule_proc(update_load, 0, 0,
                       (sark_rand() % 9999) + 1);
-  
+
   // Process IPTag timeouts
 
   iptag_timer ();
@@ -1355,8 +1452,10 @@ void proc_100hz (uint a1, uint a2)
   // Ping application CPUs to check on status
 
   if (sv->soft_wdog)
-    soft_wdog (sv->soft_wdog);
-    
+    {
+      soft_wdog (sv->soft_wdog);
+    }
+
   // Send LTPC packet (untested!)
 
   if (sv->ltpc_period > 0 && ++ltpc_timer >= sv->ltpc_period)
@@ -1383,29 +1482,41 @@ void proc_1khz (uint a1, uint a2)
       if (sv->led_period == 1)
         {
           // sv->led_period == 1: Display current load using PWM
-          
+
           // Slowly track the actual load value
           uint fractional_load = ((uint)load) << LOAD_FRAC_BITS;
           if (disp_load < fractional_load)
-            disp_load++;
+            {
+              disp_load++;
+            }
           else if (disp_load > fractional_load)
-            disp_load--;
-          
+            {
+              disp_load--;
+            }
+
           // PWM generation
           static uint period = 0;
           uint duty = disp_load >> (LOAD_FRAC_BITS + PWM_BITS);
-          
+
           // If there is *any* load, keep the LED on a little bit.
           if (disp_load > 0 && duty == 0)
-            duty = 1;
-          
+            {
+              duty = 1;
+            }
+
           if (period >= duty)
-            sark_led_set (LED_OFF(0));
+            {
+              sark_led_set (LED_OFF(0));
+            }
           else
-            sark_led_set (LED_ON(0));
-          
+            {
+              sark_led_set (LED_ON(0));
+            }
+
           if (++period >= (1 << PWM_BITS))
-            period = 0;
+            {
+              period = 0;
+            }
         }
       else if (sv->led_period >= 2)
         {
@@ -1429,11 +1540,17 @@ static uint pll_mult (uint freq)
   uint f = 0;
 
   if (freq >= 50)
-    f = 1;
+    {
+      f = 1;
+    }
   if (freq >= 100)
-    f = 2;
+    {
+      f = 2;
+    }
   if (freq >= 200)
-    f = 3;
+    {
+      f = 3;
+    }
 
   return f << 16;
 }
@@ -1478,8 +1595,6 @@ void pll_init ()
 
 
 //------------------------------------------------------------------------------
-
-
 
 void eth_setup ()
 {
@@ -1563,7 +1678,9 @@ void c_main (void)
   rtr_init (sark.phys_cpu);		// Initialise router
 
   if (sv->boot_delay)			// If bootROM boot
-    boot_nn (sv->hw_ver);		// Flood fill neighbours
+    {
+      boot_nn (sv->hw_ver);		// Flood fill neighbours
+    }
 
   boot_ap ();				// Start local APs
 
@@ -1578,7 +1695,9 @@ void c_main (void)
   vic_setup ();				// Set VIC, interrupts on
 
   if (sv->boot_delay)
-    eth_setup ();		        // Set up Ethernet if present
+    {
+      eth_setup ();		        // Set up Ethernet if present
+    }
 
   while (1)				// Run event loop (forever...)
     {

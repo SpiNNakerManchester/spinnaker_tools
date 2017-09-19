@@ -4,8 +4,8 @@
 //
 // Copyright (C)    The University of Manchester - 2009-2013
 //
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
+// Author	    Steve Temple, APT Group, School of Computer Science
+// Email	    temples@cs.man.ac.uk
 //
 //------------------------------------------------------------------------------
 
@@ -33,13 +33,17 @@
 void *sark_xalloc (heap_t *heap, uint size, uint tag, uint flag)
 {
   if (size == 0 || tag > 255)
-    return NULL;
+    {
+      return NULL;
+    }
 
   uint app_id = (flag & ALLOC_ID) ? (flag >> 8) : sark_vec->app_id;
   uint entry = (app_id << 8) + tag;
 
   if (tag != 0 && sv->alloc_tag[entry] != NULL)
-    return NULL;
+    {
+      return NULL;
+    }
 
   // Word align and add overhead
 
@@ -48,54 +52,68 @@ void *sark_xalloc (heap_t *heap, uint size, uint tag, uint flag)
   uint cpsr;
 
   if (flag & ALLOC_LOCK)
-    cpsr = sark_lock_get (LOCK_HEAP);
-
-  block_t *prev = NULL;
-  block_t *free = heap->free;
-
-  while (free != NULL)
     {
-      block_t *next = free->next;
-      block_t *new = (block_t *) ((uchar *) free + size);
+      cpsr = sark_lock_get (LOCK_HEAP);
+    }
 
-      if (new <= free) // Request way too big?
-	break;
+  block_t *prev_blk = NULL;
+  block_t *free_blk = heap->free;
 
-      if (new > next) // Free block too small
+  while (free_blk != NULL)
+    {
+      block_t *next_blk = free_blk->next;
+      block_t *new_blk = (block_t *) ((uchar *) free_blk + size);
+
+      if (new_blk <= free_blk) // Request way too big?
 	{
-	  prev = free;
-	  free = free->free;
+	  break;
+	}
+
+      if (new_blk > next_blk) // Free block too small
+	{
+	  prev_blk = free_blk;
+	  free_blk = free_blk->free;
 	  continue;
 	}
 
-      if (new + 1 < next) // too big - split but don't make zero-size frag.
+      if (new_blk + 1 < next_blk) // too big - split but don't make zero-size frag.
 	{
-	  new->next = next;
-	  free->next = new;
-	  new->free = free->free;
-	  free->free = new;
+	  new_blk->next = next_blk;
+	  free_blk->next = new_blk;
+	  new_blk->free = free_blk->free;
+	  free_blk->free = new_blk;
 	}
 
-      if (prev)
-	prev->free = free->free;
+      if (prev_blk)
+	{
+	  prev_blk->free = free_blk->free;
+	}
       else
-	heap->free = free->free;
+	{
+	  heap->free = free_blk->free;
+	}
 
       heap->free_bytes -= size;
 
       if (flag & ALLOC_LOCK)
-	sark_lock_free (cpsr, LOCK_HEAP);
+	{
+	  sark_lock_free (cpsr, LOCK_HEAP);
+	}
 
-      free->free = (block_t *) (0xffff0000 + entry);
+      free_blk->free = (block_t *) (0xffff0000 + entry);
 
       if (tag != 0)
-	sv->alloc_tag[entry] = free + 1;
+	{
+	  sv->alloc_tag[entry] = free_blk + 1;
+	}
 
-      return free + 1;
+      return free_blk + 1;
     }
 
   if (flag & ALLOC_LOCK)
-    sark_lock_free (cpsr, LOCK_HEAP);
+    {
+      sark_lock_free (cpsr, LOCK_HEAP);
+    }
 
   return NULL;
 }
@@ -121,12 +139,16 @@ void *sark_alloc (uint count, uint size)
 void sark_xfree (heap_t *heap, void *ptr, uint flag)
 {
   if (ptr == NULL)
-    rt_error (RTE_NULL);
+    {
+      rt_error (RTE_NULL);
+    }
 
   uint cpsr;
 
   if (flag & ALLOC_LOCK)
-    cpsr = sark_lock_get (LOCK_HEAP);
+    {
+      cpsr = sark_lock_get (LOCK_HEAP);
+    }
 
   block_t *block = (block_t *) ptr - 1;
   block_t *prev = NULL;
@@ -135,7 +157,9 @@ void sark_xfree (heap_t *heap, void *ptr, uint flag)
   uint entry = (uint) block->free & 0xffff;
 
   if ((entry & 255) != 0)
-    sv->alloc_tag[entry] = NULL;
+    {
+      sv->alloc_tag[entry] = NULL;
+    }
 
   heap->free_bytes += (uchar *) block->next - (uchar *) block;
 
@@ -144,7 +168,9 @@ void sark_xfree (heap_t *heap, void *ptr, uint flag)
   while (next != NULL)
     {
       if (block < next)
-	break;
+	{
+	  break;
+	}
       prev = next;
       next = next->free;
     }
@@ -154,9 +180,13 @@ void sark_xfree (heap_t *heap, void *ptr, uint flag)
   block->free = next;
 
   if (prev)
-    prev->free = block;
+    {
+      prev->free = block;
+    }
   else
-    heap->free = block;
+    {
+      heap->free = block;
+    }
 
   // Merge with previous and/or next blocks if possible
 
@@ -173,7 +203,9 @@ void sark_xfree (heap_t *heap, void *ptr, uint flag)
     }
 
   if (flag & ALLOC_LOCK)
-    sark_lock_free (cpsr, LOCK_HEAP);
+    {
+      sark_lock_free (cpsr, LOCK_HEAP);
+    }
 }
 
 
@@ -228,7 +260,9 @@ uint sark_heap_max (heap_t *heap, uint flag)
   uint cpsr;
 
   if (flag & ALLOC_LOCK)
-    cpsr = sark_lock_get (LOCK_HEAP);
+    {
+      cpsr = sark_lock_get (LOCK_HEAP);
+    }
 
   while (p != NULL)
     {
@@ -237,14 +271,18 @@ uint sark_heap_max (heap_t *heap, uint flag)
 	  uint free = (uchar *) p->next - (uchar *) p - sizeof (block_t);
 
 	  if (free > max)
-	    max = free;
+	    {
+	      max = free;
+	    }
 	}
 
       p = p->free;
     }
 
   if (flag & ALLOC_LOCK)
-    sark_lock_free (cpsr, LOCK_HEAP);
+    {
+      sark_lock_free (cpsr, LOCK_HEAP);
+    }
 
   return max;
 }
@@ -297,7 +335,9 @@ heap_t *sark_heap_init (uint *base, uint *top)
 uint rtr_alloc_id (uint size, uint app_id)
 {
   if (size == 0)
-    return 0;
+    {
+      return 0;
+    }
 
   rtr_entry_t *router = sv->rtr_copy;
 
@@ -309,27 +349,31 @@ uint rtr_alloc_id (uint size, uint app_id)
   while (free != 0)
     {
       uint next = router[free].next;
-      uint new = free + size;
+      uint new_alloc = free + size;
 
-      if (new > next) 	// Too small, keep looking
+      if (new_alloc > next)	// Too small, keep looking
 	{
 	  prev = free;
 	  free = router[free].free;
 	  continue;
 	}
 
-      if (new < next)	// Too big, split
+      if (new_alloc < next)	// Too big, split
 	{
-	  router[new].next = next;
-	  router[free].next = new;
-	  router[new].free = router[free].free;
-	  router[free].free = new;
+	  router[new_alloc].next = next;
+	  router[free].next = new_alloc;
+	  router[new_alloc].free = router[free].free;
+	  router[free].free = new_alloc;
 	}
 
       if (prev != 0)
-	router[prev].free = router[free].free;
+	{
+	  router[prev].free = router[free].free;
+	}
       else
-	sv->rtr_free = router[free].free;
+	{
+	  sv->rtr_free = router[free].free;
+	}
 
       router[free].free = app_id | 0x8000;
 
@@ -357,7 +401,9 @@ uint rtr_alloc (uint size)
 void rtr_free (uint entry, uint clear)
 {
   if (entry < RTR_ALLOC_FIRST || entry >= RTR_ALLOC_LAST)
-    return;
+    {
+      return;
+    }
 
   rtr_entry_t *router = sv->rtr_copy;
 
@@ -375,7 +421,9 @@ void rtr_free (uint entry, uint clear)
   while (next != 0)
     {
       if (entry < next)
-	break;
+	{
+	  break;
+	}
       prev = next;
       next = router[next].free;
     }
@@ -383,9 +431,13 @@ void rtr_free (uint entry, uint clear)
   router[entry].free = next;
 
   if (prev != 0)
-    router[prev].free = entry;
+    {
+      router[prev].free = entry;
+    }
   else
-    sv->rtr_free = entry;
+    {
+      sv->rtr_free = entry;
+    }
 
   if (next != 0 && router[entry].next == next)
     {
@@ -454,7 +506,9 @@ uint rtr_alloc_max (void)
 	  uint free = router[block].next - block;
 
 	  if (free > max)
-	    max = free;
+	    {
+	      max = free;
+	    }
 	}
 
       block = router[block].free;
@@ -473,8 +527,9 @@ uint rtr_alloc_max (void)
 void *sark_tag_ptr (uint tag, uint app_id)
 {
   if (app_id == 0)
-    app_id = sark_vec->app_id;
-  
+    {
+      app_id = sark_vec->app_id;
+    }
   return (void *) sv->alloc_tag[(app_id << 8) + tag];
 }
 

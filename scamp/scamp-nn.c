@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // scamp-nn.c	    NN packet handling for SC&MP
@@ -31,8 +30,7 @@
 
 //------------------------------------------------------------------------------
 
-typedef struct nn_desc_t
-{
+typedef struct nn_desc_t {
   uchar state;			// FF state
   uchar error;			// Error flag
   uchar forward;		// Rebroadcast code
@@ -148,21 +146,29 @@ void compute_eth (void)
   int y = p2p_addr & 0xFF;
   int x_size = p2p_dims >> 8;
   int y_size = p2p_dims & 0xFF;
-  
+
   // Compensate for the fact that '0, 0' may not actually lie in a legitemate
   // place for a board corner then compute modulo 12 the cheap way.
 
   int xm = x - (p2p_root >> 8);
   while (xm < 0)
-    xm += 12;
+    {
+      xm += 12;
+    }
   while (xm >= 12)
-    xm -= 12;
+    {
+      xm -= 12;
+    }
 
   int ym = y - (p2p_root & 0xFF);
   while (ym < 0)
-    ym += 12;
+    {
+      ym += 12;
+    }
   while (ym >= 12)
-    ym -= 12;
+    {
+      ym -= 12;
+    }
 
   // Get table entry and split fields
 
@@ -174,11 +180,15 @@ void compute_eth (void)
 
   x -= xt;
   if (x < 0)
-    x += x_size;
+    {
+      x += x_size;
+    }
 
   y -= yt;
   if (y < 0)
-    y += y_size;
+    {
+      y += y_size;
+    }
 
   sv->board_addr = (xt << 8) + yt;
   sv->eth_addr = sv->dbg_addr = (x << 8) + y;
@@ -202,14 +212,14 @@ void compute_level (uint p2p_addr)
   uint x = p2p_addr >> 8;
   uint y = p2p_addr & 255;
 
-  for (uint l = 0; l < 4; l++)
+  for (uint lvl = 0; lvl < 4; lvl++)
     {
-      uint shift = 6 - 2 * l;
+      uint shift = 6 - 2 * lvl;
       uint mask = ~((4 << shift) - 1);
       uint bit = ((x >> shift) & 3) + 4 * ((y >> shift) & 3);
       uint nx = x & mask;
       uint ny = y & mask;
-      levels[l].level_addr = (nx << 24) + ((ny + l) << 16) + (1 << bit);
+      levels[lvl].level_addr = (nx << 24) + ((ny + lvl) << 16) + (1 << bit);
     }
 }
 
@@ -219,7 +229,7 @@ void compute_level (uint p2p_addr)
 void level_config (void)
 {
   compute_level(p2p_addr);
-  
+
   for (uint level = 0; level < 4; level++)
     {
       uint base = (levels[level].level_addr >> 16) & 0xfcfc;
@@ -240,11 +250,13 @@ void level_config (void)
 		  uint wx = i & ((1 << shift) - 1);
 		  uint wy = i >> shift;
 		  uint a = base + addr + (wx << 8) + wy;
-		  
+
 		  // Don't bother trying outside the scope of the system
 		  if (a >= p2p_dims || (a & 0xFF) >= (p2p_dims & 0xFF))
-		    continue;
-		  
+		    {
+		      continue;
+		    }
+
 		  uint link = rtr_p2p_get (a);
 
 		  if (link != 6)
@@ -293,7 +305,9 @@ uint link_read_word (uint addr, uint link, uint *buf, uint timeout)
   peek_pkt.flags = 0;
 
   if (! pkt_tx (PKT_NND + (link << 18), 0, addr))
-    return RC_PKT_TX;
+    {
+      return RC_PKT_TX;
+    }
 
   event_t* e = event_new (proc_byte_set, (uint) &peek_pkt.flags, 2);
 
@@ -308,15 +322,21 @@ uint link_read_word (uint addr, uint link, uint *buf, uint timeout)
   timer_schedule (e, timeout);
 
   while (peek_pkt.flags == 0)
-    continue;
+    {
+      continue;
+    }
 
   if (peek_pkt.flags == 2)
-    return RC_TIMEOUT;
+    {
+      return RC_TIMEOUT;
+    }
 
   timer_cancel (e, id);
 
   if (buf != NULL)
-    *buf = peek_pkt.pkt.data;
+    {
+      *buf = peek_pkt.pkt.data;
+    }
 
   return RC_OK;
 }
@@ -327,7 +347,9 @@ uint link_write_word (uint addr, uint link, uint *buf, uint timeout)
   poke_pkt.flags = 0;
 
   if (! pkt_tx (PKT_NND + PKT_PL + (link << 18), *buf, addr))
-    return RC_PKT_TX;
+    {
+      return RC_PKT_TX;
+    }
 
   event_t* e = event_new (proc_byte_set, (uint) &poke_pkt.flags, 2);
 
@@ -342,11 +364,15 @@ uint link_write_word (uint addr, uint link, uint *buf, uint timeout)
   timer_schedule (e, timeout);
 
   while (poke_pkt.flags == 0)
-    continue;
+    {
+      continue;
+    }
 
   if (poke_pkt.flags == 2)
-    return RC_TIMEOUT;
-  
+    {
+      return RC_TIMEOUT;
+    }
+
   timer_cancel (e, id);
 
   return RC_OK;
@@ -365,7 +391,9 @@ pkt_buf_t* pkt_buf_get ()
       pkt_buf_list = pkt->next;
       pkt_buf_count++;
       if (pkt_buf_count > pkt_buf_max)
-	pkt_buf_max = pkt_buf_count;
+        {
+	  pkt_buf_max = pkt_buf_count;
+        }
     }
 
   return pkt;
@@ -385,7 +413,9 @@ uint next_id (void)
 {
   uint t = sv->last_id + 1;
   if (t > 127)
-    t = 1;
+    {
+      t = 1;
+    }
   sv->last_id = t;
   return t << 1;
 }
@@ -394,7 +424,9 @@ uint next_biff_id (void)
 {
   uint t = sv->last_biff_id + 1;
   if (t > 127)
-    t = 1;
+    {
+      t = 1;
+    }
   sv->last_biff_id = t;
   return t << 1;
 }
@@ -417,7 +449,9 @@ void nn_mark (uint key)
 void ff_nn_send (uint key, uint data, uint fwd_rty, uint add_id)
 {
   if (add_id)
-    key |= next_id ();
+    {
+      key |= next_id ();
+    }
 
   uint count = fwd_rty & 7;     // Number of times to send
   uint delay = fwd_rty & 0xf8;  // Delay between transmissions
@@ -444,7 +478,7 @@ void biff_nn_send (uint data)
 {
   // Note: Should only be called on chips which are at position (0, 0) on their
   // board.
-  
+
   uint key = NN_CMD_BIFF << 24;
   key |= next_biff_id ();
   // NB: X = Y = 0
@@ -469,8 +503,10 @@ void p2pc_addr_nn_send(uint arg1, uint arg2)
 {
   // Don't send anything if our address is actually unknown...
   if (p2p_addr_guess_x == NO_IDEA || p2p_addr_guess_y == NO_IDEA)
-    return;
-  
+    {
+      return;
+    }
+
   uint key = (NN_CMD_P2PC << 24) | (P2PC_ADDR << 2);
   uint data = ((p2p_addr_guess_x & 0xFFFF) << 16) |
                (p2p_addr_guess_y & 0xFFFF);
@@ -478,7 +514,9 @@ void p2pc_addr_nn_send(uint arg1, uint arg2)
   key |= chksum_64 (key, data);
 
   for (uint link = 0; link < NUM_LINKS; link++)
-    pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    {
+      pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    }
 }
 
 // Broadcast the existance of a new P2P coordinate having been discovered
@@ -490,7 +528,9 @@ void p2pc_new_nn_send(uint x, uint y)
   key |= chksum_64 (key, data);
 
   for (uint link = 0; link < NUM_LINKS; link++)
-    pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    {
+      pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    }
 }
 
 // Transmit our current best guess of coordinates to all neighbouring chips.
@@ -505,22 +545,28 @@ void p2pc_dims_nn_send(uint arg1, uint arg2)
   key |= chksum_64 (key, data);
 
   for (uint link = 0; link < NUM_LINKS; link++)
-    pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    {
+      pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    }
 }
 
 // Transmit "P2PB" table generating packets
 void p2pb_nn_send(uint arg1, uint arg2)
 {
   static int id = 0;
-  
+
   uint key = (NN_CMD_P2PB << 24) | (0x3f00 << 8) | ((id++ & 0x7F) << 1);
   uint data = p2p_addr << 16;
 
   key |= chksum_64 (key, data);
 
   for (uint link = 0; link < NUM_LINKS; link++)
-    if (link_en & (1 << link))
-      pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+    {
+      if (link_en & (1 << link))
+        {
+	  pkt_tx (PKT_NN + PKT_PL + (link << 18), data, key);
+        }
+    }
 }
 
 // Update our current best guess of our coordinates based on a packet from a
@@ -530,24 +576,34 @@ void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
   // Coordinates of neighbour
   int nx = data >> 16;
   int ny = data & 0xFFFF;
-  if (nx & 0x8000) nx |= 0xFFFF0000;
-  if (ny & 0x8000) ny |= 0xFFFF0000;
-  
+  if (nx & 0x8000)
+    {
+      nx |= 0xFFFF0000;
+    }
+  if (ny & 0x8000)
+    {
+      ny |= 0xFFFF0000;
+    }
+
   // Work out our coordinates
   int x = nx + (int)lx[link];
   int y = ny + (int)ly[link];
-  
+
   // Ignore if this address has wrapped around a few too many times...
   if (x < -255 || x > 255 || y < -255 || y > 255)
-    return;
-  
+    {
+      return;
+    }
+
   // Ignore if in board-test mode and coordinate is not within a SpiNN-5 board
   // boundary.
   if ((sv->bt_flags & 1) &&
       (x >= 8 || x < 0 || y >= 8 || y < 0 ||
        eth_map[y][x] != ((x << 4) + y)))
-    return;
-  
+    {
+      return;
+    }
+
   // Update out current guess
   int updated = 0;
   if ((p2p_addr_guess_x < 0 && x >= 0) || // X has gone non-negative or
@@ -564,7 +620,7 @@ void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
       p2p_addr_guess_y = y;
       updated |= 2;
     }
-  
+
   // If guess was updated, broadcast this fact
   if (updated)
     {
@@ -579,20 +635,28 @@ void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
   // Coordinates of the new coordinate
   int x = data >> 16;
   int y = data & 0xFFFF;
-  if (x & 0x8000) x |= 0xFFFF0000;
-  if (y & 0x8000) y |= 0xFFFF0000;
-  
+  if (x & 0x8000)
+    {
+      x |= 0xFFFF0000;
+    }
+  if (y & 0x8000)
+    {
+      y |= 0xFFFF0000;
+    }
+
   // Ignore if this address has wrapped around a few too many times (should not
   // occur but here as a sanity check since we'll be indexing with this...)
   if (x < -255 || x > 255 || y < -255 || y > 255)
-    return;
-  
+    {
+      return;
+    }
+
   // Update the bitmap of known coordinates
   uint bit_offset = (((x + 256) << 9) | ((y + 256) << 0));
   uchar byte = p2p_addr_table[bit_offset / 8];
   uchar new_byte = byte | (1 << (bit_offset % 8));
   p2p_addr_table[bit_offset / 8] = new_byte;
-  
+
   // Re-broadcast only newly discovered coordinates
   if (byte != new_byte)
     {
@@ -607,12 +671,18 @@ void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
   // Bounds of the coordinates
   int new_min_x = (data >> 24) & 0xFF;
   int new_min_y = (data >> 16) & 0xFF;
-  if (new_min_x) new_min_x |= 0xFFFFFF00;
-  if (new_min_y) new_min_y |= 0xFFFFFF00;
-  
+  if (new_min_x)
+    {
+      new_min_x |= 0xFFFFFF00;
+    }
+  if (new_min_y)
+    {
+      new_min_y |= 0xFFFFFF00;
+    }
+
   int new_max_x = (data >> 8) & 0xFF;
   int new_max_y = (data >> 0) & 0xFF;
-  
+
   // Expand bounds as required
   int changed = 0;
   if (new_min_x < p2p_min_x)
@@ -635,7 +705,7 @@ void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
       p2p_max_y = new_max_y;
       changed = 1;
     }
-  
+
   // Re-broadcast immediately if bounds expanded to minimise propogation
   // delay
   if (changed)
@@ -649,7 +719,7 @@ void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
 void nn_rcv_p2pc_pct (uint link, uint data, uint key)
 {
   int p2pc_cmd = (key >> 2) & 0x3;
-  
+
   switch (p2pc_cmd)
     {
       case P2PC_ADDR:
@@ -684,11 +754,31 @@ void nn_cmd_rtrc (uint data)
   uint t1 = 0;
   uint t2 = 0;
 
-  if (data & 0x20) {t2 |= data & 0xff000000; t1 |= 0xff000000;} // Wait2
-  if (data & 0x10) {t2 |= data & 0x00ff0000; t1 |= 0x00ff0000;} // Wait1
-  if (data & 0x08) {t2 |= data & 0x00008000; t1 |= 0x00008000;} // W bit
-  if (data & 0x04) {t2 |= data & 0x00001f00; t1 |= 0x00001f00;} // MP
-  if (data & 0x02) {t2 |= data & 0x000000c0; t1 |= 0x000000c0;} // TP
+  if (data & 0x20)				// Wait2
+    {
+      t2 |= data & 0xff000000;
+      t1 |= 0xff000000;
+    }
+  if (data & 0x10)				// Wait1
+    {
+      t2 |= data & 0x00ff0000;
+      t1 |= 0x00ff0000;
+    }
+  if (data & 0x08)				// W bit
+    {
+      t2 |= data & 0x00008000;
+      t1 |= 0x00008000;
+    }
+  if (data & 0x04)				// MP
+    {
+      t2 |= data & 0x00001f00;
+      t1 |= 0x00001f00;
+    }
+  if (data & 0x02)				// TP
+    {
+      t2 |= data & 0x000000c0;
+      t1 |= 0x000000c0;
+    }
 
   t1 = rtr[RTR_CONTROL] & ~t1;
   rtr[RTR_CONTROL] = t1 | t2;
@@ -722,7 +812,9 @@ uint nn_cmd_sig0 (uint data)
 
     case 3: // ID set/reset ## what's this? Set last_id here ?
       if (data == nn_desc.gidr_id)
-	return 0;
+        {
+	  return 0;
+        }
 
       nn_desc.gidr_id = data;
       sark_word_set (nn_desc.id_set, (data & 1) ? 0xff : 0x00, 16);
@@ -753,20 +845,32 @@ void nn_cmd_mem (uint data, uint key)
   uint base = SV_SV;
 
   if (op == 1)
-    base = SYSRAM_BASE;
+    {
+      base = SYSRAM_BASE;
+    }
   else if (op == 2)
-    base = SYSCTL_BASE;
+    {
+      base = SYSCTL_BASE;
+    }
   else if (op == 3)
-    base = sv->mem_ptr;
+    {
+      base = sv->mem_ptr;
+    }
 
   uint ptr = base + ((key >> 8) & 255);
-  
+
   if (type == 0)
-    * (uchar *) ptr = data;
+    {
+      * ((uchar *) ptr) = data;
+    }
   else if (type == 1)
-    * (short *) ptr = data;
+    {
+      * ((short *) ptr) = data;
+    }
   else
-    * (uint *) ptr = data;
+    {
+      * ((uint *) ptr) = data;
+    }
 }
 
 
@@ -812,17 +916,23 @@ uint nn_cmd_p2pb (uint id, uint data, uint link)
       (link_en & (1 << link)))
     {
       if (table_hops == 0xffff)
-        sv->p2p_active++;
+        {
+	  sv->p2p_active++;
+        }
 
       hop_table[addr] = (id << 24) + hops;
 
       rtr_p2p_set (addr, link);
 
       if (hops >= 0x3FF)
-        data |= P2PB_STOP_BIT;
+        {
+	  data |= P2PB_STOP_BIT;
+        }
     }
   else
-    data |= P2PB_STOP_BIT;
+    {
+      data |= P2PB_STOP_BIT;
+    }
 
   return data + 1;
 }
@@ -877,9 +987,9 @@ uint nn_cmd_ffcs (uint data, uint key)
   // shouldn't be forwarded.
   uint64 id = (((uint64) data) << 18) | cores;
   if (id <= nn_desc.last_ffcs)
-  {
-    return 1;
-  }
+    {
+      return 1;
+    }
   nn_desc.last_ffcs = id;
 
   if ((mask == 0) ||
@@ -900,7 +1010,9 @@ uint nn_cmd_ffcs (uint data, uint key)
 uint nn_cmd_fbs (uint id, uint data, uint key)
 {
   if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK)
-    return 0;
+    {
+      return 0;
+    }
 
   uint block_num = (key >> 16) & 255;
   uint word = block_num >> 5;
@@ -908,7 +1020,9 @@ uint nn_cmd_fbs (uint id, uint data, uint key)
   uint mask = nn_desc.fbs_set[word];
 
   if ((mask & bit) != 0)
-    return 0;
+    {
+      return 0;
+    }
 
   nn_desc.fbs_set[word] = mask | bit;
 
@@ -932,7 +1046,9 @@ uint nn_cmd_fbd (uint id, uint data, uint key)
 
   if (id != nn_desc.id || block_num != nn_desc.block_num ||
       nn_desc.state != FF_ST_INBLK)
-    return 0;
+    {
+      return 0;
+    }
 
   uint offset = (key >> 8) & 0xff;
   uint word = offset >> 5;
@@ -940,7 +1056,9 @@ uint nn_cmd_fbd (uint id, uint data, uint key)
   uint mask = nn_desc.fbd_set[word];
 
   if ((mask & bit) != 0)
-    return 0;
+    {
+      return 0;
+    }
 
   nn_desc.word_count++;
   nn_desc.fbd_set[word] = mask | bit;
@@ -957,14 +1075,18 @@ uint nn_cmd_fbe (uint id, uint data, uint key)
 
   if (id != nn_desc.id || block_num != nn_desc.block_num ||
       nn_desc.state != FF_ST_INBLK)
-    return 0;
+    {
+      return 0;
+    }
 
   uint word = block_num >> 5;
   uint bit = 1 << (block_num & 31);
   uint mask = nn_desc.fbe_set[word];
 
   if ((mask & bit) != 0)
-    return 0;
+    {
+      return 0;
+    }
 
   nn_desc.fbe_set[word] = mask | bit;
 
@@ -977,7 +1099,9 @@ uint nn_cmd_fbe (uint id, uint data, uint key)
 		     nn_desc.word_len * 4);
     }
   else
-    nn_desc.error = 1;
+    {
+      nn_desc.error = 1;
+    }
 
   nn_desc.state = FF_ST_EXBLK;
 
@@ -988,7 +1112,9 @@ uint nn_cmd_fbe (uint id, uint data, uint key)
 uint nn_cmd_ffe (uint id, uint data, uint key)
 {
   if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK)
-    return 0;
+    {
+      return 0;
+    }
 
   nn_desc.state = FF_ST_IDLE;
 
@@ -997,7 +1123,9 @@ uint nn_cmd_ffe (uint id, uint data, uint key)
     {
       if (!event_queue_proc (proc_start_app, (uint) nn_desc.aplx_addr,
 			     data | nn_desc.cores, PRIO_0))
-	sw_error (SW_OPT);
+        {
+	  sw_error (SW_OPT);
+        }
     }
 
   return 1;
@@ -1012,19 +1140,23 @@ void proc_pkt_bc (uint i_pkt, uint count)
   uint link = pkt->link;
   uint offset = (forward & 0x40) ? 0 : link;
 
-  for (uint l = 0; l < NUM_LINKS; l++)
+  for (uint lnk = 0; lnk < NUM_LINKS; lnk++)
     {
-      if (forward & (1 << l))
+      if (forward & (1 << lnk))
 	{
-	  uint p = l + offset;
+	  uint p = lnk + offset;
 
 	  if (p >= NUM_LINKS)
-	    p -= NUM_LINKS;
+	    {
+	      p -= NUM_LINKS;
+	    }
 
 	  if ((1 << p) & link_en)
 	    {
 	      if (! pkt_tx (pkt->pkt.ctrl + (p << 18), pkt->pkt.data, pkt->pkt.key))
-		sw_error (SW_OPT);
+		{
+		  sw_error (SW_OPT);
+		}
 	    }
 	}
     }
@@ -1034,7 +1166,9 @@ void proc_pkt_bc (uint i_pkt, uint count)
   if (count != 0)
     {
       if (!timer_schedule_proc (proc_pkt_bc, (uint) pkt, count, pkt->delay))
-	sw_error (SW_OPT);
+	{
+	  sw_error (SW_OPT);
+	}
     }
   else
     {
@@ -1054,21 +1188,23 @@ void nn_cmd_biff(uint x, uint y, uint data)
   //   data[23:18] - Which links are working (bitmap)
   //   data[17:0] - Which cores are working (bitmap)
   uint type = data >> 30;
-  
+
   switch (type)
     {
       case 0:
         {
           uint target_x = (data >> 27) & 7;
           uint target_y = (data >> 24) & 7;
-          
+
           // Ignore if not targeted at this chip
           if (target_x != x || target_y != y)
-            return;
-          
+            {
+              return;
+            }
+
           // NB: *Dead* links are given as '1'
           sv->link_en = link_en = ((~data) >> 18) & 0x3f;
-          
+
           // Kill any cores noted as dead (note this may kill the core running
           // the monitor process, rendering the chip dead. This is the desired
           // effect in this instance since rebooting another core as monitor
@@ -1077,7 +1213,7 @@ void nn_cmd_biff(uint x, uint y, uint data)
           remap_phys_cores(dead_cores);
         }
         break;
-      
+
       default: // Ignore...
         break;
     }
@@ -1087,23 +1223,27 @@ void nn_rcv_biff_pct (uint link, uint data, uint key)
 {
   // When this function has been called, the checksum has already been verified
   // and the command checked as being NN_CMD_BIFF.
-  
+
   // Work out the coordinate of this chip on its board given the link it
   // arrived on and the coordinates in the packet.
   int x = ((key >> 11) & 7) + lx[link];
   int y = ((key >> 8) & 7) + ly[link];
-  
+
   // Fliter the packet if it came from another board
   if (x >= 8 || x < 0 || y >= 8 || y < 0 ||
       eth_map[y][x] != ((x << 4) + y))
-    return;
-  
+    {
+      return;
+    }
+
   uint id = (key >> 1) & 127;
-  
+
   // Packets must have an ID at present
   if (id == 0)
-    return;
-  
+    {
+      return;
+    }
+
   // Filter out packets we've seen before (note that IDs are only unique within
   // a board so this process must occur *after* filtering packets from other
   // boards.
@@ -1111,24 +1251,26 @@ void nn_rcv_biff_pct (uint link, uint data, uint key)
   uint bit = 1 << (id & 31);             // Bit in word
   uint mask = nn_desc.biff_id_set[word]; // Get mask word from array
   if (mask & bit)
-    return;
+    {
+      return;
+    }
 
   // Flag that this ID has been seen
   nn_desc.biff_id_set[word] = mask | bit;
   word = (word + 2) % 4;
   nn_desc.biff_id_set[word] = 0;
-  
+
   // Handle the command (passing in the coordinates of the chip within its
   // board)
   nn_cmd_biff(x, y, data);
-  
+
   // Continue propagation:
-  
+
   // Update coordinates in packet
   key &= ~0x3f00;
   key |= x << 11;
   key |= y << 8;
-  
+
   // Recompute checksum
   key &= 0x0fffffff;
   key |= chksum_64 (key, data);
@@ -1148,7 +1290,7 @@ void nn_rcv_biff_pct (uint link, uint data, uint key)
 
   pkt_t tp = {PKT_NN + PKT_PL, data, key};
   pkt->pkt = tp;
-    
+
   if (!timer_schedule_proc (proc_pkt_bc, (uint) pkt, 1, 8))
     {
       sw_error (SW_OPT);
@@ -1192,18 +1334,22 @@ void nn_rcv_pkt (uint link, uint data, uint key)
       uint mask = nn_desc.id_set[word];	// Get mask word from array
 
       if (mask & bit)
-	return;
+        {
+	  return;
+        }
 
       nn_desc.id_set[word] = mask | bit;
       word = (word + 2) % 4;
       nn_desc.id_set[word] = 0;
     }
-  
+
   switch (cmd)
     {
     case NN_CMD_SIG0:
       if (nn_cmd_sig0 (data))
-	break;
+        {
+	  break;
+        }
       return;
 
     case NN_CMD_RTRC:
@@ -1213,9 +1359,13 @@ void nn_rcv_pkt (uint link, uint data, uint key)
     case NN_CMD_LTPC:
       t = sv->tp_timer + 2;
       if ((t <= data) && ((t ^ data) & BIT_31) == 0)
-	sv->tp_timer = data - 1;
+        {
+	  sv->tp_timer = data - 1;
+        }
       else
-	return;
+        {
+	  return;
+        }
       break;
 
     case NN_CMD_SIG1:
@@ -1228,44 +1378,56 @@ void nn_rcv_pkt (uint link, uint data, uint key)
 
     case NN_CMD_FFCS:
       if (nn_cmd_ffcs (data, key))
-        return;
+        {
+	  return;
+        }
       break;
 
     case NN_CMD_P2PB:
       data = nn_cmd_p2pb (id, data, link);
       if (data & P2PB_STOP_BIT)
-	return;
+        {
+	  return;
+        }
       break;
 
     case NN_CMD_FBS:
       if (nn_cmd_fbs (id, data, key))
-	break;
+        {
+	  break;
+        }
       return;
 
     case NN_CMD_FBD:
       if (nn_cmd_fbd (id, data, key))
-	break;
+        {
+	  break;
+        }
       return;
 
     case NN_CMD_FBE:
       if (nn_cmd_fbe (id, data, key))
-	break;
+        {
+	  break;
+        }
       return;
 
     case NN_CMD_FFE:
       if (nn_cmd_ffe (id, data, key))
-	break;
+        {
+	  break;
+        }
       return;
 
-     default: // Ignore...
+    default: // Ignore...
       return;
     }
 
   // Now forward the incoming packet
-  
+
   // forward[5:0] Which links should the packet be sent down
   // forward[6] If reset (fwd[6]==0), link numbers above will be treated
-  //            as relative to the packet's incoming link, i.e., fwd[0] 
+  //            as relative to the packet's incoming link, i.e., fwd[0]
   //            means send to the incoming link. For example. if a packet
   //            comes in on the south link, fwd[0] means send South, fwd[1]
   //            means send East, and so on counterclockwise.
@@ -1279,9 +1441,8 @@ void nn_rcv_pkt (uint link, uint data, uint key)
   // retry[7:3] The number of usec to wait between repeated packets is
   //            wait = (8 * retry[7:3]) + 8
   uint forward, retry;
-  
 
-  if (cmd & 4) //const 
+  if (cmd & 4) //const
     {
       forward = nn_desc.forward;
       retry = nn_desc.retry;
@@ -1309,8 +1470,10 @@ void nn_rcv_pkt (uint link, uint data, uint key)
 
   pkt_t tp = {PKT_NN + PKT_PL, data, key};
   pkt->pkt = tp;
-    
+
   if (!timer_schedule_proc (proc_pkt_bc,
 			    (uint) pkt, (retry & 7) + 1, 8)) // const
-    sw_error (SW_OPT);
+    {
+      sw_error (SW_OPT);
+    }
 }

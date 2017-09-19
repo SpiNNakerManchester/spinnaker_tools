@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // bmp_hw.c	    Low-level hardware interface code for BMP LPC1768
@@ -244,12 +243,12 @@ __asm uint32_t cpu_int_off (void)
   mrs     r0, primask
   cpsid   i
   bx      lr
-} 
+}
 
 __asm void cpu_int_restore (uint32_t cpsr)
 {
-  msr     primask, r0 
-  bx      lr 
+  msr     primask, r0
+  bx      lr
 }
 
 
@@ -337,9 +336,13 @@ void led_set (uint32_t leds)
 void fpga_reset (uint32_t code)
 {
   if (code == 0)
-    LPC_GPIO1->FIOCLR = XIL_RST;
+    {
+      LPC_GPIO1->FIOCLR = XIL_RST;
+    }
   else if (code == 1)
-    LPC_GPIO1->FIOSET = XIL_RST;
+    {
+      LPC_GPIO1->FIOSET = XIL_RST;
+    }
   else
     {
       LPC_GPIO1->FIOSET = XIL_RST;
@@ -400,7 +403,9 @@ uint32_t fpga_init (uint32_t mask)
     {
       delay_us (10);
       if (--t == 0)
-	return 0;
+        {
+	  return 0;
+        }
     }
 
   return 1;
@@ -424,7 +429,9 @@ static void configure_adc (void)
   LPC_ADC->ADCR = ADC_PDN + ((div - 1) << 8);
 
   for (uint32_t i = 0; i < 8; i++)
-    board_stat[can_ID].adc[i] = UINT16_MAX;
+    {
+      board_stat[can_ID].adc[i] = UINT16_MAX;
+    }
 }
 
 
@@ -433,11 +440,14 @@ void read_adc (void)
   uint32_t *adc = (uint32_t *) &LPC_ADC->ADDR0;
 
   if ((1 << adc_chan) & ADC_VALID)
-    board_stat[can_ID].adc[adc_chan] = (adc[adc_chan] >> 4) & 0xfff; 
+    {
+      board_stat[can_ID].adc[adc_chan] = (adc[adc_chan] >> 4) & 0xfff;
+    }
 
   if (++adc_chan == 8)			// Move to next channel
-    adc_chan = 0;
-
+    {
+      adc_chan = 0;
+    }
   LPC_ADC->ADCR &= ~ 0x070000ff;	// Clear channels & start
   LPC_ADC->ADCR |= 1 << adc_chan;	// Select channel
   LPC_ADC->ADCR |= 0x01000000;		// Start conversion
@@ -482,8 +492,9 @@ static void process_reset (void)
   if ((rsid & 3) != 0)
     {
       for (uint32_t i = 0; i < 8; i++)
-	uni_vec[i] = 0;
-
+	{
+	  uni_vec[i] = 0;
+	}
       LPC_SC->RSID = 3;
     }
 
@@ -516,7 +527,7 @@ void configure_pwm (uint32_t period, uint32_t width)
   LPC_PWM1->PCR = 1 << 14;		// Enable PWM6 output
   LPC_PWM1->MR0 = period;		// Period
   LPC_PWM1->MR6 = width;		// Pulse width
-  LPC_PWM1->MCR = 2;			// Reset TC on MR0 
+  LPC_PWM1->MCR = 2;			// Reset TC on MR0
   LPC_PWM1->LER = (1 << 0) + (1 << 6);	// Enable match copy
 
   LPC_PWM1->TCR = 9;			// Enable everything...
@@ -604,9 +615,13 @@ static void set_pin_od (uint32_t port, uint32_t pin, uint32_t mode)
   uint32_t *od_reg = (uint32_t *) &LPC_PINCON->PINMODE_OD0 + port;
 
   if (mode == PINSEL_PINMODE_OPENDRAIN)
-    *od_reg |= 1 << pin;
+    {
+      *od_reg |= 1 << pin;
+    }
   else
-    *od_reg &= ~(1 << pin);
+    {
+      *od_reg &= ~(1 << pin);
+    }
 }
 
 
@@ -770,7 +785,9 @@ void reset_spin (uint32_t code)
     {
       LPC_GPIO2->FIOSET = POR;
       if (fpga)
-	LPC_GPIO1->FIOCLR = XIL_RST;
+	{
+	  LPC_GPIO1->FIOCLR = XIL_RST;
+	}
     }
 
   if (code != 1)
@@ -781,7 +798,9 @@ void reset_spin (uint32_t code)
       LPC_GPIO2->FIOCLR = POR;	// Clear POR
 
       if (fpga)			// Set XRST
-	LPC_GPIO1->FIOSET = XIL_RST;
+	{
+	  LPC_GPIO1->FIOSET = XIL_RST;
+	}
     }
 }
 
@@ -897,14 +916,20 @@ void die (uint32_t code)
   uint32_t bits = LED_7;
 
   for (uint32_t i = 0; i < 4; i++)
-    if (code & (1 << i))
-      bits |= led_bit[i+3];
+    {
+      if (code & (1 << i))
+	{
+	  bits |= led_bit[i+3];
+	}
+    }
 
   LPC_GPIO0->FIOCLR = LED_MASK;
   LPC_GPIO0->FIOSET = bits;
 
   while (1)
-    refresh_wdt ();
+    {
+      refresh_wdt ();
+    }
 }
 
 
@@ -912,14 +937,18 @@ void delay_us (uint32_t n)
 {
   n *= 34;
   while (n--)
-    continue;
+    {
+      continue;
+    }
 }
 
 
 void delay_ms (uint32_t n)
 {
   while (n--)
-    delay_us (1000);
+    {
+      delay_us (1000);
+    }
 }
 
 
@@ -949,7 +978,9 @@ static void configure_spin (void)
   // Clear out temporary buffer used to assemble data
 
   for (uint32_t i = 0; i < 128; i++)
-    buf[i] = 0xffffffff;
+    {
+      buf[i] = 0xffffffff;
+    }
 
   // First thing in buffer is IP address info (11 words)
   // at offset 0. This needs to be byte reversed!
@@ -958,8 +989,9 @@ static void configure_spin (void)
   buf[1] = __rev (SYSRAM_IP_DATA);
 
   for (uint32_t i = 0; i < 8; i++)
-    buf[i+2] = __rev (ip[i]);
-
+    {
+      buf[i+2] = __rev (ip[i]);
+    }
   buf[10] = __rev (0xaaaaaaaa);
 
   // Second thing is board_info which starts at offset 256
@@ -969,13 +1001,15 @@ static void configure_spin (void)
   uint32_t count = info[0];
 
   if (count > 63)	// !! Un-init. flash?
-    count = 0;
-
+    {
+      count = 0;
+    }
   buf[64] = count;
 
   for (uint32_t i = 1; i < count + 1; i++)
-    buf [64 + i] = info[i];
-
+    {
+      buf [64 + i] = info[i];
+    }
   sf_read (0, 512, (uint8_t *) flash_buf);
 
   if (memcmp (flash_buf, buf, 512) != 0)
@@ -1025,7 +1059,9 @@ void proc_setup (uint32_t d1, uint32_t d2)
       board2can = null_map;
     }
   else
-    die (9);
+    {
+      die (9);
+    }
 
   board_ID = can2board[can_ID];
 
@@ -1088,7 +1124,9 @@ void proc_setup (uint32_t d1, uint32_t d2)
   uint32_t flags = d1 >> 24;
 
   if ((flags & 2) == 0)
-    proc_power (((10 * board_ID) << 16) + 1, 1 << board_ID);
+    {
+      proc_power (((10 * board_ID) << 16) + 1, 1 << board_ID);
+    }
 }
 
 
@@ -1144,8 +1182,8 @@ void configure_hw (void)
       configure_lcd ();
 
       if (! read_ee (0, sizeof (ee_data), &ee_data) ||
-	  is_blank (&ee_data, sizeof (ee_data)) ||
-	  crc32_chk (&ee_data, sizeof (ee_data)) != 0)
+	      is_blank (&ee_data, sizeof (ee_data)) ||
+	      crc32_chk (&ee_data, sizeof (ee_data)) != 0)
 	{
 	  LPC_GPIO0->FIOSET = LED_7;
 	  memcpy (&ee_data, &ee_default, sizeof (ee_data));
@@ -1153,22 +1191,24 @@ void configure_hw (void)
     }
 
   config2 = (ee_data.gw_addr[0] << 24) +
-    (ee_data.gw_addr[1] << 16) +
-    (ee_data.gw_addr[2] << 8) +
-    (ee_data.gw_addr[3] << 0);
+	  (ee_data.gw_addr[1] << 16) +
+	  (ee_data.gw_addr[2] << 8) +
+	  (ee_data.gw_addr[3] << 0);
 
   config1 = (ee_data.flags << 24) +
-    (ee_data.mac_byte << 16) +
-    (ee_data.frame_ID << 8) +
-    (ee_data.mask_bits << 3) +
-    ee_data.hw_ver;
+	  (ee_data.mac_byte << 16) +
+	  (ee_data.frame_ID << 8) +
+	  (ee_data.mask_bits << 3) +
+	  ee_data.hw_ver;
 
   if (can_ID == 0 || can_ID >= CAN_SIZE) // >= probably not in a backplane
-    proc_setup (config1, config2);
-
+    {
+      proc_setup (config1, config2);
+    }
   if (can_ID < CAN_SIZE)
-    configure_can (can_ID);
-
+    {
+      configure_can (can_ID);
+    }
   if (can_ID == 31)		// No backplane
     {
       can_ID = board_ID = 0;
@@ -1176,11 +1216,13 @@ void configure_hw (void)
       fan_sense = 1;
     }
   else
-    fan_sense = bp_ctrl;
-
+    {
+      fan_sense = bp_ctrl;
+    }
   if (bp_ctrl && (ee_data.flags & 1))
-    configure_pwm (1024, 256);
-
+    {
+      configure_pwm (1024, 256);
+    }
   configure_adc ();		// NB uses can_ID
 
   configure_wdt (62500000);	// 10 secs

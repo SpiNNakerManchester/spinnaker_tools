@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // bmp_flash.c	    Flash routines for BMP LPC1768
@@ -24,9 +23,12 @@ uint32_t is_blank (void *buf, uint32_t len)
   uint8_t *buffer = (uint8_t *) buf;
 
   for (uint32_t i = 0; i < len; i++)
-    if (buffer[i] != 0xff)
-      return 0;
-
+    {
+      if (buffer[i] != 0xff)
+	{
+	  return 0;
+	}
+    }
   return 1;
 }
 
@@ -40,9 +42,13 @@ uint32_t is_blank (void *buf, uint32_t len)
 uint32_t flash_sector (uint32_t addr)
 {
   if (addr < 0x10000)
-    return addr / 4096;
+    {
+      return addr / 4096;
+    }
   else
-    return 16 + (addr - 0x10000) / 32768;
+    {
+      return 16 + (addr - 0x10000) / 32768;
+    }
 }
 
 

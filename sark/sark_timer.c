@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // sark_timer.c	    Timer routines for SARK
@@ -28,7 +27,9 @@ void event_register_timer (vic_slot slot)
       sark_vic_set (slot, TIMER2_INT, 1, timer2_int_han);
     }
   else
-    rt_error (RTE_TIMER);
+    {
+      rt_error (RTE_TIMER);
+    }
 }
 
 
@@ -116,7 +117,9 @@ uint timer_schedule_proc (event_proc proc, uint arg1, uint arg2, uint time)
   event_t *e = event_new (proc, arg1, arg2);
 
   if (e == NULL)
-    return 0;
+    {
+      return 0;
+    }
 
   timer_schedule (e, time);
   return 1;
@@ -138,10 +141,14 @@ uint timer_schedule_proc (event_proc proc, uint arg1, uint arg2, uint time)
 void timer_cancel (event_t *e, uint ID)
 {
   if (e == NULL)
-    rt_error (RTE_NULL);
+    {
+      rt_error (RTE_NULL);
+    }
 
   if (e->ID != ID)		// Still active (return if not)
-    return;
+    {
+      return;
+    }
 
   uint cpsr = cpu_int_disable ();
   event_t* q = event.timer_queue;
@@ -162,7 +169,9 @@ void timer_cancel (event_t *e, uint ID)
 	      pq->next = e->next;
 
 	      if (e->next != NULL)	// Add our time to next in queue
-		e->next->time += e->time;
+		{
+		  e->next->time += e->time;
+		}
 
 	      e->next = event.free;	// Return to free queue
 	      event.free = e;
@@ -213,7 +222,9 @@ void timer2_int (void)
   while (eq != NULL)			// Run the execute queue
     {
       if (eq->proc != NULL)		// Execute proc if non-NULL
-      	eq->proc (eq->arg1, eq->arg2);
+	{
+	  eq->proc (eq->arg1, eq->arg2);
+	}
 
       event_t* next = eq->next;
 

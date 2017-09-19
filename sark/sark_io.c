@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // sark_io.c	    Simple character I/O library for Spinnaker
@@ -56,7 +55,9 @@ static sdp_msg_t *io_std_init ()
   sdp_msg_t *msg = sark_alloc (1, sizeof (sdp_msg_t));
 
   if (msg == NULL)
-    rt_error (RTE_IOBUF);
+    {
+      rt_error (RTE_IOBUF);
+    }
 
   msg->flags = 0x07;
   msg->tag = TAG_HOST;
@@ -81,7 +82,9 @@ static iobuf_t *io_buf_init ()
 				0,
 				1);
   if (iobuf == NULL)
-    rt_error (RTE_IOBUF);
+    {
+      rt_error (RTE_IOBUF);
+    }
 
   iobuf->unix_time = sv->unix_time;
   iobuf->time_ms = sv->time_ms;
@@ -146,7 +149,9 @@ void io_put_char (char *stream, uint c)
   else if (stream == IO_STD)
     {
       if (io_msg == NULL)
-	io_msg = io_std_init ();
+	{
+	  io_msg = io_std_init ();
+	}
 
       uchar *buf = (uchar *) &io_msg->flags;	// Point at start of msg
 
@@ -162,7 +167,9 @@ void io_put_char (char *stream, uint c)
   else if (stream == IO_BUF)
     {
       if (io_buf == NULL)
-	io_buf = sark.vcpu->iobuf = io_buf_init ();
+	{
+	  io_buf = sark.vcpu->iobuf = io_buf_init ();
+	}
 
       io_buf->buf[buf_ptr++] = c;
 
@@ -174,7 +181,9 @@ void io_put_char (char *stream, uint c)
 	}
 
       else if (c == '\n' || c == 0)
-	io_buf->ptr = buf_ptr;
+	{
+	  io_buf->ptr = buf_ptr;
+	}
     }
 }
 
@@ -192,13 +201,17 @@ static void io_put_str (char *stream, char *s, int d)
   int n = 0;
 
   while (*t++)
-    n++;
-
+    {
+      n++;
+    }
   while (d-- > n)
-    io_put_char (stream, ' ');
-
+    {
+      io_put_char (stream, ' ');
+    }
   while (*s)
-    io_put_char (stream, *s++);
+    {
+      io_put_char (stream, *s++);
+    }
 }
 
 
@@ -223,20 +236,28 @@ static void io_put_int (char *stream, int n, uint d, uint pad) // pad not used!
 
       s[i++] = r.mod + '0';
       n = r.div;
-      if (n == 0) break;
+      if (n == 0)
+	{
+	  break;
+	}
     }
 
   while (i > 0 && s[--i] == '0')
-    continue;
-
+    {
+      continue;
+    }
   if (neg)
-    s[++i] = neg;
-
+    {
+      s[++i] = neg;
+    }
   while (d-- > i + 1)
-    io_put_char (stream, ' ');
-
+    {
+      io_put_char (stream, ' ');
+    }
   while (i >= 0)
-    io_put_char (stream, s[i--]);
+    {
+      io_put_char (stream, s[i--]);
+    }
 }
 
 
@@ -254,17 +275,24 @@ static void io_put_uint (char *stream, uint n, uint d, uint pad)
 
       s[i++] = r.mod + '0';
       n = r.div;
-      if (n == 0) break;
+      if (n == 0)
+	{
+	  break;
+	}
     }
 
   while (i > 0 && s[--i] == '0')
-    continue;
-
+    {
+      continue;
+    }
   while (d-- > i + 1)
-    io_put_char (stream, pad);
-
+    {
+      io_put_char (stream, pad);
+    }
   while (i >= 0)
-    io_put_char (stream, s[i--]);
+    {
+      io_put_char (stream, s[i--]);
+    }
 }
 
 
@@ -274,7 +302,9 @@ static void io_put_uint (char *stream, uint n, uint d, uint pad)
 static void io_put_zhex (char *stream, uint n, uint d)
 {
   for (int i = d - 1; i >= 0; i--)
-    io_put_char (stream, hex [(n >> (4 * i)) & 15]);
+    {
+      io_put_char (stream, hex [(n >> (4 * i)) & 15]);
+    }
 }
 
 
@@ -290,17 +320,24 @@ static void io_put_hex (char *stream, uint n, uint d, uint pad)
     {
       s[i++] = hex[n & 15];
       n = n >> 4;
-      if (n == 0) break;
+      if (n == 0)
+	{
+	  break;
+	}
     }
 
   while (i > 0 && s[--i] == '0')
-    continue;
-
+    {
+      continue;
+    }
   while (d-- > i + 1)
-    io_put_char (stream, pad);
-
+    {
+      io_put_char (stream, pad);
+    }
   while (i >= 0)
-    io_put_char (stream, s[i--]);
+    {
+      io_put_char (stream, s[i--]);
+    }
 }
 
 
@@ -315,7 +352,9 @@ static void io_put_mac (char *stream, uchar *s)
     {
       io_put_zhex (stream, s[i], 2);
       if (i != 5)
-	io_put_char (stream, ':');
+	{
+	  io_put_char (stream, ':');
+	}
     }
 }
 
@@ -326,7 +365,9 @@ static void io_put_ip (char *stream, uchar *s)
     {
       io_put_int (stream, s[i], 0, 0);
       if (i != 3)
-	io_put_char (stream, '.');
+	{
+	  io_put_char (stream, '.');
+	}
     }
 }
 #endif
@@ -349,7 +390,9 @@ void io_put_fixed (char *stream, uint n, uint d, uint a, uint pad, int neg)
 
   f = n;
   if (a > 12) // maximum precision of 12 to prevent overflow
-    a = 12;
+    {
+      a = 12;
+    }
 
   while (i < a)
     {
@@ -383,7 +426,9 @@ void io_put_fixed (char *stream, uint n, uint d, uint a, uint pad, int neg)
   // add decimal
 
   if (a)
-    s[i++] = '.';
+    {
+      s[i++] = '.';
+    }
 
   // integer part
 
@@ -396,25 +441,35 @@ void io_put_fixed (char *stream, uint n, uint d, uint a, uint pad, int neg)
       s[i++] = r.mod + '0';
       n = r.div;
       if (n == 0)
-	break;
+	{
+	  break;
+	}
     }
 
-  if (neg) {  // <drl add>
-    s[i++] = '-';
-  }  // </drl add>
+  if (neg) // <drl add>
+    {
+      s[i++] = '-';
+    }  // </drl add>
 
   while (d-- > (i+1))
-    io_put_char (stream, pad);
-
+    {
+      io_put_char (stream, pad);
+    }
   while (i > 0)
-    io_put_char (stream, s[--i]);
+    {
+      io_put_char (stream, s[--i]);
+    }
 }
 
  // <drl add>
 static void io_put_sfixed (char *stream, int n, uint d, uint a, uint pad)
-{ io_put_fixed (stream, (uint)((n < 0)? (-n): n) << 1, d, a, pad, (n < 0)); }
+{
+  io_put_fixed (stream, (uint)((n < 0)? (-n): n) << 1, d, a, pad, (n < 0));
+}
 static void io_put_ufixed (char *stream, uint n, uint d, uint a, uint pad)
-{ io_put_fixed (stream, n, d, a, pad, (1==0)); }
+{
+  io_put_fixed (stream, n, d, a, pad, (1==0));
+}
  // </drl add>
 
 #endif
@@ -440,15 +495,19 @@ static void io_put_ufixed (char *stream, uint n, uint d, uint a, uint pad)
 // %n.mk - s16.15 ISO accum fixed point with width n, precision m
 // %n.mK -  16.16 ISO unsigned accum fixed point with width n, precision m
 
-void io_printf (char *stream, char *f, ...) 
+void io_printf (char *stream, char *f, ...)
 {
   va_list ap;
- 
+
   if (stream == IO_NULL)
-    return;
+    {
+      return;
+    }
 
   if (stream > IO_NULL)
-    sp_ptr = stream[0] = 0;
+    {
+      sp_ptr = stream[0] = 0;
+    }
 
   va_start (ap, f);
 
@@ -457,7 +516,9 @@ void io_printf (char *stream, char *f, ...)
       char c = *f++;
 
       if (c == 0)
-	return;
+	{
+	  return;
+	}
 
       if (c != '%')
 	{
@@ -468,12 +529,16 @@ void io_printf (char *stream, char *f, ...)
       c = *f++;
 
       if (c == 0)
-	return;
+	{
+	  return;
+	}
 
       char pad = ' ';
 
       if (c == '0')
-	pad = c;
+	{
+	  pad = c;
+	}
 
       uint size = 0;
 
@@ -482,7 +547,9 @@ void io_printf (char *stream, char *f, ...)
 	  size = 10 * size + c - '0';
 	  c = *f++;
 	  if (c == 0)
-	    return;
+	    {
+	      return;
+	    }
 	}
 
 #ifdef SPINN_IO_FIX
@@ -500,7 +567,9 @@ void io_printf (char *stream, char *f, ...)
 	    }
 
 	  if (c == 0)
-	    return;
+	    {
+	      return;
+	    }
 	}
 #endif
 

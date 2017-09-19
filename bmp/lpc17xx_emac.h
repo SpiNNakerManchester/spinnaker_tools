@@ -126,22 +126,24 @@ extern "C"
  **********************************************************************/
 /** Programmable field representing the Non-Back-to-Back Inter-Packet-Gap */
 #define EMAC_IPGR_NBBIPG_P2(n)	(n&0x7F)
-/** Recommended value for Programmable field representing the Non-Back-to-Back Inter-Packet-Gap Part 1 */
+/** Recommended value for Programmable field representing the Non-Back-to-Back
+ * Inter-Packet-Gap Part 1 */
 #define EMAC_IPGR_P2_DEF		(EMAC_IPGR_NBBIPG_P2(0x12))
 /** Programmable field representing the optional carrierSense window referenced in
  * IEEE 802.3/4.2.3.2.1 'Carrier Deference' */
 #define EMAC_IPGR_NBBIPG_P1(n)	((n&0x7F)<<8)
-/** Recommended value for Programmable field representing the Non-Back-to-Back Inter-Packet-Gap Part 2 */
+/** Recommended value for Programmable field representing the Non-Back-to-Back
+ * Inter-Packet-Gap Part 2 */
 #define EMAC_IPGR_P1_DEF        EMAC_IPGR_NBBIPG_P1(0x0C)
 
 /*********************************************************************//**
  * Macro defines for Collision Window/Retry Register
  **********************************************************************/
-/** Programmable field specifying the number of retransmission attempts following a collision before
- * aborting the packet due to excessive collisions */
+/** Programmable field specifying the number of retransmission attempts
+ * following a collision before aborting the packet due to excessive collisions */
 #define EMAC_CLRT_MAX_RETX(n)	(n&0x0F)
-/** Programmable field representing the slot time or collision window during which collisions occur
- * in properly configured networks */
+/** Programmable field representing the slot time or collision window during
+ * which collisions occur in properly configured networks */
 #define EMAC_CLRT_COLL(n)		((n&0x3F)<<8)
 /** Default value for Collision Window / Retry register */
 #define EMAC_CLRT_DEF           ((EMAC_CLRT_MAX_RETX(0x0F))|(EMAC_CLRT_COLL(0x37)))
@@ -192,12 +194,12 @@ extern "C"
 /*********************************************************************//**
  * Macro defines for MII Management Write Data Register
  **********************************************************************/
-#define EMAC_MWTD_DATA(n)		(n&0xFFFF)		/**< Data field for MMI Management Write Data register */
+#define EMAC_MWTD_DATA(n)	(n&0xFFFF)	/**< Data field for MMI Management Write Data register */
 
 /*********************************************************************//**
  * Macro defines for MII Management Read Data Register
  **********************************************************************/
-#define EMAC_MRDD_DATA(n)		(n&0xFFFF)		/**< Data field for MMI Management Read Data register */
+#define EMAC_MRDD_DATA(n)	(n&0xFFFF)	/**< Data field for MMI Management Read Data register */
 
 /*********************************************************************//**
  * Macro defines for MII Management Indicators Register
@@ -283,13 +285,13 @@ extern "C"
 /*********************************************************************//**
  * Macro defines for Flow Control Counter Register
  **********************************************************************/
-#define EMAC_FCC_MIRR_CNT(n)        	(n&0xFFFF)  		/**< Mirror Counter                    */
-#define EMAC_FCC_PAUSE_TIM(n)       	((n&0xFFFF)<<16)  	/**< Pause Timer                       */
+#define EMAC_FCC_MIRR_CNT(n)	(n&0xFFFF)  	/**< Mirror Counter                    */
+#define EMAC_FCC_PAUSE_TIM(n)	((n&0xFFFF)<<16) /**< Pause Timer                      */
 
 /*********************************************************************//**
  * Macro defines for Flow Control Status Register
  **********************************************************************/
-#define EMAC_FCS_MIRR_CNT(n)        	(n&0xFFFF)  		/**< Mirror Counter Current            */
+#define EMAC_FCS_MIRR_CNT(n)	(n&0xFFFF)	/**< Mirror Counter Current            */
 
 
 /* Receive filter register definitions -------------------------------------------------------- */
@@ -316,7 +318,7 @@ extern "C"
 #define EMAC_WOL_PERFECT         0x00000020  /**< Perfect Filter WoL                */
 #define EMAC_WOL_RX_FILTER       0x00000080  /**< RX Filter caused WoL              */
 #define EMAC_WOL_MAG_PACKET      0x00000100  /**< Magic Packet Filter caused WoL    */
-#define EMAC_WOL_BITMASK		 0x01BF		/**< Receive Filter WoL Status/Clear bitmasl value */
+#define EMAC_WOL_BITMASK	     0x01BF  /**< Receive Filter WoL Status/Clear bitmasl value */
 
 
 /* Module control register definitions ---------------------------------------------------- */

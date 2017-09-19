@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // bmp_io.c	    Simple character I/O library for BMP
@@ -37,7 +36,9 @@ static void std_putc (uint32_t c)
   tube_buf[tube_ptr++] = c;
 
   if (c != 0 && c != '\n' && tube_ptr != 256)
-    return;
+    {
+      return;
+    }
 
   sdp_msg_t *msg = msg_get ();
 
@@ -94,13 +95,17 @@ static void io_put_str (char *stream, char *s, int d)
   int n = 0;
 
   while (*t++)
-    n++;
-
+    {
+      n++;
+    }
   while (d-- > n)
-    io_put_char (stream, ' ');
-
+    {
+      io_put_char (stream, ' ');
+    }
   while (*s)
-    io_put_char (stream, *s++);
+    {
+      io_put_char (stream, *s++);
+    }
 }
 
 
@@ -121,20 +126,28 @@ static void io_put_int (char *stream, int n, uint32_t d, uint32_t pad)
     {
       s[i++] = n % 10 + '0';
       n = n / 10;
-      if (n == 0) break;
+      if (n == 0)
+	{
+	  break;
+	}
     }
 
   while (i > 0 && s[--i] == '0')
-    continue;
-
+    {
+      continue;
+    }
   if (neg)
-    s[++i] = neg;
-
+    {
+      s[++i] = neg;
+    }
   while (d-- > i + 1)
-    io_put_char (stream, ' ');
-
+    {
+      io_put_char (stream, ' ');
+    }
   while (i >= 0)
-    io_put_char (stream, s[i--]);
+    {
+      io_put_char (stream, s[i--]);
+    }
 }
 
 
@@ -147,24 +160,33 @@ static void io_put_uint (char *stream, uint32_t n, uint32_t d, uint32_t pad)
     {
       s[i++] = n % 10 + '0';
       n = n / 10;
-      if (n == 0) break;
+      if (n == 0)
+	{
+	  break;
+	}
     }
 
   while (i > 0 && s[--i] == '0')
-    continue;
-
+    {
+      continue;
+    }
   while (d-- > i + 1)
-    io_put_char (stream, pad);
-
+    {
+      io_put_char (stream, pad);
+    }
   while (i >= 0)
-    io_put_char (stream, s[i--]);
+    {
+      io_put_char (stream, s[i--]);
+    }
 }
 
 
 static void io_put_zhex (char *stream, uint32_t n, uint32_t d)
 {
   for (int i = d - 1; i >= 0; i--)
-    io_put_char (stream, hex [(n >> (4 * i)) & 15]);
+    {
+      io_put_char (stream, hex [(n >> (4 * i)) & 15]);
+    }
 }
 
 
@@ -177,17 +199,26 @@ static void io_put_hex (char *stream, uint32_t n, uint32_t d, uint32_t pad)
     {
       s[i++] = hex[n & 15];
       n = n >> 4;
-      if (n == 0) break;
+      if (n == 0)
+	{
+	  break;
+	}
     }
 
   while (i > 0 && s[--i] == '0')
-    continue;
+    {
+      continue;
+    }
 
   while (d-- > i + 1)
-    io_put_char (stream, pad);
+    {
+      io_put_char (stream, pad);
+    }
 
   while (i >= 0)
-    io_put_char (stream, s[i--]);
+    {
+      io_put_char (stream, s[i--]);
+    }
 }
 
 
@@ -197,7 +228,9 @@ static void io_put_mac (char *stream, uint8_t *s)
     {
       io_put_zhex (stream, s[i], 2);
       if (i != 5)
-	io_put_char (stream, ':');
+	{
+	  io_put_char (stream, ':');
+	}
     }
 }
 
@@ -208,21 +241,26 @@ static void io_put_ip (char *stream, uint8_t *s)
     {
       io_put_int (stream, s[i], 0, 0);
       if (i != 3)
-	io_put_char (stream, '.');
+	{
+	  io_put_char (stream, '.');
+	}
     }
 }
 
 
-void io_printf (char *stream, char *f, ...) 
+void io_printf (char *stream, char *f, ...)
 {
   va_list ap;
- 
-  if (stream == IO_NULL ||
-      (stream == IO_LCD && ! lcd_active))
-    return;
+
+  if (stream == IO_NULL || (stream == IO_LCD && ! lcd_active))
+    {
+      return;
+    }
 
   if (stream > IO_NULL) 	// Initialise string (sprintf)
-    sp_ptr = stream[0] = 0;
+    {
+      sp_ptr = stream[0] = 0;
+    }
 
   va_start (ap, f);
 
@@ -231,7 +269,9 @@ void io_printf (char *stream, char *f, ...)
       char c = *f++;
 
       if (c == 0)
-	break;
+	{
+	  break;
+	}
 
       if (c != '%')
 	{
@@ -242,12 +282,16 @@ void io_printf (char *stream, char *f, ...)
       c = *f++;
 
       if (c == 0)
-	break;
+	{
+	  break;
+	}
 
       char pad = ' ';
 
       if (c == '0')
-	pad = c;
+	{
+	  pad = c;
+	}
 
       uint32_t size = 0;
 
@@ -258,7 +302,9 @@ void io_printf (char *stream, char *f, ...)
 	}
 
       if (c == 0)
-	break;
+	{
+	  break;
+	}
 
       switch (c)
 	{
@@ -296,7 +342,9 @@ void io_printf (char *stream, char *f, ...)
 
 	case 'q': // LCD control code
 	  if (stream == IO_LCD)
-	    lcd_ctrl (va_arg (ap, uint32_t));
+	    {
+	      lcd_ctrl (va_arg (ap, uint32_t));
+	    }
 	  break;
 
 	default:

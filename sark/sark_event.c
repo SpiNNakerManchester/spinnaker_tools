@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // sark_event.c	    Event handling routines for SARK
@@ -26,7 +25,7 @@ static const uchar vic_bit[] =
     TIMER1_INT,		// Timer 1
     CC_MC_INT,		// MC pkt
     SARK_MSG_INT,	// SDP msg
-    SOFTWARE_INT,	// User event 
+    SOFTWARE_INT,	// User event
     SARK_SIG_INT,	// Signal
     DMA_DONE_INT	// DMA done
   };
@@ -46,7 +45,9 @@ event_data_t event;
 uint event_user (uint arg1, uint arg2)
 {
   if (event.user)
-    return 0;
+    {
+      return 0;
+    }
 
   event.arg1 = arg1;
   event.arg2 = arg2;
@@ -145,14 +146,18 @@ void event_enable (event_type event_num, uint enable)
       if (slot == SLOT_FIQ)
 	{
 	  if (event.fiq_vector == NULL)
-	    rt_error (RTE_ENABLE);
+	    {
+	      rt_error (RTE_ENABLE);
+	    }
 
 	  sark_vec->fiq_vec = event.fiq_vector;
 	}
       else
 	{
 	  if (event.vic_addr[event_num] == NULL)
-	    rt_error (RTE_ENABLE);
+	    {
+	      rt_error (RTE_ENABLE);
+	    }
 
 	  vic[VIC_ADDR + slot] = (uint) event.vic_addr[event_num];
 	}
@@ -190,14 +195,18 @@ void event_wait (void)
       sark_cpu_state (CPU_STATE_SYNC1);
 
       while (~sc[SC_FLAG] & bit) 	// Wait 1
-	cpu_wfi ();
+	{
+	  cpu_wfi ();
+	}
     }
   else
     {
       sark_cpu_state (CPU_STATE_SYNC0);
 
       while (sc[SC_FLAG] & bit) 	// Wait 0
-	cpu_wfi ();
+	{
+	  cpu_wfi ();
+	}
     }
 
   event.wait ^= 1;
@@ -212,17 +221,23 @@ uint event_start (uint period, uint events, sync_bool wait)
   // Allocate required number of events
 
   if (events != 0)
-    event_alloc (events);
+    {
+      event_alloc (events);
+    }
 
   // Die if any errors so far
 
   if (event.rc != 0)
-    rt_error (RTE_EVENT, event.rc);
+    {
+      rt_error (RTE_EVENT, event.rc);
+    }
 
   // Wait for go...
 
   if (wait)
-    event_wait ();
+    {
+      event_wait ();
+    }
 
   // Set up timer1 if needed
 
@@ -302,7 +317,9 @@ void event_pause (uint pause)
     }
 
   if (event.pause_proc != NULL)
-    event.pause_proc (pause, event.pause_arg2);
+    {
+      event.pause_proc (pause, event.pause_arg2);
+    }
 }
 
 
@@ -324,7 +341,9 @@ void event_stop (uint rc)
 uint event_queue (event_t *e, event_priority priority)
 {
   if (priority > PRIO_MAX)
-    return 0;
+    {
+      return 0;
+    }
 
   proc_queue_t *queue = event.proc_queue + priority;
 
@@ -356,7 +375,9 @@ uint event_queue_proc (event_proc proc, uint arg1, uint arg2,
   event_t *e = event_new (proc, arg1, arg2);
 
   if (e != NULL)
-    return event_queue (e, priority);
+    {
+      return event_queue (e, priority);
+    }
 
   return 0;
 }
@@ -403,9 +424,13 @@ void event_run (uint restart)
 	}
 
       if ((x != NULL) && restart)
-	priority = PRIO_0;
+	{
+	  priority = PRIO_0;
+	}
       else
-	priority++;
+	{
+	  priority++;
+	}
     }
 }
 
@@ -445,7 +470,9 @@ void event_run2 (uint restart)
       cpu_int_restore (cpsr);
 
       if (restart)			// Back to priority 0 if anything
-	priority = PRIO_0;		// executed
+	{				// executed
+	  priority = PRIO_0;
+	}
     }
 }
 
@@ -467,7 +494,9 @@ event_t* event_new (event_proc proc, uint arg1, uint arg2)
       uint next_id = event.id + 1;
 
       if (next_id == 0)
-	next_id = 1;
+	{
+	  next_id = 1;
+	}
 
       event.free = e->next;
       e->next = NULL;
@@ -481,7 +510,9 @@ event_t* event_new (event_proc proc, uint arg1, uint arg2)
 
       event.count++;
       if (event.count > event.max)
-	event.max = event.count;
+	{
+	  event.max = event.count;
+	}
     }
   else
     {

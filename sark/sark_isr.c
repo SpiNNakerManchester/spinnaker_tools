@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // sark_isr.c	    Interrupt handlers for SARK
@@ -40,17 +39,21 @@ INT_HANDLER txpkt_int_han ()
   pkt_t *pkt = event.pkt_queue + event.pkt_remove;
 
   if (pkt->ctrl & 1)
-    cc[CC_TCR] = pkt->ctrl;
-
+    {
+      cc[CC_TCR] = pkt->ctrl;
+    }
   if (pkt->ctrl & 2)
-    cc[CC_TXDATA] = pkt->data;
+    {
+      cc[CC_TXDATA] = pkt->data;
+    }
 
   cc[CC_TXKEY] = pkt->key;
 
   event.pkt_count--;
-
   if (event.pkt_count == 0)
-    vic[VIC_DISABLE] = 1 << CC_TNF_INT;
+    {
+      vic[VIC_DISABLE] = 1 << CC_TNF_INT;
+    }
 
   vic[VIC_VADDR] = (uint) vic;
 }
@@ -66,7 +69,9 @@ INT_HANDLER user_null (void)
   uint slot = sark_vec->event[EVENT_USER].slot;
 
   if (slot != SLOT_FIQ)
-    vic[VIC_VADDR] = (uint) vic;
+    {
+      vic[VIC_VADDR] = (uint) vic;
+    }
 }
 
 
@@ -118,7 +123,9 @@ INT_HANDLER sdp_null (void)
   uint slot = sark_vec->event[EVENT_USER].slot;
 
   if (slot != SLOT_FIQ)
-    vic[VIC_VADDR] = (uint) vic;
+    {
+      vic[VIC_VADDR] = (uint) vic;
+    }
 }
 
 INT_HANDLER sdp_irq (void)
@@ -175,7 +182,9 @@ INT_HANDLER rxpkt_null (void)
   uint slot = sark_vec->event[EVENT_RXPKT].slot;
 
   if (slot != SLOT_FIQ)
-    vic[VIC_VADDR] = (uint) vic;
+    {
+      vic[VIC_VADDR] = (uint) vic;
+    }
 }
 
 
@@ -228,7 +237,9 @@ INT_HANDLER timer_null (void)
   uint slot = sark_vec->event[EVENT_TIMER].slot;
 
   if (slot != SLOT_FIQ)
-    vic[VIC_VADDR] = (uint) vic;
+    {
+      vic[VIC_VADDR] = (uint) vic;
+    }
 }
 
 
@@ -286,7 +297,9 @@ INT_HANDLER sig_null (void)
   uint slot = sark_vec->event[EVENT_SIG].slot;
 
   if (slot != SLOT_FIQ)
-    vic[VIC_VADDR] = (uint) vic;
+    {
+      vic[VIC_VADDR] = (uint) vic;
+    }
 }
 
 

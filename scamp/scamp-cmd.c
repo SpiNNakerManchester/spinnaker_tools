@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 //
 // scamp-cmd.c	    Command handling for SC&MP
@@ -97,7 +96,9 @@ uint cmd_iptag (sdp_msg_t *msg, uint srce_ip)
   if (op == IPTAG_NEW || op == IPTAG_SET)
     {
       if (op == IPTAG_NEW)
-	tag = iptag_new ();
+        {
+	  tag = iptag_new ();
+        }
 
       if (tag != TAG_NONE)
 	{
@@ -109,7 +110,9 @@ uint cmd_iptag (sdp_msg_t *msg, uint srce_ip)
 	  uint flags = (msg->arg1 >> 20) & 0x0f00;
 
 	  if (timeout != 0)
-	    timeout = 1 << (timeout - 1);
+	    {
+	      timeout = 1 << (timeout - 1);
+	    }
 
 	  tt->timeout = timeout;
 	  tt->flags = flags |= timeout;
@@ -163,13 +166,15 @@ uint cmd_iptag (sdp_msg_t *msg, uint srce_ip)
     }
   else if (op == IPTAG_TTO)
     {
-      msg->arg1 = (TAG_FIXED_SIZE << 24) + 
+      msg->arg1 = (TAG_FIXED_SIZE << 24) +
 	          (TAG_POOL_SIZE << 16) +
 	          (sizeof (iptag_t) << 8) +
 	          tag_tto;
 
       if (msg->arg2 < 16)
-	tag_tto = msg->arg2;
+        {
+	  tag_tto = msg->arg2;
+        }
 
       return 4;
     }
@@ -333,7 +338,9 @@ uint cmd_rtr (sdp_msg_t *msg)
   else if (op == 1)
     {
       if (! rtr_mc_clear (msg->arg2, count))
-	msg->cmd_rc = RC_ARG;
+        {
+	  msg->cmd_rc = RC_ARG;
+        }
     }
   else if (op == 2)
     {
@@ -341,7 +348,9 @@ uint cmd_rtr (sdp_msg_t *msg)
       uint offset = msg->arg3;
 
       if (! rtr_mc_load (table, count, offset, app_id))
-	msg->cmd_rc = RC_ARG;
+        {
+	  msg->cmd_rc = RC_ARG;
+        }
     }
   else if (op == 3)
     {
@@ -418,20 +427,24 @@ uint cmd_info (sdp_msg_t *msg)
           uint remote_chip_id;
           uint rc = link_read_word ((uint)(sc + SC_CHIP_ID), link, &remote_chip_id, timeout);
           if (rc == RC_OK && remote_chip_id == local_chip_id)
-            msg->arg1 |= 1 << (link + 8);
+            {
+              msg->arg1 |= 1 << (link + 8);
+            }
         }
     }
 
   // Get largest free block in SDRAM
   msg->arg2 = sark_heap_max (sv->sdram_heap, ALLOC_LOCK);
-  // 
+  //
   // Get largest free block in SysRAM
   msg->arg3 = sark_heap_max (sv->sysram_heap, ALLOC_LOCK);
   
   // Add core states to the message
   uchar *buf = (uchar*) &(msg->data);
   for (uint core = 0; core < NUM_CPUS; core++)
-    *(buf++) = sv_vcpu[core].cpu_state;
+    {
+      *(buf++) = sv_vcpu[core].cpu_state;
+    }
 
   // Add the nearest Ethernet P2P id
   *(buf++) = sv->eth_addr & 0xFF;
@@ -522,7 +535,9 @@ void p2p_region (uint data, uint srce)
   uint t = chksum_32 (data);
 
   if (t != 0)
-    return;
+    {
+      return;
+    }
 
   uint cmd = (data >> 22) & 3;
   uint level = (data >> 26) & 3;
@@ -544,7 +559,9 @@ void p2p_region (uint data, uint srce)
 	  levels[level].result = bit | count;
 	}
       else
-	levels[level].result += data;
+        {
+	  levels[level].result += data;
+        }
 
       levels[level].rcvd++;
 
@@ -583,14 +600,22 @@ void p2p_region (uint data, uint srce)
       if (mode == MODE_SUM)
 	{
 	  for (uint i = 1; i < num_cpus; i++)
-	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state))
-	      result++;
+	    {
+	      if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state))
+	        {
+		  result++;
+	        }
+	    }
 	}
       else if (mode == MODE_OR)
 	{
 	  for (uint i = 1; i < num_cpus; i++)
-	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state))
-	      result = 1 << 16;
+	    {
+	      if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state))
+	        {
+		  result = 1 << 16;
+	        }
+	    }
 
 	  result++;
 	}
@@ -599,8 +624,12 @@ void p2p_region (uint data, uint srce)
 	  result = 1 << 16;
 
 	  for (uint i = 1; i < num_cpus; i++)
-	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state != state))
-	      result = 0;
+	    {
+	      if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state != state))
+	        {
+		  result = 0;
+	        }
+	    }
 
 	  result++;
 	}
@@ -797,10 +826,10 @@ uint scamp_debug (sdp_msg_t *msg, uint srce_ip)
     case CMD_VER:
       return cmd_ver (msg);
 
-    case CMD_READ: 
+    case CMD_READ:
       return sark_cmd_read (msg);
 
-    case CMD_WRITE: 
+    case CMD_WRITE:
       return sark_cmd_write (msg);
 
     case CMD_FILL:
@@ -845,7 +874,7 @@ uint scamp_debug (sdp_msg_t *msg, uint srce_ip)
 
     case CMD_RTR:
       return cmd_rtr (msg);
-    
+
     case CMD_INFO:
       return cmd_info (msg);
 
