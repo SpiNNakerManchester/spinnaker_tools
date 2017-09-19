@@ -37,53 +37,53 @@
 
 
 typedef struct {
-  ushort htype;
-  ushort ptype;
-  uchar hlen;
-  uchar plen;
-  ushort op;
-  uchar sha[6];
-  uchar spa[4];
-  uchar tha[6];
-  uchar tpa[4];
+    ushort htype;
+    ushort ptype;
+    uchar hlen;
+    uchar plen;
+    ushort op;
+    uchar sha[6];
+    uchar spa[4];
+    uchar tha[6];
+    uchar tpa[4];
 } arp_pkt_t;
 
 
 typedef struct {
-  ushort srce;
-  ushort dest;
-  ushort length;
-  ushort checksum;
+    ushort srce;
+    ushort dest;
+    ushort length;
+    ushort checksum;
 } udp_hdr_t;
 
 
 typedef struct {
-  uchar type;
-  uchar code;
-  ushort checksum;
-  ushort ident;
-  ushort seq;
+    uchar type;
+    uchar code;
+    ushort checksum;
+    ushort ident;
+    ushort seq;
 } icmp_hdr_t;
 
 
 typedef struct {
-  uchar dest[6];
-  uchar srce[6];
-  ushort type;
+    uchar dest[6];
+    uchar srce[6];
+    ushort type;
 } mac_hdr_t;
 
 
 typedef struct {
-  uchar ver_len;
-  uchar DS;
-  ushort length;
-  ushort ident;
-  ushort flg_off;
-  uchar TTL;
-  uchar protocol;
-  ushort checksum;
-  uchar srce[4];
-  uchar dest[4];
+    uchar ver_len;
+    uchar DS;
+    ushort length;
+    ushort ident;
+    ushort flg_off;
+    uchar TTL;
+    uchar protocol;
+    ushort checksum;
+    uchar srce[4];
+    uchar dest[4];
 } ip_hdr_t;
 
 

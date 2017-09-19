@@ -189,94 +189,94 @@
 
 // Phases of the network initialisation process, in order
 enum netinit_phase_e {
-  // Configure P2P addresses for all chips while waiting for all chips to come
-  // online.
-  NETINIT_PHASE_P2P_ADDR,
-  // Determine the dimensions of the system and kill off all chips outside this
-  // range (ensuring incorrectly guessed dimensions do not result in address
-  // aliasing).
-  NETINIT_PHASE_P2P_DIMS,
-  // Send Board-info flood-fill messages to disable all known iffy links, cores
-  // and chips.
-  NETINIT_PHASE_BIFF,
-  // Construct the P2P routing tables
-  NETINIT_PHASE_P2P_TABLE,
-  // Setting the Ethernet address
-  NETINIT_PHASE_SET_ETHERNET_ADDR,
-  // The boot process is complete and the system is ready for use
-  NETINIT_PHASE_DONE = 0xFF,
+    // Configure P2P addresses for all chips while waiting for all chips to
+    // come online.
+    NETINIT_PHASE_P2P_ADDR,
+    // Determine the dimensions of the system and kill off all chips outside
+    // this range (ensuring incorrectly guessed dimensions do not result in
+    // address aliasing).
+    NETINIT_PHASE_P2P_DIMS,
+    // Send Board-info flood-fill messages to disable all known iffy links,
+    // cores and chips.
+    NETINIT_PHASE_BIFF,
+    // Construct the P2P routing tables
+    NETINIT_PHASE_P2P_TABLE,
+    // Setting the Ethernet address
+    NETINIT_PHASE_SET_ETHERNET_ADDR,
+    // The boot process is complete and the system is ready for use
+    NETINIT_PHASE_DONE = 0xFF,
 };
 
 // Phases of the Ethernet initialisation process, in order
 enum ethinit_phase_e {
-  // FIRST PHASE - wait for Ethernet to come up
-  ETHINIT_PHASE_WAIT_1,
-  // SECOND_PHASE - wait for Ethernet to come up
-  ETHINIT_PHASE_WAIT_2,
-  // Ethernet either up or timed out
-  ETHINIT_PHASE_DONE = 0xFF,
+    // FIRST PHASE - wait for Ethernet to come up
+    ETHINIT_PHASE_WAIT_1,
+    // SECOND_PHASE - wait for Ethernet to come up
+    ETHINIT_PHASE_WAIT_2,
+    // Ethernet either up or timed out
+    ETHINIT_PHASE_DONE = 0xFF,
 };
 
 //------------------------------------------------------------------------------
 
 enum alloc_cmd_e {
-  ALLOC_SDRAM,		 	//!< Allocate SDRAM
-  FREE_SDRAM,		 	//!< Free SDRAM
-  FREE_SDRAM_ID,		//!< Free DRAM by ID
-  ALLOC_RTR,		 	//!< Allocate Router
-  FREE_RTR,	 		//!< Free Router
-  FREE_RTR_ID,		 	//!< Free Router by ID
-  SDRAM_SPACE,			//!< Total free space & largest free block
-  HEAP_TAG_PTR,			//!< Heap block from tag & ID
-  ALLOC_MAX=HEAP_TAG_PTR 	//!< Maximum command
+    ALLOC_SDRAM,		//!< Allocate SDRAM
+    FREE_SDRAM,		 	//!< Free SDRAM
+    FREE_SDRAM_ID,		//!< Free DRAM by ID
+    ALLOC_RTR,		 	//!< Allocate Router
+    FREE_RTR,	 		//!< Free Router
+    FREE_RTR_ID,		//!< Free Router by ID
+    SDRAM_SPACE,		//!< Total free space & largest free block
+    HEAP_TAG_PTR,		//!< Heap block from tag & ID
+    ALLOC_MAX=HEAP_TAG_PTR 	//!< Maximum command
 };
 
 //------------------------------------------------------------------------------
 
 typedef struct {		// IPTAG entry (32 bytes)
-  uchar ip[4];
-  uchar mac[6];
-  ushort tx_port;
-  ushort timeout;
-  ushort flags;
-  uint count;
-  ushort rx_port;
-  ushort dest_addr;
-  uchar dest_port;
-  uchar __PAD1[7];
+    uchar ip[4];
+    uchar mac[6];
+    ushort tx_port;
+    ushort timeout;
+    ushort flags;
+    uint count;
+    ushort rx_port;
+    ushort dest_addr;
+    uchar dest_port;
+    uchar __PAD1[7];
 } iptag_t;
 
 
 #define PKT_QUEUE_SIZE 		32
 
 typedef struct pkt_queue_t {	// Queue of packets
-  uchar insert;
-  uchar remove;
-  volatile uchar count;
-  uchar max;
-  pkt_t queue[PKT_QUEUE_SIZE];
+    uchar insert;
+    uchar remove;
+    volatile uchar count;
+    uchar max;
+    pkt_t queue[PKT_QUEUE_SIZE];
 } pkt_queue_t;
 
 
 typedef struct pkt_buf_t {	// Holds a NN packet awaiting transmission
-  struct pkt_buf_t *next;
-  volatile uchar flags;
-  uchar fwd;
-  uchar delay;
-  uchar link;
-  pkt_t pkt;
+    struct pkt_buf_t *next;
+    volatile uchar flags;
+    uchar fwd;
+    uchar delay;
+    uchar link;
+    pkt_t pkt;
 } pkt_buf_t;
 
 
 typedef struct {	// 64 bytes
-  uint   level_addr;	// 0: This chip's region at this level
-  ushort sent;		// 4: Number of requests sent out in this region
-  ushort rcvd;		// 6: Number of responses received
-  ushort parent;	// 8: P2P address of the chip which sent the last request
-  ushort __PAD1;	// 10
-  uint result;		// 12: Result accumulated within this region
-  ushort addr[16];	// 16: A working chip p2p for each subregion, if valid
-  uchar  valid[16];	// 48: Is at least one chip in each sub-region known to be alive?
+    uint   level_addr;	// 0: This chip's region at this level
+    ushort sent;	// 4: Number of requests sent out in this region
+    ushort rcvd;	// 6: Number of responses received
+    ushort parent;	// 8: P2P address of the chip which sent the last request
+    ushort __PAD1;	// 10
+    uint result;	// 12: Result accumulated within this region
+    ushort addr[16];	// 16: A working chip p2p for each subregion, if valid
+    uchar  valid[16];	// 48: Is at least one chip in each sub-region known to be alive?
 } level_t;
 
 //------------------------------------------------------------------------------
