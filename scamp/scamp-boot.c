@@ -23,7 +23,7 @@
 
 #define BLOCK_COUNT	28	// From 1-256,
 #define WORD_COUNT	256	// From 1-256, BLOCK_COUNT * WORD_COUNT must be < 32kB
-#define BYTE_COUNT	(WORD_COUNT * sizeof (uint))
+#define BYTE_COUNT	(WORD_COUNT * sizeof(uint))
 
 
 #define FF_START_PHASE_1		0x01000003
@@ -124,7 +124,7 @@ void boot_nn(uint hw_ver)
     uint key = FF_START_PHASE_1;
     uint data = (FF_TARGET_MONITOR << 24) | ((BLOCK_COUNT - 1) << 16);
 
-    nn_tx (key, data);
+    nn_tx(key, data);
 
     for (uint j = 0; j < BLOCK_COUNT; j++) {
 	key = FF_BLOCK_START_PHASE_1 | (j << 16) | ((WORD_COUNT - 1) << 8);

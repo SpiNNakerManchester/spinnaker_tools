@@ -294,7 +294,7 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
     uint seq_len_log = sv->p2p_sql & 7;
     uint ctrl = (seq_len_log << 5) + desc->tid;
 
-    uint sum = ~ipsum (buf, len+4, 0);		// NB "ctrl" omitted from sum
+    uint sum = ~ipsum(buf, len+4, 0);		// NB "ctrl" omitted from sum
 
     buf[2] = sum >> 8;				// Sum (hi)
     buf[3] = sum;				// Sum (lo)

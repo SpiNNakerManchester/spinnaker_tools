@@ -1252,8 +1252,8 @@ void trace(int horizontalPixels, int verticalPixels, int horizontalFieldOfView,
 #ifdef API
 		spin1_send_mc_packet(key, payload, 1);
 #else
-		pkt_tx_kd (key, payload);
-#endif
+		pkt_tx_kd(key, payload);
+#endif // API
             }
 
 	    // End of inner loop
@@ -1315,7 +1315,7 @@ void sdp_packet_callback(uint msg, uint port)
 	//io_printf(IO_STD, "I am core %d %d %d.  I've been told I'm node %d of %d.\n",
 	//          (spin1_get_chip_id()&secondByte)>>8, spin1_get_chip_id()&firstByte, spin1_get_core_id(), nodeID, numberOfNodes);
 
-	sark_delay_us(1000 * sark_core_id ());
+	sark_delay_us(1000 * sark_core_id());
 
 	sdp_msg->cmd_rc     = 5; // trace ack
 	uchar temp_port     = sdp_msg->srce_port;
@@ -1332,7 +1332,7 @@ void sdp_packet_callback(uint msg, uint port)
 #else
 	event_enable(EVENT_SDP, 0);
 #endif
-	sark_delay_us(800000 + 32000 * sark_core_id ());
+	sark_delay_us(800000 + 32000 * sark_core_id());
 
 	trace(width, height, hField, vField, antialiasing, camx, camy, camz,
 		lookx, looky, lookz, upx, upy, upz, nodeID, numberOfNodes);
@@ -1400,8 +1400,8 @@ void c_main()
 
     load_mc_routing_tables();
 
-    horizontalInterpolations1 = sark_alloc (20, sizeof(Vector3));
-    horizontalInterpolations2 = sark_alloc (20, sizeof(Vector3));
+    horizontalInterpolations1 = sark_alloc(20, sizeof(Vector3));
+    horizontalInterpolations2 = sark_alloc(20, sizeof(Vector3));
 
 #ifdef API
     spin1_set_timer_tick(1000000 + 1000*spin1_get_core_id() + spin1_get_chip_id());

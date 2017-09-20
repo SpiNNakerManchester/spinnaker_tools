@@ -21,18 +21,18 @@
 
 extern pkt_queue_t tx_pkt_queue;
 
-extern void p2p_region (uint data, uint key);
-extern void p2p_rcv_data (uint data, uint key);
-extern void p2p_rcv_ctrl (uint data, uint key);
-extern void nn_rcv_pkt (uint link, uint data, uint key);
-extern void peek_ack_pkt (uint link, uint data, uint key);
-extern void poke_ack_pkt (uint link, uint data, uint key);
+extern void p2p_region(uint data, uint key);
+extern void p2p_rcv_data(uint data, uint key);
+extern void p2p_rcv_ctrl(uint data, uint key);
+extern void nn_rcv_pkt(uint link, uint data, uint key);
+extern void peek_ack_pkt(uint link, uint data, uint key);
+extern void poke_ack_pkt(uint link, uint data, uint key);
 
-extern void proc_1khz (uint a1, uint a2);
-extern void proc_100hz (uint a1, uint a2);
-extern void proc_1hz (uint a1, uint a2);
+extern void proc_1khz(uint a1, uint a2);
+extern void proc_100hz(uint a1, uint a2);
+extern void proc_1hz(uint a1, uint a2);
 
-extern void msg_queue_insert (sdp_msg_t *msg, uint srce_ip);
+extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 
 //------------------------------------------------------------------------------
 
@@ -97,7 +97,7 @@ void eth_rx_int(void)
   " :::);
 }
 #else
-__asm void eth_rx_int (void)
+__asm void eth_rx_int(void)
 {
 	code32
 	import	eth_receive
@@ -275,7 +275,7 @@ INT_HANDLER ap_int()
 	    sw_error(SW_OPT);
         }
 
-	sark_shmsg_free (shm_msg);
+	sark_shmsg_free(shm_msg);
     } else {	//## Hook for other commands...
 	vcpu->mbox_mp_cmd = SHM_IDLE;
 	sw_error(SW_OPT);

@@ -97,7 +97,7 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
 	if (tag != TAG_NONE) {
 	    iptag_t *tt = tag_table + tag;
 
-	    sark_word_set(tt, 0, sizeof (iptag_t));
+	    sark_word_set(tt, 0, sizeof(iptag_t));
 
 	    uint timeout = (msg->arg1 >> 24) & 15;
 	    uint flags = (msg->arg1 >> 20) & 0x0f00;
@@ -149,7 +149,7 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
     } else if (op == IPTAG_TTO) {
 	msg->arg1 = (TAG_FIXED_SIZE << 24) +
 		(TAG_POOL_SIZE << 16) +
-		(sizeof (iptag_t) << 8) +
+		(sizeof(iptag_t) << 8) +
 		tag_tto;
 
 	if (msg->arg2 < 16) {
@@ -179,9 +179,9 @@ uint cmd_ver(sdp_msg_t *msg)
     msg->arg3 = (uint) build_date;
 
     sark_str_cpy((char *) msg->data, SCAMP_ID_STR);
-    sark_str_cpy((char *) msg->data + sizeof (SCAMP_ID_STR), SLLT_VER_STR);
+    sark_str_cpy((char *) msg->data + sizeof(SCAMP_ID_STR), SLLT_VER_STR);
 
-    return 12 + sizeof (SCAMP_ID_STR) + sizeof (SLLT_VER_STR);
+    return 12 + sizeof(SCAMP_ID_STR) + sizeof(SLLT_VER_STR);
 }
 
 //-------------------------------------------------------------------------

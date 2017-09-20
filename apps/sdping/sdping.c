@@ -88,7 +88,7 @@ void flip_led(uint ticks, uint null)
 
 void c_main()
 {
-    io_printf (IO_STD, ">> sdping\n");
+    io_printf(IO_STD, ">> sdping\n");
 
     spin1_set_timer_tick(1000000);
 

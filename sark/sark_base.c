@@ -185,7 +185,7 @@ void sw_error_fl(sw_err_mode mode, char* file, uint line)
 void *sark_alloc(uint count, uint size)
 {
     uint bytes = count * size;
-    uint words = (bytes + 3) / sizeof (uint);
+    uint words = (bytes + 3) / sizeof(uint);
 
     if (words == 0) {
 	return 0;

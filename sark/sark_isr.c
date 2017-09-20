@@ -151,7 +151,7 @@ INT_HANDLER sdp_fiq(void)
 }
 
 
-INT_HANDLER sdp_queue (void)
+INT_HANDLER sdp_queue(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_MSG_INT;
 
@@ -206,7 +206,7 @@ INT_HANDLER rxpkt_fiq(void)
 }
 
 
-INT_HANDLER rxpkt_queue (void)
+INT_HANDLER rxpkt_queue(void)
 {
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
@@ -317,7 +317,7 @@ INT_HANDLER sig_fiq(void)
 }
 
 
-INT_HANDLER sig_queue (void)
+INT_HANDLER sig_queue(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_SIG_INT;
 

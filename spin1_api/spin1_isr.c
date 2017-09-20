@@ -4,7 +4,7 @@
 #include <spin1_api_params.h>
 
 
-extern void schedule (uchar event_id, uint arg0, uint arg1);
+extern void schedule(uchar event_id, uint arg0, uint arg1);
 
 extern uchar user_pending;
 extern uint user_arg0;
@@ -543,7 +543,7 @@ INT_HANDLER soft_int_fiqsr()
     vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
 
     // Execute preeminent callback
-    callback[USER_EVENT].cback (user_arg0, user_arg1);
+    callback[USER_EVENT].cback(user_arg0, user_arg1);
 
     // Clear flag to indicate event has been serviced
     user_pending = FALSE;

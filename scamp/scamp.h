@@ -281,50 +281,50 @@ typedef struct {	// 64 bytes
 
 //------------------------------------------------------------------------------
 
-extern uint pkt_tx (uint tcr, uint data, uint key);
-extern void proc_byte_set (uint a1, uint a2);
-extern void msg_queue_insert (sdp_msg_t *msg, uint srce_ip);
+extern uint pkt_tx(uint tcr, uint data, uint key);
+extern void proc_byte_set(uint a1, uint a2);
+extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 
 // scamp-nn.c
 
-extern void compute_eth (void);
-extern void compute_level (uint p2p_addr);
-extern void level_config (void);
-extern void ff_nn_send (uint key, uint data, uint fwd_rty, uint log);
-extern void biff_nn_send (uint data);
+extern void compute_eth(void);
+extern void compute_level(uint p2p_addr);
+extern void level_config(void);
+extern void ff_nn_send(uint key, uint data, uint fwd_rty, uint log);
+extern void biff_nn_send(uint data);
 extern void nn_cmd_biff(uint x, uint y, uint data);
-extern void nn_mark (uint key);
-extern uint link_read_word (uint addr, uint link, uint *buf, uint timeout);
-extern uint link_write_word (uint addr, uint link, uint *buf, uint timeout);
-extern void proc_start_app (uint aplx_addr, uint id_mask);
-extern uint next_id (void);
-extern void nn_init (void);
-extern void proc_ffe (uint aplx_addr, uint cpu_mask);
+extern void nn_mark(uint key);
+extern uint link_read_word(uint addr, uint link, uint *buf, uint timeout);
+extern uint link_write_word(uint addr, uint link, uint *buf, uint timeout);
+extern void proc_start_app(uint aplx_addr, uint id_mask);
+extern uint next_id(void);
+extern void nn_init(void);
+extern void proc_ffe(uint aplx_addr, uint cpu_mask);
 
 // scamp-3.c
 
-extern uint iptag_new (void);
-extern void assign_virt_cpu (uint phys_cpu);
+extern uint iptag_new(void);
+extern void assign_virt_cpu(uint phys_cpu);
 extern void remap_phys_cores(uint phys_cores);
 
 // spinn_srom.c
 
-extern uint cmd_srom (sdp_msg_t *msg);
+extern uint cmd_srom(sdp_msg_t *msg);
 
 // scamp-isr.c
 
-extern void vic_setup (void);
+extern void vic_setup(void);
 
 // scamp-app.c
 
-extern void signal_app (uint data);
-extern void boot_ap (void);
-extern void clock_ap (uint virt_mask, uint enable);
-extern void reset_ap (uint virt_mask);
+extern void signal_app(uint data);
+extern void boot_ap(void);
+extern void clock_ap(uint virt_mask, uint enable);
+extern void reset_ap(uint virt_mask);
 
 // scamp-p2p.c
 
-extern uint p2p_send_msg (uint addr, sdp_msg_t *msg);
+extern uint p2p_send_msg(uint addr, sdp_msg_t *msg);
 
 // scamp-nn.c
 extern void p2pc_addr_nn_send(uint arg1, uint arg2);
@@ -333,12 +333,12 @@ extern void p2pb_nn_send(uint arg1, uint arg2);
 
 // scamp-cmd.c
 
-extern uint scamp_debug (sdp_msg_t *msg, uint srce_ip);
-extern void send_p2pc (uint arg2, uint arg3);
+extern uint scamp_debug(sdp_msg_t *msg, uint srce_ip);
+extern void send_p2pc(uint arg2, uint arg3);
 
 // scamp-boot.c
 
-extern void boot_nn (uint hw_ver);
+extern void boot_nn(uint hw_ver);
 
 //------------------------------------------------------------------------------
 
@@ -373,13 +373,13 @@ extern volatile int p2p_max_y;
 extern uchar *p2p_addr_table;
 
 // Initial value of p2p_addr_guess_{x,y} when not the root chip
-#define NO_IDEA (-1024)
+#define NO_IDEA			(-1024)
 
 // Size of p2p_addr_table in bytes.
-#define P2P_ADDR_TABLE_BYTES (512 * 512 / 8)
+#define P2P_ADDR_TABLE_BYTES	(512 * 512 / 8)
 
 //------------------------------------------------------------------------------
 
-extern void putz (uint v);
+extern void putz(uint v);
 
 #endif

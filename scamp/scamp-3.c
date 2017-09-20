@@ -307,9 +307,9 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
 
     uint ip_len = (ip_hdr->ver_len & 15) * 4;
     udp_hdr_t *udp_hdr = (udp_hdr_t *) (rx_pkt + IP_HDR_OFFSET + ip_len);
-    uint udp_dest = ntohs (udp_hdr->dest);
-    uint udp_srce = ntohs (udp_hdr->srce);
-    int len = ntohs (udp_hdr->length);
+    uint udp_dest = ntohs(udp_hdr->dest);
+    uint udp_srce = ntohs(udp_hdr->srce);
+    int len = ntohs(udp_hdr->length);
 
     if (udp_dest == srom.udp_port) {
 	len -= 10;			//const UDP_HDR + UDP_PAD
@@ -639,7 +639,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
     if (msg->dest_addr != msg->srce_addr && msg->dest_addr != p2p_addr &&
 	    (flags & SDPF_NR) == 0) {
-	if (p2p_up == 0 || rtr_p2p_get (msg->dest_addr) == 6) {
+	if (p2p_up == 0 || rtr_p2p_get(msg->dest_addr) == 6) {
 	    return_msg(msg, RC_ROUTE);
 	    return;
 	}
@@ -1323,7 +1323,7 @@ void proc_1khz(uint a1, uint a2)
 	    if (period >= duty) {
 		sark_led_set(LED_OFF(0));
 	    } else {
-		sark_led_set (LED_ON(0));
+		sark_led_set(LED_ON(0));
 	    }
 
 	    if (++period >= (1 << PWM_BITS)) {
@@ -1443,7 +1443,7 @@ void jtag_init(void)
 }
 
 
-void sark_config (void)
+void sark_config(void)
 {
     sark_vec->num_msgs = 16;		// Allocate 16 SDP messages
     sark_vec->num_events = 64;		// and 64 events

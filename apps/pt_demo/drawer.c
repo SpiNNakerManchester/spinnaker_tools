@@ -18,7 +18,7 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
-extern void* input_thread (void *ptr);
+extern void* input_thread(void *ptr);
 extern void init_udp_server_spinnaker(void);
 
 int frameWidth, frameHeight;
@@ -298,7 +298,7 @@ int main(
 
   init_udp_server_spinnaker();		//initialization of the port for receiving SpiNNaker frames
 
-  frameHeight = (argc > 1 ? atoi (argv[1]) : 256);
+  frameHeight = (argc > 1 ? atoi(argv[1]) : 256);
   frameWidth = (int) ((((int) horizontalFieldOfView * frameHeight)) / verticalFieldOfView);
 
   prevTime = clock();

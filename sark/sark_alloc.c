@@ -269,11 +269,11 @@ heap_t *sark_heap_init(uint *base, uint *top)
     heap_t *heap = (heap_t *) base;
 
     block_t *first = (block_t *) heap->buffer;
-    block_t *last = (block_t *) ((uchar *) top - sizeof (block_t));
+    block_t *last = (block_t *) ((uchar *) top - sizeof(block_t));
 
     heap->free = heap->first = first;
     heap->last = first->next = last;
-    heap->free_bytes = (uchar *) last - (uchar *) first - sizeof (block_t);
+    heap->free_bytes = (uchar *) last - (uchar *) first - sizeof(block_t);
 
     last->next = NULL;
     first->free = NULL;

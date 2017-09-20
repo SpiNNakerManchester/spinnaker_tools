@@ -74,28 +74,28 @@ diagnostics_t diagnostics;
 /* interrupt service routines */
 // -----------------------------
 
-extern INT_HANDLER cc_rx_error_isr (void);
-extern INT_HANDLER cc_rx_ready_isr (void);
-extern INT_HANDLER cc_fr_ready_isr (void);
-extern INT_HANDLER cc_tx_empty_isr (void);
-extern INT_HANDLER dma_done_isr (void);
-extern INT_HANDLER dma_error_isr (void);
-extern INT_HANDLER timer1_isr (void);
-extern INT_HANDLER sys_controller_isr (void);
-extern INT_HANDLER soft_int_isr (void);
-extern INT_HANDLER cc_rx_ready_fiqsr (void);
-extern INT_HANDLER cc_fr_ready_fiqsr (void);
-extern INT_HANDLER dma_done_fiqsr (void);
-extern INT_HANDLER timer1_fiqsr (void);
-extern INT_HANDLER soft_int_fiqsr (void);
-extern INT_HANDLER sark_int_han (void);
+extern INT_HANDLER cc_rx_error_isr(void);
+extern INT_HANDLER cc_rx_ready_isr(void);
+extern INT_HANDLER cc_fr_ready_isr(void);
+extern INT_HANDLER cc_tx_empty_isr(void);
+extern INT_HANDLER dma_done_isr(void);
+extern INT_HANDLER dma_error_isr(void);
+extern INT_HANDLER timer1_isr(void);
+extern INT_HANDLER sys_controller_isr(void);
+extern INT_HANDLER soft_int_isr(void);
+extern INT_HANDLER cc_rx_ready_fiqsr(void);
+extern INT_HANDLER cc_fr_ready_fiqsr(void);
+extern INT_HANDLER dma_done_fiqsr(void);
+extern INT_HANDLER timer1_fiqsr(void);
+extern INT_HANDLER soft_int_fiqsr(void);
+extern INT_HANDLER sark_int_han(void);
 
 // ----------------------------
 /* intercore synchronisation */
 // ----------------------------
 
-extern void spin1_wfi (void);
-uint spin1_int_enable (void);
+extern void spin1_wfi(void);
+uint spin1_int_enable(void);
 
 // !! ST replaced by SARK routine
 
@@ -383,7 +383,7 @@ void spin1_pause()
 {
     vic[VIC_DISABLE] = (1 << TIMER1_INT);
     configure_timer1(timer_tick, timer_phase);
-    sark_cpu_state (CPU_STATE_PAUSE);
+    sark_cpu_state(CPU_STATE_PAUSE);
     paused = 1;
 }
 
@@ -395,7 +395,7 @@ void resume()
 	event.wait ^= 1;
     }
     paused = 0;
-    sark_cpu_state (CPU_STATE_RUN);
+    sark_cpu_state(CPU_STATE_RUN);
     vic[VIC_ENABLE] = (1 << TIMER1_INT);
     tc[T1_CONTROL] = 0xe2;
 }
@@ -702,7 +702,7 @@ uint spin1_get_simulation_time()
 *
 * SOURCE
 */
-void spin1_exit (uint error)
+void spin1_exit(uint error)
 {
     // Disable API-enabled interrupts to allow simulation to exit,
 
@@ -891,7 +891,7 @@ uint start(sync_bool sync, uint start_paused)
     if (paused) {
 	sark_cpu_state(CPU_STATE_PAUSE);
     } else {
-	sark_cpu_state (CPU_STATE_RUN);
+	sark_cpu_state(CPU_STATE_RUN);
     }
 
     // Initialise hardware
@@ -1010,7 +1010,7 @@ uint spin1_start_paused()
 * SOURCE
 */
 // !! ST replaced by SARK routine
-void spin1_delay_us (uint n)
+void spin1_delay_us(uint n)
 {
     sark_delay_us(n);
 }
@@ -1767,7 +1767,7 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
     uchar result = SUCCESS;
 
     /* disable interrupts for atomic access to task queues */
-    uint cpsr = spin1_irq_disable ();
+    uint cpsr = spin1_irq_disable();
 
     task_queue_t *tq = &task_queue[priority-1];
 
@@ -1850,7 +1850,7 @@ uint spin1_trigger_user_event(uint arg0, uint arg1)
 *
 * SOURCE
 */
-void sark_pre_main (void)
+void sark_pre_main(void)
 {
     sark_call_cpp_constructors();
 

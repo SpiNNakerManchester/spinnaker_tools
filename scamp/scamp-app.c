@@ -150,7 +150,7 @@ void proc_start_app(uint aplx_addr, uint id_op_mask)
 
 // Clean up shared data belonging to a given AppID
 
-void clean_app_id (uint app_id)
+void clean_app_id(uint app_id)
 {
     app_data_t *app = sv->app_data + app_id;
 

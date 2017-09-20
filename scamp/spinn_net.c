@@ -284,7 +284,7 @@ void icmp_pkt(uchar *rx_pkt, uint rx_len)
     icmp_hdr_t *icmp = (icmp_hdr_t *) (buf + IP_HDR_OFFSET + ip_hdr_len);
 
     if (icmp->type == ICMP_ECHO_REQ) {
-	uint icmp_len = ntohs (ip_hdr->length) - ip_hdr_len; // Size of ICMP hdr+data
+	uint icmp_len = ntohs(ip_hdr->length) - ip_hdr_len; // Size of ICMP hdr+data
 
 	copy_ip_hdr(ip_hdr->srce, PROT_ICMP, ip_hdr, icmp_len + IP_HDR_SIZE);
 

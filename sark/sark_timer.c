@@ -169,7 +169,7 @@ void timer_cancel(event_t *e, uint ID)
 	}
     }
 
-    cpu_int_restore (cpsr);
+    cpu_int_restore(cpsr);
 }
 
 
@@ -202,7 +202,7 @@ void timer2_int(void)
 
     while (eq != NULL) {		// Run the execute queue
 	if (eq->proc != NULL) {		// Execute proc if non-NULL
-	    eq->proc (eq->arg1, eq->arg2);
+	    eq->proc(eq->arg1, eq->arg2);
 	}
 
 	event_t* next = eq->next;

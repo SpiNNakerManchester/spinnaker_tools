@@ -243,7 +243,7 @@ void level_config(void)
 			continue;
 		    }
 
-		    uint link = rtr_p2p_get (a);
+		    uint link = rtr_p2p_get(a);
 
 		    if (link != 6) {
 			levels[level].addr[num] = a;
@@ -397,7 +397,7 @@ uint next_biff_id(void)
 }
 
 
-void nn_mark (uint key)
+void nn_mark(uint key)
 {
     uint id = (key >> 1) & 127;
 
@@ -836,7 +836,7 @@ uint nn_cmd_p2pb(uint id, uint data, uint link)
 
 	hop_table[addr] = (id << 24) + hops;
 
-	rtr_p2p_set (addr, link);
+	rtr_p2p_set(addr, link);
 
 	if (hops >= 0x3FF) {
 	    data |= P2PB_STOP_BIT;
@@ -1193,7 +1193,7 @@ void nn_rcv_pkt(uint link, uint data, uint key)
 	nn_rcv_biff_pct(link, data, key);
 	return;
     } else if (cmd == NN_CMD_P2PC) {
-	nn_rcv_p2pc_pct (link, data, key);
+	nn_rcv_p2pc_pct(link, data, key);
 	return;
     }
 
@@ -1262,19 +1262,19 @@ void nn_rcv_pkt(uint link, uint data, uint key)
 	return;
 
     case NN_CMD_FBD:
-	if (nn_cmd_fbd (id, data, key)) {
+	if (nn_cmd_fbd(id, data, key)) {
 	    break;
         }
 	return;
 
     case NN_CMD_FBE:
-	if (nn_cmd_fbe (id, data, key)) {
+	if (nn_cmd_fbe(id, data, key)) {
 	    break;
         }
 	return;
 
     case NN_CMD_FFE:
-	if (nn_cmd_ffe (id, data, key)) {
+	if (nn_cmd_ffe(id, data, key)) {
 	    break;
         }
 	return;
