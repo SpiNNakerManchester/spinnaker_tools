@@ -159,24 +159,26 @@ uint  spin1_rand  (void);
 //  diagnostic data available to the application
 // ------------------------------------------------------------------------
 typedef struct {
-  uint exit_code;                                       // simulation exit code
-  uint warnings;                                        // warnings type bit map
-  uint total_mc_packets;                                // total routed MC packets during simulation
-  uint dumped_mc_packets;                               // total dumped MC packets by the router
-  volatile uint discarded_mc_packets;                   // total discarded MC packets by API
-  uint dma_transfers;                                   // total DMA transfers requested
-  uint dma_bursts;                                      // total DMA bursts completed
-  uint dma_queue_full;                                  // dma queue full count
-  uint task_queue_full;                                 // task queue full count
-  uint tx_packet_queue_full;                            // transmitter packet queue full count
-  uint writeBack_errors;                                // write-back buffer error count
-  uint total_fr_packets;                                // total routed FR packets during simulation
-  uint dumped_fr_packets;                               // total dumped FR packets by the router
-  uint discarded_fr_packets;                            // total discarded FR packets by API
-  uint in_timer_callback;                               // bool which states if currently in timer callback
-  uint number_timer_tic_in_queue;                       // the number of timer tic callbacks in the queue
-  uint largest_number_of_concurrent_timer_tic_overruns; // the max number of timer tics callbacks being queued at any time
-  uint total_times_tick_tic_callback_overran;           // the total number of times the timer tic callback overran
+    uint exit_code;			// simulation exit code
+    uint warnings;			// warnings type bit map
+    uint total_mc_packets;		// total routed MC packets during simulation
+    uint dumped_mc_packets;		// total dumped MC packets by the router
+    volatile uint discarded_mc_packets;	// total discarded MC packets by API
+    uint dma_transfers;			// total DMA transfers requested
+    uint dma_bursts;			// total DMA bursts completed
+    uint dma_queue_full;		// dma queue full count
+    uint task_queue_full;		// task queue full count
+    uint tx_packet_queue_full;		// transmitter packet queue full count
+    uint writeBack_errors;		// write-back buffer error count
+    uint total_fr_packets;		// total routed FR packets during simulation
+    uint dumped_fr_packets;		// total dumped FR packets by the router
+    uint discarded_fr_packets;		// total discarded FR packets by API
+    uint in_timer_callback;		// bool which states if currently in timer callback
+    uint number_timer_tic_in_queue;	// the number of timer tic callbacks in the queue
+    uint largest_number_of_concurrent_timer_tic_overruns;
+					// the max number of timer tics callbacks being queued at any time
+    uint total_times_tick_tic_callback_overran;
+					// the total number of times the timer tic callback overran
 } diagnostics_t;
 
 extern diagnostics_t diagnostics;

@@ -158,18 +158,18 @@
 /* data transfer */
 // ----------------
 typedef struct {
-  uint id;
-  uint tag;
-  uint* system_address;
-  uint* tcm_address;
-  uint description;
+    uint id;
+    uint tag;
+    uint* system_address;
+    uint* tcm_address;
+    uint description;
 } copy_t;
 
 
 typedef struct {
-  uint start;
-  uint end;
-  copy_t queue[DMA_QUEUE_SIZE];
+    uint start;
+    uint end;
+    copy_t queue[DMA_QUEUE_SIZE];
 } dma_queue_t;
 // ----------------
 
@@ -177,15 +177,15 @@ typedef struct {
 /* communications */
 // -----------------
 typedef struct {
-  uint key;
-  uint data;
-  uint TCR;
+    uint key;
+    uint data;
+    uint TCR;
 } packet_t;
 
 typedef struct {
-  uint start;
-  uint end;
-  packet_t queue[TX_PACKET_QUEUE_SIZE];
+    uint start;
+    uint end;
+    packet_t queue[TX_PACKET_QUEUE_SIZE];
 } tx_packet_queue_t;
 // -----------------
 
@@ -193,20 +193,20 @@ typedef struct {
 /* scheduler/dispatcher */
 // -----------------------
 typedef struct {
-  callback_t cback;
-  int priority;
+    callback_t cback;
+    int priority;
 } cback_t;
 
 typedef struct {
-  callback_t cback;
-  uint arg0;
-  uint arg1;
+    callback_t cback;
+    uint arg0;
+    uint arg1;
 } task_t;
 
 typedef struct {
-  uint start;
-  uint end;
-  task_t queue[TASK_QUEUE_SIZE];
+    uint start;
+    uint end;
+    task_t queue[TASK_QUEUE_SIZE];
 } task_queue_t;
 
 extern cback_t callback[NUM_EVENTS];

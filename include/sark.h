@@ -112,8 +112,8 @@ The APLX buffer lives at the top of ITCM, starting at 0x7fc0
 
 // IPTAG definitions
 
-#define TAG_NONE        255 //!< Invalid tag/transient request
-#define TAG_HOST        0   //!< Reserved for host
+#define TAG_NONE        255	//!< Invalid tag/transient request
+#define TAG_HOST        0	//!< Reserved for host
 
 //------------------------------------------------------------------------------
 
@@ -140,14 +140,14 @@ Allocations of SysCtl Test & Set registers (locks)
 */
 
 enum spin_lock_e {
-  LOCK_MSG,             //!< Msg buffers in SysRAM
-  LOCK_MBOX,            //!< Mailbox flag variable
-  LOCK_ETHER,           //!< Ethernet Tx (unused...)
-  LOCK_GPIO,            //!< GPIO port (unused...)
-  LOCK_API_ROOT,        //!< Spin1 API
-  LOCK_SEMA,            //!< Sema access
-  LOCK_HEAP,            //!< Heap in System / SDRAM
-  LOCK_RTR              //!< Router
+    LOCK_MSG,		//!< Msg buffers in SysRAM
+    LOCK_MBOX,		//!< Mailbox flag variable
+    LOCK_ETHER,		//!< Ethernet Tx (unused...)
+    LOCK_GPIO,		//!< GPIO port (unused...)
+    LOCK_API_ROOT,	//!< Spin1 API
+    LOCK_SEMA,		//!< Sema access
+    LOCK_HEAP,		//!< Heap in System / SDRAM
+    LOCK_RTR		//!< Router
 };
 
 typedef enum spin_lock_e spin_lock; //!< Typedef for enum spin_lock_e
@@ -176,28 +176,28 @@ Run time error codes (passed as first arg to "rt_error")
 */
 
 enum rte_code_e {
-  RTE_NONE,             //!< 0 No error
-  RTE_RESET,            //!< 1 Branch through zero
-  RTE_UNDEF,            //!< 2 Undefined instruction
-  RTE_SVC,              //!< 3 Undefined SVC or no handler
-  RTE_PABT,             //!< 4 Prefetch abort
-  RTE_DABT,             //!< 5 Data abort
-  RTE_IRQ,              //!< 6 Unhandled IRQ
-  RTE_FIQ,              //!< 7 Unhandled FIQ
-  RTE_VIC,              //!< 8 Unconfigured VIC vector
+    RTE_NONE,		//!< 0 No error
+    RTE_RESET,		//!< 1 Branch through zero
+    RTE_UNDEF,		//!< 2 Undefined instruction
+    RTE_SVC,		//!< 3 Undefined SVC or no handler
+    RTE_PABT,		//!< 4 Prefetch abort
+    RTE_DABT,		//!< 5 Data abort
+    RTE_IRQ,		//!< 6 Unhandled IRQ
+    RTE_FIQ,		//!< 7 Unhandled FIQ
+    RTE_VIC,		//!< 8 Unconfigured VIC vector
 
-  RTE_ABORT,            //!< Generic user abort
-  RTE_MALLOC,           //!< "malloc" failure
-  RTE_DIV0,             //!< Divide by zero
-  RTE_EVENT,            //!< Event startup failure
-  RTE_SWERR,            //!< Fatal SW error
-  RTE_IOBUF,            //!< Failed to allocate IO buffer
-  RTE_ENABLE,           //!< Bad event enable
-  RTE_NULL,             //!< Generic null pointer error
-  RTE_PKT,              //!< Pkt startup failure
-  RTE_TIMER,            //!< Timer startup failure
-  RTE_API,              //!< API startup failure
-  RTE_VER               //!< SW version conflict
+    RTE_ABORT,		//!< Generic user abort
+    RTE_MALLOC,		//!< "malloc" failure
+    RTE_DIV0,		//!< Divide by zero
+    RTE_EVENT,		//!< Event startup failure
+    RTE_SWERR,		//!< Fatal SW error
+    RTE_IOBUF,		//!< Failed to allocate IO buffer
+    RTE_ENABLE,		//!< Bad event enable
+    RTE_NULL,		//!< Generic null pointer error
+    RTE_PKT,		//!< Pkt startup failure
+    RTE_TIMER,		//!< Timer startup failure
+    RTE_API,		//!< API startup failure
+    RTE_VER		//!< SW version conflict
 };
 
 typedef enum rte_code_e rte_code;   //!< Typedef for enum rte_code_e
@@ -226,25 +226,25 @@ respond to anything
 */
 
 enum cpu_state_e {
-  CPU_STATE_DEAD,       //!< Dead core
-  CPU_STATE_PWRDN,      //!< Powered down
-  CPU_STATE_RTE,        //!< Died with Run Time Error
-  CPU_STATE_WDOG,       //!< Watchdog expired
+    CPU_STATE_DEAD,	//!< Dead core
+    CPU_STATE_PWRDN,	//!< Powered down
+    CPU_STATE_RTE,	//!< Died with Run Time Error
+    CPU_STATE_WDOG,	//!< Watchdog expired
 
-  CPU_STATE_INIT,       //!< Initialising (transient)
-  CPU_STATE_WAIT,       //!< Ready to execute
-  CPU_STATE_SARK,       //!< Entered c_main
-  CPU_STATE_RUN,        //!< Running (API/Event)
+    CPU_STATE_INIT,	//!< Initialising (transient)
+    CPU_STATE_WAIT,	//!< Ready to execute
+    CPU_STATE_SARK,	//!< Entered c_main
+    CPU_STATE_RUN,	//!< Running (API/Event)
 
-  CPU_STATE_SYNC0,      //!< Waiting for sync 0
-  CPU_STATE_SYNC1,      //!< Waiting for sync 1
-  CPU_STATE_PAUSE,      //!< Paused in application
-  CPU_STATE_EXIT,       //!< Exited application
+    CPU_STATE_SYNC0,	//!< Waiting for sync 0
+    CPU_STATE_SYNC1,	//!< Waiting for sync 1
+    CPU_STATE_PAUSE,	//!< Paused in application
+    CPU_STATE_EXIT,	//!< Exited application
 
-  CPU_STATE_12,         //!< Spare
-  CPU_STATE_13,         //!< Spare
-  CPU_STATE_14,         //!< Spare
-  CPU_STATE_IDLE        //!< Idle (SARK stub)
+    CPU_STATE_12,	//!< Spare
+    CPU_STATE_13,	//!< Spare
+    CPU_STATE_14,	//!< Spare
+    CPU_STATE_IDLE	//!< Idle (SARK stub)
 };
 
 typedef enum cpu_state_e cpu_state; //!< Typedef for enum cpu_state_e
@@ -260,13 +260,13 @@ Types of event
 */
 
 enum event_type_e {
-  EVENT_TIMER,          //!< Timer elapsed
-  EVENT_RXPKT,          //!< MC packet received
-  EVENT_SDP,            //!< SDP packet received
-  EVENT_USER,           //!< User triggered event
-  EVENT_SIG,            //!< Signal from hosts
-  EVENT_DMA,            //!< DMA complete
-  EVENT_MAX=EVENT_DMA   //!< Maximum event number
+    EVENT_TIMER,	//!< Timer elapsed
+    EVENT_RXPKT,	//!< MC packet received
+    EVENT_SDP,		//!< SDP packet received
+    EVENT_USER,		//!< User triggered event
+    EVENT_SIG,		//!< Signal from hosts
+    EVENT_DMA,		//!< DMA complete
+    EVENT_MAX=EVENT_DMA	//!< Maximum event number
 };
 
 typedef enum event_type_e event_type;   //!< typedef for enum event_type_e
@@ -282,9 +282,9 @@ State of event execution
 */
 
 enum event_state_e {    // RUN must be first (0)
-  EVENT_RUN,            //!< Running
-  EVENT_PAUSE,          //!< Paused
-  EVENT_STOP            //!< Stopped
+    EVENT_RUN,		//!< Running
+    EVENT_PAUSE,	//!< Paused
+    EVENT_STOP		//!< Stopped
 };
 
 typedef enum event_state_e event_state; //!< typedef for enum event_state_e
@@ -294,11 +294,11 @@ Slots in the VIC interrupt controller
 */
 
 enum vic_slot_e {
-  SLOT_0,  SLOT_1,  SLOT_2,  SLOT_3,
-  SLOT_4,  SLOT_5,  SLOT_6,  SLOT_7,
-  SLOT_8,  SLOT_9,  SLOT_10, SLOT_11,
-  SLOT_12, SLOT_13, SLOT_14, SLOT_15,
-  SLOT_MAX=SLOT_15, SLOT_FIQ
+    SLOT_0,  SLOT_1,  SLOT_2,  SLOT_3,
+    SLOT_4,  SLOT_5,  SLOT_6,  SLOT_7,
+    SLOT_8,  SLOT_9,  SLOT_10, SLOT_11,
+    SLOT_12, SLOT_13, SLOT_14, SLOT_15,
+    SLOT_MAX=SLOT_15, SLOT_FIQ
 };
 
 typedef enum vic_slot_e vic_slot;   //!< Typedef for enum vic_slot_e
@@ -308,8 +308,8 @@ Event queue priorities
 */
 
 enum event_priority_e {
-  PRIO_0, PRIO_1, PRIO_2, PRIO_3,
-  PRIO_MAX=PRIO_3
+    PRIO_0, PRIO_1, PRIO_2, PRIO_3,
+    PRIO_MAX=PRIO_3
 };
 
 typedef enum event_priority_e event_priority;   //!< Typedef for enum event_priority_e
@@ -319,9 +319,9 @@ Mode for sw_error calls to decide if rt_error is to be called
 */
 
 enum sw_err_mode_e {
-  SW_OPT,       //!< Optional, controlled by sark.sw_rte
-  SW_NEVER,     //!< Never call rt_error
-  SW_RTE        //!< Always call rt_error
+    SW_OPT,		//!< Optional, controlled by sark.sw_rte
+    SW_NEVER,		//!< Never call rt_error
+    SW_RTE		//!< Always call rt_error
 };
 
 typedef enum sw_err_mode_e sw_err_mode; //!< Typedef for enum sw_err_mode_e
@@ -331,8 +331,8 @@ Startup syncronisation bool
 */
 
 enum sync_bool_e {
-  SYNC_NOWAIT,  //!< Don't wait
-  SYNC_WAIT     //!< Wait for synchronisation
+    SYNC_NOWAIT,	//!< Don't wait
+    SYNC_WAIT		//!< Wait for synchronisation
 };
 
 typedef enum sync_bool_e sync_bool; //!< Typedef for enum sync_bool_e
@@ -353,11 +353,11 @@ Mailbox commands passed to APs
 */
 
 enum shm_cmd_e {
-  SHM_IDLE,     //!< Idle state of mailbox
-  SHM_MSG,      //!< Passing SDP message
-  SHM_NOP,      //!< Does nothing...
-  SHM_SIGNAL,   //!< Signal application
-  SHM_CMD       //!< Command to MP
+    SHM_IDLE,		//!< Idle state of mailbox
+    SHM_MSG,		//!< Passing SDP message
+    SHM_NOP,		//!< Does nothing...
+    SHM_SIGNAL,		//!< Signal application
+    SHM_CMD		//!< Command to MP
 };
 
 typedef enum shm_cmd_e shm_cmd; //!< Typedef for enum shm_cmd_e
@@ -369,23 +369,23 @@ Signals passed to applications
 */
 
 enum signal_e {
-  SIG_INIT,     //!< Initialise cores
-  SIG_PWRDN,    //!< Powerdown cores
-  SIG_STOP,     //!< Stop application and clean up
-  SIG_START,    //!< Start application if waiting
+    SIG_INIT,		//!< Initialise cores
+    SIG_PWRDN,		//!< Powerdown cores
+    SIG_STOP,		//!< Stop application and clean up
+    SIG_START,		//!< Start application if waiting
 
-  SIG_SYNC0,    //!< Synchronisation barrier 0
-  SIG_SYNC1,    //!< Synchronisation barrier 1
-  SIG_PAUSE,    //!< Pause application
-  SIG_CONT,     //!< Continue application
+    SIG_SYNC0,		//!< Synchronisation barrier 0
+    SIG_SYNC1,		//!< Synchronisation barrier 1
+    SIG_PAUSE,		//!< Pause application
+    SIG_CONT,		//!< Continue application
 
-  SIG_EXIT,     //!< Terminate application
-  SIG_TIMER,    //!< Trigger timer for application
-  SIG_USR0,     //!< Send user signal 0
-  SIG_USR1,     //!< Send user signal 1
+    SIG_EXIT,		//!< Terminate application
+    SIG_TIMER,		//!< Trigger timer for application
+    SIG_USR0,		//!< Send user signal 0
+    SIG_USR1,		//!< Send user signal 1
 
-  SIG_USR2,     //!< Send user signal 2
-  SIG_USR3,     //!< Send user signal 3
+    SIG_USR2,		//!< Send user signal 2
+    SIG_USR3,		//!< Send user signal 3
 };
 
 typedef enum signal_e signal;   //!< Typedef for enum signal_e
@@ -469,17 +469,16 @@ Returned (div, mod) from divmod
 */
 
 typedef struct divmod {
-  uint div;         //!< Dividend
-  uint mod;         //!< Modulus
+    uint div;		//!< Dividend
+    uint mod;		//!< Modulus
 } divmod_t;
 
 /*!
 Used in the block memory allocator (4 bytes)
 */
 
-typedef struct mem_link
-{
-  struct mem_link *next;    //!< Pointer to next free block
+typedef struct mem_link {
+    struct mem_link *next;	//!< Pointer to next free block
 } mem_link_t;
 
 /*!
@@ -487,9 +486,9 @@ Used in the block memory allocator (8 bytes)
 */
 
 typedef struct mem_block {
-  mem_link_t *free;     //!< Pointer to first free block
-  ushort count;         //!< Count of blocks in use
-  ushort max;           //!< Maximum blocks used
+    mem_link_t *free;	//!< Pointer to first free block
+    ushort count;	//!< Count of blocks in use
+    ushort max;		//!< Maximum blocks used
 } mem_block_t;
 
 
@@ -498,15 +497,15 @@ Contents of SV SROM area (32 bytes)
 */
 
 typedef struct srom_data {
-  ushort flags;         //!< 16 bit flags
-  uchar  mac_addr[6];   //!< MAC address
-  uchar  ip_addr[4];    //!< IP address
-  uchar  gw_addr[4];    //!< Gateway address
-  uchar  net_mask[4];   //!< Net mask
-  ushort udp_port;      //!< UDP port for SDP messages
-  ushort __PAD1;        //!< Spare...
-  uint   __PAD2;        //!< Spare...
-  uint   __PAD3;        //!< Spare...
+    ushort flags;	//!< 16 bit flags
+    uchar  mac_addr[6];	//!< MAC address
+    uchar  ip_addr[4];	//!< IP address
+    uchar  gw_addr[4];	//!< Gateway address
+    uchar  net_mask[4];	//!< Net mask
+    ushort udp_port;	//!< UDP port for SDP messages
+    ushort __PAD1;	//!< Spare...
+    uint   __PAD2;	//!< Spare...
+    uint   __PAD3;	//!< Spare...
 } srom_data_t;
 
 /*!
@@ -514,11 +513,11 @@ Copy of router entry (16 bytes)
 */
 
 typedef struct rtr_entry {
-  ushort next;      //!< Index of next block
-  ushort free;      //!< Index of next free block (or app_id)
-  uint route;       //!< Route word
-  uint key;         //!< Key word
-  uint mask;        //!< Mask word
+    ushort next;	//!< Index of next block
+    ushort free;	//!< Index of next free block (or app_id)
+    uint route;		//!< Route word
+    uint key;		//!< Key word
+    uint mask;		//!< Mask word
 } rtr_entry_t;
 
 /*!
@@ -527,11 +526,11 @@ is not in use.
 */
 
 typedef struct app_data {
-  uchar cores;          //!< Number of cores using this ID
-  uchar clean;          //!< Set if this ID has been cleaned
-  uchar sema;           //!< Semaphore
-  uchar lead;           //!< Lead core number
-  uint mask;            //!< Mask of cores using this ID
+    uchar cores;	//!< Number of cores using this ID
+    uchar clean;	//!< Set if this ID has been cleaned
+    uchar sema;		//!< Semaphore
+    uchar lead;		//!< Lead core number
+    uint mask;		//!< Mask of cores using this ID
 } app_data_t;
 
 
@@ -539,14 +538,14 @@ typedef struct app_data {
 
 // SDP messages
 
-#define NUM_SDP_PORTS	8	    //!< Number of SDP ports (0-7)
-#define PORT_SHIFT      5       //!< Port is in top 3 bits
-#define PORT_MASK       0xe0    //!< Port is in top 3 bits
-#define CPU_MASK        0x1f    //!< CPU is in bottom 5 bits
+#define NUM_SDP_PORTS	8	//!< Number of SDP ports (0-7)
+#define PORT_SHIFT      5	//!< Port is in top 3 bits
+#define PORT_MASK       0xe0	//!< Port is in top 3 bits
+#define CPU_MASK        0x1f	//!< CPU is in bottom 5 bits
 
-#define PORT_ETH        255     //!< Special to indicate Ethernet
+#define PORT_ETH        255	//!< Special to indicate Ethernet
 
-#define SDP_BUF_SIZE    256     //!< SDP data buffer capacity
+#define SDP_BUF_SIZE    256	//!< SDP data buffer capacity
 
 /*!
 SDP message definition
@@ -555,53 +554,53 @@ checksum. It will be a minimum of 8 as the SDP header should always
 be present.
 */
 
-typedef struct sdp_msg {    // SDP message - 292 bytes
-  struct sdp_msg *next;     //!< Next in free list
-  ushort length;            //!< length
-  ushort checksum;          //!< checksum (if used)
+typedef struct sdp_msg {	// SDP message - 292 bytes
+    struct sdp_msg *next;	//!< Next in free list
+    ushort length;		//!< length
+    ushort checksum;		//!< checksum (if used)
 
-  // sdp_hdr_t (mandatory)
+    // sdp_hdr_t (mandatory)
 
-  uchar flags;              //!< Flag byte
-  uchar tag;                //!< IP tag
-  uchar dest_port;          //!< Destination port/CPU
-  uchar srce_port;          //!< Source port/CPU
-  ushort dest_addr;         //!< Destination address
-  ushort srce_addr;         //!< Source address
+    uchar flags;		//!< Flag byte
+    uchar tag;			//!< IP tag
+    uchar dest_port;		//!< Destination port/CPU
+    uchar srce_port;		//!< Source port/CPU
+    ushort dest_addr;		//!< Destination address
+    ushort srce_addr;		//!< Source address
 
-  // cmd_hdr_t (optional)
+    // cmd_hdr_t (optional)
 
-  ushort cmd_rc;            //!< Command/Return Code
-  ushort seq;               //!< Sequence number
-  uint arg1;                //!< Arg 1
-  uint arg2;                //!< Arg 2
-  uint arg3;                //!< Arg 3
+    ushort cmd_rc;		//!< Command/Return Code
+    ushort seq;			//!< Sequence number
+    uint arg1;			//!< Arg 1
+    uint arg2;			//!< Arg 2
+    uint arg3;			//!< Arg 3
 
-  // user data (optional)
+    // user data (optional)
 
-  uchar data[SDP_BUF_SIZE]; //!< User data (256 bytes)
+    uchar data[SDP_BUF_SIZE];	//!< User data (256 bytes)
 
-  uint __PAD1;              //!< Private padding
+    uint __PAD1;		//!< Private padding
 } sdp_msg_t;
 
 
 // Legacy definitions...
 
-typedef struct sdp_hdr {    // SDP header
-  uchar flags;
-  uchar tag;
-  uchar dest_port;
-  uchar srce_port;
-  ushort dest_addr;
-  ushort srce_addr;
+typedef struct sdp_hdr {	// SDP header
+    uchar flags;
+    uchar tag;
+    uchar dest_port;
+    uchar srce_port;
+    ushort dest_addr;
+    ushort srce_addr;
 } sdp_hdr_t;
 
-typedef struct cmd_hdr {    // Command header
-  ushort cmd_rc;
-  ushort flags;
-  uint arg1;
-  uint arg2;
-  uint arg3;
+typedef struct cmd_hdr {	// Command header
+    ushort cmd_rc;
+    ushort flags;
+    uint arg1;
+    uint arg2;
+    uint arg3;
 } cmd_hdr_t;
 
 //------------------------------------------------------------------------------
@@ -615,8 +614,8 @@ requires N+8
 */
 
 typedef struct block {
-  struct block *next;   //!< Chains all blocks together (in address order)
-  struct block *free;   //!< Chains free blocks together (in address order)
+    struct block *next;		//!< Chains all blocks together (in address order)
+    struct block *free;		//!< Chains free blocks together (in address order)
 } block_t;
 
 /*!
@@ -628,11 +627,11 @@ end of the heap.
 */
 
 typedef struct {
-  block_t *free;    //!< Root of free block chain
-  block_t *first;   //!< First block
-  block_t *last;    //!< Last block (zero size, never used for storage)
-  uint free_bytes;  //!< Number of free bytes left
-  uchar buffer[];   //!< Buffer for blocks
+    block_t *free;		//!< Root of free block chain
+    block_t *first;		//!< First block
+    block_t *last;		//!< Last block (zero size, never used for storage)
+    uint free_bytes;		//!< Number of free bytes left
+    uchar buffer[];		//!< Buffer for blocks
 } heap_t;
 
 
@@ -648,9 +647,9 @@ therefore constrained to live in the bottom 64K of the address space
 */
 
 typedef struct event_vec {
-  ushort proc;          //!< Handler address (squeezed into 16 bits!)
-  uchar slot;           //!< VIC slot
-  uchar priority;       //!< Priority for queued events
+    ushort proc;		//!< Handler address (squeezed into 16 bits!)
+    uchar slot;			//!< VIC slot
+    uchar priority;		//!< Priority for queued events
 } event_vec_t;
 
 /*!
@@ -661,36 +660,36 @@ point during start-up
 */
 
 typedef struct sark_vec {
-  int_handler reset_vec;          //!< 0x20 Reset vector
-  int_handler undef_vec;          //!< 0x24 Undefined instruction vector
-  int_handler svc_vec;            //!< 0x28 SVC vector
-  int_handler pabt_vec;           //!< 0x2c Prefetch abort vector
-  int_handler dabt_vec;           //!< 0x30 Data abort vector
-  int_handler aplx_proc;          //!< 0x34 Pointer to "proc_aplx"
-  int_handler irq_vec;            //!< 0x38 IRQ vector
-  int_handler fiq_vec;            //!< 0x3c FIQ vector
+    int_handler reset_vec;	//!< 0x20 Reset vector
+    int_handler undef_vec;	//!< 0x24 Undefined instruction vector
+    int_handler svc_vec;	//!< 0x28 SVC vector
+    int_handler pabt_vec;	//!< 0x2c Prefetch abort vector
+    int_handler dabt_vec;	//!< 0x30 Data abort vector
+    int_handler aplx_proc;	//!< 0x34 Pointer to "proc_aplx"
+    int_handler irq_vec;	//!< 0x38 IRQ vector
+    int_handler fiq_vec;	//!< 0x3c FIQ vector
 
-  ushort svc_stack;               //!< 0x40 SVC stack size (words)
-  ushort irq_stack;               //!< 0x42 IRQ stack size (words)
-  ushort fiq_stack;               //!< 0x44 FIQ stack size (words)
-  ushort stack_size;              //!< 0x46 Total stack size (bytes)
+    ushort svc_stack;		//!< 0x40 SVC stack size (words)
+    ushort irq_stack;		//!< 0x42 IRQ stack size (words)
+    ushort fiq_stack;		//!< 0x44 FIQ stack size (words)
+    ushort stack_size;		//!< 0x46 Total stack size (bytes)
 
-  uint *code_top;                 //!< 0x48 Points to top of code
-  uint *heap_base;                //!< 0x4c Points to base of heap
-  uint *stack_top;                //!< 0x50 Points to top of stacks
+    uint *code_top;		//!< 0x48 Points to top of code
+    uint *heap_base;		//!< 0x4c Points to base of heap
+    uint *stack_top;		//!< 0x50 Points to top of stacks
 
-  uint stack_fill;                //!< 0x54 Stack fill word
+    uint stack_fill;		//!< 0x54 Stack fill word
 
-  uchar num_msgs;                 //!< 0x58 Number of SDP msgs buffers
-  uchar sark_slot;                //!< 0x59 VIC slot for MP->AP interrupt
+    uchar num_msgs;		//!< 0x58 Number of SDP msgs buffers
+    uchar sark_slot;		//!< 0x59 VIC slot for MP->AP interrupt
 
-  uchar num_events;               //!< 0x5a Number of initial events
-  uchar api;                      //!< 0x5b API active
-  uchar app_id;                   //!< 0x5c App ID
-  volatile uchar app_flags;       //!< 0x5d App flags
-  ushort __PAD;                   //!< 0x5e Pad
+    uchar num_events;		//!< 0x5a Number of initial events
+    uchar api;			//!< 0x5b API active
+    uchar app_id;		//!< 0x5c App ID
+    volatile uchar app_flags;	//!< 0x5d App flags
+    ushort __PAD;		//!< 0x5e Pad
 
-  event_vec_t event[EVENT_COUNT]; //!< 0x60 Event vectors...
+    event_vec_t event[EVENT_COUNT]; //!< 0x60 Event vectors...
 } sark_vec_t;
 
 /*!
@@ -708,39 +707,39 @@ NUM_CPU of these is based at SV_VCPU in System RAM and pointed to by
 */
 
 typedef struct vcpu {		// 128 bytes
-  uint r[8];                    //!<  0 - r0-r7
-  uint psr;                     //!< 32 - cpsr
-  uint sp;                      //!< 36 - sp
-  uint lr;                      //!< 40 - lr
-  uchar rt_code;                //!< 44 - RT error code
-  uchar phys_cpu;               //!< 45 - Physical CPU
-  uchar cpu_state;              //!< 46 - CPU state
-  uchar app_id;                 //!< 47 - Application ID
-  void *mbox_ap_msg;            //!< 48 - mbox msg MP->AP
-  void *mbox_mp_msg;            //!< 52 - mbox msg AP->MP
-  volatile uchar mbox_ap_cmd;   //!< 56 - mbox command MP->AP
-  volatile uchar mbox_mp_cmd;   //!< 57 - mbox command AP->MP
-  ushort sw_count;              //!< 58 - SW error count (saturating)
-  char *sw_file;                //!< 60 - SW source file name
-  uint sw_line;                 //!< 64 - SW source line (could be short?)
-  uint time;                    //!< 68 - Time of loading
-  char app_name[16];            //!< 72 - Application name
-  void *iobuf;                  //!< 88 - IO buffer in SDRAM (or 0)
-  uint sw_ver;                  //!< 92 - SW version
-  uint __PAD[4];                //!< 96 - (spare)
-  uint user0;                   //!< 112 - User word 0
-  uint user1;                   //!< 116 - User word 1
-  uint user2;                   //!< 120 - User word 2
-  uint user3;                   //!< 124 - User word 3
+    uint r[8];			//!<  0 - r0-r7
+    uint psr;			//!< 32 - cpsr
+    uint sp;			//!< 36 - sp
+    uint lr;			//!< 40 - lr
+    uchar rt_code;		//!< 44 - RT error code
+    uchar phys_cpu;		//!< 45 - Physical CPU
+    uchar cpu_state;		//!< 46 - CPU state
+    uchar app_id;		//!< 47 - Application ID
+    void *mbox_ap_msg;		//!< 48 - mbox msg MP->AP
+    void *mbox_mp_msg;		//!< 52 - mbox msg AP->MP
+    volatile uchar mbox_ap_cmd;	//!< 56 - mbox command MP->AP
+    volatile uchar mbox_mp_cmd;	//!< 57 - mbox command AP->MP
+    ushort sw_count;		//!< 58 - SW error count (saturating)
+    char *sw_file;		//!< 60 - SW source file name
+    uint sw_line;		//!< 64 - SW source line (could be short?)
+    uint time;			//!< 68 - Time of loading
+    char app_name[16];		//!< 72 - Application name
+    void *iobuf;		//!< 88 - IO buffer in SDRAM (or 0)
+    uint sw_ver;		//!< 92 - SW version
+    uint __PAD[4];		//!< 96 - (spare)
+    uint user0;			//!< 112 - User word 0
+    uint user1;			//!< 116 - User word 1
+    uint user2;			//!< 120 - User word 2
+    uint user3;			//!< 124 - User word 3
 } vcpu_t;
 
 
 // For "sark_alib.s" (maintain sync with vcpu_t)
 
-#define VCPU_SIZE           128 //!< Size of vcpu_t
-#define VCPU_RT_CODE        44  //!< Offset of rt_code
-#define VCPU_CPU_STATE      46  //!< Offset of cpu_state
-#define VCPU_APP_ID         47  //!< Offset of app_id
+#define VCPU_SIZE	128	//!< Size of vcpu_t
+#define VCPU_RT_CODE	44	//!< Offset of rt_code
+#define VCPU_CPU_STATE	46	//!< Offset of cpu_state
+#define VCPU_APP_ID	47	//!< Offset of app_id
 
 //------------------------------------------------------------------------------
 
@@ -763,15 +762,15 @@ events which have to occur at a particular time or on a set of
 priority ordered queues for events which are processed by a scheduler.
 */
 
-typedef struct event {  // 24 bytes
-  struct event *next;   //!< Next in Q or NULL
+typedef struct event {		// 24 bytes
+    struct event *next;		//!< Next in Q or NULL
 
-  event_proc proc;      //!< Proc to be called or NULL
-  uint arg1;            //!< First arg to proc
-  uint arg2;            //!< Second arg to proc
-  uint time;            //!< Time (CPU ticks) until event due
-                        //!< (or 0 if at head of Q)
-  uint ID;              //!< Unique ID for active event (0 if inactive)
+    event_proc proc;		//!< Proc to be called or NULL
+    uint arg1;			//!< First arg to proc
+    uint arg2;			//!< Second arg to proc
+    uint time;			//!< Time (CPU ticks) until event due
+				//!< (or 0 if at head of Q)
+    uint ID;			//!< Unique ID for active event (0 if inactive)
 } event_t;
 
 /*!
@@ -779,8 +778,8 @@ Struct holding head and tail of a list of "event_t"
 */
 
 typedef struct proc_queue {
-  event_t *proc_head;       //!< List of queued "proc" events
-  event_t *proc_tail;       //!< and tail of that list
+    event_t *proc_head;		//!< List of queued "proc" events
+    event_t *proc_tail;		//!< and tail of that list
 } proc_queue_t;
 
 /*!
@@ -788,9 +787,9 @@ Struct holding a packet
 */
 
 typedef struct pkt {
-  uint ctrl;            //!< TCR in 23:16, flags in 1:0
-  uint data;            //!< Data (payload) field
-  uint key;             //!< Key (non-payload!) field
+    uint ctrl;			//!< TCR in 23:16, flags in 1:0
+    uint data;			//!< Data (payload) field
+    uint key;			//!< Key (non-payload!) field
 } pkt_t;
 
 /*!
@@ -799,54 +798,54 @@ holds all the variables needed by these two packages.
 */
 
 typedef struct event_data {
-  event_t *free;            //!< List of free events
-  event_t *timer_queue;     //!< List of active timer events
+    event_t *free;		//!< List of free events
+    event_t *timer_queue;	//!< List of active timer events
 
-  ushort count;             //!< Number of events currently in use
-  ushort max;               //!< Maximum number ever used
-  uint id;                  //!< Holds unique ID for active events
+    ushort count;		//!< Number of events currently in use
+    ushort max;			//!< Maximum number ever used
+    uint id;			//!< Holds unique ID for active events
 
-  uint failed;              //!< Counts failures of event_new
-  uint rc;                  //!< Failure codes
+    uint failed;		//!< Counts failures of event_new
+    uint rc;			//!< Failure codes
 
-  volatile uchar state;     //!< Stop/pauses event loop
-  uchar __PAD1;             //!< (Spare)
-  uchar wait;               //!< Wait state
-  uchar user;               //!< Non-zero if user event pending
+    volatile uchar state;	//!< Stop/pauses event loop
+    uchar __PAD1;		//!< (Spare)
+    uchar wait;			//!< Wait state
+    uchar user;			//!< Non-zero if user event pending
 
-  uint ticks;               //!< Timer tick counter
-  uint arg1;                //!< Arg1 for user event
-  uint arg2;                //!< Arg2 for user event
+    uint ticks;			//!< Timer tick counter
+    uint arg1;			//!< Arg1 for user event
+    uint arg2;			//!< Arg2 for user event
 
-  sdp_msg_t *msg;           //!< Passes msg from SARK to app
-  uint signal;              //!< Passes signal from SARK to app
+    sdp_msg_t *msg;		//!< Passes msg from SARK to app
+    uint signal;		//!< Passes signal from SARK to app
 
-  event_proc pause_proc;    //!< Called on pause
-  uint pause_arg2;          //!< Arg2 to pause_proc (arg1 is pause)
+    event_proc pause_proc;	//!< Called on pause
+    uint pause_arg2;		//!< Arg2 to pause_proc (arg1 is pause)
 
-  uint exit_rc;             //!< Return value from "event_start"
+    uint exit_rc;		//!< Return value from "event_start"
 
-  uchar pkt_insert;         //!< Insert point for packet queue
-  uchar pkt_remove;         //!< Remove point for packet queue
-  volatile uchar pkt_count; //!< Count of items in packet queue
-  uchar __PAD2;             //!< (Spare)
-  ushort pkt_size;          //!< Size of packet queue (<= 256)
-  ushort pkt_max;           //!< Max occupancy of packet queue
-  pkt_t *pkt_queue;         //!< Pointer to packet queue
+    uchar pkt_insert;		//!< Insert point for packet queue
+    uchar pkt_remove;		//!< Remove point for packet queue
+    volatile uchar pkt_count;	//!< Count of items in packet queue
+    uchar __PAD2;		//!< (Spare)
+    ushort pkt_size;		//!< Size of packet queue (<= 256)
+    ushort pkt_max;		//!< Max occupancy of packet queue
+    pkt_t *pkt_queue;		//!< Pointer to packet queue
 
-  uint vic_select;          //!< Builds VIC IRQ/FIQ select word
-  uint vic_enable;          //!< Builds VIC interrupt enable word
-  uint old_select;          //!< Keeps old state of vic_select
-  uint old_enable;          //!< Keeps old state of vic_enable
+    uint vic_select;		//!< Builds VIC IRQ/FIQ select word
+    uint vic_enable;		//!< Builds VIC interrupt enable word
+    uint old_select;		//!< Keeps old state of vic_select
+    uint old_enable;		//!< Keeps old state of vic_enable
 
-  int_handler fiq_vector;   //!< New FIQ vector (or 0)
-  int_handler old_vector;   //!< Old FIQ vector
+    int_handler fiq_vector;	//!< New FIQ vector (or 0)
+    int_handler old_vector;	//!< Old FIQ vector
 
-  int_handler vic_addr[EVENT_COUNT]; //!< Record of handler for each event
+    int_handler vic_addr[EVENT_COUNT]; //!< Record of handler for each event
 
-  /*! Queues of events - one for each priority level */
+    /*! Queues of events - one for each priority level */
 
-  proc_queue_t proc_queue[PRIO_MAX+1];
+    proc_queue_t proc_queue[PRIO_MAX + 1];
 } event_data_t;
 
 //------------------------------------------------------------------------------
@@ -856,27 +855,27 @@ A struct holding all of the variables maintained by SARK
 */
 
 typedef struct sark_data {
-  uint virt_cpu;        //!< 00 Virtual CPU number
-  uint phys_cpu;        //!< 04 Physical CPU number
+    uint virt_cpu;		//!< 00 Virtual CPU number
+    uint phys_cpu;		//!< 04 Physical CPU number
 
-  uint random[2];       //!< 08 Random number variable
+    uint random[2];		//!< 08 Random number variable
 
-  uint *stack_base;     //!< 10 Bottom of stack area (& heap limit)
-  uint *heap_base;      //!< 14 Bottom of heap area
-  heap_t *heap;         //!< 18 Heap in DTCM
+    uint *stack_base;		//!< 10 Bottom of stack area (& heap limit)
+    uint *heap_base;		//!< 14 Bottom of heap area
+    heap_t *heap;		//!< 18 Heap in DTCM
 
-  vcpu_t *vcpu;         //!< 1c Pointer to VCPU block
+    vcpu_t *vcpu;		//!< 1c Pointer to VCPU block
 
-  mem_block_t msg_root; //!< 20 Control block for SDP messages
+    mem_block_t msg_root;	//!< 20 Control block for SDP messages
 
-  uint msg_rcvd;        //!< 28 Numbers of msgs received
-  uint msg_sent;        //!< 2c Numbers of msgs sent
+    uint msg_rcvd;		//!< 28 Numbers of msgs received
+    uint msg_sent;		//!< 2c Numbers of msgs sent
 
-  ushort cpu_clk;       //!< 30 CPU clock speed (MHz)
-  uchar sw_rte;         //!< 32 Set to 1 for SW error calls rt_error
-  uchar __PAD1;         //!< 33
-  void *sdram_buf;      //!< 34 Pointer to SDRAM buffer
-  uint pkt_count;       //!< 38 Count of thrown packets
+    ushort cpu_clk;		//!< 30 CPU clock speed (MHz)
+    uchar sw_rte;		//!< 32 Set to 1 for SW error calls rt_error
+    uchar __PAD1;		//!< 33
+    void *sdram_buf;		//!< 34 Pointer to SDRAM buffer
+    uint pkt_count;		//!< 38 Count of thrown packets
 } sark_data_t;
 
 //
@@ -952,102 +951,102 @@ RAM at 0xe5007f00
 */
 
 typedef struct sv {
-  ushort p2p_addr;          //!< 00 P2P address of this chip
-  ushort p2p_dims;          //!< 02 P2P dimensions
+    ushort p2p_addr;		//!< 00 P2P address of this chip
+    ushort p2p_dims;		//!< 02 P2P dimensions
 
-  ushort dbg_addr;          //!< 04 P2P address for debug messages
-  uchar  p2p_up;            //!< 06 Non-zero if P2P networking active
-  uchar  last_id;           //!< 07 Last ID used in NNBC
+    ushort dbg_addr;		//!< 04 P2P address for debug messages
+    uchar  p2p_up;		//!< 06 Non-zero if P2P networking active
+    uchar  last_id;		//!< 07 Last ID used in NNBC
 
-  ushort eth_addr;          //!< 08 P2P address of nearest Ethernet node
-  uchar hw_ver;             //!< 0a Hardware version
-  uchar eth_up;             //!< 0b Non-zero if Ethernet active
+    ushort eth_addr;		//!< 08 P2P address of nearest Ethernet node
+    uchar hw_ver;		//!< 0a Hardware version
+    uchar eth_up;		//!< 0b Non-zero if Ethernet active
 
-  uchar p2pb_repeats;       //!< 0c Number of times to send out P2PB packets
-  uchar p2p_sql;            //!< 0d P2P sequence length (**)
-  uchar clk_div;            //!< 0e Clock divisors for system & router bus
-  uchar tp_scale;           //!< 0f Scale for router phase timer
+    uchar p2pb_repeats;		//!< 0c Number of times to send out P2PB packets
+    uchar p2p_sql;		//!< 0d P2P sequence length (**)
+    uchar clk_div;		//!< 0e Clock divisors for system & router bus
+    uchar tp_scale;		//!< 0f Scale for router phase timer
 
-  volatile uint64 clock_ms; //!< 10 Milliseconds since boot
-  volatile ushort time_ms;  //!< 18 Milliseconds in second (0..999)
-  ushort ltpc_period;       //!< 1a
+    volatile uint64 clock_ms;	//!< 10 Milliseconds since boot
+    volatile ushort time_ms;	//!< 18 Milliseconds in second (0..999)
+    ushort ltpc_period;		//!< 1a
 
-  volatile uint unix_time;  //!< 1c Seconds since 1970
-  uint tp_timer;            //!< 20 Router time phase timer
+    volatile uint unix_time;	//!< 1c Seconds since 1970
+    uint tp_timer;		//!< 20 Router time phase timer
 
-  ushort cpu_clk;           //!< 24 CPU clock in MHz
-  ushort mem_clk;           //!< 26 SDRAM clock in MHz
+    ushort cpu_clk;		//!< 24 CPU clock in MHz
+    ushort mem_clk;		//!< 26 SDRAM clock in MHz
 
-  uchar forward;            //!< 28 NNBC forward parameter
-  uchar retry;              //!< 29 NNBC retry parameter
-  uchar peek_time;          //!< 2a Timeout for link read/write (us)
-  uchar led_period;         //!< 2b LED flash period (* 10 ms)
+    uchar forward;		//!< 28 NNBC forward parameter
+    uchar retry;		//!< 29 NNBC retry parameter
+    uchar peek_time;		//!< 2a Timeout for link read/write (us)
+    uchar led_period;		//!< 2b LED flash period (* 10 ms)
 
-  uchar netinit_bc_wait;    //!< 2c Minimum time after last BC during netinit (*10 ms)
-  uchar netinit_phase;      //!< 2d Phase of boot process
-  ushort p2p_root;          //!< 2e The P2P address from which the system was booted
+    uchar netinit_bc_wait;	//!< 2c Minimum time after last BC during netinit (*10 ms)
+    uchar netinit_phase;	//!< 2d Phase of boot process
+    ushort p2p_root;		//!< 2e The P2P address from which the system was booted
 
-  uint led0;                //!< 30 LED definition words (for up
-  uint led1;                //!< 34 to 15 LEDs)
-  uint __PAD2;              //!< 38
-  uint random;              //!< 3c Random number seed
+    uint led0;			//!< 30 LED definition words (for up
+    uint led1;			//!< 34 to 15 LEDs)
+    uint __PAD2;		//!< 38
+    uint random;		//!< 3c Random number seed
 
-  uchar root_chip;          //!< 40 Set if we are the root chip
-  uchar num_buf;            //!< 41 Number of SHM buffers
-  uchar boot_delay;         //!< 42 Delay between boot NN pkts (us)
-  uchar soft_wdog;          //!< 43 Soft watchdog control
+    uchar root_chip;		//!< 40 Set if we are the root chip
+    uchar num_buf;		//!< 41 Number of SHM buffers
+    uchar boot_delay;		//!< 42 Delay between boot NN pkts (us)
+    uchar soft_wdog;		//!< 43 Soft watchdog control
 
-  uint __PAD3;              //!< 44
+    uint __PAD3;		//!< 44
 
-  heap_t *sysram_heap;      //!< 48 Heap in SysRAM
-  heap_t *sdram_heap;       //!< 4c Heap in SDRAM
+    heap_t *sysram_heap;	//!< 48 Heap in SysRAM
+    heap_t *sdram_heap;		//!< 4c Heap in SDRAM
 
-  uint iobuf_size;          //!< 50 Size of IO buffers (bytes)
-  uint *sdram_bufs;         //!< 54 SDRAM buffers
-  uint sysbuf_size;         //!< 58 Size of system buffers (words)
-  uint boot_sig;            //!< 5c Boot signature word
+    uint iobuf_size;		//!< 50 Size of IO buffers (bytes)
+    uint *sdram_bufs;		//!< 54 SDRAM buffers
+    uint sysbuf_size;		//!< 58 Size of system buffers (words)
+    uint boot_sig;		//!< 5c Boot signature word
 
-  uint mem_ptr;             //!< 60 Memory pointer for NNBC memory setter
+    uint mem_ptr;		//!< 60 Memory pointer for NNBC memory setter
 
-  volatile uchar lock;      //!< 64 Lock variable
-  uchar link_en;            //!< 65 Bit map of enabled links
-  uchar last_biff_id;       //!< 66 Last ID used in BIFF
-  uchar bt_flags;           //!< 67 Board Test flags
+    volatile uchar lock;	//!< 64 Lock variable
+    uchar link_en;		//!< 65 Bit map of enabled links
+    uchar last_biff_id;		//!< 66 Last ID used in BIFF
+    uchar bt_flags;		//!< 67 Board Test flags
 
-  mem_block_t shm_root;     //!< 68 Control block for SHM bufs
+    mem_block_t shm_root;	//!< 68 Control block for SHM bufs
 
-  uint utmp0;               //!< 70 Four temps...
-  uint utmp1;               //!< 74
-  uint utmp2;               //!< 78
-  uint utmp3;               //!< 7c
+    uint utmp0;			//!< 70 Four temps...
+    uint utmp1;			//!< 74
+    uint utmp2;			//!< 78
+    uint utmp3;			//!< 7c
 
-  uchar status_map[20];     //!< 80 Set during SC&MP ROM boot
-  uchar p2v_map[20];        //!< 94 Phys to Virt core map
-  uchar v2p_map[20];        //!< a8 Virt to Phys core map
+    uchar status_map[20];	//!< 80 Set during SC&MP ROM boot
+    uchar p2v_map[20];		//!< 94 Phys to Virt core map
+    uchar v2p_map[20];		//!< a8 Virt to Phys core map
 
-  uchar num_cpus;           //!< bc Number of good cores
-  uchar rom_cpus;           //!< bd SC&MP ROM good cores
-  ushort board_addr;        //!< be Position of chip on PCB
+    uchar num_cpus;		//!< bc Number of good cores
+    uchar rom_cpus;		//!< bd SC&MP ROM good cores
+    ushort board_addr;		//!< be Position of chip on PCB
 
-  uint *sdram_base;         //!< c0 Base of user SDRAM
-  uint *sysram_base;        //!< c4 Base of user SysRAM
-  uint *sdram_sys;          //!< c8 System SDRAM
-  vcpu_t *vcpu_base;        //!< cc Start of VCPU blocks
+    uint *sdram_base;		//!< c0 Base of user SDRAM
+    uint *sysram_base;		//!< c4 Base of user SysRAM
+    uint *sdram_sys;		//!< c8 System SDRAM
+    vcpu_t *vcpu_base;		//!< cc Start of VCPU blocks
 
-  heap_t *sys_heap;         //!< d0 System heap in SDRAM
-  rtr_entry_t *rtr_copy;    //!< d4 Copy of router MC tables
-  uint *hop_table;          //!< d8 P2P hop table
-  block_t** alloc_tag;      //!< dc Start of alloc_tag table
-  ushort rtr_free;          //!< e0 Start of free router entry list
-  ushort p2p_active;        //!< e2 Count of active P2P addresses
-  app_data_t *app_data;     //!< e4 Array of app_id structs
-  sdp_msg_t *shm_buf;       //!< e8 SHM buffers
-  uint mbox_flags;          //!< ec AP->MP communication flags
+    heap_t *sys_heap;		//!< d0 System heap in SDRAM
+    rtr_entry_t *rtr_copy;	//!< d4 Copy of router MC tables
+    uint *hop_table;		//!< d8 P2P hop table
+    block_t** alloc_tag;	//!< dc Start of alloc_tag table
+    ushort rtr_free;		//!< e0 Start of free router entry list
+    ushort p2p_active;		//!< e2 Count of active P2P addresses
+    app_data_t *app_data;	//!< e4 Array of app_id structs
+    sdp_msg_t *shm_buf;		//!< e8 SHM buffers
+    uint mbox_flags;		//!< ec AP->MP communication flags
 
-  uchar ip_addr[4];         //!< f0 IP address (or 0)
-  uint fr_copy;             //!< f4 (Virtual) copy of router FR reg
-  uint *board_info;         //!< f8 Pointer to board_info area !!
-  uint sw_ver;              //!< fc Software version number
+    uchar ip_addr[4];		//!< f0 IP address (or 0)
+    uint fr_copy;		//!< f4 (Virtual) copy of router FR reg
+    uint *board_info;		//!< f8 Pointer to board_info area !!
+    uint sw_ver;		//!< fc Software version number
 } sv_t;
 
 
