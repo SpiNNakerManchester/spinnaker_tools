@@ -99,19 +99,19 @@ uint spin1_int_enable (void);
 
 // !! ST replaced by SARK routine
 
-void spin1_msg_free (sdp_msg_t *msg)
+void spin1_msg_free(sdp_msg_t *msg)
 {
-  sark_msg_free (msg);
+    sark_msg_free(msg);
 }
 
-sdp_msg_t* spin1_msg_get (void)
+sdp_msg_t* spin1_msg_get(void)
 {
-  return sark_msg_get ();
+    return sark_msg_get();
 }
 
-uint spin1_send_sdp_msg (sdp_msg_t *msg, uint timeout)
+uint spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout)
 {
-  return sark_msg_send (msg, timeout);
+    return sark_msg_send(msg, timeout);
 }
 
 // ------------------------------------------------------------------------
@@ -131,9 +131,9 @@ uint spin1_send_sdp_msg (sdp_msg_t *msg, uint timeout)
 
 // !! ST now calls SARK srand
 
-void spin1_srand (uint seed)
+void spin1_srand(uint seed)
 {
-  sark_srand (seed);
+    sark_srand(seed);
 }
 /*
 *******/
@@ -159,9 +159,9 @@ void spin1_srand (uint seed)
 
 // !! ST now uses equivalent SARK routine
 
-uint spin1_rand  (void)
+uint spin1_rand(void)
 {
-  return sark_rand ();
+    return sark_rand();
 }
 
 /*
@@ -184,11 +184,11 @@ uint spin1_rand  (void)
 */
 void configure_communications_controller()
 {
-  // initialize transmitter control to send MC packets
-  cc[CC_TCR] = 0x00000000;
+    // initialize transmitter control to send MC packets
+    cc[CC_TCR] = 0x00000000;
 
-  //TODO: clear receiver status
-//  cc[CC_RSR] = 0x00000000;
+    //TODO: clear receiver status
+    // cc[CC_RSR] = 0x00000000;
 }
 /*
 *******/
@@ -207,22 +207,22 @@ void configure_communications_controller()
 */
 void configure_dma_controller()
 {
-  dma[DMA_CTRL] = 0x3f; // Abort pending and active transfers
-  dma[DMA_CTRL] = 0x0d; // clear possible transfer done and restart
+    dma[DMA_CTRL] = 0x3f; // Abort pending and active transfers
+    dma[DMA_CTRL] = 0x0d; // clear possible transfer done and restart
 
-  // TODO: needs updating when error support is completed
-  // enable interrupt sources
+    // TODO: needs updating when error support is completed
+    // enable interrupt sources
 #if USE_WRITE_BUFFER == TRUE
-  dma[DMA_GCTL] = 0x100c01; // enable dma done & write buffer ints.
+    dma[DMA_GCTL] = 0x100c01; // enable dma done & write buffer ints.
 #else
-  dma[DMA_GCTL] = 0x000c00; // enable dma done interrupt
-#endif
+    dma[DMA_GCTL] = 0x000c00; // enable dma done interrupt
+#endif // USE_WRITE_BUFFER == TRUE
 
 #if API_DEBUG == TRUE
-  /* initialise dmac counters */
-  /* dmac counts transfer bursts */
-  dma[DMA_SCTL] = 3; // clear and enable counters
-#endif
+    /* initialise dmac counters */
+    /* dmac counts transfer bursts */
+    dma[DMA_SCTL] = 3; // clear and enable counters
+#endif // API_DEBUG == TRUE
 }
 /*
 *******/
@@ -253,13 +253,13 @@ void configure_dma_controller()
 *
 * SOURCE
 */
-void configure_timer1 (uint time, uint phase)
+void configure_timer1(uint time, uint phase)
 {
-  // do not enable yet!
-  tc[T1_CONTROL] = 0;
-  tc[T1_INT_CLR] = 1;
-  tc[T1_LOAD] = sv->cpu_clk * (time + phase);
-  tc[T1_BG_LOAD] = sv->cpu_clk * time;
+    // do not enable yet!
+    tc[T1_CONTROL] = 0;
+    tc[T1_INT_CLR] = 1;
+    tc[T1_LOAD] = sv->cpu_clk * (time + phase);
+    tc[T1_BG_LOAD] = sv->cpu_clk * time;
 }
 /*
 *******/
@@ -282,101 +282,98 @@ void configure_timer1 (uint time, uint phase)
 *
 * SOURCE
 */
-void configure_vic (uint enable_timer)
+void configure_vic(uint enable_timer)
 {
-  uint fiq_select = 0;
-  uint int_select = ((1 << TIMER1_INT)   |
-                     (1 << SOFTWARE_INT) |
-                     (1 << CC_MC_INT) |
-                     (1 << CC_FR_INT) |
-                     (1 << DMA_ERR_INT)  |
-                     (1 << DMA_DONE_INT)
-                    );
+    uint fiq_select = 0;
+    uint int_select = ((1 << TIMER1_INT)   |
+	    (1 << SOFTWARE_INT) |
+	    (1 << CC_MC_INT) |
+	    (1 << CC_FR_INT) |
+	    (1 << DMA_ERR_INT)  |
+	    (1 << DMA_DONE_INT));
 
-  // disable the relevant interrupts while configuring the VIC
+    // disable the relevant interrupts while configuring the VIC
 
-  vic[VIC_DISABLE] = int_select;
+    vic[VIC_DISABLE] = int_select;
 
-  // remember default fiq handler
+    // remember default fiq handler
 
-  old_vector = sark_vec->fiq_vec;
-  old_select = vic[VIC_SELECT];
-  old_enable = vic[VIC_ENABLE];
+    old_vector = sark_vec->fiq_vec;
+    old_select = vic[VIC_SELECT];
+    old_enable = vic[VIC_ENABLE];
 
-  // configure fiq -- if requested by user
-  switch (fiq_event)
-  {
+    // configure fiq -- if requested by user
+    switch (fiq_event) {
     case MC_PACKET_RECEIVED:
     case MCPL_PACKET_RECEIVED:
-      sark_vec->fiq_vec = cc_rx_ready_fiqsr;
-      fiq_select = (1 << CC_MC_INT);
-      break;
+	sark_vec->fiq_vec = cc_rx_ready_fiqsr;
+	fiq_select = (1 << CC_MC_INT);
+	break;
     case FR_PACKET_RECEIVED:
     case FRPL_PACKET_RECEIVED:
-      sark_vec->fiq_vec = cc_fr_ready_fiqsr;
-      fiq_select = (1 << CC_FR_INT);
-      break;
+	sark_vec->fiq_vec = cc_fr_ready_fiqsr;
+	fiq_select = (1 << CC_FR_INT);
+	break;
     case DMA_TRANSFER_DONE:
-      sark_vec->fiq_vec = dma_done_fiqsr;
-      fiq_select = (1 << DMA_DONE_INT);
-      break;
+	sark_vec->fiq_vec = dma_done_fiqsr;
+	fiq_select = (1 << DMA_DONE_INT);
+	break;
     case TIMER_TICK:
-      sark_vec->fiq_vec = timer1_fiqsr;
-      fiq_select = (1 << TIMER1_INT);
-      break;
+	sark_vec->fiq_vec = timer1_fiqsr;
+	fiq_select = (1 << TIMER1_INT);
+	break;
     case USER_EVENT:
-      sark_vec->fiq_vec = soft_int_fiqsr;
-      fiq_select = (1 << SOFTWARE_INT);
-      break;
-  }
+	sark_vec->fiq_vec = soft_int_fiqsr;
+	fiq_select = (1 << SOFTWARE_INT);
+	break;
+    }
 
-  // Move the SARK interrupt to chosen slot
+    // Move the SARK interrupt to chosen slot
 
-  vic_controls[sark_vec->sark_slot] = 0;	  // Disable previous slot
+    vic_controls[sark_vec->sark_slot] = 0;	  // Disable previous slot
 
-  vic_vectors[SARK_PRIORITY]  = sark_int_han;
-  vic_controls[SARK_PRIORITY] = 0x20 | CPU_INT;
+    vic_vectors[SARK_PRIORITY]  = sark_int_han;
+    vic_controls[SARK_PRIORITY] = 0x20 | CPU_INT;
 
-  // Configure API callback interrupts
-  vic_vectors[RX_READY_PRIORITY] = cc_rx_ready_isr;
-  vic_controls[RX_READY_PRIORITY] = 0x20 | CC_MC_INT;
+    // Configure API callback interrupts
+    vic_vectors[RX_READY_PRIORITY] = cc_rx_ready_isr;
+    vic_controls[RX_READY_PRIORITY] = 0x20 | CC_MC_INT;
 
-  vic_vectors[FR_READY_PRIORITY] = cc_fr_ready_isr;
-  vic_controls[FR_READY_PRIORITY] = 0x20 | CC_FR_INT;
+    vic_vectors[FR_READY_PRIORITY] = cc_fr_ready_isr;
+    vic_controls[FR_READY_PRIORITY] = 0x20 | CC_FR_INT;
 
-  vic_vectors[DMA_DONE_PRIORITY]  = dma_done_isr;
-  vic_controls[DMA_DONE_PRIORITY] = 0x20 | DMA_DONE_INT;
+    vic_vectors[DMA_DONE_PRIORITY]  = dma_done_isr;
+    vic_controls[DMA_DONE_PRIORITY] = 0x20 | DMA_DONE_INT;
 
-  vic_vectors[TIMER1_PRIORITY]  = timer1_isr;
-  vic_controls[TIMER1_PRIORITY] = 0x20 | TIMER1_INT;
+    vic_vectors[TIMER1_PRIORITY]  = timer1_isr;
+    vic_controls[TIMER1_PRIORITY] = 0x20 | TIMER1_INT;
 
-  // configure the TX empty interrupt but don't enable it yet!
-  vic_vectors[CC_TMT_PRIORITY] = cc_tx_empty_isr;
-  vic_controls[CC_TMT_PRIORITY] = 0x20 | CC_TMT_INT;
+    // configure the TX empty interrupt but don't enable it yet!
+    vic_vectors[CC_TMT_PRIORITY] = cc_tx_empty_isr;
+    vic_controls[CC_TMT_PRIORITY] = 0x20 | CC_TMT_INT;
 
-  // configure the software interrupt
-  vic_vectors[SOFT_INT_PRIORITY]  = soft_int_isr;
-  vic_controls[SOFT_INT_PRIORITY] = 0x20 | SOFTWARE_INT;
+    // configure the software interrupt
+    vic_vectors[SOFT_INT_PRIORITY]  = soft_int_isr;
+    vic_controls[SOFT_INT_PRIORITY] = 0x20 | SOFTWARE_INT;
 
 #if USE_WRITE_BUFFER == TRUE
     /* configure the DMA error interrupt */
-  vic_vectors[DMA_ERR_PRIORITY]  = dma_error_isr;
-  vic_controls[DMA_ERR_PRIORITY] = 0x20 | DMA_ERR_INT;
-#endif
+    vic_vectors[DMA_ERR_PRIORITY]  = dma_error_isr;
+    vic_controls[DMA_ERR_PRIORITY] = 0x20 | DMA_ERR_INT;
+#endif // USE_WRITE_BUFFER == TRUE
 
-  vic[VIC_SELECT] = fiq_select;
+    vic[VIC_SELECT] = fiq_select;
 
-  if (!enable_timer)
-    {
-      int_select = int_select & ~(1 << TIMER1_INT);
+    if (!enable_timer) {
+	int_select = int_select & ~(1 << TIMER1_INT);
     }
 
 #if USE_WRITE_BUFFER == TRUE
-  vic[VIC_ENABLE] = int_select;
+    vic[VIC_ENABLE] = int_select;
 #else
-  // don't enable the dma error interrupt
-  vic[VIC_ENABLE] = int_select & ~(1 << DMA_ERR_INT);
-#endif
+    // don't enable the dma error interrupt
+    vic[VIC_ENABLE] = int_select & ~(1 << DMA_ERR_INT);
+#endif // USE_WRITE_BUFFER == TRUE
 }
 /*
 *******/
@@ -384,43 +381,36 @@ void configure_vic (uint enable_timer)
 
 void spin1_pause()
 {
-  vic[VIC_DISABLE] = (1 << TIMER1_INT);
-  configure_timer1(timer_tick, timer_phase);
-  sark_cpu_state (CPU_STATE_PAUSE);
-  paused = 1;
+    vic[VIC_DISABLE] = (1 << TIMER1_INT);
+    configure_timer1(timer_tick, timer_phase);
+    sark_cpu_state (CPU_STATE_PAUSE);
+    paused = 1;
 }
 
 
 void resume()
 {
-  if (resume_sync == 1)
-    {
-      resume_sync = 0;
-      event.wait ^= 1;
+    if (resume_sync == 1) {
+	resume_sync = 0;
+	event.wait ^= 1;
     }
-  paused = 0;
-  sark_cpu_state (CPU_STATE_RUN);
-  vic[VIC_ENABLE] = (1 << TIMER1_INT);
-  tc[T1_CONTROL] = 0xe2;
+    paused = 0;
+    sark_cpu_state (CPU_STATE_RUN);
+    vic[VIC_ENABLE] = (1 << TIMER1_INT);
+    tc[T1_CONTROL] = 0xe2;
 }
 
 
 void spin1_resume(sync_bool sync)
 {
-  if (sync == SYNC_NOWAIT)
-    {
-      resume();
-    }
-  else
-    {
-      resume_sync = 1;
-      if (event.wait)
-	{
-	  sark_cpu_state(CPU_STATE_SYNC1);
-	}
-      else
-	{
-	  sark_cpu_state(CPU_STATE_SYNC0);
+    if (sync == SYNC_NOWAIT) {
+	resume();
+    } else {
+	resume_sync = 1;
+	if (event.wait) {
+	    sark_cpu_state(CPU_STATE_SYNC1);
+	} else {
+	    sark_cpu_state(CPU_STATE_SYNC0);
 	}
     }
 }
@@ -428,13 +418,12 @@ void spin1_resume(sync_bool sync)
 
 uint resume_wait()
 {
-  uint bit = 1 << sark.virt_cpu;
+    uint bit = 1 << sark.virt_cpu;
 
-  if (event.wait)
-    {
-      return (~sc[SC_FLAG] & bit);    // Wait 1
+    if (event.wait) {
+	return (~sc[SC_FLAG] & bit);	// Wait 1
     }
-  return (sc[SC_FLAG] & bit);     // Wait 0
+    return (sc[SC_FLAG] & bit);		// Wait 0
 }
 
 
@@ -475,87 +464,77 @@ uint resume_wait()
 */
 void dispatch()
 {
-  uint i;
-  uint cpsr;
-  task_queue_t *tq;
-  volatile callback_t cback;
-  resume_sync = 0;
+    uint i;
+    uint cpsr;
+    task_queue_t *tq;
+    volatile callback_t cback;
+    resume_sync = 0;
 
-  // dispatch callbacks from queues until
-  // spin1_exit () is called (run = 0)
-  while (run)
-    {
-      i = 0;
+    // dispatch callbacks from queues until
+    // spin1_exit () is called (run = 0)
+    while (run) {
+	i = 0;
 
-      // disable interrupts to avoid concurrent
-      // scheduler/dispatcher accesses to queues
-      cpsr = spin1_int_disable ();
+	// disable interrupts to avoid concurrent
+	// scheduler/dispatcher accesses to queues
+	cpsr = spin1_int_disable();
 
-      while (run && i < (NUM_PRIORITIES-1))
-	{
-	  tq = &task_queue[i];
+	while (run && i < (NUM_PRIORITIES-1)) {
+	    tq = &task_queue[i];
 
-	  i++;  // prepare for next priority queue
+	    i++;  // prepare for next priority queue
 
-	  if (tq->start != tq->end)
-	    {
-	      cback = tq->queue[tq->start].cback;
-	      uint arg0 = tq->queue[tq->start].arg0;
-	      uint arg1 = tq->queue[tq->start].arg1;
+	    if (tq->start != tq->end) {
+		cback = tq->queue[tq->start].cback;
+		uint arg0 = tq->queue[tq->start].arg0;
+		uint arg1 = tq->queue[tq->start].arg1;
 
-	      tq->start = (tq->start + 1) % TASK_QUEUE_SIZE;
+		tq->start = (tq->start + 1) % TASK_QUEUE_SIZE;
 
-	      if (cback != NULL)
-		{
-		  // run callback with interrupts enabled
-		  spin1_mode_restore (cpsr);
+		if (cback != NULL) {
+		    // run callback with interrupts enabled
+		    spin1_mode_restore(cpsr);
 
-		  // check for if its a timer callback, if it is, update tracker values
-		  if (cback == callback[TIMER_TICK].cback)
-		    {
-		      diagnostics.in_timer_callback = 1;
+		    // check for if its a timer callback, if it is, update
+		    // tracker values
+		    if (cback == callback[TIMER_TICK].cback) {
+			diagnostics.in_timer_callback = 1;
 		    }
 
-		  // execute callback
-		  if (cback != callback[TIMER_TICK].cback || !paused)
-		    {
-		      cback (arg0, arg1);
+		    // execute callback
+		    if (cback != callback[TIMER_TICK].cback || !paused) {
+			cback(arg0, arg1);
 		    }
 
-		  // update queue size
-		  if (cback == callback[TIMER_TICK].cback)
-		    {
-		      if (diagnostics.number_timer_tic_in_queue > 0)
-			{
-			  diagnostics.number_timer_tic_in_queue -= 1;
+		    // update queue size
+		    if (cback == callback[TIMER_TICK].cback) {
+			if (diagnostics.number_timer_tic_in_queue > 0) {
+			    diagnostics.number_timer_tic_in_queue -= 1;
 			}
-		      diagnostics.in_timer_callback = 0;
+			diagnostics.in_timer_callback = 0;
 		    }
 
-		  cpsr = spin1_int_disable ();
+		    cpsr = spin1_int_disable();
 
-		  // re-start examining queues at highest priority
-		  i = 0;
+		    // re-start examining queues at highest priority
+		    i = 0;
 		}
 	    }
 	}
 
-      if (run)
-	{
-	  // go to sleep with interrupts disabled to avoid hazard!
-	  // an interrupt will still wake up the dispatcher
-	  spin1_wfi ();
+	if (run) {
+	    // go to sleep with interrupts disabled to avoid hazard!
+	    // an interrupt will still wake up the dispatcher
+	    spin1_wfi();
 
-	  // Handle resume
-	  if (resume_sync == 1)
-	    {
-	      if (!resume_wait())
-		{
-		  resume();
+	    // Handle resume
+	    if (resume_sync == 1) {
+		if (!resume_wait()) {
+		    resume();
 		}
 	    }
 
-	  spin1_mode_restore (cpsr);
+	    spin1_mode_restore(cpsr);
 	}
     }
 }
@@ -585,55 +564,41 @@ void dispatch()
 *
 * SOURCE
 */
-void spin1_callback_on (uint event_id, callback_t cback, int priority)
+void spin1_callback_on(uint event_id, callback_t cback, int priority)
 {
-  // set up the callback
-  callback[event_id].cback = cback;
-  callback[event_id].priority = priority;
+    // set up the callback
+    callback[event_id].cback = cback;
+    callback[event_id].priority = priority;
 
-  // Enforce a single callback on FIQ
+    // Enforce a single callback on FIQ
 
-  if (priority < 0)
-    {
-      if (fiq_event == -1 ||
-	      (event_id == MC_PACKET_RECEIVED && fiq_event == MCPL_PACKET_RECEIVED) ||
-	      (event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED) ||
-	      (event_id == FR_PACKET_RECEIVED && fiq_event == FRPL_PACKET_RECEIVED) ||
-	      (event_id == FRPL_PACKET_RECEIVED && fiq_event == FR_PACKET_RECEIVED))
-	{
-	  fiq_event = event_id;
-	}
-      else
-	{
-	  rt_error (RTE_API);
+    if (priority < 0) {
+	if (fiq_event == -1 ||
+		(event_id == MC_PACKET_RECEIVED && fiq_event == MCPL_PACKET_RECEIVED) ||
+		(event_id == MCPL_PACKET_RECEIVED && fiq_event == MC_PACKET_RECEIVED) ||
+		(event_id == FR_PACKET_RECEIVED && fiq_event == FRPL_PACKET_RECEIVED) ||
+		(event_id == FRPL_PACKET_RECEIVED && fiq_event == FR_PACKET_RECEIVED)) {
+	    fiq_event = event_id;
+	} else {
+	    rt_error(RTE_API);
 	}
     }
 
-  // Enforce same interrupt handler for both packet callbacks
+    // Enforce same interrupt handler for both packet callbacks
 
-  if (event_id == MC_PACKET_RECEIVED || event_id == MCPL_PACKET_RECEIVED)
-    {
-      if (mc_pkt_prio == -2)
-        {
-	  mc_pkt_prio = priority;
+    if (event_id == MC_PACKET_RECEIVED || event_id == MCPL_PACKET_RECEIVED) {
+	if (mc_pkt_prio == -2) {
+	    mc_pkt_prio = priority;
+        } else if (mc_pkt_prio == -1 && priority != -1) {
+            rt_error(RTE_API);
         }
-      else if (mc_pkt_prio == -1 && priority != -1)
-        {
-	  rt_error (RTE_API);
+    } else if (event_id == FR_PACKET_RECEIVED || event_id == FRPL_PACKET_RECEIVED) {
+	if (fr_pkt_prio == -2) {
+	    fr_pkt_prio = priority;
+        } else if (fr_pkt_prio == -1 && priority != -1) {
+            rt_error(RTE_API);
         }
     }
-  else if (event_id == FR_PACKET_RECEIVED || event_id == FRPL_PACKET_RECEIVED)
-    {
-      if (fr_pkt_prio == -2)
-        {
-	  fr_pkt_prio = priority;
-        }
-      else if (fr_pkt_prio == -1 && priority != -1)
-        {
-	  rt_error (RTE_API);
-        }
-    }
-
 }
 /*
 *******/
@@ -655,11 +620,10 @@ void spin1_callback_on (uint event_id, callback_t cback, int priority)
 
 void spin1_callback_off(uint event_id)
 {
-  callback[event_id].cback = NULL;
+    callback[event_id].cback = NULL;
 
-  if (callback[event_id].priority < 0)
-    {
-      fiq_event = -1;
+    if (callback[event_id].priority < 0) {
+	fiq_event = -1;
     }
 }
 /*
@@ -687,19 +651,17 @@ void spin1_callback_off(uint event_id)
 */
 void deschedule(uint event_id)
 {
-  uint cpsr = spin1_irq_disable ();
+    uint cpsr = spin1_irq_disable();
 
-  task_queue_t *tq = &task_queue[callback[event_id].priority-1];
+    task_queue_t *tq = &task_queue[callback[event_id].priority-1];
 
-  for (uint i = 0; i < TASK_QUEUE_SIZE; i++)
-    {
-      if (tq->queue[i].cback == callback[event_id].cback)
-        {
-	  tq->queue[i].cback = NULL;
+    for (uint i = 0; i < TASK_QUEUE_SIZE; i++) {
+	if (tq->queue[i].cback == callback[event_id].cback) {
+	    tq->queue[i].cback = NULL;
         }
     }
 
-  spin1_mode_restore(cpsr);
+    spin1_mode_restore(cpsr);
 }
 /*
 *******/
@@ -721,7 +683,7 @@ void deschedule(uint event_id)
 */
 uint spin1_get_simulation_time()
 {
-  return ticks;
+    return ticks;
 }
 /*
 *******/
@@ -742,19 +704,19 @@ uint spin1_get_simulation_time()
 */
 void spin1_exit (uint error)
 {
-  // Disable API-enabled interrupts to allow simulation to exit,
+    // Disable API-enabled interrupts to allow simulation to exit,
 
-  vic[VIC_DISABLE] = (1 << CC_MC_INT)   |
-                     (1 << CC_FR_INT)   |
-                     (1 << TIMER1_INT)   |
-                     (1 << SOFTWARE_INT) |
-                     (1 << DMA_ERR_INT)  |
-                     (1 << DMA_DONE_INT);
+    vic[VIC_DISABLE] = (1 << CC_MC_INT)   |
+	    (1 << CC_FR_INT)   |
+	    (1 << TIMER1_INT)   |
+	    (1 << SOFTWARE_INT) |
+	    (1 << DMA_ERR_INT)  |
+	    (1 << DMA_DONE_INT);
 
-  // Report back the return code and exit the simulation
+    // Report back the return code and exit the simulation
 
-  run = 0;
-  diagnostics.exit_code = error;
+    run = 0;
+    diagnostics.exit_code = error;
 }
 /*
 *******/
@@ -774,10 +736,10 @@ void spin1_exit (uint error)
 *
 * SOURCE
 */
-void spin1_set_timer_tick_and_phase (uint time, uint phase)
+void spin1_set_timer_tick_and_phase(uint time, uint phase)
 {
-  timer_tick = time;
-  timer_phase = phase;
+    timer_tick = time;
+    timer_phase = phase;
 }
 /*
 *******/
@@ -794,28 +756,28 @@ void spin1_set_timer_tick_and_phase (uint time, uint phase)
 *
 * SOURCE
 */
-void clean_up ()
+void clean_up()
 {
-  uint cpsr = spin1_int_disable ();
+    uint cpsr = spin1_int_disable();
 
-  // Restore old SARK FIQ handler
+    // Restore old SARK FIQ handler
 
-  sark_vec->fiq_vec = old_vector;
-  vic[VIC_SELECT] = old_select;
-  vic[VIC_ENABLE] = old_enable;
+    sark_vec->fiq_vec = old_vector;
+    vic[VIC_SELECT] = old_select;
+    vic[VIC_ENABLE] = old_enable;
 
-  // Restore old SARK IRQ handler
-  vic_controls[sark_vec->sark_slot] = 0x20 | CPU_INT;
+    // Restore old SARK IRQ handler
+    vic_controls[sark_vec->sark_slot] = 0x20 | CPU_INT;
 
-  // timer1
-  tc[T1_INT_CLR] = 1;   // clear possible interrupt
+    // timer1
+    tc[T1_INT_CLR] = 1;   // clear possible interrupt
 
-  // dma controller
-  dma[DMA_GCTL] = 0;    // disable all IRQ sources
-  dma[DMA_CTRL] = 0x3f; // Abort pending and active transfers
-  dma[DMA_CTRL] = 0x0d; // clear possible transfer done and restart
+    // dma controller
+    dma[DMA_GCTL] = 0;    // disable all IRQ sources
+    dma[DMA_CTRL] = 0x3f; // Abort pending and active transfers
+    dma[DMA_CTRL] = 0x0d; // clear possible transfer done and restart
 
-  spin1_mode_restore (cpsr);
+    spin1_mode_restore(cpsr);
 }
 /*
 *******/
@@ -832,36 +794,34 @@ void clean_up ()
 *
 * SOURCE
 */
-void report_debug ()
+void report_debug()
 {
 #if API_DEBUG == TRUE
+    if (leadAp) {	// Only the leader appl. core reports router data
+	// Report router counters
 
-  if (leadAp) // Only the leader appl. core reports router data
-    {
-      // Report router counters
+	io_printf(IO_API, "\t\t[api_debug] RTR mc     packets: %d\n",
+		rtr[RTR_DGC0] + rtr[RTR_DGC1]);
+	io_delay(API_PRINT_DELAY);
 
-      io_printf (IO_API, "\t\t[api_debug] RTR mc     packets: %d\n",
-                 rtr[RTR_DGC0] + rtr[RTR_DGC1]);
-      io_delay (API_PRINT_DELAY);
-
-      io_printf (IO_API, "\t\t[api_debug] RTR dpd mc packets: %d\n",
-                 rtr[RTR_DGC8]);
-      io_delay (API_PRINT_DELAY);
+	io_printf(IO_API, "\t\t[api_debug] RTR dpd mc packets: %d\n",
+		rtr[RTR_DGC8]);
+	io_delay(API_PRINT_DELAY);
     }
 
-  io_printf (IO_API, "\t\t[api_debug] ISR thrown packets: %d\n",
-	  diagnostics.discarded_mc_packets);
-  io_delay (API_PRINT_DELAY);
+    io_printf(IO_API, "\t\t[api_debug] ISR thrown packets: %d\n",
+	    diagnostics.discarded_mc_packets);
+    io_delay(API_PRINT_DELAY);
 
-  io_printf (IO_API, "\t\t[api_debug] ISR thrown FR packets: %d\n",
-	  diagnostics.discarded_fr_packets);
-  io_delay (API_PRINT_DELAY);
+    io_printf(IO_API, "\t\t[api_debug] ISR thrown FR packets: %d\n",
+	    diagnostics.discarded_fr_packets);
+    io_delay(API_PRINT_DELAY);
 
-  // Report DMAC counters
+    // Report DMAC counters
 
-  io_printf (IO_API, "\t\t[api_debug] DMA bursts:  %d\n", dma[DMA_STAT0]);
-  io_delay (API_PRINT_DELAY);
-#endif
+    io_printf(IO_API, "\t\t[api_debug] DMA bursts:  %d\n", dma[DMA_STAT0]);
+    io_delay(API_PRINT_DELAY);
+#endif // API_DEBUG == TRUE
 }
 /*
 *******/
@@ -877,37 +837,33 @@ void report_debug ()
 *
 * SOURCE
 */
-void report_warns ()
+void report_warns()
 {
 #if API_WARN == TRUE	    // report warnings
-  if (diagnostics.warnings & TASK_QUEUE_FULL)
-    {
-      io_printf (IO_API, "\t\t[api_warn] warning: task queue full (%u)\n",
-	      diagnostics.task_queue_full);
-      io_delay (API_PRINT_DELAY);
+    if (diagnostics.warnings & TASK_QUEUE_FULL) {
+	io_printf(IO_API, "\t\t[api_warn] warning: task queue full (%u)\n",
+		diagnostics.task_queue_full);
+	io_delay(API_PRINT_DELAY);
     }
-  if (diagnostics.warnings & DMA_QUEUE_FULL)
-    {
-      io_printf (IO_API, "\t\t[api_warn] warning: DMA queue full (%u)\n",
-	      diagnostics.dma_queue_full);
-      io_delay (API_PRINT_DELAY);
+    if (diagnostics.warnings & DMA_QUEUE_FULL) {
+	io_printf(IO_API, "\t\t[api_warn] warning: DMA queue full (%u)\n",
+		diagnostics.dma_queue_full);
+	io_delay(API_PRINT_DELAY);
     }
-  if (diagnostics.warnings & PACKET_QUEUE_FULL)
-    {
-      io_printf (IO_API, "\t\t[api_warn] warning: packet queue full (%u)\n",
-	      diagnostics.tx_packet_queue_full);
-      io_delay (API_PRINT_DELAY);
+    if (diagnostics.warnings & PACKET_QUEUE_FULL) {
+	io_printf(IO_API, "\t\t[api_warn] warning: packet queue full (%u)\n",
+		diagnostics.tx_packet_queue_full);
+	io_delay(API_PRINT_DELAY);
     }
-# if USE_WRITE_BUFFER == TRUE
-  if (diagnostics.warnings & WRITE_BUFFER_ERROR)
-    {
-      io_printf (IO_API,
-	      "\t\t[api_warn] warning: write buffer errors (%u)\n",
-	      diagnostics.writeBack_errors);
-      io_delay (API_PRINT_DELAY);
+#if USE_WRITE_BUFFER == TRUE
+    if (diagnostics.warnings & WRITE_BUFFER_ERROR) {
+	io_printf(IO_API,
+		"\t\t[api_warn] warning: write buffer errors (%u)\n",
+		diagnostics.writeBack_errors);
+	io_delay(API_PRINT_DELAY);
     }
-#endif
-#endif
+#endif // USE_WRITE_BUFFER == TRUE
+#endif // API_WARN == TRUE
 }
 /*
 *******/
@@ -915,107 +871,102 @@ void report_warns ()
 
 void spin1_rte(rte_code code)
 {
-  // Don't actually shutdown, just set the CPU into an RTE code and
-  // stop the timer
-  clean_up();
-  sark_cpu_state(CPU_STATE_RTE);
+    // Don't actually shutdown, just set the CPU into an RTE code and
+    // stop the timer
+    clean_up();
+    sark_cpu_state(CPU_STATE_RTE);
 #ifdef __GNUC__
-  register uint lr asm("lr");
+    register uint lr asm("lr");
 #else
-  register uint lr __asm("lr");
-#endif
-  sv_vcpu->lr = lr;
-  sv_vcpu->rt_code = code;
-  sv->led_period = 8;
+    register uint lr __asm("lr");
+#endif // __GNUC__
+    sv_vcpu->lr = lr;
+    sv_vcpu->rt_code = code;
+    sv->led_period = 8;
 }
 
-uint start (sync_bool sync, uint start_paused)
+uint start(sync_bool sync, uint start_paused)
 {
-  paused = start_paused;
-  if (paused)
-    {
-      sark_cpu_state (CPU_STATE_PAUSE);
-    }
-  else
-    {
-      sark_cpu_state (CPU_STATE_RUN);
+    paused = start_paused;
+    if (paused) {
+	sark_cpu_state(CPU_STATE_PAUSE);
+    } else {
+	sark_cpu_state (CPU_STATE_RUN);
     }
 
-  // Initialise hardware
+    // Initialise hardware
 
-  configure_communications_controller();
-  configure_dma_controller();
-  configure_timer1 (timer_tick, timer_phase);
-  configure_vic(!paused);
+    configure_communications_controller();
+    configure_dma_controller();
+    configure_timer1 (timer_tick, timer_phase);
+    configure_vic(!paused);
 
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-  diagnostics.warnings = NO_ERROR;
-  diagnostics.dma_queue_full = 0;
-  diagnostics.task_queue_full = 0;
-  diagnostics.tx_packet_queue_full = 0;
-  diagnostics.dma_transfers = 1;
-  diagnostics.exit_code = NO_ERROR;     // simulation return value
-  diagnostics.in_timer_callback = 0;
-  diagnostics.number_timer_tic_in_queue = 0;
-  diagnostics.total_times_tick_tic_callback_overran = 0;
-  diagnostics.largest_number_of_concurrent_timer_tic_overruns = 0;
+    diagnostics.warnings = NO_ERROR;
+    diagnostics.dma_queue_full = 0;
+    diagnostics.task_queue_full = 0;
+    diagnostics.tx_packet_queue_full = 0;
+    diagnostics.dma_transfers = 1;
+    diagnostics.exit_code = NO_ERROR;     // simulation return value
+    diagnostics.in_timer_callback = 0;
+    diagnostics.number_timer_tic_in_queue = 0;
+    diagnostics.total_times_tick_tic_callback_overran = 0;
+    diagnostics.largest_number_of_concurrent_timer_tic_overruns = 0;
 #if USE_WRITE_BUFFER == TRUE
-  diagnostics.writeBack_errors = 0;
+    diagnostics.writeBack_errors = 0;
 #endif
-#endif
+#endif // (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
 
-  // synchronise with other application cores
+    // synchronise with other application cores
 
-  if (sync == SYNC_WAIT)
-    {
-      event_wait ();
+    if (sync == SYNC_WAIT) {
+	event_wait();
     }
 
-  // initialise counter and ticks for simulation
-  // 32-bit, periodic counter, interrupts enabled
+    // initialise counter and ticks for simulation
+    // 32-bit, periodic counter, interrupts enabled
 
-  if (timer_tick && !paused)
-    {
-      tc[T1_CONTROL] = 0xe2;
+    if (timer_tick && !paused) {
+	tc[T1_CONTROL] = 0xe2;
     }
 
-  ticks = 0;
-  run = 1;
+    ticks = 0;
+    run = 1;
 
-  // simulate!
-  dispatch ();
+    // simulate!
+    dispatch();
 
-  // simulation finished - clean up before returning to c_main
-  clean_up ();
+    // simulation finished - clean up before returning to c_main
+    clean_up();
 
-  // re-enable interrupts for sark
-  // only CPU_INT enabled in the VIC
-  spin1_int_enable ();
+    // re-enable interrupts for sark
+    // only CPU_INT enabled in the VIC
+    spin1_int_enable();
 
-  // provide diagnostics data to application
+    // provide diagnostics data to application
 #if (API_DIAGNOSTICS == TRUE)
-  diagnostics.total_mc_packets     = rtr[RTR_DGC0] + rtr[RTR_DGC1];
-  diagnostics.dumped_mc_packets    = rtr[RTR_DGC8];
-  diagnostics.dma_bursts           = dma[DMA_STAT0];
-  diagnostics.total_fr_packets     = rtr[RTR_DGC6] + rtr[RTR_DGC7];
-  diagnostics.dumped_fr_packets    = rtr[RTR_DGC11];
-#endif
+    diagnostics.total_mc_packets     = rtr[RTR_DGC0] + rtr[RTR_DGC1];
+    diagnostics.dumped_mc_packets    = rtr[RTR_DGC8];
+    diagnostics.dma_bursts           = dma[DMA_STAT0];
+    diagnostics.total_fr_packets     = rtr[RTR_DGC6] + rtr[RTR_DGC7];
+    diagnostics.dumped_fr_packets    = rtr[RTR_DGC11];
+#endif // API_DIAGNOSTICS == TRUE
 
-  // report problems if requested!
+    // report problems if requested!
 #if (API_DEBUG == TRUE) || (API_WARN == TRUE)
-  // avoid sending output at the same time as other chips!
-  io_delay (10000 * my_chip);
+    // avoid sending output at the same time as other chips!
+    io_delay(10000 * my_chip);
 
 #if API_DEBUG == TRUE	// report debug information
-  report_debug();
+    report_debug();
 #endif
 
 #if API_WARN == TRUE       	// report warnings
-  report_warns ();
+    report_warns();
 #endif // API_WARN
 #endif // API_DEBUG || API_WARN
 
-  return diagnostics.exit_code;
+    return diagnostics.exit_code;
 }
 /*
 *******/
@@ -1033,14 +984,14 @@ uint start (sync_bool sync, uint start_paused)
 * SOURCE
 */
 
-uint spin1_start (sync_bool sync)
+uint spin1_start(sync_bool sync)
 {
-  return start(sync, 0);
+    return start(sync, 0);
 }
 
 uint spin1_start_paused()
 {
-  return start(SYNC_NOWAIT, 1);
+    return start(SYNC_NOWAIT, 1);
 }
 
 
@@ -1061,7 +1012,7 @@ uint spin1_start_paused()
 // !! ST replaced by SARK routine
 void spin1_delay_us (uint n)
 {
-  sark_delay_us (n);
+    sark_delay_us(n);
 }
 /*
 *******/
@@ -1095,48 +1046,43 @@ void spin1_delay_us (uint n)
 *
 * SOURCE
 */
-uint spin1_dma_transfer (uint tag, void *system_address, void *tcm_address,
-            uint direction, uint length)
+uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
+	uint direction, uint length)
 {
-  uint id = 0;
-  uint cpsr = spin1_int_disable ();
+    uint id = 0;
+    uint cpsr = spin1_int_disable();
 
-  uint new_end = (dma_queue.end + 1) % DMA_QUEUE_SIZE;
+    uint new_end = (dma_queue.end + 1) % DMA_QUEUE_SIZE;
 
-  if (new_end != dma_queue.start)
-    {
-      id = diagnostics.dma_transfers++;
+    if (new_end != dma_queue.start) {
+	id = diagnostics.dma_transfers++;
 
-      uint desc = DMA_WIDTH << 24 | DMA_BURST_SIZE << 21
-	      | direction << 19 | length;
+	uint desc = DMA_WIDTH << 24 | DMA_BURST_SIZE << 21
+		| direction << 19 | length;
 
-      dma_queue.queue[dma_queue.end].id = id;
-      dma_queue.queue[dma_queue.end].tag = tag;
-      dma_queue.queue[dma_queue.end].system_address = system_address;
-      dma_queue.queue[dma_queue.end].tcm_address = tcm_address;
-      dma_queue.queue[dma_queue.end].description = desc;
+	dma_queue.queue[dma_queue.end].id = id;
+	dma_queue.queue[dma_queue.end].tag = tag;
+	dma_queue.queue[dma_queue.end].system_address = system_address;
+	dma_queue.queue[dma_queue.end].tcm_address = tcm_address;
+	dma_queue.queue[dma_queue.end].description = desc;
 
-      /* if dmac is available and dma_queue empty trigger transfer now */
-      if (!(dma[DMA_STAT] & 4) && (dma_queue.start == dma_queue.end))
-        {
-	  dma[DMA_ADRS] = (uint) system_address;
-	  dma[DMA_ADRT] = (uint) tcm_address;
-	  dma[DMA_DESC] = desc;
+	/* if dmac is available and dma_queue empty trigger transfer now */
+	if (!(dma[DMA_STAT] & 4) && (dma_queue.start == dma_queue.end)) {
+	    dma[DMA_ADRS] = (uint) system_address;
+	    dma[DMA_ADRT] = (uint) tcm_address;
+	    dma[DMA_DESC] = desc;
         }
 
-      dma_queue.end = new_end;
-    }
-  else
-    {
+	dma_queue.end = new_end;
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-      diagnostics.warnings |= DMA_QUEUE_FULL;
-      diagnostics.dma_queue_full++;
-#endif
+    } else {
+	diagnostics.warnings |= DMA_QUEUE_FULL;
+	diagnostics.dma_queue_full++;
+#endif // (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
     }
 
-  spin1_mode_restore(cpsr);
-
-  return id;
+    spin1_mode_restore(cpsr);
+    return id;
 }
 /*
 *******/
@@ -1157,14 +1103,13 @@ uint spin1_dma_transfer (uint tag, void *system_address, void *tcm_address,
 *
 * SOURCE
 */
-void spin1_memcpy (void *dst, void const *src, uint len)
+void spin1_memcpy(void *dst, void const *src, uint len)
 {
-  char *pDst = (char *) dst;
-  char const *pSrc = (char const *) src;
+    char *pDst = (char *) dst;
+    char const *pSrc = (char const *) src;
 
-  while (len--)
-    {
-      *pDst++ = *pSrc++;
+    while (len--) {
+	*pDst++ = *pSrc++;
     }
 }
 /*
@@ -1187,10 +1132,10 @@ void spin1_memcpy (void *dst, void const *src, uint len)
 */
 void spin1_flush_rx_packet_queue()
 {
-  deschedule(MC_PACKET_RECEIVED);
-  deschedule(MCPL_PACKET_RECEIVED);
-  deschedule(FR_PACKET_RECEIVED);
-  deschedule(FRPL_PACKET_RECEIVED);
+    deschedule(MC_PACKET_RECEIVED);
+    deschedule(MCPL_PACKET_RECEIVED);
+    deschedule(FR_PACKET_RECEIVED);
+    deschedule(FRPL_PACKET_RECEIVED);
 }
 /*
 *******/
@@ -1209,101 +1154,89 @@ void spin1_flush_rx_packet_queue()
 */
 void spin1_flush_tx_packet_queue()
 {
-  uint cpsr = spin1_irq_disable ();
+    uint cpsr = spin1_irq_disable();
 
-  tx_packet_queue.start = tx_packet_queue.end;
+    tx_packet_queue.start = tx_packet_queue.end;
 
-  spin1_mode_restore(cpsr);
+    spin1_mode_restore(cpsr);
 }
 /*
 *******/
 
 uint spin1_send_packet(uint key, uint data, uint TCR)
 {
-  // TODO: This need to be re-written for SpiNNaker using the
-  // TX_nof_full flag instead -- much more efficient!
+    // TODO: This need to be re-written for SpiNNaker using the
+    // TX_nof_full flag instead -- much more efficient!
 
-  uint rc = SUCCESS;
+    uint rc = SUCCESS;
+    uint cpsr = spin1_irq_disable();
 
-  uint cpsr = spin1_irq_disable ();
+    /* clear sticky TX full bit and check TX state */
+    cc[CC_TCR] = TX_TCR_MCDEFAULT;
 
-  /* clear sticky TX full bit and check TX state */
-  cc[CC_TCR] = TX_TCR_MCDEFAULT;
-
-  if (cc[CC_TCR] & TX_FULL_MASK)
-    {
-      if ((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE == tx_packet_queue.start)
-        {
-	  /* if queue full cannot do anything -- report failure */
-	  rc = FAILURE;
+    if (cc[CC_TCR] & TX_FULL_MASK) {
+	if ((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE
+		== tx_packet_queue.start) {
+	    /* if queue full cannot do anything -- report failure */
+	    rc = FAILURE;
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-	  diagnostics.warnings |= PACKET_QUEUE_FULL;
-	  diagnostics.tx_packet_queue_full++;
+	    diagnostics.warnings |= PACKET_QUEUE_FULL;
+	    diagnostics.tx_packet_queue_full++;
 #endif
+	} else {
+	    /* if not full queue packet */
+	    tx_packet_queue.queue[tx_packet_queue.end].key = key;
+	    tx_packet_queue.queue[tx_packet_queue.end].data = data;
+	    tx_packet_queue.queue[tx_packet_queue.end].TCR = TCR;
+
+	    tx_packet_queue.end = (tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE;
+
+	    /* turn on tx_empty interrupt (in case it was off) */
+	    vic[VIC_ENABLE] = (1 << CC_TMT_INT);
         }
-      else
-        {
-	  /* if not full queue packet */
-	  tx_packet_queue.queue[tx_packet_queue.end].key = key;
-	  tx_packet_queue.queue[tx_packet_queue.end].data = data;
-	  tx_packet_queue.queue[tx_packet_queue.end].TCR = TCR;
+    } else {
+	if ((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE
+		== tx_packet_queue.start) {
+	    /* if queue full, dequeue and send packet at the */
+	    /* head of the queue to make room for new packet */
+	    uint hkey  = tx_packet_queue.queue[tx_packet_queue.start].key;
+	    uint hdata = tx_packet_queue.queue[tx_packet_queue.start].data;
+	    uint hTCR = tx_packet_queue.queue[tx_packet_queue.start].TCR;
 
-	  tx_packet_queue.end = (tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE;
+	    tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
 
-	  /* turn on tx_empty interrupt (in case it was off) */
-	  vic[VIC_ENABLE] = (1 << CC_TMT_INT);
-        }
-    }
-  else
-    {
-      if ((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE == tx_packet_queue.start)
-        {
-	  /* if queue full, dequeue and send packet at the */
-	  /* head of the queue to make room for new packet */
-	  uint hkey  = tx_packet_queue.queue[tx_packet_queue.start].key;
-	  uint hdata = tx_packet_queue.queue[tx_packet_queue.start].data;
-	  uint hTCR = tx_packet_queue.queue[tx_packet_queue.start].TCR;
+	    cc[CC_TCR] = hTCR;
 
-	  tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
-
-	  cc[CC_TCR] = hTCR;
-
-	  if (hTCR & PKT_PL)
-	    {
-	      cc[CC_TXDATA] = hdata;
+	    if (hTCR & PKT_PL) {
+		cc[CC_TXDATA] = hdata;
 	    }
-	  cc[CC_TXKEY]  = hkey;
+	    cc[CC_TXKEY]  = hkey;
         }
 
-      if (tx_packet_queue.start == tx_packet_queue.end)
-        {
-	  // If queue empty send packet
+	if (tx_packet_queue.start == tx_packet_queue.end) {
+	    // If queue empty send packet
+	    cc[CC_TCR] = TCR;
 
-	  cc[CC_TCR] = TCR;
-
-	  if (TCR & PKT_PL)
-	    {
-	      cc[CC_TXDATA] = data;
+	    if (TCR & PKT_PL) {
+		cc[CC_TXDATA] = data;
 	    }
-	  cc[CC_TXKEY]  = key;
+	    cc[CC_TXKEY]  = key;
 
-	  // turn off tx_empty interrupt (in case it was on)
-	  vic[VIC_DISABLE] = 1 << CC_TMT_INT;
-        }
-      else
-        {
-	  /* if not empty queue packet */
-	  tx_packet_queue.queue[tx_packet_queue.end].key = key;
-	  tx_packet_queue.queue[tx_packet_queue.end].data = data;
-	  tx_packet_queue.queue[tx_packet_queue.end].TCR = TCR;
+	    // turn off tx_empty interrupt (in case it was on)
+	    vic[VIC_DISABLE] = 1 << CC_TMT_INT;
+        } else {
+            /* if not empty queue packet */
+            tx_packet_queue.queue[tx_packet_queue.end].key = key;
+            tx_packet_queue.queue[tx_packet_queue.end].data = data;
+            tx_packet_queue.queue[tx_packet_queue.end].TCR = TCR;
 
-	  tx_packet_queue.end = (tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE;
+            tx_packet_queue.end = (tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE;
         }
     }
 
-  spin1_mode_restore(cpsr);
+    spin1_mode_restore(cpsr);
 
-  return rc;
+    return rc;
 }
 
 /****f* spin1_api.c/spin1_send_mc_packet
@@ -1331,9 +1264,9 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
 
 uint spin1_send_mc_packet(uint key, uint data, uint load)
 {
-  uint tcr = (load) ? PKT_MC_PL : PKT_MC;
+    uint tcr = (load) ? PKT_MC_PL : PKT_MC;
 
-  return spin1_send_packet (key, data, tcr);
+    return spin1_send_packet(key, data, tcr);
 }
 /*
 *******/
@@ -1363,9 +1296,9 @@ uint spin1_send_mc_packet(uint key, uint data, uint load)
 
 uint spin1_send_fr_packet(uint key, uint data, uint load)
 {
-  uint tcr = (load) ? PKT_FR_PL : PKT_FR;
+    uint tcr = (load) ? PKT_FR_PL : PKT_FR;
 
-  return spin1_send_packet (key, data, tcr);
+    return spin1_send_packet(key, data, tcr);
 }
 
 /*
@@ -1387,14 +1320,13 @@ uint spin1_send_fr_packet(uint key, uint data, uint load)
 * SOURCE
 */
 #ifdef THUMB
-extern uint spin1_irq_disable (void);
-#else
-#ifdef __GNUC__
-__inline uint spin1_irq_disable (void)
+extern uint spin1_irq_disable(void);
+#elif defined(__GNUC__)
+__inline uint spin1_irq_disable(void)
 {
-  uint old_val, new_val;
+    uint old_val, new_val;
 
-  asm volatile (
+    asm volatile (
     "mrs	%[old_val], cpsr \n\
      orr	%[new_val], %[old_val], #0x80 \n\
      msr	cpsr_c, %[new_val] \n"
@@ -1402,20 +1334,19 @@ __inline uint spin1_irq_disable (void)
      :
      : );
 
-  return old_val;
+    return old_val;
 }
 #else
-__forceinline uint spin1_irq_disable (void)
+__forceinline uint spin1_irq_disable(void)
 {
-  uint old_val, new_val;
+    uint old_val, new_val;
 
-  __asm { mrs old_val, cpsr }
-  __asm { orr new_val, old_val, 0x80 }
-  __asm { msr cpsr_c, new_val }
+    __asm { mrs old_val, cpsr }
+    __asm { orr new_val, old_val, 0x80 }
+    __asm { msr cpsr_c, new_val }
 
-  return old_val;
+    return old_val;
 }
-#endif
 #endif
 /*
 *******/
@@ -1436,23 +1367,21 @@ __forceinline uint spin1_irq_disable (void)
 * SOURCE
 */
 #ifdef THUMB
-extern void spin1_mode_restore (uint cpsr);
-#else
-#ifdef __GNUC__
-__inline void spin1_mode_restore (uint cpsr)
+extern void spin1_mode_restore(uint cpsr);
+#elif defined(__GNUC__)
+__inline void spin1_mode_restore(uint cpsr)
 {
-  asm volatile (
+    asm volatile (
     "msr	cpsr_c, %[cpsr]"
     :
     : [cpsr] "r" (cpsr)
     :);
 }
 #else
-__forceinline void spin1_mode_restore (uint sr)
+__forceinline void spin1_mode_restore(uint sr)
 {
-  __asm { msr cpsr_c, sr }
+    __asm { msr cpsr_c, sr }
 }
-#endif
 #endif
 /*
 *******/
@@ -1473,14 +1402,13 @@ __forceinline void spin1_mode_restore (uint sr)
 * SOURCE
 */
 #ifdef THUMB
-extern uint spin1_irq_enable (void);
-#else
-#ifdef __GNUC__
-__inline uint spin1_irq_enable (void)
+extern uint spin1_irq_enable(void);
+#elif defined(__GNUC__)
+__inline uint spin1_irq_enable(void)
 {
-  uint old_val, new_val;
+    uint old_val, new_val;
 
-  asm volatile (
+    asm volatile (
     "mrs	%[old_val], cpsr \n\
      bic	%[new_val], %[old_val], #0x80 \n\
      msr	cpsr_c, %[new_val] \n"
@@ -1488,20 +1416,19 @@ __inline uint spin1_irq_enable (void)
      :
      : );
 
-  return old_val;
+    return old_val;
 }
 #else
-__forceinline uint spin1_irq_enable (void)
+__forceinline uint spin1_irq_enable(void)
 {
-  uint old_val, new_val;
+    uint old_val, new_val;
 
-  __asm { mrs old_val, cpsr }
-  __asm { bic new_val, old_val, 0x80 }
-  __asm { msr cpsr_c, new_val }
+    __asm { mrs old_val, cpsr }
+    __asm { bic new_val, old_val, 0x80 }
+    __asm { msr cpsr_c, new_val }
 
-  return old_val;
+    return old_val;
 }
-#endif
 #endif
 /*
 *******/
@@ -1522,14 +1449,13 @@ __forceinline uint spin1_irq_enable (void)
 * SOURCE
 */
 #ifdef THUMB
-extern uint spin1_fiq_disable (void);
-#else
-#ifdef __GNUC__
-__inline uint spin1_fiq_disable (void)
+extern uint spin1_fiq_disable(void);
+#elif defined(__GNUC__)
+__inline uint spin1_fiq_disable(void)
 {
-  uint old_val, new_val;
+    uint old_val, new_val;
 
-  asm volatile (
+    asm volatile (
     "mrs	%[old_val], cpsr \n\
      orr	%[new_val], %[old_val], #0x40 \n\
      msr	cpsr_c, %[new_val] \n"
@@ -1537,20 +1463,19 @@ __inline uint spin1_fiq_disable (void)
      :
      : );
 
-  return old_val;
+    return old_val;
 }
 #else
-__forceinline uint spin1_fiq_disable (void)
+__forceinline uint spin1_fiq_disable(void)
 {
-  uint old_val, new_val;
+    uint old_val, new_val;
 
-  __asm { mrs old_val, cpsr }
-  __asm { orr new_val, old_val, 0x40 }
-  __asm { msr cpsr_c, new_val }
+    __asm { mrs old_val, cpsr }
+    __asm { orr new_val, old_val, 0x40 }
+    __asm { msr cpsr_c, new_val }
 
-  return old_val;
+    return old_val;
 }
-#endif
 #endif
 /*
 *******/
@@ -1571,14 +1496,13 @@ __forceinline uint spin1_fiq_disable (void)
 * SOURCE
 */
 #ifdef THUMB
-extern uint spin1_int_disable (void);
-#else
-#ifdef __GNUC__
-__inline uint spin1_int_disable (void)
+extern uint spin1_int_disable(void);
+#elif defined(__GNUC__)
+__inline uint spin1_int_disable(void)
 {
-  uint old_val, new_val;
+    uint old_val, new_val;
 
-  asm volatile (
+    asm volatile (
     "mrs	%[old_val], cpsr \n\
      orr	%[new_val], %[old_val], #0xc0 \n\
      msr	cpsr_c, %[new_val] \n"
@@ -1586,20 +1510,19 @@ __inline uint spin1_int_disable (void)
      :
      : );
 
-  return old_val;
+    return old_val;
 }
 #else
-__forceinline uint spin1_int_disable (void)
+__forceinline uint spin1_int_disable(void)
 {
-  uint old_val, new_val;
+    uint old_val, new_val;
 
-  __asm { mrs old_val, cpsr }
-  __asm { orr new_val, old_val, 0xc0 }
-  __asm { msr cpsr_c, new_val }
+    __asm { mrs old_val, cpsr }
+    __asm { orr new_val, old_val, 0xc0 }
+    __asm { msr cpsr_c, new_val }
 
-  return old_val;
+    return old_val;
 }
-#endif
 #endif
 /*
 *******/
@@ -1620,7 +1543,7 @@ __forceinline uint spin1_int_disable (void)
 */
 uint spin1_get_id(void)
 {
-  return (uint) ((sv->p2p_addr << 5) | sark.virt_cpu);
+    return (uint) ((sv->p2p_addr << 5) | sark.virt_cpu);
 }
 /*
 *******/
@@ -1638,9 +1561,9 @@ uint spin1_get_id(void)
 *
 * SOURCE
 */
-uint spin1_get_core_id (void)
+uint spin1_get_core_id(void)
 {
-  return sark.virt_cpu;
+    return sark.virt_cpu;
 }
 /*
 *******/
@@ -1658,9 +1581,9 @@ uint spin1_get_core_id (void)
 *
 * SOURCE
 */
-uint spin1_get_chip_id (void)
+uint spin1_get_chip_id(void)
 {
-  return (uint) sv->p2p_addr;
+    return (uint) sv->p2p_addr;
 }
 /*
 *******/
@@ -1688,22 +1611,21 @@ uint spin1_get_chip_id (void)
 #if 0
 uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 {
-  if (entry >= APP_MC_ENTRIES) // top priority entries reserved for the system
-    {
-      return FAILURE;
+    if (entry >= APP_MC_ENTRIES) { // top priority entries reserved for the system
+	return FAILURE;
     }
 
-  entry += SYS_MC_ENTRIES;
-  rtr_mc_set (entry, key, mask, route);
+    entry += SYS_MC_ENTRIES;
+    rtr_mc_set(entry, key, mask, route);
 
 #if API_DEBUG == TRUE
-  io_printf (IO_API,
-        "\t\t[api_debug] MC entry %d: k 0x%8z m 0x%8z r 0x%8z\n",
-        entry, key, mask, route);
-  io_delay (API_PRINT_DLY);
+    io_printf(IO_API,
+	    "\t\t[api_debug] MC entry %d: k 0x%8z m 0x%8z r 0x%8z\n",
+	    entry, key, mask, route);
+    io_delay(API_PRINT_DLY);
 #endif
 
-  return SUCCESS;
+    return SUCCESS;
 }
 #endif
 
@@ -1732,9 +1654,9 @@ uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 
 // !! ST replaced by SARK routine
 
-void spin1_led_control (uint p)
+void spin1_led_control(uint p)
 {
-  sark_led_set (p);
+    sark_led_set(p);
 }
 /*
 *******/
@@ -1760,9 +1682,9 @@ void spin1_led_control (uint p)
 * SOURCE
 */
 
-void* spin1_malloc (uint bytes)
+void* spin1_malloc(uint bytes)
 {
-  return sark_alloc (bytes, 1);
+    return sark_alloc(bytes, 1);
 }
 
 /*
@@ -1792,36 +1714,29 @@ void* spin1_malloc (uint bytes)
 *
 * SOURCE
 */
-void schedule_sysmode (uchar event_id, uint arg0, uint arg1)
+void schedule_sysmode(uchar event_id, uint arg0, uint arg1)
 {
-  if (callback[event_id].priority <= 0)
-    {
-      callback[event_id].cback(arg0, arg1);
-    }
-  else
-    {
-      task_queue_t *tq = &task_queue[callback[event_id].priority-1];
+    if (callback[event_id].priority <= 0) {
+	callback[event_id].cback(arg0, arg1);
+    } else {
+	task_queue_t *tq = &task_queue[callback[event_id].priority-1];
 
-      if ((tq->end + 1) % TASK_QUEUE_SIZE != tq->start)
-        {
-	  tq->queue[tq->end].cback = callback[event_id].cback;
-	  tq->queue[tq->end].arg0 = arg0;
-	  tq->queue[tq->end].arg1 = arg1;
+	if ((tq->end + 1) % TASK_QUEUE_SIZE != tq->start) {
+	    tq->queue[tq->end].cback = callback[event_id].cback;
+	    tq->queue[tq->end].arg0 = arg0;
+	    tq->queue[tq->end].arg1 = arg1;
 
-	  tq->end = (tq->end + 1) % TASK_QUEUE_SIZE;
+	    tq->end = (tq->end + 1) % TASK_QUEUE_SIZE;
 
-	  if (event_id == TIMER_TICK)
-	    {
-	      diagnostics.number_timer_tic_in_queue += 1;
+	    if (event_id == TIMER_TICK) {
+		diagnostics.number_timer_tic_in_queue += 1;
 	    }
-        }
-      else      // queue is full
-        {
+	} else {		// queue is full
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-	  diagnostics.warnings |= TASK_QUEUE_FULL;
-	  diagnostics.task_queue_full++;
+	    diagnostics.warnings |= TASK_QUEUE_FULL;
+	    diagnostics.task_queue_full++;
 #endif
-        }
+	}
     }
 }
 /*
@@ -1846,38 +1761,35 @@ void schedule_sysmode (uchar event_id, uint arg0, uint arg1)
 *
 * SOURCE
 */
-uint spin1_schedule_callback (callback_t cback, uint arg0, uint arg1,
-                uint priority)
+uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
+	uint priority)
 {
-  uchar result = SUCCESS;
+    uchar result = SUCCESS;
 
-  /* disable interrupts for atomic access to task queues */
-  uint cpsr = spin1_irq_disable ();
+    /* disable interrupts for atomic access to task queues */
+    uint cpsr = spin1_irq_disable ();
 
-  task_queue_t *tq = &task_queue[priority-1];
+    task_queue_t *tq = &task_queue[priority-1];
 
-  if ((tq->end + 1) % TASK_QUEUE_SIZE != tq->start)
-    {
-      tq->queue[tq->end].cback = cback;
-      tq->queue[tq->end].arg0 = arg0;
-      tq->queue[tq->end].arg1 = arg1;
+    if ((tq->end + 1) % TASK_QUEUE_SIZE != tq->start) {
+	tq->queue[tq->end].cback = cback;
+	tq->queue[tq->end].arg0 = arg0;
+	tq->queue[tq->end].arg1 = arg1;
 
-      tq->end = (tq->end + 1) % TASK_QUEUE_SIZE;
-    }
-  else
-    {
-      // queue is full
-      result = FAILURE;
+	tq->end = (tq->end + 1) % TASK_QUEUE_SIZE;
+    } else {
+	// queue is full
+	result = FAILURE;
 #if (API_WARN == TRUE) || (API_DIAGNOSTICS == TRUE)
-      diagnostics.warnings |= TASK_QUEUE_FULL;
-      diagnostics.task_queue_full++;
+	diagnostics.warnings |= TASK_QUEUE_FULL;
+	diagnostics.task_queue_full++;
 #endif
     }
 
-  /* restore interrupt status */
-  spin1_mode_restore(cpsr);
+    /* restore interrupt status */
+    spin1_mode_restore(cpsr);
 
-  return result;
+    return result;
 }
 /*
 *******/
@@ -1904,21 +1816,18 @@ uint spin1_schedule_callback (callback_t cback, uint arg0, uint arg1,
 */
 uint spin1_trigger_user_event(uint arg0, uint arg1)
 {
-  if (!user_pending)
-    {
-      /* remember callback arguments */
-      user_arg0 = arg0;
-      user_arg1 = arg1;
-      user_pending = TRUE;
+    if (!user_pending) {
+	/* remember callback arguments */
+	user_arg0 = arg0;
+	user_arg1 = arg1;
+	user_pending = TRUE;
 
-      /* trigger software interrupt in the VIC */
-      vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
+	/* trigger software interrupt in the VIC */
+	vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
 
-      return (SUCCESS);
-    }
-  else
-    {
-      return (FAILURE);
+	return (SUCCESS);
+    } else {
+	return (FAILURE);
     }
 }
 /*
@@ -1943,12 +1852,12 @@ uint spin1_trigger_user_event(uint arg0, uint arg1)
 */
 void sark_pre_main (void)
 {
-  sark_call_cpp_constructors();
+    sark_call_cpp_constructors();
 
-  sark_cpu_state (CPU_STATE_SARK);
-  sark_vec->api = 1;
+    sark_cpu_state(CPU_STATE_SARK);
+    sark_vec->api = 1;
 
-  leadAp = (sark_app_lead () == sark.virt_cpu);
+    leadAp = (sark_app_lead() == sark.virt_cpu);
 }
 /*
 *******/
@@ -1969,9 +1878,9 @@ void sark_pre_main (void)
 *
 * SOURCE
 */
-void sark_post_main (void)
+void sark_post_main(void)
 {
-  sark_cpu_state (CPU_STATE_EXIT);
+    sark_cpu_state(CPU_STATE_EXIT);
 }
 /*
 *******/
