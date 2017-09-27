@@ -4,6 +4,17 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.1.1 - Bug fixing
+
+Bug Fixes:
+
+* All code has been reformatted to a more consistent style
+
+* SCAMP: Fixes to SDP handling that should make it more effective when using
+  windowing of code 
+
+#-------------------------------------------------------------------------------
+
 
 Version 3.1.0 - Lots of bug fixes and some new features.
 
