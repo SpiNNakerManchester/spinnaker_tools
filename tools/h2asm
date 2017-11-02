@@ -66,6 +66,7 @@ my $blank = 0;
 my $in_enum = 0;
 my $enum_count;
 my $time = localtime(time());
+my $inskip = 0;
 
 printf ";\n; Auto-generated from \"%s\" - $time\n;\n", $ARGV[0] || "<STDIN>";
 
@@ -83,6 +84,15 @@ while (<>) {
     }
 
     $blank = 0;
+
+    # Skip any chunks intended for C++ only...
+    if (/^#ifdef +__cplusplus$/) {
+        $inskip = 1;
+    } elsif ($inskip && m!^#endif */\* *__cplusplus *\*/;?$!) {
+        $inskip = 0;
+        next;
+    }
+    next if $inskip;
 
     if (/^;!?(.*)/) {
 		print ";$1\n";
