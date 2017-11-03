@@ -8,10 +8,10 @@ extern "C" void __cxa_pure_virtual() {
 extern "C" void c_main(void) {
     try {
 	cpp_main();
-    } catch(const std::exception &e) {
+    } catch (const std::exception &e) {
 	io_printf(IO_BUF, "uncaught exception: %s", e.what());
 	rt_error(RTE_SWERR);
-    } catch(...) {
+    } catch (...) {
 	io_printf(IO_BUF, "unexpected non-standard exception");
 	rt_error(RTE_SWERR);
     }
