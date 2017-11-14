@@ -51,19 +51,20 @@ ifeq ($(GNU),1)
 
     # GNU Compiler (gcc) settings
     AS := $(GP)-as --defsym GNU=1 -mthumb-interwork -march=armv5te
-    CC_NO_THUMB  := $(GP)-gcc -c -mthumb-interwork -march=armv5te -std=gnu99 -fno-builtin -I $(SPINN_INC_DIR)
-    CXX_NO_THUMB := $(GP)-gcc -c -mthumb-interwork -march=armv5te -std=c++11 -fno-builtin -I $(SPINN_INC_DIR) -fno-rtti -fno-exceptions
+    CC_NO_THUMB  := $(GP)-gcc -c -mthumb-interwork -march=armv5te -std=gnu99 -ffreestanding -I $(SPINN_INC_DIR)
+    CXX_NO_THUMB := $(GP)-gcc -c -mthumb-interwork -march=armv5te -std=c++11 -ffreestanding -I $(SPINN_INC_DIR) -fno-rtti -fno-exceptions
     CC_THUMB  := $(CC_NO_THUMB) -mthumb -DTHUMB
     CXX_THUMB := $(CXX_NO_THUMB) -mthumb -DTHUMB
     
     OSPACE := -Os
     OTIME := -Ofast
+    ALL_WARNINGS := -Wall -Wextra
     
     ifeq ($(LIB), 1)
         CFLAGS += -fdata-sections -ffunction-sections
-        LD := $(GP)-ld -i -fno-builtin
+        LD := $(GP)-ld -i
     else
-        LD := $(GP)-gcc -T$(SPINN_TOOLS_DIR)/sark.lnk -Wl,-e,cpu_reset -Wl,-static -fno-builtin -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
+        LD := $(GP)-gcc -T$(SPINN_TOOLS_DIR)/sark.lnk -Wl,-e,cpu_reset -Wl,-static -ffreestanding -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
         LFLAGS += -L $(SPINN_LIB_DIR)
     endif
     
@@ -76,19 +77,20 @@ ifeq ($(GNU),1)
 else
     # ARM Compiler settings
     AS := armasm --keep --cpu=5te --apcs interwork
-    CC_NO_THUMB := armcc -c --c99 --cpu=5te --apcs interwork --min_array_alignment=4 -fno-builtin -I $(SPINN_INC_DIR)
-    CXX_NO_THUMB := armcc -c --cpp11 --cpu=5te --apcs interwork --min_array_alignment=4 -fno-builtin -I $(SPINN_INC_DIR) --no_rtti --no_exceptions
+    CC_NO_THUMB := armcc -c --c99 --cpu=5te --apcs interwork --min_array_alignment=4 -I $(SPINN_INC_DIR)
+    CXX_NO_THUMB := armcc -c --cpp11 --cpu=5te --apcs interwork --min_array_alignment=4 -I $(SPINN_INC_DIR) --no_rtti --no_exceptions
     CC_THUMB := $(CC_NO_THUMB) --thumb -DTHUMB
     CXX_THUMB := $(CXX_NO_THUMB) --thumb -DTHUMB
     
     OSPACE := -Ospace
     OTIME := -Otime
+    ALL_WARNINGS :=
     
     ifeq ($(LIB), 1)
         CFLAGS += --split_sections
-        LD := armlink --partial -fno-builtin
+        LD := armlink --partial
     else
-        LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct --remove --entry cpu_reset -fno-builtin
+        LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct --remove --entry cpu_reset
     endif
     
     AR := armar -rsc
