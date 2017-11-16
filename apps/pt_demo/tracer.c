@@ -565,9 +565,9 @@ Vector3 vecRefract(
 	int mu1,
 	int mu2)
 {
-    int n1DotS	    = vecUnitDotProd(n1, s);
+    int n1DotS	      = vecUnitDotProd(n1, s);
     Vector3 firstTerm = vecScalarMul(s, n1DotS);
-    int sqrtTer	    = fp_sqrt(fp_mul(mu2, mu2) -
+    int sqrtTerm      = fp_sqrt(fp_mul(mu2, mu2) -
 	    fp_mul(mu1, mu1) + fp_mul(n1DotS, n1DotS));
 
     Vector3 result =
