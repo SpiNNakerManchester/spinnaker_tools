@@ -136,7 +136,7 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
 	return 4;
     } else if (op == IPTAG_GET) {
 	iptag_t *tt = tag_table + tag;
-	uint size = msg->arg2 * sizeof iptag_t;
+	uint size = msg->arg2 * sizeof(iptag_t);
 
 	if (size > SDP_BUF_SIZE) {
 	    msg->cmd_rc = RC_ARG;
