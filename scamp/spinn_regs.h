@@ -1,7 +1,7 @@
 #ifndef SPINN_REGS_H
 #define SPINN_REGS_H
 
-uint reg_test (const uint *vec);
+uint reg_test(const uint *vec);
 
 extern uint timer_test[];
 extern uint cc_test[];

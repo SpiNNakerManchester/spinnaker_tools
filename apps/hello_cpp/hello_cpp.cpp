@@ -8,15 +8,14 @@
 
 extern "C" void c_main()
 {
-  char buf[64];
+    char buf[64];
 
-  io_printf (IO_STD, "Hello world from C++! (via SDP)\n");
+    io_printf(IO_STD, "Hello world from C++! (via SDP)\n");
 
-  io_printf (IO_BUF, "Hello world from C++! (via SDRAM)\n");
+    io_printf(IO_BUF, "Hello world from C++! (via SDRAM)\n");
 
-  // io_printf can also do sprintf!
+    // io_printf can also do sprintf!
 
-  io_printf (buf, "Hello world from C++! (via printf...)\n");
-
-  io_printf (IO_BUF, buf);
+    io_printf(buf, "Hello world from C++! (via printf...)\n");
+    io_printf(IO_BUF, buf);
 }

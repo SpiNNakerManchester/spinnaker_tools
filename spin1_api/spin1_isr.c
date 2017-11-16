@@ -4,7 +4,7 @@
 #include <spin1_api_params.h>
 
 
-extern void schedule (uchar event_id, uint arg0, uint arg1);
+extern void schedule(uchar event_id, uint arg0, uint arg1);
 
 extern uchar user_pending;
 extern uint user_arg0;
@@ -33,48 +33,39 @@ extern tx_packet_queue_t tx_packet_queue;
 *
 * SOURCE
 */
-INT_HANDLER cc_rx_ready_isr (void)
+INT_HANDLER cc_rx_ready_isr(void)
 {
-  uint rx_status = cc[CC_RSR];	// Get Rx status
+    uint rx_status = cc[CC_RSR];	// Get Rx status
 
-  if (rx_status & PKT_PL)	// Has payload?
-    {
-      uint rx_data = cc[CC_RXDATA];
-      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+    if (rx_status & PKT_PL) {		// Has payload?
+	uint rx_data = cc[CC_RXDATA];
+	uint rx_key = cc[CC_RXKEY];	// also clears interrupt
 
-      // If application callback registered schedule it
+	// If application callback registered schedule it
 
-      if (callback[MCPL_PACKET_RECEIVED].cback != NULL)
-	{
-	  schedule (MCPL_PACKET_RECEIVED, rx_key, rx_data);
-	}
+	if (callback[MCPL_PACKET_RECEIVED].cback != NULL) {
+	    schedule(MCPL_PACKET_RECEIVED, rx_key, rx_data);
+	} else {
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
-      else
-	{
-	  diagnostics.discarded_mc_packets++;
+	    diagnostics.discarded_mc_packets++;
 	}
 #endif
-    }
-  else
-    {
-      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+    } else {
+	uint rx_key = cc[CC_RXKEY];	// also clears interrupt
 
-      if (callback[MC_PACKET_RECEIVED].cback != NULL)
-	{
-	  schedule (MC_PACKET_RECEIVED, rx_key, 0);
-	}
+	if (callback[MC_PACKET_RECEIVED].cback != NULL) {
+	    schedule(MC_PACKET_RECEIVED, rx_key, 0);
+	} else {
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
-      else
-	{
-	  diagnostics.discarded_mc_packets++;
-	}
+	    diagnostics.discarded_mc_packets++;
 #endif
+	}
     }
 
-  // TODO: maybe clear error flags (sticky) in CC
-  // Ack VIC
+    // TODO: maybe clear error flags (sticky) in CC
 
-  vic[VIC_VADDR] = (uint) vic;
+    // Ack VIC
+    vic[VIC_VADDR] = (uint) vic;
 }
 /*
 *******/
@@ -97,27 +88,24 @@ INT_HANDLER cc_rx_ready_isr (void)
 *
 * SOURCE
 */
-INT_HANDLER cc_rx_ready_fiqsr ()
+INT_HANDLER cc_rx_ready_fiqsr()
 {
-  uint rx_status = cc[CC_RSR];	// Get Rx status
+    uint rx_status = cc[CC_RSR];	// Get Rx status
 
-  if (rx_status & PKT_PL)	// Has payload?
-    {
-      uint rx_data = cc[CC_RXDATA];
-      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+    if (rx_status & PKT_PL) {		// Has payload?
+	uint rx_data = cc[CC_RXDATA];
+	uint rx_key = cc[CC_RXKEY];	// also clears interrupt
 
-      // Execute preeminent callback
+	// Execute preeminent callback
 
-      callback[MCPL_PACKET_RECEIVED].cback (rx_key, rx_data);
-    }
-  else
-    {
-      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+	callback[MCPL_PACKET_RECEIVED].cback(rx_key, rx_data);
+    } else {
+	uint rx_key = cc[CC_RXKEY];	// also clears interrupt
 
-      callback[MC_PACKET_RECEIVED].cback (rx_key, 0);
+	callback[MC_PACKET_RECEIVED].cback(rx_key, 0);
     }
 
-  // TODO: maybe clear error flags (sticky) in CC
+    // TODO: maybe clear error flags (sticky) in CC
 }
 /*
 *******/
@@ -140,48 +128,39 @@ INT_HANDLER cc_rx_ready_fiqsr ()
 *
 * SOURCE
 */
-INT_HANDLER cc_fr_ready_isr (void)
+INT_HANDLER cc_fr_ready_isr(void)
 {
-  uint rx_status = cc[CC_RSR];	// Get Rx status
+    uint rx_status = cc[CC_RSR];	// Get Rx status
 
-  if (rx_status & PKT_PL)	// Has payload?
-    {
-      uint rx_data = cc[CC_RXDATA];
-      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+    if (rx_status & PKT_PL) {		// Has payload?
+	uint rx_data = cc[CC_RXDATA];
+	uint rx_key = cc[CC_RXKEY];	// also clears interrupt
 
-      // If application callback registered schedule it
+	// If application callback registered schedule it
 
-      if (callback[FRPL_PACKET_RECEIVED].cback != NULL)
-	{
-	  schedule (FRPL_PACKET_RECEIVED, rx_key, rx_data);
-	}
+	if (callback[FRPL_PACKET_RECEIVED].cback != NULL) {
+	    schedule(FRPL_PACKET_RECEIVED, rx_key, rx_data);
+	} else {
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
-      else
-	{
-	  diagnostics.discarded_fr_packets++;
-	}
+	    diagnostics.discarded_fr_packets++;
 #endif
-    }
-  else
-    {
-      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+	}
+    } else {
+	uint rx_key = cc[CC_RXKEY];	// also clears interrupt
 
-      if (callback[FR_PACKET_RECEIVED].cback != NULL)
-	{
-	  schedule (FR_PACKET_RECEIVED, rx_key, 0);
-	}
+	if (callback[FR_PACKET_RECEIVED].cback != NULL) {
+	    schedule(FR_PACKET_RECEIVED, rx_key, 0);
+	} else {
 #if (API_DEBUG == TRUE) || (API_DIAGNOSTICS == TRUE)
-      else
-	{
-	  diagnostics.discarded_fr_packets++;
-	}
+	    diagnostics.discarded_fr_packets++;
 #endif
+	}
     }
 
-  // TODO: maybe clear error flags (sticky) in CC
-  // Ack VIC
+    // TODO: maybe clear error flags (sticky) in CC
 
-  vic[VIC_VADDR] = (uint) vic;
+    // Ack VIC
+    vic[VIC_VADDR] = (uint) vic;
 }
 /*
 *******/
@@ -204,27 +183,24 @@ INT_HANDLER cc_fr_ready_isr (void)
 *
 * SOURCE
 */
-INT_HANDLER cc_fr_ready_fiqsr ()
+INT_HANDLER cc_fr_ready_fiqsr()
 {
-  uint rx_status = cc[CC_RSR];	// Get Rx status
+    uint rx_status = cc[CC_RSR];	// Get Rx status
 
-  if (rx_status & PKT_PL)	// Has payload?
-    {
-      uint rx_data = cc[CC_RXDATA];
-      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+    if (rx_status & PKT_PL) {		// Has payload?
+	uint rx_data = cc[CC_RXDATA];
+	uint rx_key = cc[CC_RXKEY];	// also clears interrupt
 
-      // Execute preeminent callback
+	// Execute preeminent callback
 
-      callback[FRPL_PACKET_RECEIVED].cback (rx_key, rx_data);
-    }
-  else
-    {
-      uint rx_key = cc[CC_RXKEY];  // also clears interrupt
+	callback[FRPL_PACKET_RECEIVED].cback(rx_key, rx_data);
+    } else {
+	uint rx_key = cc[CC_RXKEY];	// also clears interrupt
 
-      callback[FR_PACKET_RECEIVED].cback (rx_key, 0);
+	callback[FR_PACKET_RECEIVED].cback(rx_key, 0);
     }
 
-  // TODO: maybe clear error flags (sticky) in CC
+    // TODO: maybe clear error flags (sticky) in CC
 }
 /*
 *******/
@@ -243,16 +219,16 @@ INT_HANDLER cc_fr_ready_fiqsr ()
 *
 * SOURCE
 */
-INT_HANDLER cc_rx_error_isr ()
+INT_HANDLER cc_rx_error_isr()
 {
-  // Consume erroneous packet (also clears interrupt)
+    // Consume erroneous packet (also clears interrupt)
 
-  uint sink = cc[CC_RXKEY];
+    uint sink = cc[CC_RXKEY];
 
-  // clear error flags (sticky) in CC and ack VIC
+    // clear error flags (sticky) in CC and ack VIC
 
-  cc[CC_RSR] = 0;
-  vic[VIC_VADDR] = 1;
+    cc[CC_RSR] = 0;
+    vic[VIC_VADDR] = 1;
 }
 /*
 *******/
@@ -272,48 +248,44 @@ INT_HANDLER cc_rx_error_isr ()
 *
 * SOURCE
 */
-INT_HANDLER cc_tx_empty_isr ()
+INT_HANDLER cc_tx_empty_isr()
 {
-//TODO: should use TX_not_full interrupt in SpiNNaker -- more efficient!
+    //TODO: should use TX_not_full interrupt in SpiNNaker -- more efficient!
 
-  // Clear the sticky TX full bit
-  cc[CC_TCR] = TX_TCR_MCDEFAULT;
+    // Clear the sticky TX full bit
+    cc[CC_TCR] = TX_TCR_MCDEFAULT;
 
-  // Drain queue: send packets while queue not empty and CC not full
+    // Drain queue: send packets while queue not empty and CC not full
 
-  while (tx_packet_queue.start != tx_packet_queue.end
-	  && ~cc[CC_TCR] & 0x40000000)
-    {
-      // Dequeue packet
+    while (tx_packet_queue.start != tx_packet_queue.end
+	    && ~cc[CC_TCR] & 0x40000000) {
+	// Dequeue packet
 
-      uint key = tx_packet_queue.queue[tx_packet_queue.start].key;
-      uint data = tx_packet_queue.queue[tx_packet_queue.start].data;
-      uint TCR = tx_packet_queue.queue[tx_packet_queue.start].TCR;
+	uint key = tx_packet_queue.queue[tx_packet_queue.start].key;
+	uint data = tx_packet_queue.queue[tx_packet_queue.start].data;
+	uint TCR = tx_packet_queue.queue[tx_packet_queue.start].TCR;
 
-      tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
+	tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
 
-      // Send the packet
+	// Send the packet
 
-      cc[CC_TCR] = TCR;
+	cc[CC_TCR] = TCR;
 
-      if (TCR & PKT_PL)
-	{
-	  cc[CC_TXDATA] = data;
+	if (TCR & PKT_PL) {
+	    cc[CC_TXDATA] = data;
 	}
 
-      cc[CC_TXKEY]  = key;
+	cc[CC_TXKEY]  = key;
     }
 
-  // If queue empty turn off tx_empty interrupt
+    // If queue empty turn off tx_empty interrupt
 
-  if (tx_packet_queue.start == tx_packet_queue.end)
-    {
-      vic[VIC_DISABLE] = 1 << CC_TMT_INT;
+    if (tx_packet_queue.start == tx_packet_queue.end) {
+	vic[VIC_DISABLE] = 1 << CC_TMT_INT;
     }
 
-  // ack VIC
-
-  vic[VIC_VADDR] = 1;
+    // ack VIC
+    vic[VIC_VADDR] = 1;
 }
 /*
 *******/
@@ -335,43 +307,39 @@ INT_HANDLER cc_tx_empty_isr ()
 *
 * SOURCE
 */
-INT_HANDLER dma_done_isr ()
+INT_HANDLER dma_done_isr()
 {
-  // Clear transfer done interrupt in DMAC
+    // Clear transfer done interrupt in DMAC
+    dma[DMA_CTRL] = 0x8;
 
-  dma[DMA_CTRL]  = 0x8;
+    // Prepare data for callback before triggering a new DMA transfer
 
-  // Prepare data for callback before triggering a new DMA transfer
+    uint completed_id  = dma_queue.queue[dma_queue.start].id;
+    uint completed_tag = dma_queue.queue[dma_queue.start].tag;
 
-  uint completed_id  = dma_queue.queue[dma_queue.start].id;
-  uint completed_tag = dma_queue.queue[dma_queue.start].tag;
+    //TODO: can schedule up to 2 transfers if DMA free
+    // Update queue pointer and trigger new transfer if queue not empty
 
-  //TODO: can schedule up to 2 transfers if DMA free
-  // Update queue pointer and trigger new transfer if queue not empty
+    dma_queue.start = (dma_queue.start + 1) % DMA_QUEUE_SIZE;
 
-  dma_queue.start = (dma_queue.start + 1) % DMA_QUEUE_SIZE;
+    if (dma_queue.start != dma_queue.end) {
+	uint *system_address = dma_queue.queue[dma_queue.start].system_address;
+	uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
+	uint  description = dma_queue.queue[dma_queue.start].description;
 
-  if (dma_queue.start != dma_queue.end)
-    {
-      uint *system_address = dma_queue.queue[dma_queue.start].system_address;
-      uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
-      uint  description = dma_queue.queue[dma_queue.start].description;
-
-      dma[DMA_ADRS] = (uint) system_address;
-      dma[DMA_ADRT] = (uint) tcm_address;
-      dma[DMA_DESC] = description;
+	dma[DMA_ADRS] = (uint) system_address;
+	dma[DMA_ADRT] = (uint) tcm_address;
+	dma[DMA_DESC] = description;
     }
 
-  // If application callback registered schedule it
+    // If application callback registered schedule it
 
-  if (callback[DMA_TRANSFER_DONE].cback != NULL)
-    {
-      schedule (DMA_TRANSFER_DONE, completed_id, completed_tag);
+    if (callback[DMA_TRANSFER_DONE].cback != NULL) {
+	schedule(DMA_TRANSFER_DONE, completed_id, completed_tag);
     }
 
-  // Ack VIC
-
-  vic[VIC_VADDR] = 1;
+    // Ack VIC
+    vic[VIC_VADDR] = 1;
 }
 /*
 *******/
@@ -393,37 +361,36 @@ INT_HANDLER dma_done_isr ()
 *
 * SOURCE
 */
-INT_HANDLER dma_done_fiqsr ()
+INT_HANDLER dma_done_fiqsr()
 {
-  // Clear transfer done interrupt in DMAC
+    // Clear transfer done interrupt in DMAC
 
-  dma[DMA_CTRL]  = 0x8;
+    dma[DMA_CTRL]  = 0x8;
 
-  // Prepare data for callback before triggering a new DMA transfer
+    // Prepare data for callback before triggering a new DMA transfer
 
-  uint completed_id  = dma_queue.queue[dma_queue.start].id;
-  uint completed_tag = dma_queue.queue[dma_queue.start].tag;
+    uint completed_id  = dma_queue.queue[dma_queue.start].id;
+    uint completed_tag = dma_queue.queue[dma_queue.start].tag;
 
-  //TODO: can schedule up to 2 transfers if DMA free
+    //TODO: can schedule up to 2 transfers if DMA free
 
-  // Update queue pointer and trigger new transfer if queue not empty
+    // Update queue pointer and trigger new transfer if queue not empty
 
-  dma_queue.start = (dma_queue.start + 1) % DMA_QUEUE_SIZE;
+    dma_queue.start = (dma_queue.start + 1) % DMA_QUEUE_SIZE;
 
-  if (dma_queue.start != dma_queue.end)
-    {
-      uint *system_address = dma_queue.queue[dma_queue.start].system_address;
-      uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
-      uint  description = dma_queue.queue[dma_queue.start].description;
+    if (dma_queue.start != dma_queue.end) {
+	uint *system_address = dma_queue.queue[dma_queue.start].system_address;
+	uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
+	uint  description = dma_queue.queue[dma_queue.start].description;
 
-      dma[DMA_ADRS] = (uint) system_address;
-      dma[DMA_ADRT] = (uint) tcm_address;
-      dma[DMA_DESC] = description;
+	dma[DMA_ADRS] = (uint) system_address;
+	dma[DMA_ADRT] = (uint) tcm_address;
+	dma[DMA_DESC] = description;
     }
 
-  // Execute preeminent callback
+    // Execute preeminent callback
 
-  callback[DMA_TRANSFER_DONE].cback (completed_id, completed_tag);
+    callback[DMA_TRANSFER_DONE].cback(completed_id, completed_tag);
 }
 /*
 *******/
@@ -440,20 +407,18 @@ INT_HANDLER dma_done_fiqsr ()
 *
 * SOURCE
 */
-INT_HANDLER dma_error_isr ()
+INT_HANDLER dma_error_isr()
 {
-  //TODO: update to other dma error sources when supported
-  // deal with write buffer errors
-#if API_WARN == TRUE
-#if USE_WRITE_BUFFER == TRUE
-  // increase error count
-  wberrors++;
-#endif
+    //TODO: update to other dma error sources when supported
+    // deal with write buffer errors
+#if (API_WARN == TRUE) && (USE_WRITE_BUFFER == TRUE)
+    // increase error count
+    wberrors++;
 #endif
 
-  // clear write buffer error interrupt in DMAC and ack VIC
-  dma[DMA_CTRL]  = 0x20;
-  vic[VIC_VADDR] = 1;
+    // clear write buffer error interrupt in DMAC and ack VIC
+    dma[DMA_CTRL]  = 0x20;
+    vic[VIC_VADDR] = 1;
 }
 /*
 *******/
@@ -470,41 +435,35 @@ INT_HANDLER dma_error_isr ()
 *
 * SOURCE
 */
-INT_HANDLER timer1_isr ()
+INT_HANDLER timer1_isr()
 {
-  // Clear timer interrupt
+    // Clear timer interrupt
+    tc[T1_INT_CLR] = 1;
 
-  tc[T1_INT_CLR] = 1;
+    // Increment simulation "time"
+    ticks++;
 
-  // Increment simulation "time"
+    // If application callback registered schedule it
+    if (callback[TIMER_TICK].cback != NULL) {
 
-  ticks++;
+	// check for timer tic overload and store in diagnostics
+	if (diagnostics.in_timer_callback != 0) {
 
-  // If application callback registered schedule it
-  if (callback[TIMER_TICK].cback != NULL)
-    {
+	    // if in timer tic callback already, add to tracker for total failures
+	    diagnostics.total_times_tick_tic_callback_overran += 1;
 
-      // check for timer tic overload and store in diagnostics
-      if (diagnostics.in_timer_callback != 0)
-	{
-
-	  // if in timer tic callback already, add to tracker for total failures
-	  diagnostics.total_times_tick_tic_callback_overran += 1;
-
-	  // if number of timer callbacks in queue is greater than previously seen
-	  if (diagnostics.number_timer_tic_in_queue >
-	      diagnostics.largest_number_of_concurrent_timer_tic_overruns)
-	    {
-	      diagnostics.largest_number_of_concurrent_timer_tic_overruns =
-		      diagnostics.number_timer_tic_in_queue;
+	    // if number of timer callbacks in queue is greater than previously seen
+	    if (diagnostics.number_timer_tic_in_queue >
+		    diagnostics.largest_number_of_concurrent_timer_tic_overruns) {
+		diagnostics.largest_number_of_concurrent_timer_tic_overruns =
+			diagnostics.number_timer_tic_in_queue;
 	    }
 	}
-      schedule(TIMER_TICK, ticks, NULL);
+	schedule(TIMER_TICK, ticks, NULL);
     }
 
-  // Ack VIC
-
-  vic[VIC_VADDR] = 1;
+    // Ack VIC
+    vic[VIC_VADDR] = 1;
 }
 /*
 *******/
@@ -521,19 +480,16 @@ INT_HANDLER timer1_isr ()
 *
 * SOURCE
 */
-INT_HANDLER timer1_fiqsr ()
+INT_HANDLER timer1_fiqsr()
 {
-  // clear timer interrupt
+    // clear timer interrupt
+    tc[T1_INT_CLR] = 1;
 
-  tc[T1_INT_CLR] = 1;
+    // Increment simulation "time"
+    ticks++;
 
-  // Increment simulation "time"
-
-  ticks++;
-
-  // Execute preeminent callback
-
-  callback[TIMER_TICK].cback(ticks, NULL);
+    // Execute preeminent callback
+    callback[TIMER_TICK].cback(ticks, NULL);
 }
 /*
 *******/
@@ -550,26 +506,21 @@ INT_HANDLER timer1_fiqsr ()
 *
 * SOURCE
 */
-INT_HANDLER soft_int_isr ()
+INT_HANDLER soft_int_isr()
 {
-  // Clear software interrupt in the VIC
+    // Clear software interrupt in the VIC
+    vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
 
-  vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
-
-  // If application callback registered schedule it
-
-  if (callback[USER_EVENT].cback != NULL)
-    {
-      schedule (USER_EVENT, user_arg0, user_arg1);
+    // If application callback registered schedule it
+    if (callback[USER_EVENT].cback != NULL) {
+	schedule(USER_EVENT, user_arg0, user_arg1);
     }
 
-  // Clear flag to indicate event has been serviced
+    // Clear flag to indicate event has been serviced
+    user_pending = FALSE;
 
-  user_pending = FALSE;
-
-  // Ack VIC
-
-  vic[VIC_VADDR] = 1;
+    // Ack VIC
+    vic[VIC_VADDR] = 1;
 }
 /*
 *******/
@@ -586,19 +537,16 @@ INT_HANDLER soft_int_isr ()
 *
 * SOURCE
 */
-INT_HANDLER soft_int_fiqsr ()
+INT_HANDLER soft_int_fiqsr()
 {
-  // Clear software interrupt in the VIC
+    // Clear software interrupt in the VIC
+    vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
 
-  vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
+    // Execute preeminent callback
+    callback[USER_EVENT].cback(user_arg0, user_arg1);
 
-  // Execute preeminent callback
-
-  callback[USER_EVENT].cback (user_arg0, user_arg1);
-
-  // Clear flag to indicate event has been serviced
-
-  user_pending = FALSE;
+    // Clear flag to indicate event has been serviced
+    user_pending = FALSE;
 }
 /*
 *******/

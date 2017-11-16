@@ -31,10 +31,8 @@
 #define	PHY_SP_CSR		31
 
 
-void phy_reset (void);
-
-void phy_write (uint addr, uint data);
-
-uint phy_read (uint addr);
+void phy_reset(void);
+void phy_write(uint addr, uint data);
+uint phy_read(uint addr);
 
 #endif

@@ -161,58 +161,50 @@
 
 //------------------------------------------------------------------------------
 
-void configure_clocks ()
+void configure_clocks()
 {
-  LPC_SC->SCS = SCS_V;			// Configure main osc.
+    LPC_SC->SCS = SCS_V;		// Configure main osc.
 
-  // Wait for Osc ready
-
-  while ((LPC_SC->SCS & OSC_UP) == 0)
-    {
-      continue;
+    // Wait for Osc ready
+    while ((LPC_SC->SCS & OSC_UP) == 0) {
+	continue;
     }
-  LPC_SC->CCLKCFG   = CCLKCFG_V; 	// Set PLL0->CCLK divider
+    LPC_SC->CCLKCFG   = CCLKCFG_V; 	// Set PLL0->CCLK divider
 
-  // Peripheral Clock Selection doesn't seem to work here!
+    // Peripheral Clock Selection doesn't seem to work here!
 
-  // LPC_SC->PCLKSEL0  = PCLKSEL0_V;
-  // LPC_SC->PCLKSEL1  = PCLKSEL1_V;
+    // LPC_SC->PCLKSEL0  = PCLKSEL0_V;
+    // LPC_SC->PCLKSEL1  = PCLKSEL1_V;
 
-  LPC_SC->CLKSRCSEL = CLKSRCSEL_V;      // Select Clock Source for PLL0
+    LPC_SC->CLKSRCSEL = CLKSRCSEL_V;	// Select Clock Source for PLL0
 
-  LPC_SC->PLL0CFG   = PLL0CFG_V;        // Configure PLL0
-  LPC_SC->PLL0FEED  = 0xaa;
-  LPC_SC->PLL0FEED  = 0x55;
+    LPC_SC->PLL0CFG   = PLL0CFG_V;	// Configure PLL0
+    LPC_SC->PLL0FEED  = 0xaa;
+    LPC_SC->PLL0FEED  = 0x55;
 
-  LPC_SC->PLL0CON   = 0x01;             // Enable PLL0
-  LPC_SC->PLL0FEED  = 0xaa;
-  LPC_SC->PLL0FEED  = 0x55;
+    LPC_SC->PLL0CON   = 0x01;		// Enable PLL0
+    LPC_SC->PLL0FEED  = 0xaa;
+    LPC_SC->PLL0FEED  = 0x55;
 
-  // Wait for PLL to lock
-
-  while ((LPC_SC->PLL0STAT & PLL_LOCK) == 0)
-    {
-      continue;
+    // Wait for PLL to lock
+    while ((LPC_SC->PLL0STAT & PLL_LOCK) == 0) {
+	continue;
     }
-  LPC_SC->PLL0CON   = 0x03;             // PLL0 Enable & Connect
-  LPC_SC->PLL0FEED  = 0xaa;
-  LPC_SC->PLL0FEED  = 0x55;
+    LPC_SC->PLL0CON   = 0x03;		// PLL0 Enable & Connect
+    LPC_SC->PLL0FEED  = 0xaa;
+    LPC_SC->PLL0FEED  = 0x55;
 
-  // Wait for PLLC0_STAT & PLLE0_STAT
-
-  while ((LPC_SC->PLL0STAT & PLL_UP) != PLL_UP)
-    {
-      continue;
+    // Wait for PLLC0_STAT & PLLE0_STAT
+    while ((LPC_SC->PLL0STAT & PLL_UP) != PLL_UP) {
+	continue;
     }
-  LPC_SC->FLASHCFG  = FLASHCFG_V;	// Configure flash accelerator
+    LPC_SC->FLASHCFG  = FLASHCFG_V;	// Configure flash accelerator
 
-  LPC_SC->PCONP     = PCONP_V;          // Power Control for Peripherals
+    LPC_SC->PCONP     = PCONP_V;	// Power Control for Peripherals
 
-  uint32_t n = 32 * 1024;		// Wait about 1ms
-
-  while (n--)
-    {
-      continue;
+    uint32_t n = 32 * 1024;		// Wait about 1ms
+    while (n--) {
+	continue;
     }
 }
 

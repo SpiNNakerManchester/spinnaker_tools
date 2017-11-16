@@ -50,19 +50,17 @@ void tick_callback(
 	uint ticks,
 	uint dummy)
 {
-  if (ticks % 250 == (myKey & 255))		// Every 0.25 secs, time skewed for SDP
-    {
-      alive = (count[gen] | alive) == 3;	// Life automaton rule
-      count[gen] = 0;				// clear count for next gen
-      gen = !gen;				// onto next generation
+    if (ticks % 250 == (myKey & 255)) {		// Every 0.25 secs, time skewed for SDP
+	alive = (count[gen] | alive) == 3;	// Life automaton rule
+	count[gen] = 0;				// clear count for next gen
+	gen = !gen;				// onto next generation
 
-      spin1_send_mc_packet (myKey, gen+(alive<<1), WITH_PAYLOAD); // send state to neighbours
+	spin1_send_mc_packet(myKey, gen+(alive<<1), WITH_PAYLOAD); // send state to neighbours
 
-      if (alive != last_alive)
-	{
-	  char *s = (alive) ? "white" : "black"; // Make a colour string
-	  io_printf (IO_STD, "#%s;#fill;\n", s); // And print it
-	  last_alive = alive;
+	if (alive != last_alive) {
+	    char *s = (alive) ? "white" : "black"; // Make a colour string
+	    io_printf(IO_STD, "#%s;#fill;\n", s); // And print it
+	    last_alive = alive;
 	}
     }
 }
@@ -72,7 +70,7 @@ void packet_in(
 	uint key,
 	uint data)				// data = gen + 2*alive
 {
-  count[data & 1] += data >> 1;			// count[gen mod 2] += alive
+    count[data & 1] += data >> 1;		// count[gen mod 2] += alive
 }
 
 
@@ -88,7 +86,7 @@ int x, y;					// core x, y coordinates
 uint edge(					// check for core at edge of chip
 	uint z)
 {
-  return (z == 0) || (z == 3);
+    return (z == 0) || (z == 3);
 }
 
 
@@ -96,10 +94,9 @@ void add_route_to_core(				// filters out off-chip neighbours
 	int i,
 	int j)
 {
-  if (i >- 1 && i < 4  && j >- 1 && j < 4	// check for end of row & col
-	  && !(i == x && j == y))
-    {
-      route += 1 << (i + 4*j + 7);		// don't route to self
+    if (i >- 1 && i < 4  && j >- 1 && j < 4	// check for end of row & col
+	  && !(i == x && j == y)) {
+	route += 1 << (i + 4*j + 7);		// don't route to self
     }
 }
 
@@ -108,29 +105,25 @@ uint next_chip(					// find next chip, modulo array size
 	uint chip,
 	uint dir)
 {
-  uint cX = chip >> 8;
-  uint cY = chip & 255;
+    uint cX = chip >> 8;
+    uint cY = chip & 255;
 
-  // do the modulo sums
+    // do the modulo sums
 
-  if (dir & SOUTH)
-    {
-      cY = cY ? cY - 1 : YMAX - 1;
+    if (dir & SOUTH) {
+	cY = cY ? cY - 1 : YMAX - 1;
     }
-  if (dir & NORTH)
-    {
-      cY = (cY + 1) % YMAX;
+    if (dir & NORTH) {
+	cY = (cY + 1) % YMAX;
     }
-  if (dir & WEST)
-    {
-      cX = cX ? cX - 1 : XMAX - 1;
+    if (dir & WEST) {
+	cX = cX ? cX - 1 : XMAX - 1;
     }
-  if (dir & EAST)
-    {
-      cX = (cX + 1) % XMAX;
+    if (dir & EAST) {
+	cX = (cX + 1) % XMAX;
     }
 
-  return (cX << 8) + cY;
+    return (cX << 8) + cY;
 }
 
 
@@ -138,24 +131,19 @@ void add_route_to_chip(
 	uint chip,
 	uint dir)				// dir specifies possible directions
 {
-  if (TOROID)
-    {
-      route += dir;
-    }
-  else
-    {
-      uint nc = next_chip(chip, dir);		// toroidal routing on...
-      uint cX  = chip >> 8;
-      uint cY  = chip & 255;			// ...non-toroidal system
-      uint ncX = nc >> 8;
-      uint ncY = nc & 255;			// uses default routing to get back
+    if (TOROID) {
+	route += dir;
+    } else {
+	uint nc = next_chip(chip, dir);		// toroidal routing on...
+	uint cX  = chip >> 8;
+	uint cY  = chip & 255;			// ...non-toroidal system
+	uint ncX = nc >> 8;
+	uint ncY = nc & 255;			// uses default routing to get back
 
-      if (cX != ncX)
-	{
-	  route += toH[ncX > cX];
+	if (cX != ncX) {
+	    route += toH[ncX > cX];
 	}
-      if (cY != ncY)
-	{
+	if (cY != ncY) {
 	  route += toV[ncY > cY];
 	}
     }
@@ -166,15 +154,13 @@ void set_mc_table_entry(			// route from (chip, core)
 	uint chip,
 	uint core)
 {
-  uint e = rtr_alloc(1);
-
-  if (e == 0)
-    {
-      rt_error(RTE_ABORT);
+    uint e = rtr_alloc(1);
+    if (e == 0) {
+	rt_error(RTE_ABORT);
     }
 
-  rtr_mc_set(e, (chip << 8) + core, 0xffffffff, route);
-  route = 0;					// clear route for next use
+    rtr_mc_set(e, (chip << 8) + core, 0xffffffff, route);
+    route = 0;					// clear route for next use
 }
 
 
@@ -182,62 +168,52 @@ void set_up_routing_tables(			// this is the tricky bit!
 	uint chip,
 	uint core)
 {
-  x = (core - 1) & 3;				// core x, y coordinates
-  y = (core - 1) >> 2;
+    x = (core - 1) & 3;				// core x, y coordinates
+    y = (core - 1) >> 2;
 
-  // first set up routes for internally-generated packets
+    // first set up routes for internally-generated packets
 
-  for (int i = x - 1; i < x + 2; i++)		// column left, same, right
-    {
-      for (int j = y - 1; j < y + 2; j++)
-	{
-	  add_route_to_core(i, j);		// row below, same, above
+    for (int i = x - 1; i < x + 2; i++) {	// column left, same, right
+	for (int j = y - 1; j < y + 2; j++) {
+	    add_route_to_core(i, j);		// row below, same, above
 	}
     }
 
-  if (edge(x))
-    {
-      add_route_to_chip(chip, toH[x & 1]);	// send off-chip where appropriate
+    if (edge(x)) {
+	add_route_to_chip(chip, toH[x & 1]);	// send off-chip where appropriate
     }
-  if (edge(y))
-    {
-      add_route_to_chip(chip, toV[y & 1]);
+    if (edge(y)) {
+	add_route_to_chip(chip, toV[y & 1]);
     }
 
-  set_mc_table_entry(chip, core);		// write local Router table entry
+    set_mc_table_entry(chip, core);		// write local Router table entry
 
-  // then handle incoming packets from other chips...
-  // ...each core handles routes from corresponding cores on other chips
+    // then handle incoming packets from other chips...
+    // ...each core handles routes from corresponding cores on other chips
 
-  if (edge(y))					// top & bottom
-    {
-      for (int i = x - 1; i < x + 2; i++)	// route to opposite row
-	{
-	  add_route_to_core (i, 3 - y);
+    if (edge(y)) {				// top & bottom
+	for (int i = x - 1; i < x + 2; i++) {	// route to opposite row
+	    add_route_to_core(i, 3 - y);
 	}
 
-      if (edge(x))
-	{
-	  add_route_to_chip (chip, toH[x & 1]);	// forward diagonal connection
+	if (edge(x)) {
+	    add_route_to_chip(chip, toH[x & 1]);// forward diagonal connection
 	}
 
-      set_mc_table_entry (next_chip (chip, fromV[y & 1]), core);
+	set_mc_table_entry(next_chip(chip, fromV[y & 1]), core);
     }
 
-  if (edge(x))					// left & right
-    {
-      for (int j = y - 1; j < y + 2; j++)	// route to opposite col
-	{
-	  add_route_to_core (3 - x, j);
+    if (edge(x)) {				// left & right
+	for (int j = y - 1; j < y + 2; j++) {	// route to opposite col
+	    add_route_to_core(3 - x, j);
 	}
 
-      set_mc_table_entry(next_chip(chip, fromH[x & 1]), core);
+	set_mc_table_entry(next_chip(chip, fromH[x & 1]), core);
     }
 
-  if (edge(x) && edge(y))			// incoming diagonal connection
-    {
-      add_route_to_core(3 - x, 3 - y);		// receive from opposite corner
-      set_mc_table_entry(next_chip(chip, fromH[x & 1] + fromV[y & 1]), core);
+    if (edge(x) && edge(y)) {			// incoming diagonal connection
+	add_route_to_core(3 - x, 3 - y);	// receive from opposite corner
+	set_mc_table_entry(next_chip(chip, fromH[x & 1] + fromV[y & 1]), core);
     }
 }
 
@@ -246,35 +222,33 @@ void init_Life_state(
 	uint chip,
 	uint core)
 {
-  if (chip == 0 && (core == 5 || core == 6 || core == 7
-	    || core == 11 || core == 14))
-    {
-      count[0] = 3;				// initial state
+    if (chip == 0 && (core == 5 || core == 6 || core == 7
+	    || core == 11 || core == 14)) {
+	count[0] = 3;				// initial state
     }
 }
 
 
 void c_main(void)
 {
-  uint chip = spin1_get_chip_id();		// get chip ID
-  uint core = spin1_get_core_id();		// ...& core ID
-  myKey = (chip << 8) + core;			// key for my output packets
+    uint chip = spin1_get_chip_id();		// get chip ID
+    uint core = spin1_get_core_id();		// ...& core ID
+    myKey = (chip << 8) + core;			// key for my output packets
 
-  if ((chip >> 8) < XMAX && (chip & 255) < YMAX) // only start required cores
-    {
-      io_printf(IO_BUF, "Started core %d %d %d\n",
-	      chip >> 8, chip & 255, core);	// signal core running
+    if ((chip >> 8) < XMAX && (chip & 255) < YMAX) { // only start required cores
+	io_printf(IO_BUF, "Started core %d %d %d\n",
+		chip >> 8, chip & 255, core);	// signal core running
 
-      set_up_routing_tables(chip, core);	// configure routing
-      init_Life_state(chip, core);		// Initialise Life state
+	set_up_routing_tables(chip, core);	// configure routing
+	init_Life_state(chip, core);		// Initialise Life state
 
-      spin1_set_timer_tick(1000);		// 1ms timer tick
-      spin1_callback_on(TIMER_TICK, tick_callback, 1);		// timer callback
-      spin1_callback_on(MCPL_PACKET_RECEIVED, packet_in, -1);	// incoming packet callback
+	spin1_set_timer_tick(1000);		// 1ms timer tick
+	spin1_callback_on(TIMER_TICK, tick_callback, 1);	// timer callback
+	spin1_callback_on(MCPL_PACKET_RECEIVED, packet_in, -1);	// incoming packet callback
 
-      spin1_start(SYNC_NOWAIT);			// start event-driven operation
+	spin1_start(SYNC_NOWAIT);		// start event-driven operation
 
-      io_printf(IO_BUF, "Terminated core %d %d %d\n",
-	      chip >> 8, chip & 255, core);	// print if event_exit used...
+	io_printf(IO_BUF, "Terminated core %d %d %d\n",
+		chip >> 8, chip & 255, core);	// print if event_exit used...
     }
 }

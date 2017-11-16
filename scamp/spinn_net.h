@@ -37,84 +37,77 @@
 
 
 typedef struct {
-  ushort htype;
-  ushort ptype;
-  uchar hlen;
-  uchar plen;
-  ushort op;
-  uchar sha[6];
-  uchar spa[4];
-  uchar tha[6];
-  uchar tpa[4];
+    ushort htype;
+    ushort ptype;
+    uchar hlen;
+    uchar plen;
+    ushort op;
+    uchar sha[6];
+    uchar spa[4];
+    uchar tha[6];
+    uchar tpa[4];
 } arp_pkt_t;
 
 
 typedef struct {
-  ushort srce;
-  ushort dest;
-  ushort length;
-  ushort checksum;
+    ushort srce;
+    ushort dest;
+    ushort length;
+    ushort checksum;
 } udp_hdr_t;
 
 
 typedef struct {
-  uchar type;
-  uchar code;
-  ushort checksum;
-  ushort ident;
-  ushort seq;
+    uchar type;
+    uchar code;
+    ushort checksum;
+    ushort ident;
+    ushort seq;
 } icmp_hdr_t;
 
 
 typedef struct {
-  uchar dest[6];
-  uchar srce[6];
-  ushort type;
+    uchar dest[6];
+    uchar srce[6];
+    ushort type;
 } mac_hdr_t;
 
 
 typedef struct {
-  uchar ver_len;
-  uchar DS;
-  ushort length;
-  ushort ident;
-  ushort flg_off;
-  uchar TTL;
-  uchar protocol;
-  ushort checksum;
-  uchar srce[4];
-  uchar dest[4];
+    uchar ver_len;
+    uchar DS;
+    ushort length;
+    ushort ident;
+    ushort flg_off;
+    uchar TTL;
+    uchar protocol;
+    ushort checksum;
+    uchar srce[4];
+    uchar dest[4];
 } ip_hdr_t;
 
 
 extern const uchar bc_mac[];
 extern const uchar zero_mac[];
 
-void eth_init (uchar *mac);
+void eth_init(uchar *mac);
 
-uint ipsum (uchar *d, uint len, uint sum);
+uint ipsum(uchar *d, uint len, uint sum);
 
-void copy_mac (const uchar *f, uchar *t);
+void copy_mac(const uchar *f, uchar *t);
+void copy_ip(const uchar *f, uchar *t);
+uint cmp_ip(uchar *a, uchar *b);
+void copy_ip_hdr(uchar *dest, uint prot, ip_hdr_t *ip, uint len);
 
-void copy_ip (const uchar *f, uchar *t);
+void eth_transmit(uchar *buf, uint len, uint type, const uchar *dest);
+void eth_transmit2(uchar *hdr, uchar *buf, uint hdr_len, uint buf_len);
 
-uint cmp_ip (uchar *a, uchar *b);
+void send_arp_pkt(uchar *buf, const uchar *dest,
+		  const uchar *tha, const uchar *tpa, uint type);
+void arp_lookup(iptag_t *iptag);
+void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size);
 
-void copy_ip_hdr (uchar *dest, uint prot, ip_hdr_t *ip, uint len);
-
-void eth_transmit (uchar *buf, uint len, uint type, const uchar *dest);
-
-void eth_transmit2 (uchar *hdr, uchar *buf, uint hdr_len, uint buf_len);
-
-void send_arp_pkt (uchar *buf, const uchar *dest,
-		   const uchar *tha, const uchar *tpa, uint type);
-
-void arp_lookup (iptag_t *iptag);
-
-void arp_pkt (uchar *rx_pkt, uint rx_len, uint tag_table_size);
-
-void icmp_pkt (uchar *rx_pkt, uint rx_len);
-
-void copy_udp (uchar *buf, uint len, uint dest, uint srce);
+void icmp_pkt(uchar *rx_pkt, uint rx_len);
+void copy_udp(uchar *buf, uint len, uint dest, uint srce);
 
 #endif
