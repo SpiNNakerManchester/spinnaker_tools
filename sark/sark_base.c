@@ -423,7 +423,7 @@ uint __attribute__((weak)) sark_init(uint *stack)
 
     // Set up SDP message buffers
 
-    sdp_msg_t *msg_bufs = sark_alloc(sark_vec->num_msgs, sizeof(sdp_msg_t)_;
+    sdp_msg_t *msg_bufs = sark_alloc(sark_vec->num_msgs, sizeof(sdp_msg_t));
 
     sark.msg_root.free = (mem_link_t *) msg_bufs;
     sark_block_init(msg_bufs, sark_vec->num_msgs, sizeof(sdp_msg_t));
