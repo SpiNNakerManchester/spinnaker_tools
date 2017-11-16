@@ -11,8 +11,8 @@ addons:
 install:
   - export SPINN_DIRS=`pwd -P`
   - export SPINN_PATH=$SPINN_DIRS/tools/boot
-  - PATH=$SPINN_DIRS/tools:$PATH
-  - PERL5LIB=$SPINN_DIRS/tools:$PERL5LIB
+  - export PATH=$SPINN_DIRS/tools:$PATH
+  - export PERL5LIB=$SPINN_DIRS/tools:$PERL5LIB
 
 before_script:
   - git clone https://github.com/SpiNNakerManchester/SupportScripts.git support
