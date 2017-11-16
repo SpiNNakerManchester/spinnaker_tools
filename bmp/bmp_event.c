@@ -292,7 +292,7 @@ void event_schedule(event_t *e, uint32_t time)
     }
 
     e->time = time - ptotal;
-  
+
     e->next = pq->next;
     pq->next = e;
 

@@ -105,7 +105,7 @@ void __attribute__((noreturn)) boot_proc(void)
 
     while (1) {
 	cortex_vec = (cortex_vec_t *) (boot_sec * 0x10000);
-      
+
 	uint32_t length = cortex_vec->RO_length + cortex_vec->RW_length + 4;
 
 	// Check length < 256KB

@@ -1066,7 +1066,8 @@ Vector3 traceRay(
         	    if (lightIndex == occludingObjectIndex) { // a light can't occlude itself
         		continue;
 		    }
-        	    int shadowIntersect = sphereIntersection(spheres[occludingObjectIndex], shadowRay); // < 0.0 if there is no intersection, otherwise it is the length along the ray at which the intersection happens
+        	    // shadowIntersect < 0 if there is no intersection, otherwise it is the length along the ray at which the intersection happens
+        	    int shadowIntersect = sphereIntersection(spheres[occludingObjectIndex], shadowRay);
 
         	    if (shadowIntersect >= 0 && shadowIntersect < shadowRayLength) { // If the light is ocluded
         		if (spheres[occludingObjectIndex].transparency < 10) { // If the occluding object is opaque, stop checking
