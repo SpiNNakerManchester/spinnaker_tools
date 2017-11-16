@@ -819,7 +819,7 @@ void get_board_info(void)
 void sv_init(void)
 {
     sark_word_cpy(sv_vectors, rst_init, SV_VSIZE); 	// Copy Reset vectors
-    sark_word_cpy(&srom, sv_srom, sizeof srom_data_t);	// Copy SROM block
+    sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));	// Copy SROM block
 
     sark_word_set((void *) 0xf5007fc0, 0, 64);		// Kludge...
 
@@ -848,12 +848,12 @@ void sv_init(void)
 
     // Set up SHM buffers
     sv->shm_buf = sark_xalloc(sv->sysram_heap,
-	    sv->num_buf * sizeof sdp_msg_t, 0, 0);
+	    sv->num_buf * sizeof(sdp_msg_t), 0, 0);
 
     sv->shm_root.free = (mem_link_t *) sv->shm_buf;
     //sv->shm_root.count = sv->shm_root.max = 0;	//## Not needed now...
 
-    sark_block_init(sv->shm_buf, sv->num_buf, sizeof sdp_msg_t);
+    sark_block_init(sv->shm_buf, sv->num_buf, sizeof(sdp_msg_t));
 
     if (sv->boot_delay == 0 && sv->rom_cpus == 0) {
 	sv->root_chip = 1;
@@ -902,7 +902,7 @@ void sdram_init(void)
     // Router MC table copy (NB 1 extra entry in copy table)
 
     sv->rtr_copy = sark_xalloc(sv->sys_heap,
-	    (MC_TABLE_SIZE + 1) * sizeof rtr_entry_t, 0, 0);
+	    (MC_TABLE_SIZE + 1) * sizeof(rtr_entry_t), 0, 0);
 
     // Alloc ID table
 
@@ -911,8 +911,8 @@ void sdram_init(void)
 
     // AppID table
 
-    sv->app_data = sark_xalloc(sv->sys_heap, 256 * sizeof app_data_t, 0, 0);
-    sark_word_set(sv->app_data, 0, 256 * sizeof app_data_t);
+    sv->app_data = sark_xalloc(sv->sys_heap, 256 * sizeof(app_data_t), 0, 0);
+    sark_word_set(sv->app_data, 0, 256 * sizeof(app_data_t));
 }
 
 
