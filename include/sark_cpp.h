@@ -2,7 +2,7 @@
 
 extern "C"
 {
-  #include <sark.h>
+#include <sark.h>
 }
 #include <cstdlib>
 #include <new>

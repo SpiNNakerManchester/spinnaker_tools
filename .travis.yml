@@ -5,14 +5,27 @@ addons:
   apt:
     packages:
       - vera++
-      #- gcc-arm-none-eabi
-      #- libnewlib-arm-none-eabi
+      - gcc-arm-none-eabi
+      - libnewlib-arm-none-eabi
+      - freeglut3-dev
 
 install:
+  - export SPINN_DIRS=`pwd -P`
+  - export SPINN_PATH=$SPINN_DIRS/tools/boot
+  - export PATH=$SPINN_DIRS/tools:$PATH
+  - export PERL5LIB=$SPINN_DIRS/tools:$PERL5LIB
+
+before_script:
   - git clone https://github.com/SpiNNakerManchester/SupportScripts.git support
-# TODO: Add actually building the code
 
 script:
+  - make
+  - make -C scamp
+  # make -C bmp    # NEEDS ARM COMPILER!
+  - make -C apps/hello
+  - make -C apps/hello_cpp
+  - make -C apps/life
+  - make -C apps/pt_demo
   - support/run-vera.sh sark
   - support/run-vera.sh scamp --profile spinnaker-asm.tcl
   - support/run-vera.sh spin1_api

@@ -35,75 +35,67 @@
 //------------------------------------------------------------------------------
 
 
-static void ncs_low ()
+static void ncs_low()
 {
-  sc[GPIO_CLR] = SERIAL_NCS;
-  sark_delay_us (1);
+    sc[GPIO_CLR] = SERIAL_NCS;
+    sark_delay_us(1);
 }
 
 
-static void ncs_high ()
+static void ncs_high()
 {
-  sark_delay_us (1);
-  sc[GPIO_SET] = SERIAL_NCS;
-  sark_delay_us (1);
+    sark_delay_us(1);
+    sc[GPIO_SET] = SERIAL_NCS;
+    sark_delay_us(1);
 }
 
 
-static void clock ()
+static void clock()
 {
-  sark_delay_us (1);
-  sc[GPIO_SET] = SERIAL_CLK;
-  sark_delay_us (1);
-  sc[GPIO_CLR] = SERIAL_CLK;
+    sark_delay_us(1);
+    sc[GPIO_SET] = SERIAL_CLK;
+    sark_delay_us(1);
+    sc[GPIO_CLR] = SERIAL_CLK;
 }
 
 
-static void send (uint v, uint n)
+static void send(uint v, uint n)
 {
-  do
-    {
-      if (v & 0x80000000)
-        {
-	  sc[GPIO_SET] = SERIAL_SI;
-        }
-      else
-        {
-	  sc[GPIO_CLR] = SERIAL_SI;
-        }
+    do {
+	if (v & 0x80000000) {
+	    sc[GPIO_SET] = SERIAL_SI;
+	} else {
+            sc[GPIO_CLR] = SERIAL_SI;
+	}
 
-      clock ();
+	clock();
 
-      v = v << 1;
-      n--;
-    }
-  while (n != 0);
+	v = v << 1;
+	n--;
+    } while (n != 0);
 
-  sc[GPIO_CLR] = SERIAL_SI;
+    sc[GPIO_CLR] = SERIAL_SI;
 }
 
 
-static uint read8 ()
+static uint read8()
 {
-  uint r = 0;
-  uint n = 8;
+    uint r = 0;
+    uint n = 8;
 
-  do
-    {
-      uint p = sc[GPIO_READ];
-      if (p & SERIAL_SO)
-        {
-	  r |= 1;
-        }
+    do {
+	uint p = sc[GPIO_READ];
+	if (p & SERIAL_SO) {
+	    r |= 1;
+	}
 
-      clock ();
+	clock();
 
-      r = r << 1;
-      n--;
-    }
-  while (n != 0);
+	r = r << 1;
+	n--;
+    } while (n != 0);
 
-  return r >> 1;
+    return r >> 1;
 }
 
 
@@ -122,63 +114,55 @@ static uint read8 ()
     arg2[23:0] = extra command bits
 */
 
-uint cmd_srom (sdp_msg_t *msg)
+uint cmd_srom(sdp_msg_t *msg)
 {
-  uint arg1 = msg->arg1;
-  uint port = sc[GPIO_PORT];	// Preserve output state
+    uint arg1 = msg->arg1;
+    uint port = sc[GPIO_PORT];	// Preserve output state
 
-  ncs_high ();
+    ncs_high();
 
-  if (arg1 & WREN)
-    {
-      ncs_low ();
-      send (SROM_WREN, 8);
-      ncs_high ();
+    if (arg1 & WREN) {
+	ncs_low();
+	send(SROM_WREN, 8);
+	ncs_high();
     }
 
-  ncs_low ();
+    ncs_low();
 
-  send (msg->arg2, arg1 & 63);
+    send(msg->arg2, arg1 & 63);
 
-  uint len = arg1 >> 16;
-  uchar* wbuf = msg->data;
-  uchar* rbuf = (uchar *) &msg->arg1;
+    uint len = arg1 >> 16;
+    uchar* wbuf = msg->data;
+    uchar* rbuf = (uchar *) &msg->arg1;
 
-  while (len)
-    {
-      if (arg1 & WRITE)
-        {
-	  send (*wbuf++ << 24, 8);
-        }
-      else
-        {
-	  *rbuf++ = read8 ();
+    while (len) {
+	if (arg1 & WRITE) {
+	    send(*wbuf++ << 24, 8);
+        } else {
+            *rbuf++ = read8();
         }
 
-      len--;
+	len--;
     }
 
-  ncs_high ();
+    ncs_high();
 
-  while (arg1 & WAIT)
-    {
-      ncs_low ();
-      send (SROM_RDSR, 8);
-      uint sr = read8 ();
-      ncs_high ();
+    while (arg1 & WAIT) {
+	ncs_low();
+	send(SROM_RDSR, 8);
+	uint sr = read8();
+	ncs_high();
 
-      if ((sr & 1) == 0)
-        {
-	  break;
-        }
+	if ((sr & 1) == 0) {
+	    break;
+	}
     }
 
-  sc[GPIO_PORT] = port;
+    sc[GPIO_PORT] = port;
 
-  if (arg1 & WRITE)
-    {
-      return 0;
+    if (arg1 & WRITE) {
+	return 0;
     }
 
-  return arg1 >> 16;
+    return arg1 >> 16;
 }
