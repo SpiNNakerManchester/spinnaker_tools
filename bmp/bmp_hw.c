@@ -238,17 +238,17 @@ const uint32_t hw_ver = 5;
 
 // Enable/disable interrupts
 
-__asm uint32_t cpu_int_off (void)
+__asm uint32_t cpu_int_off(void)
 {
-  mrs     r0, primask
-  cpsid   i
-  bx      lr
+    mrs     r0, primask
+    cpsid   i
+    bx      lr
 }
 
-__asm void cpu_int_restore (uint32_t cpsr)
+__asm void cpu_int_restore(uint32_t cpsr)
 {
-  msr     primask, r0
-  bx      lr
+    msr     primask, r0
+    bx      lr
 }
 
 
@@ -256,75 +256,69 @@ __asm void cpu_int_restore (uint32_t cpsr)
 
 void clock_div (uint32_t bit_pos, uint32_t value)
 {
-  if (bit_pos < 32)
-    {
-      LPC_SC->PCLKSEL0 &= (~(CLKPWR_PCLKSEL_BITMASK (bit_pos)));
-      LPC_SC->PCLKSEL0 |= (CLKPWR_PCLKSEL_SET (bit_pos, value));
-    }
-  else
-    {
-      bit_pos -= 32;
-      LPC_SC->PCLKSEL1 &= ~(CLKPWR_PCLKSEL_BITMASK (bit_pos));
-      LPC_SC->PCLKSEL1 |= (CLKPWR_PCLKSEL_SET (bit_pos, value));
+    if (bit_pos < 32) {
+	LPC_SC->PCLKSEL0 &= (~(CLKPWR_PCLKSEL_BITMASK (bit_pos)));
+	LPC_SC->PCLKSEL0 |= (CLKPWR_PCLKSEL_SET (bit_pos, value));
+    } else {
+	bit_pos -= 32;
+	LPC_SC->PCLKSEL1 &= ~(CLKPWR_PCLKSEL_BITMASK (bit_pos));
+	LPC_SC->PCLKSEL1 |= (CLKPWR_PCLKSEL_SET (bit_pos, value));
     }
 }
 
 //------------------------------------------------------------------------------
 
 
-void set_power (uint32_t state)
+void set_power(uint32_t state)
 {
-  if (state == POWER_ON)
-    {
-      LPC_GPIO0->FIOSET = LED_1;
-      LPC_GPIO2->FIOSET = POR;	// Set POR
+    if (state == POWER_ON) {
+	LPC_GPIO0->FIOSET = LED_1;
+	LPC_GPIO2->FIOSET = POR;	// Set POR
 
-      LPC_GPIO0->FIOCLR = IO_EN1;
-      LPC_GPIO1->FIOCLR = EN_V12 + EN_V18;
-      LPC_GPIO1->FIOSET = EN_VFPGA;
+	LPC_GPIO0->FIOCLR = IO_EN1;
+	LPC_GPIO1->FIOCLR = EN_V12 + EN_V18;
+	LPC_GPIO1->FIOSET = EN_VFPGA;
 
-      board_stat_t *stat = &board_stat[can_ID];
-      stat->shutdown = 0;
-    }
-  else
-    {
-      LPC_GPIO0->FIOCLR = LED_1;
+	board_stat_t *stat = &board_stat[can_ID];
+	stat->shutdown = 0;
+    } else {
+	LPC_GPIO0->FIOCLR = LED_1;
 
-      LPC_GPIO0->FIOSET = IO_EN1;
-      LPC_GPIO1->FIOSET = EN_V12 + EN_V18;
-      LPC_GPIO1->FIOCLR = EN_VFPGA;
+	LPC_GPIO0->FIOSET = IO_EN1;
+	LPC_GPIO1->FIOSET = EN_V12 + EN_V18;
+	LPC_GPIO1->FIOCLR = EN_VFPGA;
     }
 
-  power_state = state;
+    power_state = state;
 }
 
 //------------------------------------------------------------------------------
 
 
-static const uint32_t led_bit[] = {LED_0, LED_1, LED_2, LED_3,
-				   LED_4, LED_5, LED_6, LED_7};
+static const uint32_t led_bit[] = {
+    LED_0, LED_1, LED_2, LED_3,
+    LED_4, LED_5, LED_6, LED_7
+};
 
 
-void led_set (uint32_t leds)
+void led_set(uint32_t leds)
 {
-  for (uint32_t i = 0; i < 8; i++)
-    {
-      uint32_t led = led_bit[i];
-      uint32_t cmd = leds & 3;
+    for (uint32_t i = 0; i < 8; i++) {
+	uint32_t led = led_bit[i];
+	uint32_t cmd = leds & 3;
 
-      leds = leds >> 2;
+	leds = leds >> 2;
 
-      switch (cmd)
-	{
+	switch (cmd) {
 	case 1:
-	  LPC_GPIO0->FIOPIN ^= led;
-	  break;
+	    LPC_GPIO0->FIOPIN ^= led;
+	    break;
 	case 2:
-	  LPC_GPIO0->FIOCLR = led;
-	  break;
+	    LPC_GPIO0->FIOCLR = led;
+	    break;
 	case 3:
-	  LPC_GPIO0->FIOSET = led;
-	  break;
+	    LPC_GPIO0->FIOSET = led;
+	    break;
 	}
     }
 }
@@ -333,124 +327,111 @@ void led_set (uint32_t leds)
 //------------------------------------------------------------------------------
 
 
-void fpga_reset (uint32_t code)
+void fpga_reset(uint32_t code)
 {
-  if (code == 0)
-    {
-      LPC_GPIO1->FIOCLR = XIL_RST;
-    }
-  else if (code == 1)
-    {
-      LPC_GPIO1->FIOSET = XIL_RST;
-    }
-  else
-    {
-      LPC_GPIO1->FIOSET = XIL_RST;
-      delay_us (5);
-      LPC_GPIO1->FIOCLR = XIL_RST;
-      delay_us (5);
-      LPC_GPIO1->FIOSET = XIL_RST;
+    if (code == 0) {
+	LPC_GPIO1->FIOCLR = XIL_RST;
+    } else if (code == 1) {
+	LPC_GPIO1->FIOSET = XIL_RST;
+    } else {
+	LPC_GPIO1->FIOSET = XIL_RST;
+	delay_us(5);
+	LPC_GPIO1->FIOCLR = XIL_RST;
+	delay_us(5);
+	LPC_GPIO1->FIOSET = XIL_RST;
     }
 }
 
 
-uint32_t fpga_init (uint32_t mask)
+uint32_t fpga_init(uint32_t mask)
 {
-  uint32_t xprogb = 0;
-  uint32_t xinitb = 0;
+    uint32_t xprogb = 0;
+    uint32_t xinitb = 0;
 
-  if (mask & 1)
-    {
-      xprogb |= XPROGB_0;
-      xinitb |= XINITB_0;
+    if (mask & 1) {
+	xprogb |= XPROGB_0;
+	xinitb |= XINITB_0;
     }
-  if (mask & 2)
-    {
-      xprogb |= XPROGB_1;
-      xinitb |= XINITB_1;
+    if (mask & 2) {
+	xprogb |= XPROGB_1;
+	xinitb |= XINITB_1;
     }
-  if (mask & 4)
-    {
-      xprogb |= XPROGB_2;
-      xinitb |= XINITB_2;
+    if (mask & 4) {
+	xprogb |= XPROGB_2;
+	xinitb |= XINITB_2;
     }
 
-  LPC_GPIO1->FIOCLR = XIL_RST;		// Reset line (HSWAPEN) low
+    LPC_GPIO1->FIOCLR = XIL_RST;	// Reset line (HSWAPEN) low
 
-  uint32_t led = LPC_GPIO0->FIOPIN & (LED_5 + LED_6);	// Save state of LEDs
-  LPC_GPIO0->FIOSET = LED_5 + LED_6;			// Set M0, M1 high
+    uint32_t led = LPC_GPIO0->FIOPIN & (LED_5 + LED_6);	// Save state of LEDs
+    LPC_GPIO0->FIOSET = LED_5 + LED_6;	// Set M0, M1 high
 
-  LPC_GPIO1->FIOSET = xprogb;				// Set PROGB high
-  delay_us (5);
-  LPC_GPIO1->FIOCLR = xprogb;				// then low
-  delay_us (5);
-  LPC_GPIO1->FIOSET = xprogb;				// then high again
+    LPC_GPIO1->FIOSET = xprogb;		// Set PROGB high
+    delay_us(5);
+    LPC_GPIO1->FIOCLR = xprogb;		// then low
+    delay_us(5);
+    LPC_GPIO1->FIOSET = xprogb;		// then high again
 
-  // M0, M1 have to be held for some time after PROGB rises otherwise
-  // the FPGAs start up in the wrong configuration mode and drive CCLK
-  // themselves (not good!)
+    // M0, M1 have to be held for some time after PROGB rises otherwise
+    // the FPGAs start up in the wrong configuration mode and drive CCLK
+    // themselves (not good!)
 
-  delay_us (2000);	// Determined by guesswork! Should be checked
+    delay_us(2000);		// Determined by guesswork! Should be checked
 
-  LPC_GPIO0->FIOCLR = LED_5 + LED_6;			// Clear LEDs
-  LPC_GPIO0->FIOSET = led;				// and restore
+    LPC_GPIO0->FIOCLR = LED_5 + LED_6;	// Clear LEDs
+    LPC_GPIO0->FIOSET = led;		// and restore
 
-  uint32_t t = 1024;
+    uint32_t t = 1024;
 
-  // Spin4 has all InitB signals commoned - Spin5 has 3 separate lines
+    // Spin4 has all InitB signals commoned - Spin5 has 3 separate lines
 
-  while ((LPC_GPIO2->FIOPIN & xinitb) != xinitb)	// Wait for INITB high
-    {
-      delay_us (10);
-      if (--t == 0)
-        {
-	  return 0;
+    while ((LPC_GPIO2->FIOPIN & xinitb) != xinitb) { // Wait for INITB high
+	delay_us(10);
+	if (--t == 0) {
+	    return 0;
         }
     }
 
-  return 1;
+    return 1;
 }
 
 //------------------------------------------------------------------------------
 
 
-#define ADC_PCLK      25000000	// 25 MHz
-#define ADC_CLK       13000000	// 13 MHz
-#define ADC_PDN       (1 << 21)
+#define ADC_PCLK	25000000	// 25 MHz
+#define ADC_CLK		13000000	// 13 MHz
+#define ADC_PDN		(1 << 21)
 
-#define ADC_VALID 0xde		// Channels 0, 5 not used on Spin5
+#define ADC_VALID	0xde		// Channels 0, 5 not used on Spin5
 
 // Channels 0-7 - V12d, V12c, V12b, V12a, V18, V25, V33, Vpwr
 
-static void configure_adc (void)
+static void configure_adc(void)
 {
-  uint32_t div = (ADC_PCLK * 2 + ADC_CLK) / ( 2 * ADC_CLK);
+    uint32_t div = (ADC_PCLK * 2 + ADC_CLK) / ( 2 * ADC_CLK);
 
-  LPC_ADC->ADCR = ADC_PDN + ((div - 1) << 8);
+    LPC_ADC->ADCR = ADC_PDN + ((div - 1) << 8);
 
-  for (uint32_t i = 0; i < 8; i++)
-    {
-      board_stat[can_ID].adc[i] = UINT16_MAX;
+    for (uint32_t i = 0; i < 8; i++) {
+	board_stat[can_ID].adc[i] = UINT16_MAX;
     }
 }
 
 
-void read_adc (void)
+void read_adc(void)
 {
-  uint32_t *adc = (uint32_t *) &LPC_ADC->ADDR0;
+    uint32_t *adc = (uint32_t *) &LPC_ADC->ADDR0;
 
-  if ((1 << adc_chan) & ADC_VALID)
-    {
-      board_stat[can_ID].adc[adc_chan] = (adc[adc_chan] >> 4) & 0xfff;
+    if ((1 << adc_chan) & ADC_VALID) {
+	board_stat[can_ID].adc[adc_chan] = (adc[adc_chan] >> 4) & 0xfff;
     }
 
-  if (++adc_chan == 8)			// Move to next channel
-    {
-      adc_chan = 0;
+    if (++adc_chan == 8) {		// Move to next channel
+	adc_chan = 0;
     }
-  LPC_ADC->ADCR &= ~ 0x070000ff;	// Clear channels & start
-  LPC_ADC->ADCR |= 1 << adc_chan;	// Select channel
-  LPC_ADC->ADCR |= 0x01000000;		// Start conversion
+    LPC_ADC->ADCR &= ~ 0x070000ff;	// Clear channels & start
+    LPC_ADC->ADCR |= 1 << adc_chan;	// Select channel
+    LPC_ADC->ADCR |= 0x01000000;	// Start conversion
 }
 
 
@@ -458,20 +439,20 @@ void read_adc (void)
 
 // WDT/reset routines
 
-static void configure_wdt (uint32_t period)
+static void configure_wdt(uint32_t period)
 {
-  LPC_WDT->WDTC = period;
-  LPC_WDT->WDCLKSEL = 1;	// Use APB clock (25MHz)
-  LPC_WDT->WDMOD = 3;		// Enable WDT and reset
-  LPC_WDT->WDFEED = 0xaa;
-  LPC_WDT->WDFEED = 0x55;
+    LPC_WDT->WDTC = period;
+    LPC_WDT->WDCLKSEL = 1;	// Use APB clock (25MHz)
+    LPC_WDT->WDMOD = 3;		// Enable WDT and reset
+    LPC_WDT->WDFEED = 0xaa;
+    LPC_WDT->WDFEED = 0x55;
 }
 
 
-void refresh_wdt (void)
+void refresh_wdt(void)
 {
-  LPC_WDT->WDFEED = 0xaa;
-  LPC_WDT->WDFEED = 0x55;
+    LPC_WDT->WDFEED = 0xaa;
+    LPC_WDT->WDFEED = 0x55;
 }
 
 
@@ -483,279 +464,259 @@ void refresh_wdt (void)
 // 3 - time of last WDT (copy of up time)
 
 
-static void process_reset (void)
+static void process_reset(void)
 {
-  uint32_t rsid = LPC_SC->RSID;
+    uint32_t rsid = LPC_SC->RSID;
 
-  // Clear uninitialised vector if POR or EXTR
-
-  if ((rsid & 3) != 0)
-    {
-      for (uint32_t i = 0; i < 8; i++)
-	{
-	  uni_vec[i] = 0;
+    // Clear uninitialised vector if POR or EXTR
+    if ((rsid & 3) != 0) {
+	for (uint32_t i = 0; i < 8; i++) {
+	    uni_vec[i] = 0;
 	}
-      LPC_SC->RSID = 3;
+	LPC_SC->RSID = 3;
     }
 
-  // Process watchdog reset
+    // Process watchdog reset
+    if (rsid & 4) {
+	LPC_GPIO0->FIOSET = LED_7;
 
-  if (rsid & 4)
-    {
-      LPC_GPIO0->FIOSET = LED_7;
+	uni_vec[1]++;			// Bump WDT count
+	uni_vec[3] = uni_vec[2];	// Copy uptime;
+	uni_vec[2] += 10;		// Try to keep uptime correct
 
-      uni_vec[1]++;		// Bump WDT count
-      uni_vec[3] = uni_vec[2];	// Copy uptime;
-      uni_vec[2] += 10;		// Try to keep uptime correct
-
-      LPC_SC->RSID = 4;
+	LPC_SC->RSID = 4;
     }
 
-  // Save RSID register
-
-  uni_vec[0] = rsid;
+    // Save RSID register
+    uni_vec[0] = rsid;
 }
 
 
 //------------------------------------------------------------------------------
 
 
-void configure_pwm (uint32_t period, uint32_t width)
+void configure_pwm(uint32_t period, uint32_t width)
 {
-  LPC_PWM1->TCR = 0;			// Disable...
+    LPC_PWM1->TCR = 0;			// Disable...
 
-  LPC_PWM1->PCR = 1 << 14;		// Enable PWM6 output
-  LPC_PWM1->MR0 = period;		// Period
-  LPC_PWM1->MR6 = width;		// Pulse width
-  LPC_PWM1->MCR = 2;			// Reset TC on MR0
-  LPC_PWM1->LER = (1 << 0) + (1 << 6);	// Enable match copy
+    LPC_PWM1->PCR = 1 << 14;		// Enable PWM6 output
+    LPC_PWM1->MR0 = period;		// Period
+    LPC_PWM1->MR6 = width;		// Pulse width
+    LPC_PWM1->MCR = 2;			// Reset TC on MR0
+    LPC_PWM1->LER = (1 << 0) + (1 << 6); // Enable match copy
 
-  LPC_PWM1->TCR = 9;			// Enable everything...
+    LPC_PWM1->TCR = 9;			// Enable everything...
 }
 
 
 //------------------------------------------------------------------------------
 
 
-static void timer_init (LPC_TIM_TypeDef *timer, uint32_t channel,
-			uint32_t value)
+static void timer_init(LPC_TIM_TypeDef *timer, uint32_t channel,
+	uint32_t value)
 {
-  volatile uint32_t *match = &timer->MR0;
+    volatile uint32_t *match = &timer->MR0;
 
-  match[channel] = value - 1;		// Set match value
+    match[channel] = value - 1;		// Set match value
 
-  timer->MCR = 1 << (channel * 3 + 1);	// Reset on match
-  timer->EMR = 3 << (channel * 2 + 4);	// Toggle on match
+    timer->MCR = 1 << (channel * 3 + 1); // Reset on match
+    timer->EMR = 3 << (channel * 2 + 4); // Toggle on match
 
-  timer->TCR = 1;			// Enable timer
+    timer->TCR = 1;			// Enable timer
 }
 
 
-static void configure_timers (void)
+static void configure_timers(void)
 {
-  clock_div (CLKPWR_PCLKSEL_TIMER0, CLKPWR_PCLKSEL_CCLK_DIV_1);
-  clock_div (CLKPWR_PCLKSEL_TIMER1, CLKPWR_PCLKSEL_CCLK_DIV_1);
-  clock_div (CLKPWR_PCLKSEL_TIMER2, CLKPWR_PCLKSEL_CCLK_DIV_1);
-  clock_div (CLKPWR_PCLKSEL_TIMER3, CLKPWR_PCLKSEL_CCLK_DIV_1);
+    clock_div(CLKPWR_PCLKSEL_TIMER0, CLKPWR_PCLKSEL_CCLK_DIV_1);
+    clock_div(CLKPWR_PCLKSEL_TIMER1, CLKPWR_PCLKSEL_CCLK_DIV_1);
+    clock_div(CLKPWR_PCLKSEL_TIMER2, CLKPWR_PCLKSEL_CCLK_DIV_1);
+    clock_div(CLKPWR_PCLKSEL_TIMER3, CLKPWR_PCLKSEL_CCLK_DIV_1);
 
-  // System tick - period 1ms
+    // System tick - period 1ms
+    SysTick_Config(CCLK / 1000);
 
-  SysTick_Config (CCLK / 1000);
+    // Timer0 - generates 10MHz on P1.28
+    timer_init(LPC_TIM0, 0, 5);
 
-  // Timer0 - generates 10MHz on P1.28
+    // Timer1 - generates 100kHz on P1.25
+    timer_init(LPC_TIM1, 1, 500);
 
-  timer_init (LPC_TIM0, 0, 5);
+    // Timer2 - generates 25MHz on P4.28
+    timer_init(LPC_TIM2, 0, 2);
 
-  // Timer1 - generates 100kHz on P1.25
+    // Timer3 - used for events - initialised in bmp_event code
 
-  timer_init (LPC_TIM1, 1, 500);
-
-  // Timer2 - generates 25MHz on P4.28
-
-  timer_init (LPC_TIM2, 0, 2);
-
-  // Timer3 - used for events - initialised in bmp_event code
-
-  // CLKOUT produces 50 MHz on P1.27
-
-  LPC_SC->CLKOUTCFG = CLKPWR_CLKOUTCFG_CLKOUTSEL_CPU +
-                      CLKPWR_CLKOUTCFG_CLKOUTDIV(1) +
-                      CLKPWR_CLKOUTCFG_CLKOUT_EN;
+    // CLKOUT produces 50 MHz on P1.27
+    LPC_SC->CLKOUTCFG = CLKPWR_CLKOUTCFG_CLKOUTSEL_CPU +
+	    CLKPWR_CLKOUTCFG_CLKOUTDIV(1) +
+	    CLKPWR_CLKOUTCFG_CLKOUT_EN;
 }
 
 
 //------------------------------------------------------------------------------
 
 
-static void set_pin_mf (uint32_t port, uint32_t pin, uint32_t mode,
-			uint32_t function)
+static void set_pin_mf(uint32_t port, uint32_t pin, uint32_t mode,
+	uint32_t function)
 {
-  uint32_t *func_reg = (uint32_t *) &LPC_PINCON->PINSEL0 + 2 * port;
-  uint32_t *mode_reg = (uint32_t *) &LPC_PINCON->PINMODE0 + 2 * port;
+    uint32_t *func_reg = (uint32_t *) &LPC_PINCON->PINSEL0 + 2 * port;
+    uint32_t *mode_reg = (uint32_t *) &LPC_PINCON->PINMODE0 + 2 * port;
 
-  pin *= 2;
-
-  if (pin >= 32)
-    {
-      pin -= 32;
-      func_reg++;
-      mode_reg++;
+    pin *= 2;
+    if (pin >= 32) {
+	pin -= 32;
+	func_reg++;
+	mode_reg++;
     }
 
-  *func_reg &= ~(3 << pin);
-  *func_reg |= function << pin;
+    *func_reg &= ~(3 << pin);
+    *func_reg |= function << pin;
 
-  *mode_reg &= ~(3 << pin);
-  *mode_reg |= mode << pin;
+    *mode_reg &= ~(3 << pin);
+    *mode_reg |= mode << pin;
 }
 
 
-static void set_pin_od (uint32_t port, uint32_t pin, uint32_t mode)
+static void set_pin_od(uint32_t port, uint32_t pin, uint32_t mode)
 {
-  uint32_t *od_reg = (uint32_t *) &LPC_PINCON->PINMODE_OD0 + port;
+    uint32_t *od_reg = (uint32_t *) &LPC_PINCON->PINMODE_OD0 + port;
 
-  if (mode == PINSEL_PINMODE_OPENDRAIN)
-    {
-      *od_reg |= 1 << pin;
-    }
-  else
-    {
-      *od_reg &= ~(1 << pin);
+    if (mode == PINSEL_PINMODE_OPENDRAIN) {
+	*od_reg |= 1 << pin;
+    } else {
+	*od_reg &= ~(1 << pin);
     }
 }
 
 
-static void config_pin (uint32_t port, uint32_t pin, uint32_t func)
+static void config_pin(uint32_t port, uint32_t pin, uint32_t func)
 {
-  set_pin_mf (port, pin, PINSEL_PINMODE_PULLUP, func);
-  set_pin_od (port, pin, PINSEL_PINMODE_NORMAL);
+    set_pin_mf(port, pin, PINSEL_PINMODE_PULLUP, func);
+    set_pin_od(port, pin, PINSEL_PINMODE_NORMAL);
 }
 
 
 //  PORT_0, pin 16 is Flash NCS
 
-void ssp0_pins (uint32_t on)
+void ssp0_pins(uint32_t on)
 {
-  if (on)
-    {
-      LPC_GPIO2->FIOSET = IO_EN2;	// Disable Spin from Flash
+    if (on) {
+	LPC_GPIO2->FIOSET = IO_EN2;	// Disable Spin from Flash
 
-      LPC_GPIO0->FIODIR |= SF_NCS;	// Enable output (high)
+	LPC_GPIO0->FIODIR |= SF_NCS;	// Enable output (high)
 
-      config_pin (PINSEL_PORT_0, 15, PINSEL_FUNC_2); // Flash SCK
-      config_pin (PINSEL_PORT_0, 17, PINSEL_FUNC_2); // Flash SO
-      config_pin (PINSEL_PORT_0, 18, PINSEL_FUNC_2); // Flash SI
-    }
-  else
-    {
-      LPC_GPIO0->FIODIR &= ~SF_NCS;	// Disable output
+	config_pin(PINSEL_PORT_0, 15, PINSEL_FUNC_2); // Flash SCK
+	config_pin(PINSEL_PORT_0, 17, PINSEL_FUNC_2); // Flash SO
+	config_pin(PINSEL_PORT_0, 18, PINSEL_FUNC_2); // Flash SI
+    } else {
+	LPC_GPIO0->FIODIR &= ~SF_NCS;	// Disable output
 
-      config_pin (PINSEL_PORT_0, 15, PINSEL_FUNC_0); // Flash SCK
-      config_pin (PINSEL_PORT_0, 17, PINSEL_FUNC_0); // Flash SO
-      config_pin (PINSEL_PORT_0, 18, PINSEL_FUNC_0); // Flash SI
+	config_pin(PINSEL_PORT_0, 15, PINSEL_FUNC_0); // Flash SCK
+	config_pin(PINSEL_PORT_0, 17, PINSEL_FUNC_0); // Flash SO
+	config_pin(PINSEL_PORT_0, 18, PINSEL_FUNC_0); // Flash SI
 
-      LPC_GPIO2->FIOCLR = IO_EN2;	// Enable Spin onto Flash
+	LPC_GPIO2->FIOCLR = IO_EN2;	// Enable Spin onto Flash
     }
 
-  delay_ms (1);
+    delay_ms(1);
 }
 
 
-static uint32_t configure_pins (void)
+static uint32_t configure_pins(void)
 {
-  uint32_t id = LPC_GPIO2->FIOPIN & 31;
+    uint32_t id = LPC_GPIO2->FIOPIN & 31;
 
-  // Spin4 PCB fault - bits 0, 1 of ID swapped
+    // Spin4 PCB fault - bits 0, 1 of ID swapped
+    bp_ctrl = ((id & 7) == 0);
 
-  bp_ctrl = ((id & 7) == 0);
+    //-----------------
+    // Configure Port 0
 
-  //-----------------
-  // Configure Port 0
+    LPC_GPIO0->FIOSET = P0_INIT;	// Initialise outputs
+    LPC_GPIO0->FIODIR = P0_EN;		// Enable outputs
 
-  LPC_GPIO0->FIOSET = P0_INIT;	// Initialise outputs
-  LPC_GPIO0->FIODIR = P0_EN;	// Enable outputs
+    config_pin(PINSEL_PORT_0,  0, PINSEL_FUNC_1); // CAN RX
+    config_pin(PINSEL_PORT_0,  1, PINSEL_FUNC_1); // CAN TX
+    config_pin(PINSEL_PORT_0,  2, PINSEL_FUNC_2); // A/D ch 7 (VPWR)
+    config_pin(PINSEL_PORT_0,  3, PINSEL_FUNC_2); // A/D ch 6 (V33)
+    // 4-5   - LED outputs
+    // 6     - spare (Spin4), GSIG (Spin5)
+    config_pin(PINSEL_PORT_0,  7, PINSEL_FUNC_2); // Xilinx CCLK
+    config_pin(PINSEL_PORT_0,  8, PINSEL_FUNC_2); // Xilinx DOUT
+    config_pin(PINSEL_PORT_0,  9, PINSEL_FUNC_2); // Xilinx DIN
 
-  config_pin (PINSEL_PORT_0,  0, PINSEL_FUNC_1); // CAN RX
-  config_pin (PINSEL_PORT_0,  1, PINSEL_FUNC_1); // CAN TX
-  config_pin (PINSEL_PORT_0,  2, PINSEL_FUNC_2); // A/D ch 7 (VPWR)
-  config_pin (PINSEL_PORT_0,  3, PINSEL_FUNC_2); // A/D ch 6 (V33)
-  // 4-5   - LED outputs
-  // 6     - spare (Spin4), GSIG (Spin5)
-  config_pin (PINSEL_PORT_0,  7, PINSEL_FUNC_2); // Xilinx CCLK
-  config_pin (PINSEL_PORT_0,  8, PINSEL_FUNC_2); // Xilinx DOUT
-  config_pin (PINSEL_PORT_0,  9, PINSEL_FUNC_2); // Xilinx DIN
+    config_pin(PINSEL_PORT_0, 10, PINSEL_FUNC_2); // SDA2
+    config_pin(PINSEL_PORT_0, 11, PINSEL_FUNC_2); // SCL2
 
-  config_pin (PINSEL_PORT_0, 10, PINSEL_FUNC_2); // SDA2
-  config_pin (PINSEL_PORT_0, 11, PINSEL_FUNC_2); // SCL2
+    // Configure 15-18 (SSP0 - Serial Flash)
 
-  // Configure 15-18 (SSP0 - Serial Flash)
+    ssp0_pins(1);
 
-  ssp0_pins (1);
+    // 19-22 - LED outputs
+    config_pin(PINSEL_PORT_0, 24, PINSEL_FUNC_1); // A/D ch 1 (V12C)
+    config_pin(PINSEL_PORT_0, 25, PINSEL_FUNC_1); // A/D ch 2 (V12B)
+    config_pin(PINSEL_PORT_0, 26, PINSEL_FUNC_1); // A/D ch 3 (V12A)
 
-  // 19-22 - LED outputs
-  config_pin (PINSEL_PORT_0, 24, PINSEL_FUNC_1); // A/D ch 1 (V12C)
-  config_pin (PINSEL_PORT_0, 25, PINSEL_FUNC_1); // A/D ch 2 (V12B)
-  config_pin (PINSEL_PORT_0, 26, PINSEL_FUNC_1); // A/D ch 3 (V12A)
+    config_pin(PINSEL_PORT_0, 27, PINSEL_FUNC_1); // I2C SDA
+    config_pin(PINSEL_PORT_0, 28, PINSEL_FUNC_1); // I2C SCL
+    // 29-30 - LED outputs
 
-  config_pin (PINSEL_PORT_0, 27, PINSEL_FUNC_1); // I2C SDA
-  config_pin (PINSEL_PORT_0, 28, PINSEL_FUNC_1); // I2C SCL
-  // 29-30 - LED outputs
+    //-----------------
+    // Configure Port 1
 
-  //-----------------
-  // Configure Port 1
+    LPC_GPIO1->FIOSET = P1_INIT;	// Initialise outputs
+    LPC_GPIO1->FIODIR = P1_EN;		// Enable outputs
 
-  LPC_GPIO1->FIOSET = P1_INIT;	// Initialise outputs
-  LPC_GPIO1->FIODIR = P1_EN;    // Enable outputs
+    config_pin(PINSEL_PORT_1,  0, PINSEL_FUNC_1); // MII TXD0
+    config_pin(PINSEL_PORT_1,  1, PINSEL_FUNC_1); // MII TXD1
+    config_pin(PINSEL_PORT_1,  4, PINSEL_FUNC_1); // MII TX_EN
+    config_pin(PINSEL_PORT_1,  8, PINSEL_FUNC_1); // MII CRS
+    config_pin(PINSEL_PORT_1,  9, PINSEL_FUNC_1); // MII RXD0
+    config_pin(PINSEL_PORT_1, 10, PINSEL_FUNC_1); // MII RXD1
+    // XIL_RST output
+    config_pin(PINSEL_PORT_1, 15, PINSEL_FUNC_1); // MII REF_CLK
+    config_pin(PINSEL_PORT_1, 16, PINSEL_FUNC_1); // MII MDC
+    config_pin(PINSEL_PORT_1, 17, PINSEL_FUNC_1); // MII MDIO
 
-  config_pin (PINSEL_PORT_1,  0, PINSEL_FUNC_1); // MII TXD0
-  config_pin (PINSEL_PORT_1,  1, PINSEL_FUNC_1); // MII TXD1
-  config_pin (PINSEL_PORT_1,  4, PINSEL_FUNC_1); // MII TX_EN
-  config_pin (PINSEL_PORT_1,  8, PINSEL_FUNC_1); // MII CRS
-  config_pin (PINSEL_PORT_1,  9, PINSEL_FUNC_1); // MII RXD0
-  config_pin (PINSEL_PORT_1, 10, PINSEL_FUNC_1); // MII RXD1
-  // XIL_RST output
-  config_pin (PINSEL_PORT_1, 15, PINSEL_FUNC_1); // MII REF_CLK
-  config_pin (PINSEL_PORT_1, 16, PINSEL_FUNC_1); // MII MDC
-  config_pin (PINSEL_PORT_1, 17, PINSEL_FUNC_1); // MII MDIO
+    // 18-20 - VEN outputs
+    // 21    - spare (Spin4), XIL_PROGB[0] (Spin5)
+    config_pin(PINSEL_PORT_1, 22, PINSEL_FUNC_1); // MC0B0
+    // 23-24 - Xilinx PROGB outputs
+    config_pin(PINSEL_PORT_1, 25, PINSEL_FUNC_3); // Timer1/M1
+    config_pin(PINSEL_PORT_1, 26, PINSEL_FUNC_1); // MC0B1
+    config_pin(PINSEL_PORT_1, 27, PINSEL_FUNC_1); // CLKOUT (50MHz)
+    config_pin(PINSEL_PORT_1, 28, PINSEL_FUNC_3); // Timer0/M0
+    config_pin(PINSEL_PORT_1, 29, PINSEL_FUNC_1); //MC0B2
+    config_pin(PINSEL_PORT_1, 30, PINSEL_FUNC_3); // A/D ch 4 (V18)
 
-  // 18-20 - VEN outputs
-  // 21    - spare (Spin4), XIL_PROGB[0] (Spin5)
-  config_pin (PINSEL_PORT_1, 22, PINSEL_FUNC_1); // MC0B0
-  // 23-24 - Xilinx PROGB outputs
-  config_pin (PINSEL_PORT_1, 25, PINSEL_FUNC_3); // Timer1/M1
-  config_pin (PINSEL_PORT_1, 26, PINSEL_FUNC_1); // MC0B1
-  config_pin (PINSEL_PORT_1, 27, PINSEL_FUNC_1); // CLKOUT (50MHz)
-  config_pin (PINSEL_PORT_1, 28, PINSEL_FUNC_3); // Timer0/M0
-  config_pin (PINSEL_PORT_1, 29, PINSEL_FUNC_1); //MC0B2
-  config_pin (PINSEL_PORT_1, 30, PINSEL_FUNC_3); // A/D ch 4 (V18)
+    //-----------------
+    // Configure Port 2
 
-  //-----------------
-  // Configure Port 2
+    LPC_GPIO2->FIOSET = P2_INIT;	// Initialise outputs
+    LPC_GPIO2->FIODIR = P2_EN;		// Enable outputs
 
-  LPC_GPIO2->FIOSET = P2_INIT;	// Initialise outputs
-  LPC_GPIO2->FIODIR = P2_EN;    // Enable outputs
+    config_pin(PINSEL_PORT_2,  5, PINSEL_FUNC_1); // PWM 1.6 (Fan)
 
-  config_pin (PINSEL_PORT_2,  5, PINSEL_FUNC_1); // PWM 1.6 (Fan)
+    //-----------------
+    // Configure Port 3
 
-  //-----------------
-  // Configure Port 3
+    LPC_GPIO3->FIOSET = P3_INIT;	// Initialise outputs
+    LPC_GPIO3->FIODIR = P3_EN;		// Enable outputs
 
-  LPC_GPIO3->FIOSET = P3_INIT;	// Initialise outputs
-  LPC_GPIO3->FIODIR = P3_EN;    // Enable outputs
+    // 25    - output XIL_FSEL[0]
+    // 26    - output XIL_FSEL[1]
 
-  // 25    - output XIL_FSEL[0]
-  // 26    - output XIL_FSEL[1]
+    //-----------------
+    // Configure Port 4
 
-  //-----------------
-  // Configure Port 4
+    LPC_GPIO4->FIOSET = P4_INIT;	// Initialise outputs
+    LPC_GPIO4->FIODIR = P4_EN;		// Enable outputs
 
-  LPC_GPIO4->FIOSET = P4_INIT;	// Initialise outputs
-  LPC_GPIO4->FIODIR = P4_EN;    // Enable outputs
+    config_pin(PINSEL_PORT_4, 28, PINSEL_FUNC_2); // Timer2/M0
+    // 29    - output XIL_FSEL[2]
 
-  config_pin (PINSEL_PORT_4, 28, PINSEL_FUNC_2); // Timer2/M0
-  // 29    - output XIL_FSEL[2]
-
-  return id;
+    return id;
 }
 
 
@@ -775,31 +736,26 @@ static uint32_t configure_pins (void)
 // for the 'standard' IP address block of 32 bytes. If the Serial Flash is
 // set up to contain more code, the delay of 20ms will need to be increased.
 
-void reset_spin (uint32_t code)
+void reset_spin(uint32_t code)
 {
-  uint32_t fpga = code & 4;
+    uint32_t fpga = code & 4;
 
-  code &= 3;
-
-  if (code != 0)
-    {
-      LPC_GPIO2->FIOSET = POR;
-      if (fpga)
-	{
-	  LPC_GPIO1->FIOCLR = XIL_RST;
+    code &= 3;
+    if (code != 0) {
+	LPC_GPIO2->FIOSET = POR;
+	if (fpga) {
+	    LPC_GPIO1->FIOCLR = XIL_RST;
 	}
     }
 
-  if (code != 1)
-    {
-      delay_ms (1);		// Wait a while
-      ssp0_pins (0);		// Enable Spin->Flash
+    if (code != 1) {
+	delay_ms(1);			// Wait a while
+	ssp0_pins(0);			// Enable Spin->Flash
 
-      LPC_GPIO2->FIOCLR = POR;	// Clear POR
+	LPC_GPIO2->FIOCLR = POR;	// Clear POR
 
-      if (fpga)			// Set XRST
-	{
-	  LPC_GPIO1->FIOSET = XIL_RST;
+	if (fpga) {			// Set XRST
+	    LPC_GPIO1->FIOSET = XIL_RST;
 	}
     }
 }
@@ -810,23 +766,23 @@ void reset_spin (uint32_t code)
 // Set up a 300kHz 120 degree duty-cycle waveform on three outputs
 // MC0B0, MC0B1, MC0B2 (NB outputs not enabled on Spin4)
 
-static void configure_mcpwm ()
+static void configure_mcpwm()
 {
-  clock_div (CLKPWR_PCLKSEL_MC, CLKPWR_PCLKSEL_CCLK_DIV_1);
+    clock_div(CLKPWR_PCLKSEL_MC, CLKPWR_PCLKSEL_CCLK_DIV_1);
 
-  LPC_MCPWM->MCTIM0 = 0;
-  LPC_MCPWM->MCTIM1 = 111;
-  LPC_MCPWM->MCTIM2 = 222;
+    LPC_MCPWM->MCTIM0 = 0;
+    LPC_MCPWM->MCTIM1 = 111;
+    LPC_MCPWM->MCTIM2 = 222;
 
-  LPC_MCPWM->MCPER0 = 333;
-  LPC_MCPWM->MCPER1 = 333;
-  LPC_MCPWM->MCPER2 = 333;
+    LPC_MCPWM->MCPER0 = 333;
+    LPC_MCPWM->MCPER1 = 333;
+    LPC_MCPWM->MCPER2 = 333;
 
-  LPC_MCPWM->MCPW0 = 111;
-  LPC_MCPWM->MCPW1 = 111;
-  LPC_MCPWM->MCPW2 = 111;
+    LPC_MCPWM->MCPW0 = 111;
+    LPC_MCPWM->MCPW1 = 111;
+    LPC_MCPWM->MCPW2 = 111;
 
-  LPC_MCPWM->MCCON_SET = 0x00010101;
+    LPC_MCPWM->MCCON_SET = 0x00010101;
 }
 
 
@@ -840,63 +796,54 @@ static void configure_mcpwm ()
 static uint32_t fan_last[4];
 static uint16_t fan_count[4];
 
-
-void read_fans (void)
+void read_fans(void)
 {
-  uint32_t fan0 = LPC_GPIO2->FIOPIN;
-  uint32_t fan1 = fan0;
-  uint32_t fan2 = LPC_GPIO0->FIOPIN;
+    uint32_t fan0 = LPC_GPIO2->FIOPIN;
+    uint32_t fan1 = fan0;
+    uint32_t fan2 = LPC_GPIO0->FIOPIN;
 
-  if (((fan_last[0] ^ fan0) & FAN_ED0) != 0)
-    {
-      fan_last[0] = fan0;
-      fan_count[0]++;
+    if (((fan_last[0] ^ fan0) & FAN_ED0) != 0) {
+	fan_last[0] = fan0;
+	fan_count[0]++;
     }
 
-  if (((fan_last[1] ^ fan1) & FAN_ED1) != 0)
-    {
-      fan_last[1] = fan1;
-      fan_count[1]++;
+    if (((fan_last[1] ^ fan1) & FAN_ED1) != 0) {
+	fan_last[1] = fan1;
+	fan_count[1]++;
     }
 
-  if (((fan_last[2] ^ fan2) & FAN_ED2) != 0)
-    {
-      fan_last[2] = fan2;
-      fan_count[2]++;
+    if (((fan_last[2] ^ fan2) & FAN_ED2) != 0) {
+	fan_last[2] = fan2;
+	fan_count[2]++;
     }
-
 }
 
 
 // Read I2C temperature sensors and also compute the fan speed. This
 // routine is called once per second.
 
-void read_temp (void)
+void read_temp(void)
 {
-  board_stat_t *stat = &board_stat[can_ID];
+    board_stat_t *stat = &board_stat[can_ID];
 
-  for (uint32_t i = 0; i < 4; i++)
-    {
-      stat->t_int[i] = INT16_MIN;		// 0x8000
-      stat->t_ext[i] = INT16_MIN;
-      stat->fan[i] = UINT16_MAX;
+    for (uint32_t i = 0; i < 4; i++) {
+	stat->t_int[i] = INT16_MIN;		// 0x8000
+	stat->t_ext[i] = INT16_MIN;
+	stat->fan[i] = UINT16_MAX;
     }
 
-  stat->t_int[0] = read_ts (LPC_I2C2, 0x90);	// First on-board sensor
-  stat->t_int[1] = read_ts (LPC_I2C2, 0x98);	// Second on-board sensor
+    stat->t_int[0] = read_ts(LPC_I2C2, 0x90);	// First on-board sensor
+    stat->t_int[1] = read_ts(LPC_I2C2, 0x98);	// Second on-board sensor
 
-  if (bp_ctrl)	  // Backplane stuff
-    {
-      stat->t_ext[0] = read_ts (LPC_I2C0, 0x9c); // First off-board sensor
-      stat->t_ext[1] = read_ts (LPC_I2C0, 0x9e); // Second off-board sensor
+    if (bp_ctrl) {				// Backplane stuff
+	stat->t_ext[0] = read_ts(LPC_I2C0, 0x9c); // First off-board sensor
+	stat->t_ext[1] = read_ts(LPC_I2C0, 0x9e); // Second off-board sensor
     }
 
-  if (fan_sense)
-    {
-      for (uint32_t i = 0; i < 4; i++) 		 // Fans
-	{
-	  stat->fan[i] = fan_count[i] * 15;
-	  fan_count[i] = 0;
+    if (fan_sense) {
+	for (uint32_t i = 0; i < 4; i++) {	// Fans
+	    stat->fan[i] = fan_count[i] * 15;
+	    fan_count[i] = 0;
 	}
     }
 }
@@ -909,45 +856,40 @@ void read_temp (void)
 // The top LED is turned on (Red on Spin5) and the code is put on the next
 // 4 LEDs (Green on Spin5). The bottom 3 LEDs are turned off.
 
-void die (uint32_t code)
+void die(uint32_t code)
 {
-  __disable_irq ();
+    __disable_irq();
 
-  uint32_t bits = LED_7;
+    uint32_t bits = LED_7;
 
-  for (uint32_t i = 0; i < 4; i++)
-    {
-      if (code & (1 << i))
-	{
-	  bits |= led_bit[i+3];
+    for (uint32_t i = 0; i < 4; i++) {
+	if (code & (1 << i)) {
+	    bits |= led_bit[i+3];
 	}
     }
 
-  LPC_GPIO0->FIOCLR = LED_MASK;
-  LPC_GPIO0->FIOSET = bits;
+    LPC_GPIO0->FIOCLR = LED_MASK;
+    LPC_GPIO0->FIOSET = bits;
 
-  while (1)
-    {
-      refresh_wdt ();
+    while (1) {
+	refresh_wdt();
     }
 }
 
 
-void delay_us (uint32_t n)
+void delay_us(uint32_t n)
 {
-  n *= 34;
-  while (n--)
-    {
-      continue;
+    n *= 34;
+    while (n--) {
+	continue;
     }
 }
 
 
-void delay_ms (uint32_t n)
+void delay_ms(uint32_t n)
 {
-  while (n--)
-    {
-      delay_us (1000);
+    while (n--) {
+	delay_us(1000);
     }
 }
 
@@ -967,55 +909,50 @@ void delay_ms (uint32_t n)
 // single entry in a dummy load block.
 
 
-#define SYSRAM_IP_DATA 0xf5007fe0
+#define SYSRAM_IP_DATA		0xf5007fe0
 
 
-static void configure_spin (void)
+static void configure_spin(void)
 {
-  uint32_t buf[128];	// 512 bytes
-  uint32_t *ip = (uint32_t *) &spin_ip;
+    uint32_t buf[128];	// 512 bytes
+    uint32_t *ip = (uint32_t *) &spin_ip;
 
-  // Clear out temporary buffer used to assemble data
+    // Clear out temporary buffer used to assemble data
 
-  for (uint32_t i = 0; i < 128; i++)
-    {
-      buf[i] = 0xffffffff;
+    for (uint32_t i = 0; i < 128; i++) {
+	buf[i] = 0xffffffff;
     }
 
-  // First thing in buffer is IP address info (11 words)
-  // at offset 0. This needs to be byte reversed!
+    // First thing in buffer is IP address info (11 words)
+    // at offset 0. This needs to be byte reversed!
 
-  buf[0] = __rev (0x553a0008);
-  buf[1] = __rev (SYSRAM_IP_DATA);
+    buf[0] = __rev(0x553a0008);
+    buf[1] = __rev(SYSRAM_IP_DATA);
 
-  for (uint32_t i = 0; i < 8; i++)
-    {
-      buf[i+2] = __rev (ip[i]);
+    for (uint32_t i = 0; i < 8; i++) {
+	buf[i+2] = __rev(ip[i]);
     }
-  buf[10] = __rev (0xaaaaaaaa);
+    buf[10] = __rev(0xaaaaaaaa);
 
-  // Second thing is board_info which starts at offset 256
-  // and is <= 256 bytes
+    // Second thing is board_info which starts at offset 256
+    // and is <= 256 bytes
 
-  uint32_t *info = (uint32_t *) 0x1e00;
-  uint32_t count = info[0];
+    uint32_t *info = (uint32_t *) 0x1e00;
+    uint32_t count = info[0];
 
-  if (count > 63)	// !! Un-init. flash?
-    {
-      count = 0;
+    if (count > 63) {	// !! Un-init. flash?
+	count = 0;
     }
-  buf[64] = count;
+    buf[64] = count;
 
-  for (uint32_t i = 1; i < count + 1; i++)
-    {
-      buf [64 + i] = info[i];
+    for (uint32_t i = 1; i < count + 1; i++) {
+	buf[64 + i] = info[i];
     }
-  sf_read (0, 512, (uint8_t *) flash_buf);
+    sf_read(0, 512, (uint8_t *) flash_buf);
 
-  if (memcmp (flash_buf, buf, 512) != 0)
-    {
-      memcpy (flash_buf, buf, 512);
-      sf_write (0, 512, (uint8_t *) flash_buf);
+    if (memcmp(flash_buf, buf, 512) != 0) {
+	memcpy(flash_buf, buf, 512);
+	sf_write(0, 512, (uint8_t *) flash_buf);
     }
 }
 
@@ -1023,109 +960,104 @@ static void configure_spin (void)
 //------------------------------------------------------------------------------
 
 
-static const uint8_t can2board_0[] =
-  { 0,  1,  2,  3,  4,  5,   0,  0,
+static const uint8_t can2board_0[] = {
+    0,  1,  2,  3,  4,  5,   0,  0,
     6,  7,  8,  9,  10, 11,  0,  0,
     12, 13, 14, 15, 16, 17,  0,  0,
-    18, 19, 20, 21, 22, 23,  0,  0};
+    18, 19, 20, 21, 22, 23,  0,  0
+};
 
-static const uint8_t board2can_0[] =
-  { 0,  1,  2,  3,  4,  5,
+static const uint8_t board2can_0[] = {
+    0,  1,  2,  3,  4,  5,
     8,  9, 10, 11, 12, 13,
    16, 17, 18, 19, 20, 21,
-   24, 25, 26, 27, 28, 29};
+   24, 25, 26, 27, 28, 29
+};
 
-static const uint8_t null_map[] =
-  { 0,  1,  2,  3,  4,  5,  6,  7,
+static const uint8_t null_map[] = {
+    0,  1,  2,  3,  4,  5,  6,  7,
     8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23,
-   24, 25, 26, 27, 28, 29, 30, 31};
+   24, 25, 26, 27, 28, 29, 30, 31
+};
 
 
-void proc_setup (uint32_t d1, uint32_t d2)
+void proc_setup(uint32_t d1, uint32_t d2)
 {
-  uint32_t hw_ver = d1 & 7;
-  uint32_t mask = (d1 >> 3) & 31;
-  uint32_t frame_ID = (d1 >> 8) & 255;
+    uint32_t hw_ver = d1 & 7;
+    uint32_t mask = (d1 >> 3) & 31;
+    uint32_t frame_ID = (d1 >> 8) & 255;
 
-  if (hw_ver == 0)
-    {
-      can2board = can2board_0;
-      board2can = board2can_0;
-    }
-  else if (hw_ver == 1)
-    {
-      can2board = null_map;
-      board2can = null_map;
-    }
-  else
-    {
-      die (9);
+    if (hw_ver == 0) {
+	can2board = can2board_0;
+	board2can = board2can_0;
+    } else if (hw_ver == 1) {
+	can2board = null_map;
+	board2can = null_map;
+    } else {
+	die(9);
     }
 
-  board_ID = can2board[can_ID];
+    board_ID = can2board[can_ID];
 
-  ee_data.frame_ID = frame_ID;
-  mask = 0xffffffff << mask;
+    ee_data.frame_ID = frame_ID;
+    mask = 0xffffffff << mask;
 
-  if ((bmp_ip.flags & 0x4000) == 0)
-    {
-      bmp_ip.ip_addr[0] = d2 >> 24;
-      bmp_ip.ip_addr[1] = d2 >> 16;
-      bmp_ip.ip_addr[2] = frame_ID;
-      bmp_ip.ip_addr[3] = 8 * board_ID;
+    if ((bmp_ip.flags & 0x4000) == 0) {
+	bmp_ip.ip_addr[0] = d2 >> 24;
+	bmp_ip.ip_addr[1] = d2 >> 16;
+	bmp_ip.ip_addr[2] = frame_ID;
+	bmp_ip.ip_addr[3] = 8 * board_ID;
 
-      bmp_ip.gw_addr[0] = d2 >> 24;
-      bmp_ip.gw_addr[1] = d2 >> 16;
-      bmp_ip.gw_addr[2] = d2 >> 8;
-      bmp_ip.gw_addr[3] = d2 >> 0;
+	bmp_ip.gw_addr[0] = d2 >> 24;
+	bmp_ip.gw_addr[1] = d2 >> 16;
+	bmp_ip.gw_addr[2] = d2 >> 8;
+	bmp_ip.gw_addr[3] = d2 >> 0;
 
-      bmp_ip.net_mask[0] = mask >> 24;
-      bmp_ip.net_mask[1] = mask >> 16;
-      bmp_ip.net_mask[2] = mask >> 8;
-      bmp_ip.net_mask[3] = mask >> 0;
+	bmp_ip.net_mask[0] = mask >> 24;
+	bmp_ip.net_mask[1] = mask >> 16;
+	bmp_ip.net_mask[2] = mask >> 8;
+	bmp_ip.net_mask[3] = mask >> 0;
 
-      bmp_ip.mac_addr[0] = 0;
-      bmp_ip.mac_addr[1] = 0;
-      bmp_ip.mac_addr[2] = 0xa4;
-      bmp_ip.mac_addr[3] = frame_ID;
-      bmp_ip.mac_addr[4] = d1 >> 16;
-      bmp_ip.mac_addr[5] = 8 * board_ID;
+	bmp_ip.mac_addr[0] = 0;
+	bmp_ip.mac_addr[1] = 0;
+	bmp_ip.mac_addr[2] = 0xa4;
+	bmp_ip.mac_addr[3] = frame_ID;
+	bmp_ip.mac_addr[4] = d1 >> 16;
+	bmp_ip.mac_addr[5] = 8 * board_ID;
     }
 
-  if ((spin_ip.flags & 0x4000) == 0)
-    {
-      spin_ip.ip_addr[0] = d2 >> 24;
-      spin_ip.ip_addr[1] = d2 >> 16;
-      spin_ip.ip_addr[2] = frame_ID;
-      spin_ip.ip_addr[3] = 8 * board_ID + 1;
+    if ((spin_ip.flags & 0x4000) == 0) {
+	spin_ip.ip_addr[0] = d2 >> 24;
+	spin_ip.ip_addr[1] = d2 >> 16;
+	spin_ip.ip_addr[2] = frame_ID;
+	spin_ip.ip_addr[3] = 8 * board_ID + 1;
 
-      spin_ip.gw_addr[0] = d2 >> 24;
-      spin_ip.gw_addr[1] = d2 >> 16;
-      spin_ip.gw_addr[2] = d2 >> 8;
-      spin_ip.gw_addr[3] = d2 >> 0;
+	spin_ip.gw_addr[0] = d2 >> 24;
+	spin_ip.gw_addr[1] = d2 >> 16;
+	spin_ip.gw_addr[2] = d2 >> 8;
+	spin_ip.gw_addr[3] = d2 >> 0;
 
-      spin_ip.net_mask[0] = mask >> 24;
-      spin_ip.net_mask[1] = mask >> 16;
-      spin_ip.net_mask[2] = mask >> 8;
-      spin_ip.net_mask[3] = mask >> 0;
+	spin_ip.net_mask[0] = mask >> 24;
+	spin_ip.net_mask[1] = mask >> 16;
+	spin_ip.net_mask[2] = mask >> 8;
+	spin_ip.net_mask[3] = mask >> 0;
 
-      spin_ip.mac_addr[0] = 0;
-      spin_ip.mac_addr[1] = 0;
-      spin_ip.mac_addr[2] = 0xa4;
-      spin_ip.mac_addr[3] = frame_ID;
-      spin_ip.mac_addr[4] = d1 >> 16;
-      spin_ip.mac_addr[5] = 8 * board_ID + 1;
+	spin_ip.mac_addr[0] = 0;
+	spin_ip.mac_addr[1] = 0;
+	spin_ip.mac_addr[2] = 0xa4;
+	spin_ip.mac_addr[3] = frame_ID;
+	spin_ip.mac_addr[4] = d1 >> 16;
+	spin_ip.mac_addr[5] = 8 * board_ID + 1;
     }
 
-  configure_eth (bmp_ip.mac_addr);
-  configure_spin ();
+    configure_eth(bmp_ip.mac_addr);
+    configure_spin();
 
-  uint32_t flags = d1 >> 24;
+    uint32_t flags = d1 >> 24;
 
-  if ((flags & 2) == 0)
-    {
-      proc_power (((10 * board_ID) << 16) + 1, 1 << board_ID);
+    if ((flags & 2) == 0) {
+	proc_power(((10 * board_ID) << 16) + 1, 1 << board_ID);
     }
 }
 
@@ -1133,8 +1065,7 @@ void proc_setup (uint32_t d1, uint32_t d2)
 //------------------------------------------------------------------------------
 
 
-static const ee_data_t ee_default =
-  {
+static const ee_data_t ee_default = {
     0x96,			// Marker
     0,				// SW version
     0,				// HW version
@@ -1156,76 +1087,63 @@ static const ee_data_t ee_default =
     {102, 102, 102, 102, 147, 164, 0,   0},	// V-under shut
     {140, 140, 140, 140, 203, 225, 248, 225},	// V-over warn
     {152, 152, 152, 152, 221, 246, 0, 0}	// V-over shut
-  };
+};
 
 
-void configure_hw (void)
+void configure_hw(void)
 {
-  process_reset ();
+    process_reset();
 
-  can_ID = configure_pins ();
+    can_ID = configure_pins();
+    configure_timers();
+    configure_ssp();
+    configure_i2c();
+    configure_mcpwm();
 
-  configure_timers ();
+    copy_ip_data();
+    memcpy(&ee_data, &ee_default, sizeof(ee_data));
 
-  configure_ssp ();
+    if (bp_ctrl) {
+	configure_lcd();
 
-  configure_i2c ();
-
-  configure_mcpwm ();
-
-  copy_ip_data ();
-
-  memcpy (&ee_data, &ee_default, sizeof (ee_data));
-
-  if (bp_ctrl)
-    {
-      configure_lcd ();
-
-      if (! read_ee (0, sizeof (ee_data), &ee_data) ||
-	      is_blank (&ee_data, sizeof (ee_data)) ||
-	      crc32_chk (&ee_data, sizeof (ee_data)) != 0)
-	{
-	  LPC_GPIO0->FIOSET = LED_7;
-	  memcpy (&ee_data, &ee_default, sizeof (ee_data));
+	if (!read_ee(0, sizeof(ee_data), &ee_data) ||
+		is_blank(&ee_data, sizeof(ee_data)) ||
+		crc32_chk(&ee_data, sizeof(ee_data)) != 0) {
+	    LPC_GPIO0->FIOSET = LED_7;
+	    memcpy(&ee_data, &ee_default, sizeof(ee_data));
 	}
     }
 
-  config2 = (ee_data.gw_addr[0] << 24) +
-	  (ee_data.gw_addr[1] << 16) +
-	  (ee_data.gw_addr[2] << 8) +
-	  (ee_data.gw_addr[3] << 0);
+    config2 = (ee_data.gw_addr[0] << 24) +
+	    (ee_data.gw_addr[1] << 16) +
+	    (ee_data.gw_addr[2] << 8) +
+	    (ee_data.gw_addr[3] << 0);
 
-  config1 = (ee_data.flags << 24) +
-	  (ee_data.mac_byte << 16) +
-	  (ee_data.frame_ID << 8) +
-	  (ee_data.mask_bits << 3) +
-	  ee_data.hw_ver;
+    config1 = (ee_data.flags << 24) +
+	    (ee_data.mac_byte << 16) +
+	    (ee_data.frame_ID << 8) +
+	    (ee_data.mask_bits << 3) +
+	    ee_data.hw_ver;
 
-  if (can_ID == 0 || can_ID >= CAN_SIZE) // >= probably not in a backplane
-    {
-      proc_setup (config1, config2);
+    if (can_ID == 0 || can_ID >= CAN_SIZE) { // >= probably not in a backplane
+	proc_setup(config1, config2);
     }
-  if (can_ID < CAN_SIZE)
-    {
-      configure_can (can_ID);
+    if (can_ID < CAN_SIZE) {
+	configure_can(can_ID);
     }
-  if (can_ID == 31)		// No backplane
-    {
-      can_ID = board_ID = 0;
-      can_status[0] = 1;
-      fan_sense = 1;
+    if (can_ID == 31) {		// No backplane
+	can_ID = board_ID = 0;
+	can_status[0] = 1;
+	fan_sense = 1;
+    } else {
+	fan_sense = bp_ctrl;
     }
-  else
-    {
-      fan_sense = bp_ctrl;
+    if (bp_ctrl && (ee_data.flags & 1)) {
+	configure_pwm(1024, 256);
     }
-  if (bp_ctrl && (ee_data.flags & 1))
-    {
-      configure_pwm (1024, 256);
-    }
-  configure_adc ();		// NB uses can_ID
+    configure_adc();		// NB uses can_ID
 
-  configure_wdt (62500000);	// 10 secs
+    configure_wdt(62500000);	// 10 secs
 }
 
 

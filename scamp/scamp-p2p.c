@@ -33,53 +33,53 @@
 
 
 typedef struct rx_desc {
-  uchar state;
-  uchar seq_len;
-  uchar done;
-  uchar tid;
+    uchar state;
+    uchar seq_len;
+    uchar done;
+    uchar tid;
 
-  uchar tcount;
-  uchar ctrl;
-  uchar phase;
+    uchar tcount;
+    uchar ctrl;
+    uchar phase;
 
-  ushort mask;
-  ushort new_mask;
+    ushort mask;
+    ushort new_mask;
 
-  uint srce;
+    uint srce;
 
-  uchar *base;
-  uchar *limit;
-  sdp_msg_t *msg;
+    uchar *base;
+    uchar *limit;
+    sdp_msg_t *msg;
 
-  event_t* event;
-  uint event_id;
+    event_t* event;
+    uint event_id;
 } rx_desc_t;
 
 
 typedef struct tx_desc {
-  uchar seq_len;
-  uchar seq;
-  uchar odd;
-  uchar done;
+    uchar seq_len;
+    uchar seq;
+    uchar odd;
+    uchar done;
 
-  uchar state;
-  uchar rid;
-  uchar tid;
-  uchar tcount;
+    uchar state;
+    uchar rid;
+    uchar tid;
+    uchar tcount;
 
-  uchar rc;
-  uchar phase;
-  volatile uchar ack;
+    uchar rc;
+    uchar phase;
+    volatile uchar ack;
 
-  ushort mask;
+    ushort mask;
 
-  uint dest;
+    uint dest;
 
-  uchar *base;
-  uchar *limit;
+    uchar *base;
+    uchar *limit;
 
-  event_t *event;
-  uint event_id;
+    event_t *event;
+    uint event_id;
 } tx_desc_t;
 
 //------------------------------------------------------------------------------
@@ -164,37 +164,35 @@ p2p_send_pkt
 
 }
 
-#else
+#else // !ASM
 
 void p2p_send_data(uint data, uint addr)
 {
 #ifdef STATS
-  uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_DATA << 16));
-  if (r == 0)
-    {
-      p2p_stats[TX_FAIL]++;
+    uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_DATA << 16));
+    if (r == 0) {
+	p2p_stats[TX_FAIL]++;
     }
-#else
-  (void) pkt_tx(PKT_P2P_PL, data, addr + (P2P_DATA << 16));
-#endif
+#else // !STATS
+    (void) pkt_tx(PKT_P2P_PL, data, addr + (P2P_DATA << 16));
+#endif // STATS
 }
 
 void p2p_send_ctl(uint ctrl, uint addr, uint data)
 {
-  data |= ctrl;
-  data |= chksum_32(data);
+    data |= ctrl;
+    data |= chksum_32(data);
 #ifdef STATS
-  uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
-  if (r == 0)
-    {
-      p2p_stats[TX_FAIL]++;
+    uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
+    if (r == 0) {
+	p2p_stats[TX_FAIL]++;
     }
-#else
-  (void) pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
-#endif
+#else // !STATS
+    (void) pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
+#endif // STATS
 }
 
-#endif
+#endif // ASM
 
 
 // Received ACK from receiver. Cancel ack timeout and update tx_desc
@@ -208,22 +206,20 @@ void p2p_send_ctl(uint ctrl, uint addr, uint data)
 
 void p2p_data_ack(uint data, uint srce)
 {
-  uint tid = (data >> 16) & 31;
-  uint phase = (data >> 21) & 1;
-  tx_desc_t *desc = &tx_desc;
+    uint tid = (data >> 16) & 31;
+    uint phase = (data >> 21) & 1;
+    tx_desc_t *desc = &tx_desc;
 
-  if (desc->state == TX_OPEN && desc->tid == tid && desc->dest == srce)
-    {
-      timer_cancel(desc->event, desc->event_id); // p2p_ack_timeout
+    if (desc->state == TX_OPEN && desc->tid == tid && desc->dest == srce) {
+	timer_cancel(desc->event, desc->event_id); // p2p_ack_timeout
 
-      if (phase != desc->phase)
-	{
-	  desc->phase = phase;
-	  desc->base += 3 * desc->seq_len;
+	if (phase != desc->phase) {
+	    desc->phase = phase;
+	    desc->base += 3 * desc->seq_len;
 	}
 
-      desc->mask = data;
-      desc->ack = 1;
+	desc->mask = data;
+	desc->ack = 1;
     }
 }
 
@@ -233,37 +229,36 @@ void p2p_data_ack(uint data, uint srce)
 
 void p2p_close_req(uint data, uint srce)
 {
-  uint tid = (data >> 16) & 31;
-  tx_desc_t *desc = &tx_desc;
+    uint tid = (data >> 16) & 31;
+    tx_desc_t *desc = &tx_desc;
 
-  if (desc->state == TX_OPEN && desc->tid == tid && desc->dest == srce)
-    {
-      timer_cancel(desc->event, desc->event_id); // p2p_ack_timeout
+    if (desc->state == TX_OPEN && desc->tid == tid && desc->dest == srce) {
+	timer_cancel(desc->event, desc->event_id); // p2p_ack_timeout
 
-      desc->mask = 0;
-      desc->state = TX_IDLE;
-      desc->ack = 3; //const
+	desc->mask = 0;
+	desc->state = TX_IDLE;
+	desc->ack = 3; //const
     }
 
-  p2p_send_ctl(P2P_CLOSE_ACK, srce, data & 0x00ffffff);
+    p2p_send_ctl(P2P_CLOSE_ACK, srce, data & 0x00ffffff);
 }
 
 
-// Timed out waiting for data ACK from receiver. This suggests
+// Timed out waiting for data ACK from receiver. This suggests that the
 // receiver has died so close the connection.
 
 void p2p_ack_timeout(uint txd, uint a2)
 {
-  tx_desc_t *desc = (tx_desc_t *) txd;
+    tx_desc_t *desc = (tx_desc_t *) txd;
 
 #ifdef STATS
-  p2p_stats[ACK_TO]++;
+    p2p_stats[ACK_TO]++;
 #endif
 
-  desc->mask = 0; // Force exit
-  desc->done = 1;
-  desc->ack = 2;
-  desc->rc = RC_P2P_TIMEOUT;
+    desc->mask = 0; // Force exit
+    desc->done = 1;
+    desc->ack = 2;
+    desc->rc = RC_P2P_TIMEOUT;
 }
 
 /*      +-----+---------+---------------+---------------+---------------+
@@ -276,170 +271,145 @@ void p2p_ack_timeout(uint txd, uint a2)
 
 void p2p_open_timeout(uint a, uint b)
 {
-  tx_desc_t *desc = (tx_desc_t *) a;
-  desc->ack = b;
+    tx_desc_t *desc = (tx_desc_t *) a;
+    desc->ack = b;
 #ifdef STATS
-  p2p_stats[OPEN_EVENT]++;
+    p2p_stats[OPEN_EVENT]++;
 #endif
 }
 
 
 uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 {
-  uchar *buf = (uchar *) &msg->length;	// Point to len/sum
-  uint len = msg->length;	// 'Real' length
+    uchar *buf = (uchar *) &msg->length;	// Point to len/sum
+    uint len = msg->length;			// 'Real' length
 
-  msg->flags |= SDPF_SUM; 	// Set checksum bit
-  msg->checksum = 0;  		// buf[3..2] (BE)
+    msg->flags |= SDPF_SUM;			// Set checksum bit
+    msg->checksum = 0;				// buf[3..2] (BE)
 
-  tx_desc_t *desc = &tx_desc;
+    tx_desc_t *desc = &tx_desc;
 
-  desc->tid = (desc->tid + 1) & 31;
+    desc->tid = (desc->tid + 1) & 31;
 
-  uint seq_len_log = sv->p2p_sql & 7;
-  uint ctrl = (seq_len_log << 5) + desc->tid;
+    uint seq_len_log = sv->p2p_sql & 7;
+    uint ctrl = (seq_len_log << 5) + desc->tid;
 
-  uint sum = ~ipsum (buf, len+4, 0); // NB "ctrl" omitted from sum
+    uint sum = ~ipsum(buf, len+4, 0);		// NB "ctrl" omitted from sum
 
-  buf[2] = sum >> 8; 	// Sum (hi)
-  buf[3] = sum; 	// Sum (lo)
+    buf[2] = sum >> 8;				// Sum (hi)
+    buf[3] = sum;				// Sum (lo)
 
-  uint seq_len = desc->seq_len = 1 << seq_len_log;
+    uint seq_len = desc->seq_len = 1 << seq_len_log;
 
-  desc->seq = 0;
-  desc->dest = addr;
-  desc->base = buf + 2;
-  desc->limit = buf + len - 3 + 4;
-  desc->done = 0;
-  desc->phase = 0;
+    desc->seq = 0;
+    desc->dest = addr;
+    desc->base = buf + 2;
+    desc->limit = buf + len - 3 + 4;
+    desc->done = 0;
+    desc->phase = 0;
 
-  desc->state = TX_OPEN_REQ;
-  desc->tcount = open_req_retry;
-  desc->rc = RC_P2P_NOREPLY;
+    desc->state = TX_OPEN_REQ;
+    desc->tcount = open_req_retry;
+    desc->rc = RC_P2P_NOREPLY;
 
 #ifdef STATS
-  p2p_stats[P2P_SENDS]++;
+    p2p_stats[P2P_SENDS]++;
 #endif
 
-  while (1)
-    {
-      desc->ack = 0;
+    while (1) {
+	desc->ack = 0;
 
-      //##event_t* e = event_new(proc_byte_set, (uint) &desc->ack, 2);
-      event_t* e = event_new(p2p_open_timeout, (uint) desc, 2);
-
-      desc->event = e;
-
-      if (e != NULL)
-	{
-	  desc->event_id = e->ID;
-	  timer_schedule(e, open_ack_time);
-	}
-      else
-	{
-	  sw_error(SW_OPT);
+	//##event_t* e = event_new(proc_byte_set, (uint) &desc->ack, 2);
+	event_t* e = event_new(p2p_open_timeout, (uint) desc, 2);
+	desc->event = e;
+	if (e != NULL) {
+	    desc->event_id = e->ID;
+	    timer_schedule(e, open_ack_time);
+	} else {
+	    sw_error(SW_OPT);
 	}
 
-      p2p_send_ctl(P2P_OPEN_REQ, addr, (len << 8) + ctrl);
+	p2p_send_ctl(P2P_OPEN_REQ, addr, (len << 8) + ctrl);
 
-      while (desc->ack == 0) //const - returns 1 for OK, 2 for timeout
-        {
-	  continue;
+	while (desc->ack == 0) {	//const - returns 1 for OK, 2 for timeout
+	    continue;
         }
-
-      if (desc->ack == 1)
-        {
-	  break;
+	if (desc->ack == 1) {
+	    break;
         }
 
 #ifdef STATS
-      p2p_stats[OPEN_TO]++;
-      p2p_stats[TCOUNT] = desc->tcount;
+	p2p_stats[OPEN_TO]++;
+	p2p_stats[TCOUNT] = desc->tcount;
 #endif
 
-      if (desc->tcount == 0)
-	{
-	  return desc->rc;
+	if (desc->tcount == 0) {
+	    return desc->rc;
 	}
 
-      desc->tcount--;
-   }
-
-  if (desc->rc != RC_OK)
-    {
-      return desc->rc;
+	desc->tcount--;
     }
 
-  //-------
+    if (desc->rc != RC_OK) {
+	return desc->rc;
+    }
 
-  desc->state = TX_OPEN;
-  uint mask = desc->mask = (1 << seq_len) - 1;
+    //-------
 
-  // !! needed  desc->tcount = RETRY; //const
+    desc->state = TX_OPEN;
+    uint mask = desc->mask = (1 << seq_len) - 1;
 
-  while (1)
-    {
-      for (uint seq = 0; seq < seq_len; seq++)
-	{
-	  uchar *p = desc->base + 3 * seq;
+    // !! needed  desc->tcount = RETRY; //const
 
-          uint is_last_seq = (p >= desc->limit);
-          uint next_mask = mask >> 1;
+    while (1) {
+	for (uint seq = 0; seq < seq_len; seq++) {
+	    uchar *p = desc->base + 3 * seq;
 
-	  if (mask & 1)
-	    {
-              if (is_last_seq || (next_mask == 0))
-		{
-		  desc->ack = 0;
+	    uint is_last_seq = (p >= desc->limit);
+	    uint next_mask = mask >> 1;
 
-		  event_t* e = event_new(p2p_ack_timeout, (uint) desc, 0);
+	    if (mask & 1) {
+		if (is_last_seq || (next_mask == 0)) {
+		    desc->ack = 0;
 
-		  if (e != NULL)
-		    {
-		      desc->event = e;
-		      desc->event_id = e->ID;
-		      timer_schedule(e, data_ack_time);
-		    }
-		  else
-		    {
-		      sw_error(SW_OPT);
+		    event_t* e = event_new(p2p_ack_timeout, (uint) desc, 0);
+		    if (e != NULL) {
+			desc->event = e;
+			desc->event_id = e->ID;
+			timer_schedule(e, data_ack_time);
+		    } else {
+			sw_error(SW_OPT);
 		    }
 		}
 
-	      uint data = (desc->rid << 29) + (desc->phase << 28) + (seq << 24) + //##
-		      (p[2] << 16) + (p[1] << 8) + p[0];
+		uint data = (desc->rid << 29) + (desc->phase << 28) //##
+			 + (seq << 24) + (p[2] << 16) + (p[1] << 8) + p[0];
 
-	      p2p_send_data(data, addr);
+		p2p_send_data(data, addr);
 	    }
 
-	  if (is_last_seq)
-	    {
-	      desc->done = 1;
-	      break;
+	    if (is_last_seq) {
+		desc->done = 1;
+		break;
 	    }
 
-	  mask = next_mask;
-
-	  if (mask == 0)
-	    {
-	      break;
+	    mask = next_mask;
+	    if (mask == 0) {
+		break;
 	    }
 	}
 
-      while (desc->ack == 0) //const - 1 data_ack, 2 timeout, 3 close_req
-        {
-	  continue;
-        }
+	while (desc->ack == 0) { //const - 1 data_ack, 2 timeout, 3 close_req
+	    continue;
+	}
 
-      mask = desc->mask;
-
-      if (desc->done && mask == 0)
-        {
-	  break;
-        }
+	mask = desc->mask;
+	if (desc->done && mask == 0) {
+	    break;
+	}
     }
 
-  return desc->rc;
+    return desc->rc;
 }
 
 
@@ -451,38 +421,31 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 
 void p2p_data_timeout(uint rxd, uint a2)
 {
-  rx_desc_t *desc = (rx_desc_t *) rxd;
+    rx_desc_t *desc = (rx_desc_t *) rxd;
 
-  if (desc->state == RX_OPEN)
-    {
-
+    if (desc->state == RX_OPEN) {
 #ifdef STATS
-      p2p_stats[DATA_TO]++;
+	p2p_stats[DATA_TO]++;
 #endif
 
-      if (desc->tcount == 0)
-	{
-	  sark_msg_free(desc->msg);
-	  desc->state = RX_IDLE;
-	  return;
+	if (desc->tcount == 0) {
+	    sark_msg_free(desc->msg);
+	    desc->state = RX_IDLE;
+	    return;
 	}
 
-      desc->tcount--;
+	desc->tcount--;
 
-      p2p_send_ctl(P2P_DATA_ACK, desc->srce,
-	      (desc->phase << 21) + (desc->tid << 16) + desc->mask);
+	p2p_send_ctl(P2P_DATA_ACK, desc->srce,
+		(desc->phase << 21) + (desc->tid << 16) + desc->mask);
 
-      event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
-
-      if (e != NULL)
-	{
-	  desc->event = e;
-	  desc->event_id = e->ID;
-	  timer_schedule(e, data_time);
-	}
-      else
-	{
-	  sw_error(SW_OPT);
+	event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
+	if (e != NULL) {
+	    desc->event = e;
+	    desc->event_id = e->ID;
+	    timer_schedule(e, data_time);
+	} else {
+	    sw_error(SW_OPT);
 	}
     }
 }
@@ -494,21 +457,20 @@ void p2p_data_timeout(uint rxd, uint a2)
 
 void p2p_open_ack(uint data, uint srce)
 {
-  uint tid = (data >> 16) & 31;
-  uint rc = data & 255;
+    uint tid = (data >> 16) & 31;
+    uint rc = data & 255;
 
-  tx_desc_t *desc = &tx_desc;
+    tx_desc_t *desc = &tx_desc;
 
-  if (desc->state == TX_OPEN_REQ && desc->tid == tid &&
-      desc->dest == srce && rc != RC_P2P_BUSY)
-    {
-      uint rid = (data >> 21) & 7; //##
+    if (desc->state == TX_OPEN_REQ && desc->tid == tid &&
+	    desc->dest == srce && rc != RC_P2P_BUSY) {
+	uint rid = (data >> 21) & 7; //##
 
-      desc->rid = rid;
-      desc->rc = rc;
-      desc->ack = 1; //const
+	desc->rid = rid;
+	desc->rc = rc;
+	desc->ack = 1; //const
 
-      timer_cancel(desc->event, desc->event_id);
+	timer_cancel(desc->event, desc->event_id);
     }
 }
 
@@ -526,121 +488,106 @@ void p2p_open_ack(uint data, uint srce)
 
 void p2p_open_req(uint data, uint addr)
 {
-  uint len = (data >> 8) & 0xffff; // Real length from SDP hdr on...
-  uint ctrl = data & 255;
+    uint len = (data >> 8) & 0xffff; // Real length from SDP hdr on...
+    uint ctrl = data & 255;
 
-  uint tid = ctrl & 31;
-  uint seq_len = 1 << (ctrl >> 5);
+    uint tid = ctrl & 31;
+    uint seq_len = 1 << (ctrl >> 5);
 
-  if (len > (SDP_BUF_SIZE + 8 + 16) || seq_len > 16) //const
-    {
-      p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_REJECT);
+    if (len > (SDP_BUF_SIZE + 8 + 16) || seq_len > 16) { //const
+	p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_REJECT);
 #ifdef STATS
-      p2p_stats[P2P_REJECTS]++;
+	p2p_stats[P2P_REJECTS]++;
 #endif
-      return;
+	return;
     }
 
-  rx_desc_t *desc = rx_desc_table;
-  uint rid = P2P_NUM_STR;
+    rx_desc_t *desc = rx_desc_table;
+    uint rid = P2P_NUM_STR;
 
-  for (uint i = 0; i < P2P_NUM_STR; i++)
-    {
-      if (desc->state == RX_OPEN && desc->srce == addr && desc->tid == tid) // Already open
-	{
-	  timer_cancel(desc->event, desc->event_id); // p2p_data_timeout
+    for (uint i = 0; i < P2P_NUM_STR; i++) {
+	if (desc->state == RX_OPEN && desc->srce == addr
+		&& desc->tid == tid) {			// Already open
+	    timer_cancel(desc->event, desc->event_id);	// p2p_data_timeout
 #ifdef STATS
-	  p2p_stats[OPEN_DUP]++;
+	    p2p_stats[OPEN_DUP]++;
 #endif
-          p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + (i << 22) + RC_OK);
+	    p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + (i << 22) + RC_OK);
 
-	  desc->tcount = open_ack_retry;
+	    desc->tcount = open_ack_retry;
 
-	  event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
-
-	  if (e != NULL)
-	    {
-	      desc->event = e;
-	      desc->event_id = e->ID;
-	      timer_schedule(e, data_time);
-	    }
-	  else
-	    {
-	      sw_error(SW_OPT);
+	    event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
+	    if (e != NULL) {
+		desc->event = e;
+		desc->event_id = e->ID;
+		timer_schedule(e, data_time);
+	    } else {
+		sw_error(SW_OPT);
 	    }
 
-	  return;
+	    return;
 	}
 
-      if (desc->state == RX_IDLE) // Free ?
-	{
-	  rid = i;
+	if (desc->state == RX_IDLE) {			// Free ?
+	    rid = i;
 	}
-
-      desc++;
+	desc++;
     }
 
-  if (rid == P2P_NUM_STR)  // No free streams - send busy
-    {
-      p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
+    if (rid == P2P_NUM_STR) {		// No free streams - send busy
+	p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
 #ifdef STATS
-      p2p_stats[P2P_BUSY1]++;
+	p2p_stats[P2P_BUSY1]++;
 #endif
-      return;
+	return;
     }
 
-  desc = rx_desc_table + rid;
+    desc = rx_desc_table + rid;
 
-  sdp_msg_t *msg = sark_msg_get();
-
-  if (msg == NULL)
-    {
-      p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
+    sdp_msg_t *msg = sark_msg_get();
+    if (msg == NULL) {
+	p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
 #ifdef STATS
-      p2p_stats[P2P_BUSY2]++;
+	p2p_stats[P2P_BUSY2]++;
 #endif
-       return;
+	return;
     }
 
-  desc->msg = msg;
-  desc->state = RX_OPEN;
+    desc->msg = msg;
+    desc->state = RX_OPEN;
 
-  //  desc->len = len;
-  desc->ctrl = ctrl;
-  desc->srce = addr;
-  desc->tid = tid;
-  desc->seq_len = seq_len;
-  desc->done = 0;
-  desc->phase = 0;
+    //  desc->len = len;
+    desc->ctrl = ctrl;
+    desc->srce = addr;
+    desc->tid = tid;
+    desc->seq_len = seq_len;
+    desc->done = 0;
+    desc->phase = 0;
 
-  desc->mask = desc->new_mask = (1 << seq_len) - 1;
+    desc->mask = desc->new_mask = (1 << seq_len) - 1;
 
-  uchar *ptr = desc->base = (uchar *) &msg->flags - 2;
-  desc->limit = ptr + len + 4 - (2+3); // 2 for length & 3 per packet
+    uchar *ptr = desc->base = (uchar *) &msg->flags - 2;
+    desc->limit = ptr + len + 4 - (2+3); // 2 for length & 3 per packet
 
-  ptr[-2] = len;
-  ptr[-1] = len >> 8;
+    ptr[-2] = len;
+    ptr[-1] = len >> 8;
 
-  p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + (rid << 21) + RC_OK); //##
+    p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + (rid << 21) + RC_OK); //##
 
-  desc->tcount = open_ack_retry;
+    desc->tcount = open_ack_retry;
 
 #ifdef STATS
-  p2p_stats[P2P_OPEN_N + rid]++;
-  p2p_stats[P2P_OPENS]++;
+    p2p_stats[P2P_OPEN_N + rid]++;
+    p2p_stats[P2P_OPENS]++;
 #endif
 
-  event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
-
-  if (e != NULL)
-    {
-      desc->event = e;
-      desc->event_id = e->ID;
-      timer_schedule(e, data_time);
-    }
-  else
-    {
-      sw_error(SW_OPT);
+    event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
+    if (e != NULL) {
+	desc->event = e;
+	desc->event_id = e->ID;
+	timer_schedule(e, data_time);
+    } else {
+	sw_error(SW_OPT);
     }
 }
 
@@ -651,52 +598,47 @@ void p2p_open_req(uint data, uint addr)
 
 void p2p_close_timeout(uint rxd, uint rid)
 {
-  rx_desc_t *desc = (rx_desc_t *) rxd;
+    rx_desc_t *desc = (rx_desc_t *) rxd;
 
 #ifdef STATS
-  p2p_stats[CLOSE_TO]++;
+    p2p_stats[CLOSE_TO]++;
 #endif
 
-  if (desc->tcount == 0)
-    {
-      sark_msg_free(desc->msg);
-      desc->state = RX_IDLE;
-      return;
+    if (desc->tcount == 0) {
+	sark_msg_free(desc->msg);
+	desc->state = RX_IDLE;
+	return;
     }
 
-  desc->tcount--;
+    desc->tcount--;
 
-  p2p_send_ctl(P2P_CLOSE_REQ, desc->srce,
-	  (rid << 21) + (desc->tid << 16)); //##
+    p2p_send_ctl(P2P_CLOSE_REQ, desc->srce,
+	    (rid << 21) + (desc->tid << 16)); //##
 
-  event_t* e = event_new(p2p_close_timeout, (uint) desc, rid);
-
-  if (e != NULL)
-    {
-      desc->event = e;
-      desc->event_id = e->ID;
-      timer_schedule(e, close_ack_time);
-    }
-  else
-    {
-      sw_error(SW_OPT);
+    event_t* e = event_new(p2p_close_timeout, (uint) desc, rid);
+    if (e != NULL) {
+	desc->event = e;
+	desc->event_id = e->ID;
+	timer_schedule(e, close_ack_time);
+    } else {
+	sw_error(SW_OPT);
     }
 }
 
 
 void p2p_close_ack(uint data, uint srce)
 {
-  uint rid = (data >> 21) & 7; //##
-  rx_desc_t *desc = rx_desc_table + rid;
+    uint rid = (data >> 21) & 7; //##
+    rx_desc_t *desc = rx_desc_table + rid;
 
-  uint tid = (data >> 16) & 31;
+    uint tid = (data >> 16) & 31;
 
-  if (desc->state == RX_CLOSE_REQ && desc->tid == tid && desc->srce == srce)
-    {
-      desc->state = RX_IDLE;
-      timer_cancel(desc->event, desc->event_id); // p2p_close_timeout
+    if (desc->state == RX_CLOSE_REQ && desc->tid == tid
+	    && desc->srce == srce) {
+	desc->state = RX_IDLE;
+	timer_cancel(desc->event, desc->event_id); // p2p_close_timeout
 
-      msg_queue_insert(desc->msg, 0);
+	msg_queue_insert(desc->msg, 0);
     }
 }
 
@@ -714,77 +656,64 @@ void p2p_close_ack(uint data, uint srce)
 
 void p2p_rcv_data(uint data, uint addr)
 {
-  uint rid = (data >> 29) & 7; //##
-  uint phase = (data >> 28) & 1; //##
-  rx_desc_t *desc = rx_desc_table + rid;
+    uint rid = (data >> 29) & 7; //##
+    uint phase = (data >> 28) & 1; //##
+    rx_desc_t *desc = rx_desc_table + rid;
 
-  if (desc->state == RX_OPEN && desc->srce == addr && desc->phase == phase)
-    {
-      uint seq = (data >> 24) & (desc->seq_len - 1); //##
-      uchar *ptr = desc->base + (3 * seq);
+    if (desc->state == RX_OPEN && desc->srce == addr
+	    && desc->phase == phase) {
+	uint seq = (data >> 24) & (desc->seq_len - 1); //##
+	uchar *ptr = desc->base + (3 * seq);
 
-      ptr[0] = data;
-      ptr[1] = data >> 8;
-      ptr[2] = data >> 16;
+	ptr[0] = data;
+	ptr[1] = data >> 8;
+	ptr[2] = data >> 16;
 
-      uint seq_bit = 1 << seq;
-      desc->mask &= ~seq_bit;
+	uint seq_bit = 1 << seq;
+	desc->mask &= ~seq_bit;
 
-      if (ptr >= desc->limit)
-	{
-	  desc->mask &= seq_bit - 1;
-	  desc->done = 1;
+	if (ptr >= desc->limit) {
+	    desc->mask &= seq_bit - 1;
+	    desc->done = 1;
 	}
 
-      if (desc->mask == 0) // Advance
-	{
-	  timer_cancel(desc->event, desc->event_id); // p2p_data_timeout
+	if (desc->mask == 0) {			// Advance
+	    timer_cancel(desc->event, desc->event_id); // p2p_data_timeout
 
-	  if (desc->done) // Close
-	    {
-	      desc->state = RX_CLOSE_REQ;
-	      desc->tcount = close_req_retry;
+	    if (desc->done) {			// Close
+		desc->state = RX_CLOSE_REQ;
+		desc->tcount = close_req_retry;
 
-	      p2p_send_ctl(P2P_CLOSE_REQ, desc->srce,
-		      (rid << 21) + (desc->tid << 16)); //##
+		p2p_send_ctl(P2P_CLOSE_REQ, desc->srce,
+			(rid << 21) + (desc->tid << 16)); //##
 
-	      // start close timout - mustn't exit until have CLOSE_ACK
+		// start close timout - mustn't exit until have CLOSE_ACK
 
-	      event_t* e = event_new(p2p_close_timeout, (uint) desc, rid);
-
-	      if (e != NULL)
-		{
-		  desc->event = e;
-		  desc->event_id = e->ID;
-		  timer_schedule(e, close_ack_time);
+		event_t* e = event_new(p2p_close_timeout, (uint) desc, rid);
+		if (e != NULL) {
+		    desc->event = e;
+		    desc->event_id = e->ID;
+		    timer_schedule(e, close_ack_time);
+		} else {
+		    sw_error(SW_OPT);
 		}
-	      else
-		{
-		  sw_error(SW_OPT);
-		}
-	    }
-	  else // more to do
-	    {
-	      uint phase = desc->phase ^= 1;
-	      desc->base += (3 * desc->seq_len);
-	      desc->mask = desc->new_mask;
+	    } else {				// more to do
+		uint phase = desc->phase ^= 1;
+		desc->base += (3 * desc->seq_len);
+		desc->mask = desc->new_mask;
 
-	      p2p_send_ctl(P2P_DATA_ACK, desc->srce,
-		      (phase << 21) + (desc->tid << 16) + desc->mask);
+		p2p_send_ctl(P2P_DATA_ACK, desc->srce,
+			(phase << 21) + (desc->tid << 16) + desc->mask);
 
-	      desc->tcount = data_ack_retry;
+		desc->tcount = data_ack_retry;
 
-	      event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
-
-	      if (e != NULL)
-		{
-		  desc->event = e;
-		  desc->event_id = e->ID;
-		  timer_schedule(e, data_time);
-		}
-	      else
-		{
-		  sw_error(SW_OPT);
+		event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
+		if (e != NULL) {
+		    desc->event = e;
+		    desc->event_id = e->ID;
+		    timer_schedule(e, data_time);
+		} else {
+		    sw_error(SW_OPT);
 		}
 	    }
 	}
@@ -837,34 +766,22 @@ __asm void p2p_rcv_pkt(uint data, uint addr)
 #else
 void p2p_rcv_ctrl(uint data, uint addr)
 {
-  uint t = chksum_32(data);
-
-  if (t != 0)
-    {
-      return;
+    uint t = chksum_32(data);
+    if (t != 0) {
+	return;
     }
 
-  uint cmd = (data >> 24) & 15;
-
-  if (cmd == P2P_OPEN_REQ >> 24)
-    {
-      p2p_open_req(data, addr);
-    }
-  else if (cmd == P2P_OPEN_ACK >> 24)
-    {
-      p2p_open_ack(data, addr);
-    }
-  else if (cmd == P2P_DATA_ACK >> 24)
-    {
-      p2p_data_ack(data, addr);
-    }
-  else if (cmd == P2P_CLOSE_REQ >> 24)
-    {
-      p2p_close_req(data, addr);
-    }
-  else if (cmd == P2P_CLOSE_ACK >> 24)
-    {
-      p2p_close_ack(data, addr);
+    uint cmd = (data >> 24) & 15;
+    if (cmd == P2P_OPEN_REQ >> 24) {
+	p2p_open_req(data, addr);
+    } else if (cmd == P2P_OPEN_ACK >> 24) {
+	p2p_open_ack(data, addr);
+    } else if (cmd == P2P_DATA_ACK >> 24) {
+	p2p_data_ack(data, addr);
+    } else if (cmd == P2P_CLOSE_REQ >> 24) {
+	p2p_close_req(data, addr);
+    } else if (cmd == P2P_CLOSE_ACK >> 24) {
+	p2p_close_ack(data, addr);
     }
 }
 #endif

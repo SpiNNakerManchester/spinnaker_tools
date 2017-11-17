@@ -47,14 +47,13 @@ const int pad __attribute__ ((section (".padding"))) = 0xdeaddead;
 
 // Cortex M3 vector tables for BMP LPC1768
 
-extern void die (uint32_t code);
-extern void c_main (void);
+extern void die(uint32_t code);
+extern void c_main(void);
 
-void  __attribute__((noreturn)) error_han (void)
+void  __attribute__((noreturn)) error_han(void)
 {
-  while (1)
-    {
-      die (12);
+    while (1) {
+	die(12);
     }
 }
 

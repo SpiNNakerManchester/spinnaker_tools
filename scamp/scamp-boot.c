@@ -23,7 +23,7 @@
 
 #define BLOCK_COUNT	28	// From 1-256,
 #define WORD_COUNT	256	// From 1-256, BLOCK_COUNT * WORD_COUNT must be < 32kB
-#define BYTE_COUNT	(WORD_COUNT * sizeof (uint))
+#define BYTE_COUNT	(WORD_COUNT * sizeof(uint))
 
 
 #define FF_START_PHASE_1		0x01000003
@@ -35,8 +35,7 @@
 #define FF_TARGET_MONITOR		0x0
 
 
-const uint crc_table[] =
-  {
+const uint crc_table[] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
     0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
     0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -80,79 +79,73 @@ const uint crc_table[] =
     0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693,
     0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
-  };
+};
 
 
-uint crc32 (uchar *buf, uint len)
+uint crc32(uchar *buf, uint len)
 {
-  uint crc = 0xffffffff;
+    uint crc = 0xffffffff;
 
-  while (len--)
-    {
-      crc = crc_table [(crc ^ (*buf++)) & 0xff] ^ (crc >> 8);
+    while (len--) {
+	crc = crc_table[(crc ^ (*buf++)) & 0xff] ^ (crc >> 8);
     }
-
-  return crc ^ 0xffffffff;
+    return crc ^ 0xffffffff;
 }
 
 
-void nn_tx (uint key, uint data)
+void nn_tx(uint key, uint data)
 {
-  key |= chksum_64 (key, data);
+    key |= chksum_64(key, data);
 
-  for (uint link = 0; link < NUM_LINKS; link++)
-    {
-      while ((cc[CC_TCR] & BIT_31) == 0)
-        {
-	  continue;
+    for (uint link = 0; link < NUM_LINKS; link++) {
+	while ((cc[CC_TCR] & BIT_31) == 0) {
+	    continue;
         }
 
-      cc[CC_TCR] = 0x00820000 | link << 18;
-      cc[CC_TXDATA] = data;
-      cc[CC_TXKEY] = key;
+	cc[CC_TCR] = 0x00820000 | link << 18;
+	cc[CC_TXDATA] = data;
+	cc[CC_TXKEY] = key;
     }
 
-  sark_delay_us (sv->boot_delay);// ST - 05jul12 - allow time to propagate...
+    sark_delay_us(sv->boot_delay);	// ST - 05jul12 - allow time to propagate...
 }
 
 
-void boot_nn (uint hw_ver)
+void boot_nn(uint hw_ver)
 {
-  uint * const image = (uint *) BOOT_BUF;
+    uint * const image = (uint *) BOOT_BUF;
 
-  // Plant "hw_ver" in propagated image and clear "root_chip"
+    // Plant "hw_ver" in propagated image and clear "root_chip"
 
-  sv_t * const boot_sv = (sv_t *) (BOOT_BUF + 384);
-  boot_sv->hw_ver = hw_ver;
-  boot_sv->root_chip = 0;
+    sv_t * const boot_sv = (sv_t *) (BOOT_BUF + 384);
+    boot_sv->hw_ver = hw_ver;
+    boot_sv->root_chip = 0;
 
-  uint key = FF_START_PHASE_1;
-  uint data = (FF_TARGET_MONITOR << 24) | ((BLOCK_COUNT - 1) << 16);
+    uint key = FF_START_PHASE_1;
+    uint data = (FF_TARGET_MONITOR << 24) | ((BLOCK_COUNT - 1) << 16);
 
-  nn_tx (key, data);
+    nn_tx(key, data);
 
-  for (uint j = 0; j < BLOCK_COUNT; j++)
-    {
-      key = FF_BLOCK_START_PHASE_1 | (j << 16) | ((WORD_COUNT - 1) << 8);
-      data = j * BYTE_COUNT;
+    for (uint j = 0; j < BLOCK_COUNT; j++) {
+	key = FF_BLOCK_START_PHASE_1 | (j << 16) | ((WORD_COUNT - 1) << 8);
+	data = j * BYTE_COUNT;
 
-      nn_tx (key, data);
+	nn_tx(key, data);
 
-      for (uint k = 0; k < WORD_COUNT; k++)
-	{
-	  key = FF_BLOCK_DATA_PHASE_1 | (j << 16) | (k << 0x8);
-	  data = image[j * WORD_COUNT + k];
+	for (uint k = 0; k < WORD_COUNT; k++) {
+	    key = FF_BLOCK_DATA_PHASE_1 | (j << 16) | (k << 0x8);
+	    data = image[j * WORD_COUNT + k];
 
-	  nn_tx (key, data);
+	    nn_tx(key, data);
 	}
 
-      key = FF_BLOCK_END_PHASE_1 | (j << 16);
-      data = crc32 ((uchar *) (image + j * WORD_COUNT), BYTE_COUNT);
+	key = FF_BLOCK_END_PHASE_1 | (j << 16);
+	data = crc32((uchar *) (image + j * WORD_COUNT), BYTE_COUNT);
 
-      nn_tx (key, data);
+	nn_tx(key, data);
     }
 
-  key = FF_CONTROL_PHASE_1;
+    key = FF_CONTROL_PHASE_1;
 
-  nn_tx (key, 0);
+    nn_tx(key, 0);
 }

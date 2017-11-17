@@ -72,64 +72,56 @@ uint *sdram_buffer;
 *
 * SOURCE
 */
-void app_init ()
+void app_init()
 {
-  /* ------------------------------------------------------------------- */
-  /* initialise routing entries                                          */
-  /* ------------------------------------------------------------------- */
-  /* set a MC routing table entry to send my packets back to me */
+    /* ------------------------------------------------------------------- */
+    /* initialise routing entries                                          */
+    /* ------------------------------------------------------------------- */
+    /* set a MC routing table entry to send my packets back to me */
 
-  uint e = rtr_alloc (1);
-  if (e == 0)
-    {
-      rt_error (RTE_ABORT);
+    uint e = rtr_alloc(1);
+    if (e == 0) {
+	rt_error(RTE_ABORT);
     }
 
-  rtr_mc_set (e,			// entry
-	  coreID, 			// key
-	  0xffffffff,			// mask
-	  MC_CORE_ROUTE (coreID));	// route
+    rtr_mc_set(e,			// entry
+	    coreID, 			// key
+	    0xffffffff,			// mask
+	    MC_CORE_ROUTE(coreID));	// route
 
-  /* ------------------------------------------------------------------- */
-  /* initialize the application processor resources                      */
-  /* ------------------------------------------------------------------- */
-  /* say hello */
+    /* ------------------------------------------------------------------- */
+    /* initialize the application processor resources                      */
+    /* ------------------------------------------------------------------- */
+    /* say hello */
 
-  io_printf (IO_BUF, "[core %d] -----------------------\n", coreID);
-  io_printf (IO_BUF, "[core %d] starting simulation\n", coreID);
+    io_printf(IO_BUF, "[core %d] -----------------------\n", coreID);
+    io_printf(IO_BUF, "[core %d] starting simulation\n", coreID);
 
-  // Allocate a buffer in System RAM
+    // Allocate a buffer in System RAM
+    sysram_buffer = (uint *) sark_xalloc(sv->sysram_heap,
+	    BUFFER_SIZE * sizeof(uint), 0, ALLOC_LOCK);
 
-  sysram_buffer = (uint *) sark_xalloc (sv->sysram_heap,
-	  BUFFER_SIZE * sizeof(uint), 0, ALLOC_LOCK);
+    // and a buffer somewhere in SDRAM
+    sdram_buffer = (uint *) sark_xalloc(sv->sdram_heap,
+	    BUFFER_SIZE * sizeof(uint), 0, ALLOC_LOCK);
 
-  // and a buffer somewhere in SDRAM
+    // and a buffer in DTCM
+    dtcm_buffer = (uint *) sark_alloc(BUFFER_SIZE, sizeof(uint));
 
-  sdram_buffer = (uint *) sark_xalloc (sv->sdram_heap,
-	  BUFFER_SIZE * sizeof(uint), 0, ALLOC_LOCK);
-
-  // and a buffer in DTCM
-
-  dtcm_buffer = (uint *) sark_alloc (BUFFER_SIZE, sizeof(uint));
-
-  if (dtcm_buffer == NULL ||  sdram_buffer == NULL || sysram_buffer == NULL)
-    {
-      test_DMA = FALSE;
-      io_printf (IO_BUF, "[core %d] error - cannot allocate buffer\n", coreID);
-    }
-  else
-    {
-      test_DMA = TRUE;
-      // initialize sections of DTCM, system RAM and SDRAM
-      for (uint i = 0; i < BUFFER_SIZE; i++)
-	{
-	  dtcm_buffer[i]   = i;
-	  sysram_buffer[i] = 0xa5a5a5a5;
-	  sdram_buffer[i]  = 0x5a5a5a5a;
+    if (dtcm_buffer == NULL ||  sdram_buffer == NULL || sysram_buffer == NULL) {
+	test_DMA = FALSE;
+	io_printf(IO_BUF, "[core %d] error - cannot allocate buffer\n", coreID);
+    } else {
+	test_DMA = TRUE;
+	// initialize sections of DTCM, system RAM and SDRAM
+	for (uint i = 0; i < BUFFER_SIZE; i++) {
+	    dtcm_buffer[i]   = i;
+	    sysram_buffer[i] = 0xa5a5a5a5;
+	    sdram_buffer[i]  = 0x5a5a5a5a;
 	}
 
-      io_printf (IO_BUF, "[core %d] dtcm buffer @ 0x%08x\n", coreID,
-	      (uint) dtcm_buffer);
+	io_printf(IO_BUF, "[core %d] dtcm buffer @ 0x%08x\n", coreID,
+		(uint) dtcm_buffer);
     }
 }
 /*
@@ -147,38 +139,37 @@ void app_init ()
 *
 * SOURCE
 */
-void app_done ()
+void app_done()
 {
-  // report simulation time
-  io_printf (IO_BUF, "[core %d] simulation lasted %d ticks\n", coreID,
+    // report simulation time
+    io_printf(IO_BUF, "[core %d] simulation lasted %d ticks\n", coreID,
              spin1_get_simulation_time());
 
-  // report number of packets
-  io_printf (IO_BUF, "[core %d] received %d packets\n", coreID, packets);
+    // report number of packets
+    io_printf(IO_BUF, "[core %d] received %d packets\n", coreID, packets);
 
-  // report number of failed packets
-  io_printf (IO_BUF, "[core %d] failed %d packets\n", coreID, pfailed);
+    // report number of failed packets
+    io_printf(IO_BUF, "[core %d] failed %d packets\n", coreID, pfailed);
 
-  // report number of failed user events*/
-  io_printf (IO_BUF, "[core %d] failed %d USER events\n", coreID, ufailed);
+    // report number of failed user events*/
+    io_printf(IO_BUF, "[core %d] failed %d USER events\n", coreID, ufailed);
 
-  // report number of DMA transfers
-  io_printf (IO_BUF, "[core %d] completed %d DMA transfers\n", coreID, transfers);
+    // report number of DMA transfers
+    io_printf(IO_BUF, "[core %d] completed %d DMA transfers\n", coreID, transfers);
 
-  // report number of failed transfers
-  io_printf (IO_BUF, "[core %d] failed %d DMA transfers\n", coreID, tfailed);
+    // report number of failed transfers
+    io_printf(IO_BUF, "[core %d] failed %d DMA transfers\n", coreID, tfailed);
 
-  if (tfailed)
-    {
-      io_printf (IO_BUF, "\t%d : %d @ %d\n", tfvald, tfvals, tfaddr);
+    if (tfailed) {
+	io_printf(IO_BUF, "\t%d : %d @ %d\n", tfvald, tfvals, tfaddr);
 
-      io_printf (IO_BUF, "\t%d : %d @ %d\n", dtcm_buffer[tfaddr],
-	      sdram_buffer[tfaddr], tfaddr);
+	io_printf(IO_BUF, "\t%d : %d @ %d\n", dtcm_buffer[tfaddr],
+		sdram_buffer[tfaddr], tfaddr);
     }
 
-  // say goodbye
-  io_printf (IO_BUF, "[core %d] stopping simulation\n", coreID);
-  io_printf (IO_BUF, "[core %d] -------------------\n", coreID);
+    // say goodbye
+    io_printf(IO_BUF, "[core %d] stopping simulation\n", coreID);
+    io_printf(IO_BUF, "[core %d] -------------------\n", coreID);
 }
 /*
 *******/
@@ -199,13 +190,11 @@ void app_done ()
 *
 * SOURCE
 */
-void send_packets (uint ticks, uint none)
+void send_packets(uint ticks, uint none)
 {
-  for (uint i = 0; i < ITER_TIMES; i++)
-    {
-      if (! spin1_send_mc_packet (coreID, ticks, 1))
-	{
-	  pfailed++;
+    for (uint i = 0; i < ITER_TIMES; i++) {
+	if (! spin1_send_mc_packet(coreID, ticks, 1)) {
+	    pfailed++;
 	}
     }
 }
@@ -228,28 +217,25 @@ void send_packets (uint ticks, uint none)
 *
 * SOURCE
 */
-void flip_led (uint ticks, uint null)
+void flip_led(uint ticks, uint null)
 {
-  // flip led 1
-  // Only 1 core should flip leds!
+    // flip led 1
+    // Only 1 core should flip leds!
 
-  if (leadAp)
-    {
-      spin1_led_control (LED_INV (1));
+    if (leadAp) {
+	spin1_led_control(LED_INV(1));
     }
 
-  // trigger user event to send packets
+    // trigger user event to send packets
 
-  if (spin1_trigger_user_event(ticks, NULL) == FAILURE)
-    {
-      ufailed++;
+    if (spin1_trigger_user_event(ticks, NULL) == FAILURE) {
+	ufailed++;
     }
 
-  // stop if desired number of ticks reached
+    // stop if desired number of ticks reached
 
-  if (ticks >= TOTAL_TICKS)
-    {
-      spin1_exit (0);
+    if (ticks >= TOTAL_TICKS) {
+	spin1_exit(0);
     }
 }
 /*
@@ -271,17 +257,14 @@ void flip_led (uint ticks, uint null)
 *
 * SOURCE
 */
-void do_transfer (uint val, uint none)
+void do_transfer(uint val, uint none)
 {
-  if (val == 3)
-    {
-      spin1_dma_transfer(DMA_WRITE, sysram_buffer, dtcm_buffer, DMA_WRITE,
-	      BUFFER_SIZE*sizeof(uint));
-    }
-  else if (val == 5)
-    {
-      spin1_dma_transfer(DMA_WRITE, sdram_buffer, dtcm_buffer, DMA_WRITE,
-	      BUFFER_SIZE*sizeof(uint));
+    if (val == 3) {
+	spin1_dma_transfer(DMA_WRITE, sysram_buffer, dtcm_buffer, DMA_WRITE,
+		BUFFER_SIZE*sizeof(uint));
+    } else if (val == 5) {
+	spin1_dma_transfer(DMA_WRITE, sdram_buffer, dtcm_buffer, DMA_WRITE,
+		BUFFER_SIZE*sizeof(uint));
     }
 }
 /*
@@ -303,16 +286,15 @@ void do_transfer (uint val, uint none)
 *
 * SOURCE
 */
-void count_packets (uint key, uint payload)
+void count_packets(uint key, uint payload)
 {
-  // count packets
-  packets++;
+    // count packets
+    packets++;
 
-  // if testing DMA trigger transfer requests at the right time
-  if (test_DMA)
-    {
-      // schedule task (with priority 1) to trigger DMA
-      spin1_schedule_callback (do_transfer, payload, 0, 1);
+    // if testing DMA trigger transfer requests at the right time
+    if (test_DMA) {
+	// schedule task (with priority 1) to trigger DMA
+	spin1_schedule_callback(do_transfer, payload, 0, 1);
     }
 }
 /*
@@ -337,36 +319,28 @@ void count_packets (uint key, uint payload)
 */
 void check_memcopy(uint tid, uint ttag)
 {
-  // count transfers
+    // count transfers
+    transfers++;
 
-  transfers++;
-
-  // check if DMA transfer completed correctly
-
-  if (tid <= ITER_TIMES)
-    {
-      for (uint i = 0; i < BUFFER_SIZE; i++)
-	{
-	  if (dtcm_buffer[i] != sysram_buffer[i])
-	    {
-	      tfailed++;
-	      tfaddr = i;
-	      break;
+    // check if DMA transfer completed correctly
+    if (tid <= ITER_TIMES) {
+	for (uint i = 0; i < BUFFER_SIZE; i++) {
+	    if (dtcm_buffer[i] != sysram_buffer[i]) {
+		tfailed++;
+		tfaddr = i;
+		break;
 	    }
 	}
     }
 
-  if (tid > ITER_TIMES)
-    {
-      for (uint i = 0; i < BUFFER_SIZE; i++)
-	{
-	  tfvald = dtcm_buffer[i];
-	  tfvals = sdram_buffer[i];
-	  if (tfvald != tfvals)
-	    {
-	      tfailed++;
-	      tfaddr = i;
-	      break;
+    if (tid > ITER_TIMES) {
+	for (uint i = 0; i < BUFFER_SIZE; i++) {
+	    tfvald = dtcm_buffer[i];
+	    tfvals = sdram_buffer[i];
+	    if (tfvald != tfvals) {
+		tfailed++;
+		tfaddr = i;
+		break;
 	    }
 	}
     }
@@ -388,38 +362,38 @@ void check_memcopy(uint tid, uint ttag)
 */
 void c_main()
 {
-  // Get core and chip IDs
+    // Get core and chip IDs
 
-  coreID = spin1_get_core_id ();
-  chipID = spin1_get_chip_id ();
+    coreID = spin1_get_core_id();
+    chipID = spin1_get_chip_id();
 
-  // Say hello...
+    // Say hello...
 
-  io_printf (IO_BUF, ">> simple - chip (%d, %d) core %d\n",
-	  chipID >> 8, chipID & 255, coreID);
+    io_printf(IO_BUF, ">> simple - chip (%d, %d) core %d\n",
+	    chipID >> 8, chipID & 255, coreID);
 
-  // set timer tick value (in microseconds)
+    // set timer tick value (in microseconds)
 
-  spin1_set_timer_tick (TIMER_TICK_PERIOD);
+    spin1_set_timer_tick(TIMER_TICK_PERIOD);
 
-  // register callbacks
+    // register callbacks
 
-  spin1_callback_on (MCPL_PACKET_RECEIVED, count_packets, -1);
-  spin1_callback_on (DMA_TRANSFER_DONE, check_memcopy, 0);
-  spin1_callback_on (USER_EVENT, send_packets, 2);
-  spin1_callback_on (TIMER_TICK, flip_led, 3);
+    spin1_callback_on(MCPL_PACKET_RECEIVED, count_packets, -1);
+    spin1_callback_on(DMA_TRANSFER_DONE, check_memcopy, 0);
+    spin1_callback_on(USER_EVENT, send_packets, 2);
+    spin1_callback_on(TIMER_TICK, flip_led, 3);
 
-  // initialize application
+    // initialize application
 
-  app_init ();
+    app_init();
 
-  // go
+    // go
 
-  spin1_start (SYNC_WAIT);
+    spin1_start(SYNC_WAIT);
 
-  // report results
+    // report results
 
-  app_done ();
+    app_done();
 }
 /*
 *******/

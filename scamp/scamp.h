@@ -189,142 +189,142 @@
 
 // Phases of the network initialisation process, in order
 enum netinit_phase_e {
-  // Configure P2P addresses for all chips while waiting for all chips to come
-  // online.
-  NETINIT_PHASE_P2P_ADDR,
-  // Determine the dimensions of the system and kill off all chips outside this
-  // range (ensuring incorrectly guessed dimensions do not result in address
-  // aliasing).
-  NETINIT_PHASE_P2P_DIMS,
-  // Send Board-info flood-fill messages to disable all known iffy links, cores
-  // and chips.
-  NETINIT_PHASE_BIFF,
-  // Construct the P2P routing tables
-  NETINIT_PHASE_P2P_TABLE,
-  // Setting the Ethernet address
-  NETINIT_PHASE_SET_ETHERNET_ADDR,
-  // The boot process is complete and the system is ready for use
-  NETINIT_PHASE_DONE = 0xFF,
+    // Configure P2P addresses for all chips while waiting for all chips to
+    // come online.
+    NETINIT_PHASE_P2P_ADDR,
+    // Determine the dimensions of the system and kill off all chips outside
+    // this range (ensuring incorrectly guessed dimensions do not result in
+    // address aliasing).
+    NETINIT_PHASE_P2P_DIMS,
+    // Send Board-info flood-fill messages to disable all known iffy links,
+    // cores and chips.
+    NETINIT_PHASE_BIFF,
+    // Construct the P2P routing tables
+    NETINIT_PHASE_P2P_TABLE,
+    // Setting the Ethernet address
+    NETINIT_PHASE_SET_ETHERNET_ADDR,
+    // The boot process is complete and the system is ready for use
+    NETINIT_PHASE_DONE = 0xFF,
 };
 
 // Phases of the Ethernet initialisation process, in order
 enum ethinit_phase_e {
-  // FIRST PHASE - wait for Ethernet to come up
-  ETHINIT_PHASE_WAIT_1,
-  // SECOND_PHASE - wait for Ethernet to come up
-  ETHINIT_PHASE_WAIT_2,
-  // Ethernet either up or timed out
-  ETHINIT_PHASE_DONE = 0xFF,
+    // FIRST PHASE - wait for Ethernet to come up
+    ETHINIT_PHASE_WAIT_1,
+    // SECOND_PHASE - wait for Ethernet to come up
+    ETHINIT_PHASE_WAIT_2,
+    // Ethernet either up or timed out
+    ETHINIT_PHASE_DONE = 0xFF,
 };
 
 //------------------------------------------------------------------------------
 
 enum alloc_cmd_e {
-  ALLOC_SDRAM,		 	//!< Allocate SDRAM
-  FREE_SDRAM,		 	//!< Free SDRAM
-  FREE_SDRAM_ID,		//!< Free DRAM by ID
-  ALLOC_RTR,		 	//!< Allocate Router
-  FREE_RTR,	 		//!< Free Router
-  FREE_RTR_ID,		 	//!< Free Router by ID
-  SDRAM_SPACE,			//!< Total free space & largest free block
-  HEAP_TAG_PTR,			//!< Heap block from tag & ID
-  ALLOC_MAX=HEAP_TAG_PTR 	//!< Maximum command
+    ALLOC_SDRAM,		//!< Allocate SDRAM
+    FREE_SDRAM,		 	//!< Free SDRAM
+    FREE_SDRAM_ID,		//!< Free DRAM by ID
+    ALLOC_RTR,		 	//!< Allocate Router
+    FREE_RTR,	 		//!< Free Router
+    FREE_RTR_ID,		//!< Free Router by ID
+    SDRAM_SPACE,		//!< Total free space & largest free block
+    HEAP_TAG_PTR,		//!< Heap block from tag & ID
+    ALLOC_MAX=HEAP_TAG_PTR 	//!< Maximum command
 };
 
 //------------------------------------------------------------------------------
 
 typedef struct {		// IPTAG entry (32 bytes)
-  uchar ip[4];
-  uchar mac[6];
-  ushort tx_port;
-  ushort timeout;
-  ushort flags;
-  uint count;
-  ushort rx_port;
-  ushort dest_addr;
-  uchar dest_port;
-  uchar __PAD1[7];
+    uchar ip[4];
+    uchar mac[6];
+    ushort tx_port;
+    ushort timeout;
+    ushort flags;
+    uint count;
+    ushort rx_port;
+    ushort dest_addr;
+    uchar dest_port;
+    uchar __PAD1[7];
 } iptag_t;
 
 
 #define PKT_QUEUE_SIZE 		32
 
 typedef struct pkt_queue_t {	// Queue of packets
-  uchar insert;
-  uchar remove;
-  volatile uchar count;
-  uchar max;
-  pkt_t queue[PKT_QUEUE_SIZE];
+    uchar insert;
+    uchar remove;
+    volatile uchar count;
+    uchar max;
+    pkt_t queue[PKT_QUEUE_SIZE];
 } pkt_queue_t;
 
 
 typedef struct pkt_buf_t {	// Holds a NN packet awaiting transmission
-  struct pkt_buf_t *next;
-  volatile uchar flags;
-  uchar fwd;
-  uchar delay;
-  uchar link;
-  pkt_t pkt;
+    struct pkt_buf_t *next;
+    volatile uchar flags;
+    uchar fwd;
+    uchar delay;
+    uchar link;
+    pkt_t pkt;
 } pkt_buf_t;
 
 
 typedef struct {	// 64 bytes
-  uint   level_addr;	// 0: This chip's region at this level
-  ushort sent;		// 4: Number of requests sent out in this region
-  ushort rcvd;		// 6: Number of responses received
-  ushort parent;	// 8: P2P address of the chip which sent the last request
-  ushort __PAD1;	// 10
-  uint result;		// 12: Result accumulated within this region
-  ushort addr[16];	// 16: A working chip p2p for each subregion, if valid
-  uchar  valid[16];	// 48: Is at least one chip in each sub-region known to be alive?
+    uint   level_addr;	// 0: This chip's region at this level
+    ushort sent;	// 4: Number of requests sent out in this region
+    ushort rcvd;	// 6: Number of responses received
+    ushort parent;	// 8: P2P address of the chip which sent the last request
+    ushort __PAD1;	// 10
+    uint result;	// 12: Result accumulated within this region
+    ushort addr[16];	// 16: A working chip p2p for each subregion, if valid
+    uchar  valid[16];	// 48: Is at least one chip in each sub-region known to be alive?
 } level_t;
 
 //------------------------------------------------------------------------------
 
-extern uint pkt_tx (uint tcr, uint data, uint key);
-extern void proc_byte_set (uint a1, uint a2);
-extern void msg_queue_insert (sdp_msg_t *msg, uint srce_ip);
+extern uint pkt_tx(uint tcr, uint data, uint key);
+extern void proc_byte_set(uint a1, uint a2);
+extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 
 // scamp-nn.c
 
-extern void compute_eth (void);
-extern void compute_level (uint p2p_addr);
-extern void level_config (void);
-extern void ff_nn_send (uint key, uint data, uint fwd_rty, uint log);
-extern void biff_nn_send (uint data);
+extern void compute_eth(void);
+extern void compute_level(uint p2p_addr);
+extern void level_config(void);
+extern void ff_nn_send(uint key, uint data, uint fwd_rty, uint log);
+extern void biff_nn_send(uint data);
 extern void nn_cmd_biff(uint x, uint y, uint data);
-extern void nn_mark (uint key);
-extern uint link_read_word (uint addr, uint link, uint *buf, uint timeout);
-extern uint link_write_word (uint addr, uint link, uint *buf, uint timeout);
-extern void proc_start_app (uint aplx_addr, uint id_mask);
-extern uint next_id (void);
-extern void nn_init (void);
-extern void proc_ffe (uint aplx_addr, uint cpu_mask);
+extern void nn_mark(uint key);
+extern uint link_read_word(uint addr, uint link, uint *buf, uint timeout);
+extern uint link_write_word(uint addr, uint link, uint *buf, uint timeout);
+extern void proc_start_app(uint aplx_addr, uint id_mask);
+extern uint next_id(void);
+extern void nn_init(void);
+extern void proc_ffe(uint aplx_addr, uint cpu_mask);
 
 // scamp-3.c
 
-extern uint iptag_new (void);
-extern void assign_virt_cpu (uint phys_cpu);
+extern uint iptag_new(void);
+extern void assign_virt_cpu(uint phys_cpu);
 extern void remap_phys_cores(uint phys_cores);
 
 // spinn_srom.c
 
-extern uint cmd_srom (sdp_msg_t *msg);
+extern uint cmd_srom(sdp_msg_t *msg);
 
 // scamp-isr.c
 
-extern void vic_setup (void);
+extern void vic_setup(void);
 
 // scamp-app.c
 
-extern void signal_app (uint data);
-extern void boot_ap (void);
-extern void clock_ap (uint virt_mask, uint enable);
-extern void reset_ap (uint virt_mask);
+extern void signal_app(uint data);
+extern void boot_ap(void);
+extern void clock_ap(uint virt_mask, uint enable);
+extern void reset_ap(uint virt_mask);
 
 // scamp-p2p.c
 
-extern uint p2p_send_msg (uint addr, sdp_msg_t *msg);
+extern uint p2p_send_msg(uint addr, sdp_msg_t *msg);
 
 // scamp-nn.c
 extern void p2pc_addr_nn_send(uint arg1, uint arg2);
@@ -333,12 +333,12 @@ extern void p2pb_nn_send(uint arg1, uint arg2);
 
 // scamp-cmd.c
 
-extern uint scamp_debug (sdp_msg_t *msg, uint srce_ip);
-extern void send_p2pc (uint arg2, uint arg3);
+extern uint scamp_debug(sdp_msg_t *msg, uint srce_ip);
+extern void send_p2pc(uint arg2, uint arg3);
 
 // scamp-boot.c
 
-extern void boot_nn (uint hw_ver);
+extern void boot_nn(uint hw_ver);
 
 //------------------------------------------------------------------------------
 
@@ -373,13 +373,13 @@ extern volatile int p2p_max_y;
 extern uchar *p2p_addr_table;
 
 // Initial value of p2p_addr_guess_{x,y} when not the root chip
-#define NO_IDEA (-1024)
+#define NO_IDEA			(-1024)
 
 // Size of p2p_addr_table in bytes.
-#define P2P_ADDR_TABLE_BYTES (512 * 512 / 8)
+#define P2P_ADDR_TABLE_BYTES	(512 * 512 / 8)
 
 //------------------------------------------------------------------------------
 
-extern void putz (uint v);
+extern void putz(uint v);
 
 #endif
