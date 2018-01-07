@@ -2074,7 +2074,7 @@ my $spin_cmds =
         "Dump heaps"],
     reset =>     [\&cmd_reset,
         "",
-        "Reset Spinnakers via BMP"],
+        "Reset Spinnakers and FPGAs via BMP"],
     power =>     [\&cmd_power,
         "on|off",
         "Switch power on/off via BMP"],
