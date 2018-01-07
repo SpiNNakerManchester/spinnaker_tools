@@ -1605,7 +1605,7 @@ sub cmd_fstat
 
     eval
     {
-	my $d = $bmp->link_read ($fpga, 0x40000, 32, unpack => "V*");
+	my $d = $bmp->link_read ($fpga, 0x40000, 40, unpack => "V*");
 
 	printf "%-8s %10s\n", "Register", "Global";
 	printf "%-8s %10s\n", "--------", "------";
@@ -1616,6 +1616,9 @@ sub cmd_fstat
 	printf "%-8s 0x%08x\n", "SCRM", $d->[4];
 	printf "%-8s 0x%08x\n", "SLEN", $d->[5];
 	printf "%-8s 0x%08x\n", "LEDO", $d->[6];
+	printf "%-8s 0x%08x\n", "RXEQ", $d->[7];
+	printf "%-8s 0x%08x\n", "TXDS", $d->[8];
+	printf "%-8s 0x%08x\n", "TXPE", $d->[9];
 	printf "\n";
     };
 
