@@ -1451,9 +1451,130 @@ void sark_config(void)
     sark_vec->app_flags &= ~(1 << APP_FLAG_WAIT); // Don't wait in SARK start-up
 }
 
+__asm void img_cp_exe (void) {
+	code32
+	preserve8
+
+	mov  	r0, #DMA_BASE   ;; DMA controller
+	mov  	r1, #SDRAM_BASE	;; boot image source
+	str  	r1, [r0, #0x04]
+	ldr  	r2, dmd0 	;; DTCM destination
+	str  	r2, [r0, #0x08]
+	ldr  	r3, dmc0 	;; DMA descriptor
+	str  	r3, [r0, #0x0c]
+
+	mov  	r2, #ITCM_BASE 	;; ITCM destination
+	str  	r2, [r0, #0x08]
+	ldr  	r3, dmc0
+	str  	r3, [r0, #0x0c]
+
+wt0	ldr  	r4, [r0, #0x14]	;; wait for DTCM DMA to complete
+        lsls  	r4, r4, #21
+        bpl  	wt0
+
+	mov  	r4, #08 	;; clear DMA interrupt
+	str  	r4, [r0, #0x10]
+
+wt1	ldr  	r4, [r0, #0x14]	;; wait for ITCM DMA to complete
+        lsls  	r4, r4, #21
+        bpl  	wt1
+
+	mov  	r4, #08 	;; clear DMA interrupt
+	str  	r4, [r0, #0x10]
+
+	bx      r2	        ;; branch to ITCM
+
+dmc0	dcd  	(1 << 24 | 4 << 21 | 0 << 19 | 0x7100)
+dmd0	dcd  	(DTCM_BASE + 0x00008000)
+}
+
+
+void delegate(uint del, uint del_mask)
+{
+    // start boot image DMA to SDRAM for delegate,
+    dma[DMA_ADRS] = (uint) SDRAM_BASE;
+    dma[DMA_ADRT] = (uint) DTCM_BASE + 0x00008000;
+    dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | 0x7100;
+
+    // point boot area to system RAM,
+    sc[SC_MISC_CTRL] |= 1;
+
+    // let system controller know of new monitor
+    sc[SC_MON_ID] = SC_CODE + del;
+
+    // let router know of new monitor
+    rtr[RTR_CONTROL] = 0x00400001 | (del << 8);
+
+    // take this core out of application pool
+    sc[SC_CLR_OK] = 1 << sark.phys_cpu;
+
+    // wait for boot image DMA to complete,
+    while (!(dma[DMA_STAT] & (1 << 10))) {
+        continue;
+    }
+
+    // clear DMA transfer complete interrupt,
+    dma[DMA_CTRL] = 1 << 3;
+
+    // copy img_cp_exe to system RAM for delegate,
+    sark_word_cpy (sysram, (void *) img_cp_exe, 128);
+
+    // start delegate,
+    sc[SC_SOFT_RST_L] = SC_CODE + del_mask;
+    clock_ap(del_mask, 1);
+    sark_delay_us(5);
+    sc[SC_SOFT_RST_L] = SC_CODE;
+
+    // and disable this core
+    clock_ap(1 << sark.phys_cpu, 0);
+}
+
 
 void c_main(void)
 {
+    // if this core is blacklisted it needs to delegate
+    sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));
+
+    // check if there is access to the blacklist in serial ROM,
+    if (srom.flags & SRF_PRESENT) {
+	// get board blacklist,
+	get_board_info();
+
+	// and check if need to delegate
+	if (sv->board_info) {
+	    uint   bl_len   = sv->board_info[0];
+	    uint * bl_dat   = sv->board_info + 1;
+	    uint   bl_cores = 0;
+
+	    while (bl_len--) {
+	        uint data  = *(bl_dat++);
+		uint type  = data >> 30;
+		uint coord = (data >> 24) & 0x3f;
+
+		// get (0, 0) blacklist entry if it exists
+		if ((type == 0) && (coord == 0)) {
+		    bl_cores = data & 0x3ffff;
+		    break;
+		}
+	    }
+
+	    // and delegate if this core is blacklisted
+	    if (bl_cores & (1 << sark.phys_cpu)) {
+	        uint del      = NUM_CPUS - 1;         // potential delegate
+		uint del_mask = 1 << (NUM_CPUS - 1);  // delegate mask
+
+	        // choose delegate
+	        while ((bl_cores | ~sc[SC_CPU_OK]) & del_mask) {
+		    del--;
+		    del_mask = del_mask >> 1;
+		}
+
+		// NB: this function will not return, this core will die!
+		delegate(del, del_mask);
+	    }
+	}
+    }
+
     sark.cpu_clk = 160;			// BootROM uses 160 MHz
 
     jtag_init();			// Reset JTAG internals
