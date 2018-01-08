@@ -1,12 +1,12 @@
 /***********************************************************************//**
- * @file		lpc_types.h
- * @brief		Contains the NXP ABL typedefs for C standard types.
- *     			It is intended to be used in ISO C conforming development
- *     			environments and checks for this insofar as it is possible
- *     			to do so.
- * @version		1.0
- * @date		27 Jul. 2008
- * @author		wellsk
+ * @file                lpc_types.h
+ * @brief               Contains the NXP ABL typedefs for C standard types.
+ *                      It is intended to be used in ISO C conforming development
+ *                      environments and checks for this insofar as it is possible
+ *                      to do so.
+ * @version             1.0
+ * @date                27 Jul. 2008
+ * @author              wellsk
  **************************************************************************
  * Software that is described herein is for illustrative purposes only
  * which provides customers with programming information regarding the
@@ -52,7 +52,7 @@ typedef enum {
 typedef enum {
     RESET = 0, SET = !RESET
 } FlagStatus, IntStatus, SetState;
-#define PARAM_SETSTATE(State)	((State==RESET) || (State==SET))
+#define PARAM_SETSTATE(State)   ((State==RESET) || (State==SET))
 
 /**
  * @brief Functional State Definition
@@ -61,7 +61,7 @@ typedef enum {
     DISABLE = 0,
     ENABLE = !DISABLE
 } FunctionalState;
-#define PARAM_FUNCTIONALSTATE(State)	((State==DISABLE) || (State==ENABLE))
+#define PARAM_FUNCTIONALSTATE(State)    ((State==DISABLE) || (State==ENABLE))
 
 /**
  * @ Status type definition
@@ -76,8 +76,8 @@ typedef enum {
  * Read/Write transfer type mode (Block or non-block)
  */
 typedef enum {
-    NONE_BLOCKING = 0,		/**< None Blocking type */
-    BLOCKING,			/**< Blocking type */
+    NONE_BLOCKING = 0,          /**< None Blocking type */
+    BLOCKING,                   /**< Blocking type */
 } TRANSFER_BLOCK_Type;
 
 
@@ -103,7 +103,7 @@ typedef int32_t(*PFI)();
  */
 #undef _BIT
 /* Set bit macro */
-#define _BIT(n)	(1<<n)
+#define _BIT(n) (1<<n)
 
 /* _SBF(f,v) sets the bit field starting at position "f" to value "v".
  * _SBF(f,v) is intended to be used in "OR" and "AND" expressions:
@@ -128,21 +128,21 @@ typedef int32_t(*PFI)();
  */
 #undef _BITMASK
 /* Bitmask creation macro */
-#define _BITMASK(field_width)	(_BIT(field_width) - 1)
+#define _BITMASK(field_width)   (_BIT(field_width) - 1)
 
 /* NULL pointer */
 #ifndef NULL
-#define NULL	((void*) 0)
+#define NULL    ((void*) 0)
 #endif
 
 /* Number of elements in an array */
-#define NELEMENTS(array)	(sizeof(array) / sizeof(array[0]))
+#define NELEMENTS(array)        (sizeof(array) / sizeof(array[0]))
 
-#define STATIC	static /* Static data/function define */
-#define EXTERN	extern /* External data/function define */
+#define STATIC  static /* Static data/function define */
+#define EXTERN  extern /* External data/function define */
 
-#define MAX(a, b)	(((a) > (b)) ? (a) : (b))
-#define MIN(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAX(a, b)       (((a) > (b)) ? (a) : (b))
+#define MIN(a, b)       (((a) < (b)) ? (a) : (b))
 
 /**
  * @}
@@ -164,16 +164,16 @@ typedef uint8_t UNS_8;
 typedef int8_t INT_8;
 
 /** SMA type for 16 bit unsigned value */
-typedef	uint16_t UNS_16;
+typedef uint16_t UNS_16;
 
 /** SMA type for 16 bit signed value */
-typedef	int16_t INT_16;
+typedef int16_t INT_16;
 
 /** SMA type for 32 bit unsigned value */
-typedef	uint32_t UNS_32;
+typedef uint32_t UNS_32;
 
 /** SMA type for 32 bit signed value */
-typedef	int32_t INT_32;
+typedef int32_t INT_32;
 
 /** SMA type for 64 bit signed value */
 typedef int64_t INT_64;

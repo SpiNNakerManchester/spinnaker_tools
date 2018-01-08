@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// scamp-nn.c	    NN packet handling for SC&MP
+// scamp-nn.c       NN packet handling for SC&MP
 //
 // Copyright (C)    The University of Manchester - 2009-2011
 //
@@ -18,11 +18,11 @@
 //------------------------------------------------------------------------------
 
 
-#define BC_TABLE_SIZE 		16
+#define BC_TABLE_SIZE           16
 
-#define FF_ST_IDLE  0		// Doing nothing
-#define FF_ST_EXBLK 1		// Rcvd FFS or FBE, awaiting FBS, FFE
-#define FF_ST_INBLK 2		// Rcvd FBS, awaiting FBD, FBE
+#define FF_ST_IDLE  0           // Doing nothing
+#define FF_ST_EXBLK 1           // Rcvd FFS or FBE, awaiting FBS, FFE
+#define FF_ST_INBLK 2           // Rcvd FBS, awaiting FBD, FBE
 
 #define PART_ID (CHIP_ID_CODE & 0xfff00000)
 
@@ -31,40 +31,40 @@
 //------------------------------------------------------------------------------
 
 typedef struct nn_desc_t {
-    uchar state;		// FF state
-    uchar error;		// Error flag
-    uchar forward;		// Rebroadcast code
-    uchar retry;		// Rebroadcast retry
+    uchar state;                // FF state
+    uchar error;                // Error flag
+    uchar forward;              // Rebroadcast code
+    uchar retry;                // Rebroadcast retry
 
-    uchar id;			// ID of current FF
-    uchar block_len;		// Block length
-    uchar block_count;		// Block count
-    uchar block_num;		// Block number
+    uchar id;                   // ID of current FF
+    uchar block_len;            // Block length
+    uchar block_count;          // Block count
+    uchar block_num;            // Block number
 
-    uchar app_id;		// AppID
-    uchar load;			// Set if for us
-    ushort srce_addr; 		// P2P of sender
+    uchar app_id;               // AppID
+    uchar load;                 // Set if for us
+    ushort srce_addr;           // P2P of sender
 
-    ushort word_len;		// Number of words in block
-    ushort word_count;		// Count of received words
+    ushort word_len;            // Number of words in block
+    ushort word_count;          // Count of received words
 
-    uint gidr_id;		// GIDR ID
+    uint gidr_id;               // GIDR ID
 
-    uint sum;			// Checksum
-    uint region;		// Region
-    uint cores;			// Selected cores to load
-    uint* aplx_addr;		// APLX block addr
-    uint load_addr;		// Block load base
-    uint id_set[4];		// ID bitmap (128 bits)
-    uint biff_id_set[4];	// Board-level flood-fill ID bitmap (128 bits)
-    uint fbs_set[8];		// Block bitmap for FBS (must be >= 8 words)
-    uint fbd_set[8];		// Word bitmap for FBD (must be >= 8 words)
-    uint fbe_set[8];		// Block bitmap for FBE (must be >= 8 words)
-    uint stats[16];		// Counters for each packet type
-    uint errors;		// Counter for bad checksums
-    uint buf[SDP_BUF_SIZE/4];	// Holding buffer
+    uint sum;                   // Checksum
+    uint region;                // Region
+    uint cores;                 // Selected cores to load
+    uint* aplx_addr;            // APLX block addr
+    uint load_addr;             // Block load base
+    uint id_set[4];             // ID bitmap (128 bits)
+    uint biff_id_set[4];        // Board-level flood-fill ID bitmap (128 bits)
+    uint fbs_set[8];            // Block bitmap for FBS (must be >= 8 words)
+    uint fbd_set[8];            // Word bitmap for FBD (must be >= 8 words)
+    uint fbe_set[8];            // Block bitmap for FBE (must be >= 8 words)
+    uint stats[16];             // Counters for each packet type
+    uint errors;                // Counter for bad checksums
+    uint buf[SDP_BUF_SIZE/4];   // Holding buffer
 
-    uint64 last_ffcs;		// Index of the last FFCS packet
+    uint64 last_ffcs;           // Index of the last FFCS packet
 } nn_desc_t;
 
 //------------------------------------------------------------------------------
@@ -103,8 +103,8 @@ void nn_init()
     pkt_buf_list = pkt;
 
     for (uint i = 0; i < BC_TABLE_SIZE; i++) {
-	pkt->next = (i != (BC_TABLE_SIZE - 1)) ? pkt + 1 : NULL;
-	pkt++;
+        pkt->next = (i != (BC_TABLE_SIZE - 1)) ? pkt + 1 : NULL;
+        pkt++;
     }
 }
 
@@ -150,18 +150,18 @@ void compute_eth(void)
 
     int xm = x - (p2p_root >> 8);
     while (xm < 0) {
-	xm += 12;
+        xm += 12;
     }
     while (xm >= 12) {
-	xm -= 12;
+        xm -= 12;
     }
 
     int ym = y - (p2p_root & 0xFF);
     while (ym < 0) {
-	ym += 12;
+        ym += 12;
     }
     while (ym >= 12) {
-	ym -= 12;
+        ym -= 12;
     }
 
     // Get table entry and split fields
@@ -174,12 +174,12 @@ void compute_eth(void)
 
     x -= xt;
     if (x < 0) {
-	x += x_size;
+        x += x_size;
     }
 
     y -= yt;
     if (y < 0) {
-	y += y_size;
+        y += y_size;
     }
 
     sv->board_addr = (xt << 8) + yt;
@@ -205,12 +205,12 @@ void compute_level(uint p2p_addr)
     uint y = p2p_addr & 255;
 
     for (uint lvl = 0; lvl < 4; lvl++) {
-	uint shift = 6 - 2 * lvl;
-	uint mask = ~((4 << shift) - 1);
-	uint bit = ((x >> shift) & 3) + 4 * ((y >> shift) & 3);
-	uint nx = x & mask;
-	uint ny = y & mask;
-	levels[lvl].level_addr = (nx << 24) + ((ny + lvl) << 16) + (1 << bit);
+        uint shift = 6 - 2 * lvl;
+        uint mask = ~((4 << shift) - 1);
+        uint bit = ((x >> shift) & 3) + 4 * ((y >> shift) & 3);
+        uint nx = x & mask;
+        uint ny = y & mask;
+        levels[lvl].level_addr = (nx << 24) + ((ny + lvl) << 16) + (1 << bit);
     }
 }
 
@@ -222,37 +222,37 @@ void level_config(void)
     compute_level(p2p_addr);
 
     for (uint level = 0; level < 4; level++) {
-	uint base = (levels[level].level_addr >> 16) & 0xfcfc;
-	uint shift = 6 - 2 * level;	// {6, 4, 2, 0};
-	uint width = (1 << shift);	// {64, 16, 4, 1};
+        uint base = (levels[level].level_addr >> 16) & 0xfcfc;
+        uint shift = 6 - 2 * level;     // {6, 4, 2, 0};
+        uint width = (1 << shift);      // {64, 16, 4, 1};
 
-	for (uint ix = 0; ix < 4; ix++) {
-	    for (uint iy = 0; iy < 4; iy++) {
-		uint num = ix + 4 * iy;
-		uint addr = ((ix << 8) + iy) << shift;
+        for (uint ix = 0; ix < 4; ix++) {
+            for (uint iy = 0; iy < 4; iy++) {
+                uint num = ix + 4 * iy;
+                uint addr = ((ix << 8) + iy) << shift;
 
-		// Now search for a working chip within the subregion.
+                // Now search for a working chip within the subregion.
 
-		for (uint i = 0; i < (width * width); i++) {
-		    uint wx = i & ((1 << shift) - 1);
-		    uint wy = i >> shift;
-		    uint a = base + addr + (wx << 8) + wy;
+                for (uint i = 0; i < (width * width); i++) {
+                    uint wx = i & ((1 << shift) - 1);
+                    uint wy = i >> shift;
+                    uint a = base + addr + (wx << 8) + wy;
 
-		    // Don't bother trying outside the scope of the system
-		    if (a >= p2p_dims || (a & 0xFF) >= (p2p_dims & 0xFF)) {
-			continue;
-		    }
+                    // Don't bother trying outside the scope of the system
+                    if (a >= p2p_dims || (a & 0xFF) >= (p2p_dims & 0xFF)) {
+                        continue;
+                    }
 
-		    uint link = rtr_p2p_get(a);
+                    uint link = rtr_p2p_get(a);
 
-		    if (link != 6) {
-			levels[level].addr[num] = a;
-			levels[level].valid[num] = 1;
-			break;
-		    }
-		}
-	    }
-	}
+                    if (link != 6) {
+                        levels[level].addr[num] = a;
+                        levels[level].valid[num] = 1;
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -263,9 +263,9 @@ void level_config(void)
 void peek_ack_pkt(uint link, uint data, uint key)
 {
     if (peek_pkt.flags != 1) {
-	pkt_t t = {link, data, key};
-	peek_pkt.pkt = t;
-	peek_pkt.flags = 1;
+        pkt_t t = {link, data, key};
+        peek_pkt.pkt = t;
+        peek_pkt.flags = 1;
     }
 }
 
@@ -273,9 +273,9 @@ void peek_ack_pkt(uint link, uint data, uint key)
 void poke_ack_pkt(uint link, uint data, uint key)
 {
     if (poke_pkt.flags != 1) {
-	pkt_t t = {link, data, key};
-	poke_pkt.pkt = t;
-	poke_pkt.flags = 1;
+        pkt_t t = {link, data, key};
+        poke_pkt.pkt = t;
+        poke_pkt.flags = 1;
     }
 }
 
@@ -288,30 +288,30 @@ uint link_read_word(uint addr, uint link, uint *buf, uint timeout)
     peek_pkt.flags = 0;
 
     if (! pkt_tx(PKT_NND + (link << 18), 0, addr)) {
-	return RC_PKT_TX;
+        return RC_PKT_TX;
     }
 
     event_t* e = event_new(proc_byte_set, (uint) &peek_pkt.flags, 2);
     if (e == NULL) {
-	sw_error(SW_OPT);
-	return RC_BUF;
+        sw_error(SW_OPT);
+        return RC_BUF;
     }
 
     uint id = e->ID;
     timer_schedule(e, timeout);
 
     while (peek_pkt.flags == 0) {
-	continue;
+        continue;
     }
 
     if (peek_pkt.flags == 2) {
-	return RC_TIMEOUT;
+        return RC_TIMEOUT;
     }
 
     timer_cancel(e, id);
 
     if (buf != NULL) {
-	*buf = peek_pkt.pkt.data;
+        *buf = peek_pkt.pkt.data;
     }
 
     return RC_OK;
@@ -323,24 +323,24 @@ uint link_write_word(uint addr, uint link, uint *buf, uint timeout)
     poke_pkt.flags = 0;
 
     if (! pkt_tx(PKT_NND + PKT_PL + (link << 18), *buf, addr)) {
-	return RC_PKT_TX;
+        return RC_PKT_TX;
     }
 
     event_t* e = event_new(proc_byte_set, (uint) &poke_pkt.flags, 2);
     if (e == NULL) {
-	sw_error(SW_OPT);
-	return RC_BUF;
+        sw_error(SW_OPT);
+        return RC_BUF;
     }
 
     uint id = e->ID;
     timer_schedule(e, timeout);
 
     while (poke_pkt.flags == 0) {
-	continue;
+        continue;
     }
 
     if (poke_pkt.flags == 2) {
-	return RC_TIMEOUT;
+        return RC_TIMEOUT;
     }
 
     timer_cancel(e, id);
@@ -356,10 +356,10 @@ pkt_buf_t* pkt_buf_get()
     pkt_buf_t *pkt = pkt_buf_list;
 
     if (pkt != NULL) {
-	pkt_buf_list = pkt->next;
-	pkt_buf_count++;
-	if (pkt_buf_count > pkt_buf_max) {
-	    pkt_buf_max = pkt_buf_count;
+        pkt_buf_list = pkt->next;
+        pkt_buf_count++;
+        if (pkt_buf_count > pkt_buf_max) {
+            pkt_buf_max = pkt_buf_count;
         }
     }
 
@@ -380,7 +380,7 @@ uint next_id(void)
 {
     uint t = sv->last_id + 1;
     if (t > 127) {
-	t = 1;
+        t = 1;
     }
     sv->last_id = t;
     return t << 1;
@@ -390,7 +390,7 @@ uint next_biff_id(void)
 {
     uint t = sv->last_biff_id + 1;
     if (t > 127) {
-	t = 1;
+        t = 1;
     }
     sv->last_biff_id = t;
     return t << 1;
@@ -401,9 +401,9 @@ void nn_mark(uint key)
 {
     uint id = (key >> 1) & 127;
 
-    uint w = id >> 5;			// Word in id_set
-    uint b = 1 << (id & 31);		// Bit in word
-    uint v = nn_desc.id_set[w];		// Get word from array
+    uint w = id >> 5;                   // Word in id_set
+    uint b = 1 << (id & 31);            // Bit in word
+    uint v = nn_desc.id_set[w];         // Get word from array
 
     nn_desc.id_set[w] = v | b;
     w = (w + 2) % 4;
@@ -414,22 +414,22 @@ void nn_mark(uint key)
 void ff_nn_send(uint key, uint data, uint fwd_rty, uint add_id)
 {
     if (add_id) {
-	key |= next_id();
+        key |= next_id();
     }
 
-    uint count = fwd_rty & 7;		// Number of times to send
-    uint delay = fwd_rty & 0xf8;	// Delay between transmissions
-    uint forward = fwd_rty >> 8;	// Set of links to forward to
+    uint count = fwd_rty & 7;           // Number of times to send
+    uint delay = fwd_rty & 0xf8;        // Delay between transmissions
+    uint forward = fwd_rty >> 8;        // Set of links to forward to
 
     key |= chksum_64(key, data);
 
     do {
-	for (uint link = 0; link < NUM_LINKS; link++) {
-	    if (forward & (1 << link) & link_en) {
-		sark_delay_us(delay);
-		(void) pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
-	    }
-	}
+        for (uint link = 0; link < NUM_LINKS; link++) {
+            if (forward & (1 << link) & link_en) {
+                sark_delay_us(delay);
+                (void) pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
+            }
+        }
     } while (count--);
 }
 
@@ -447,9 +447,9 @@ void biff_nn_send(uint data)
 
     uint forward = 0x07; // East, North-East, North only
     for (uint link = 0; link < NUM_LINKS; link++) {
-	if (forward & (1 << link) & link_en) {
-	    sark_delay_us(8);  // !! const
-	    (void) pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
+        if (forward & (1 << link) & link_en) {
+            sark_delay_us(8);  // !! const
+            (void) pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
         }
     }
 }
@@ -461,17 +461,17 @@ void p2pc_addr_nn_send(uint arg1, uint arg2)
 {
     // Don't send anything if our address is actually unknown...
     if (p2p_addr_guess_x == NO_IDEA || p2p_addr_guess_y == NO_IDEA) {
-	return;
+        return;
     }
 
     uint key = (NN_CMD_P2PC << 24) | (P2PC_ADDR << 2);
     uint data = ((p2p_addr_guess_x & 0xFFFF) << 16) |
-	    (p2p_addr_guess_y & 0xFFFF);
+            (p2p_addr_guess_y & 0xFFFF);
 
     key |= chksum_64(key, data);
 
     for (uint link = 0; link < NUM_LINKS; link++) {
-	pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
+        pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
     }
 }
 
@@ -484,7 +484,7 @@ void p2pc_new_nn_send(uint x, uint y)
     key |= chksum_64(key, data);
 
     for (uint link = 0; link < NUM_LINKS; link++) {
-	pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
+        pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
     }
 }
 
@@ -493,14 +493,14 @@ void p2pc_dims_nn_send(uint arg1, uint arg2)
 {
     uint key = (NN_CMD_P2PC << 24) | (P2PC_DIMS << 2);
     uint data = ((p2p_min_x & 0xFF) << 24) |
-	    ((p2p_min_y & 0xFF) << 16) |
-	    ((p2p_max_x & 0xFF) << 8) |
-	    ((p2p_max_y & 0xFF) << 0);
+            ((p2p_min_y & 0xFF) << 16) |
+            ((p2p_max_x & 0xFF) << 8) |
+            ((p2p_max_y & 0xFF) << 0);
 
     key |= chksum_64(key, data);
 
     for (uint link = 0; link < NUM_LINKS; link++) {
-	pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
+        pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
     }
 }
 
@@ -515,9 +515,9 @@ void p2pb_nn_send(uint arg1, uint arg2)
     key |= chksum_64(key, data);
 
     for (uint link = 0; link < NUM_LINKS; link++) {
-	if (link_en & (1 << link)) {
-	    pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
-	}
+        if (link_en & (1 << link)) {
+            pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
+        }
     }
 }
 
@@ -529,10 +529,10 @@ void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
     int nx = data >> 16;
     int ny = data & 0xFFFF;
     if (nx & 0x8000) {
-	nx |= 0xFFFF0000;
+        nx |= 0xFFFF0000;
     }
     if (ny & 0x8000) {
-	ny |= 0xFFFF0000;
+        ny |= 0xFFFF0000;
     }
 
     // Work out our coordinates
@@ -541,36 +541,36 @@ void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
 
     // Ignore if this address has wrapped around a few too many times...
     if (x < -255 || x > 255 || y < -255 || y > 255) {
-	return;
+        return;
     }
 
     // Ignore if in board-test mode and coordinate is not within a SpiNN-5
     // board boundary.
     if ((sv->bt_flags & 1) &&
-	    (x >= 8 || x < 0 || y >= 8 || y < 0 ||
-		    eth_map[y][x] != ((x << 4) + y))) {
-	return;
+            (x >= 8 || x < 0 || y >= 8 || y < 0 ||
+                    eth_map[y][x] != ((x << 4) + y))) {
+        return;
     }
 
     // Update out current guess
     int updated = 0;
     if ((p2p_addr_guess_x < 0 && x >= 0) || // X has gone non-negative or
-	    (((x < 0) == (p2p_addr_guess_x < 0)) && // Sign is the same and...
-		    (abs(x) < abs(p2p_addr_guess_x)))) { // ...magnitude reduced
-	p2p_addr_guess_x = x;
-	updated |= 1;
+            (((x < 0) == (p2p_addr_guess_x < 0)) && // Sign is the same and...
+                    (abs(x) < abs(p2p_addr_guess_x)))) { // ...magnitude reduced
+        p2p_addr_guess_x = x;
+        updated |= 1;
     }
     if ((p2p_addr_guess_y < 0 && y >= 0) || // Y has gone non-negative or
-	    (((y < 0) == (p2p_addr_guess_y < 0)) && // Sign is the same and...
-		    (abs(y) < abs(p2p_addr_guess_y)))) { // ...magnitude reduced
-	p2p_addr_guess_y = y;
-	updated |= 2;
+            (((y < 0) == (p2p_addr_guess_y < 0)) && // Sign is the same and...
+                    (abs(y) < abs(p2p_addr_guess_y)))) { // ...magnitude reduced
+        p2p_addr_guess_y = y;
+        updated |= 2;
     }
 
     // If guess was updated, broadcast this fact
     if (updated) {
-	ticks_since_last_p2pc_new = 0;
-	p2pc_new_nn_send(p2p_addr_guess_x, p2p_addr_guess_y);
+        ticks_since_last_p2pc_new = 0;
+        p2pc_new_nn_send(p2p_addr_guess_x, p2p_addr_guess_y);
     }
 }
 
@@ -581,17 +581,17 @@ void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
     int x = data >> 16;
     int y = data & 0xFFFF;
     if (x & 0x8000) {
-	x |= 0xFFFF0000;
+        x |= 0xFFFF0000;
     }
     if (y & 0x8000) {
-	y |= 0xFFFF0000;
+        y |= 0xFFFF0000;
     }
 
     // Ignore if this address has wrapped around a few too many times (should
     // not occur but here as a sanity check since we'll be indexing with
     // this...)
     if (x < -255 || x > 255 || y < -255 || y > 255) {
-	return;
+        return;
     }
 
     // Update the bitmap of known coordinates
@@ -602,8 +602,8 @@ void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
 
     // Re-broadcast only newly discovered coordinates
     if (byte != new_byte) {
-	ticks_since_last_p2pc_new = 0;
-	p2pc_new_nn_send(x, y);
+        ticks_since_last_p2pc_new = 0;
+        p2pc_new_nn_send(x, y);
     }
 }
 
@@ -614,10 +614,10 @@ void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
     int new_min_x = (data >> 24) & 0xFF;
     int new_min_y = (data >> 16) & 0xFF;
     if (new_min_x) {
-	new_min_x |= 0xFFFFFF00;
+        new_min_x |= 0xFFFFFF00;
     }
     if (new_min_y) {
-	new_min_y |= 0xFFFFFF00;
+        new_min_y |= 0xFFFFFF00;
     }
 
     int new_max_x = (data >> 8) & 0xFF;
@@ -626,27 +626,27 @@ void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
     // Expand bounds as required
     int changed = 0;
     if (new_min_x < p2p_min_x) {
-	p2p_min_x = new_min_x;
-	changed = 1;
+        p2p_min_x = new_min_x;
+        changed = 1;
     }
     if (new_min_y < p2p_min_y) {
-	p2p_min_y = new_min_y;
-	changed = 1;
+        p2p_min_y = new_min_y;
+        changed = 1;
     }
     if (new_max_x > p2p_max_x) {
-	p2p_max_x = new_max_x;
-	changed = 1;
+        p2p_max_x = new_max_x;
+        changed = 1;
     }
     if (new_max_y > p2p_max_y) {
-	p2p_max_y = new_max_y;
-	changed = 1;
+        p2p_max_y = new_max_y;
+        changed = 1;
     }
 
     // Re-broadcast immediately if bounds expanded to minimise propagation
     // delay
     if (changed) {
-	ticks_since_last_p2pc_dims = 0;
-	p2pc_dims_nn_send(0, 0);
+        ticks_since_last_p2pc_dims = 0;
+        p2pc_dims_nn_send(0, 0);
     }
 }
 
@@ -688,25 +688,25 @@ void nn_cmd_rtrc(uint data)
     uint t1 = 0;
     uint t2 = 0;
 
-    if (data & 0x20) {				// Wait2
-	t2 |= data & 0xff000000;
-	t1 |= 0xff000000;
+    if (data & 0x20) {                          // Wait2
+        t2 |= data & 0xff000000;
+        t1 |= 0xff000000;
     }
-    if (data & 0x10) {				// Wait1
-	t2 |= data & 0x00ff0000;
-	t1 |= 0x00ff0000;
+    if (data & 0x10) {                          // Wait1
+        t2 |= data & 0x00ff0000;
+        t1 |= 0x00ff0000;
     }
-    if (data & 0x08) {				// W bit
-	t2 |= data & 0x00008000;
-	t1 |= 0x00008000;
+    if (data & 0x08) {                          // W bit
+        t2 |= data & 0x00008000;
+        t1 |= 0x00008000;
     }
-    if (data & 0x04) {				// MP
-	t2 |= data & 0x00001f00;
-	t1 |= 0x00001f00;
+    if (data & 0x04) {                          // MP
+        t2 |= data & 0x00001f00;
+        t1 |= 0x00001f00;
     }
-    if (data & 0x02) {				// TP
-	t2 |= data & 0x000000c0;
-	t1 |= 0x000000c0;
+    if (data & 0x02) {                          // TP
+        t2 |= data & 0x000000c0;
+        t1 |= 0x000000c0;
     }
 
     t1 = rtr[RTR_CONTROL] & ~t1;
@@ -725,40 +725,40 @@ uint nn_cmd_sig0(uint data)
 
     switch (op) {
     case 0: // Set forward & retry
-	nn_desc.forward = sv->forward = data >> 8;	// 8 bits
-	nn_desc.retry = sv->retry = data;		// 8 bits
-	break;
+        nn_desc.forward = sv->forward = data >> 8;      // 8 bits
+        nn_desc.retry = sv->retry = data;               // 8 bits
+        break;
 
     case 1: // Set LEDs
-	sark_led_set(data);
-	break;
+        sark_led_set(data);
+        break;
 
     case 2: // Global Time Phase
-	sv->tp_scale = data & 15;
-	sv->tp_timer = 0;
-	break;
+        sv->tp_scale = data & 15;
+        sv->tp_timer = 0;
+        break;
 
     case 3: // ID set/reset ## what's this? Set last_id here ?
-	if (data == nn_desc.gidr_id) {
-	    return 0;
-	}
+        if (data == nn_desc.gidr_id) {
+            return 0;
+        }
 
-	nn_desc.gidr_id = data;
-	sark_word_set(nn_desc.id_set, (data & 1) ? 0xff : 0x00, 16);
-	break;
+        nn_desc.gidr_id = data;
+        sark_word_set(nn_desc.id_set, (data & 1) ? 0xff : 0x00, 16);
+        break;
 
     case 4: // Trigger "level_config"
-	event_queue_proc((event_proc) level_config, 0, 0, PRIO_0);
-	break;
+        event_queue_proc((event_proc) level_config, 0, 0, PRIO_0);
+        break;
 
     case 5: // Signal application
-	signal_app(data);
-	break;
+        signal_app(data);
+        break;
       /*
-    case GSIG_TP: 	// Router time phase period
-    case GSIG_RST: 	// Shut down APs
-    case GSIG_DOWN:	// Minimum power mode
-    case GSIG_UP:	// Operational mode
+    case GSIG_TP:       // Router time phase period
+    case GSIG_RST:      // Shut down APs
+    case GSIG_DOWN:     // Minimum power mode
+    case GSIG_UP:       // Operational mode
       */
     }
     return 1;
@@ -772,21 +772,21 @@ void nn_cmd_mem(uint data, uint key)
     uint base = SV_SV;
 
     if (op == 1) {
-	base = SYSRAM_BASE;
+        base = SYSRAM_BASE;
     } else if (op == 2) {
-	base = SYSCTL_BASE;
+        base = SYSCTL_BASE;
     } else if (op == 3) {
-	base = sv->mem_ptr;
+        base = sv->mem_ptr;
     }
 
     uint ptr = base + ((key >> 8) & 255);
 
     if (type == 0) {
-	* ((uchar *) ptr) = data;
+        * ((uchar *) ptr) = data;
     } else if (type == 1) {
-	* ((short *) ptr) = data;
+        * ((short *) ptr) = data;
     } else {
-	* ((uint *) ptr) = data;
+        * ((uint *) ptr) = data;
     }
 }
 
@@ -795,8 +795,8 @@ void nn_cmd_sig1(uint data, uint key)
 {
     uint op = (key >> 20) & 15;
 
-    if (op == 0) {		// Memory write
-	nn_cmd_mem(data, key);
+    if (op == 0) {              // Memory write
+        nn_cmd_mem(data, key);
     }
 }
 
@@ -817,32 +817,32 @@ void nn_cmd_sig1(uint data, uint key)
 
 // Returns data with P2P_STOP_BIT set if the packet should not be propagated
 
-#define P2PB_STOP_BIT 0x400	   // Set to stop propagation
+#define P2PB_STOP_BIT 0x400        // Set to stop propagation
 
 uint nn_cmd_p2pb(uint id, uint data, uint link)
 {
     uint addr = data >> 16;
-    uint hops = data & 0x3ff;	// Bottom 10 bits
+    uint hops = data & 0x3ff;   // Bottom 10 bits
 
     uint table_id = hop_table[addr] >> 24;
     uint table_hops = hop_table[addr] & 0xffff;
 
     if (addr != p2p_addr &&
-	    (id != table_id || hops < table_hops) &&
-	    (link_en & (1 << link))) {
-	if (table_hops == 0xffff) {
-	    sv->p2p_active++;
-	}
+            (id != table_id || hops < table_hops) &&
+            (link_en & (1 << link))) {
+        if (table_hops == 0xffff) {
+            sv->p2p_active++;
+        }
 
-	hop_table[addr] = (id << 24) + hops;
+        hop_table[addr] = (id << 24) + hops;
 
-	rtr_p2p_set(addr, link);
+        rtr_p2p_set(addr, link);
 
-	if (hops >= 0x3FF) {
-	    data |= P2PB_STOP_BIT;
-	}
+        if (hops >= 0x3FF) {
+            data |= P2PB_STOP_BIT;
+        }
     } else {
-	data |= P2PB_STOP_BIT;
+        data |= P2PB_STOP_BIT;
     }
 
     return data + 1;
@@ -856,9 +856,9 @@ void nn_cmd_ffs(uint data, uint key)
 {
     nn_desc.aplx_addr = sv->sdram_sys;
     nn_desc.region = data;
-    nn_desc.id = (key >> 17) & 127;	// 8 bits (LSB zero)
-    nn_desc.block_len = key >> 8;	// 8 bits
-    nn_desc.block_count = 0;		// 8 bits
+    nn_desc.id = (key >> 17) & 127;     // 8 bits (LSB zero)
+    nn_desc.block_len = key >> 8;       // 8 bits
+    nn_desc.block_count = 0;            // 8 bits
     nn_desc.error = nn_desc.load = 0;
 
     sark_word_set(nn_desc.fbs_set, 0, 32);
@@ -873,9 +873,9 @@ void nn_cmd_ffs(uint data, uint key)
     uint level = region & 3;
 
     if ((mask == 0) ||
-	    (((levels[level].level_addr >> 16) == region)) &&
-	    (levels[level].level_addr & mask)) {
-	nn_desc.load = 1;
+            (((levels[level].level_addr >> 16) == region)) &&
+            (levels[level].level_addr & mask)) {
+        nn_desc.load = 1;
     }
 
     nn_desc.state = FF_ST_EXBLK;
@@ -897,18 +897,18 @@ uint nn_cmd_ffcs(uint data, uint key)
     // shouldn't be forwarded.
     uint64 id = (((uint64) data) << 18) | cores;
     if (id <= nn_desc.last_ffcs) {
-	return 1;
+        return 1;
     }
     nn_desc.last_ffcs = id;
 
     if ((mask == 0) ||
-	    (((levels[level].level_addr >> 16) == region)) &&
-	    (levels[level].level_addr & mask)) {
-	// We're in the region, so ensure that load is set
-	nn_desc.load = 1;
+            (((levels[level].level_addr >> 16) == region)) &&
+            (levels[level].level_addr & mask)) {
+        // We're in the region, so ensure that load is set
+        nn_desc.load = 1;
 
-	// And include the cores that we wish to load
-	nn_desc.cores |= cores;
+        // And include the cores that we wish to load
+        nn_desc.cores |= cores;
     }
 
     return 0;
@@ -918,7 +918,7 @@ uint nn_cmd_ffcs(uint data, uint key)
 uint nn_cmd_fbs(uint id, uint data, uint key)
 {
     if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK) {
-	return 0;
+        return 0;
     }
 
     uint block_num = (key >> 16) & 255;
@@ -927,7 +927,7 @@ uint nn_cmd_fbs(uint id, uint data, uint key)
     uint mask = nn_desc.fbs_set[word];
 
     if ((mask & bit) != 0) {
-	return 0;
+        return 0;
     }
 
     nn_desc.fbs_set[word] = mask | bit;
@@ -951,8 +951,8 @@ uint nn_cmd_fbd(uint id, uint data, uint key)
     uint block_num = (key >> 16) & 0xff; // Block num
 
     if (id != nn_desc.id || block_num != nn_desc.block_num ||
-	    nn_desc.state != FF_ST_INBLK) {
-	return 0;
+            nn_desc.state != FF_ST_INBLK) {
+        return 0;
     }
 
     uint offset = (key >> 8) & 0xff;
@@ -961,7 +961,7 @@ uint nn_cmd_fbd(uint id, uint data, uint key)
     uint mask = nn_desc.fbd_set[word];
 
     if ((mask & bit) != 0) {
-	return 0;
+        return 0;
     }
 
     nn_desc.word_count++;
@@ -978,8 +978,8 @@ uint nn_cmd_fbe(uint id, uint data, uint key)
     uint block_num = (key >> 16) & 0xff;
 
     if (id != nn_desc.id || block_num != nn_desc.block_num ||
-	    nn_desc.state != FF_ST_INBLK) {
-	return 0;
+            nn_desc.state != FF_ST_INBLK) {
+        return 0;
     }
 
     uint word = block_num >> 5;
@@ -987,18 +987,18 @@ uint nn_cmd_fbe(uint id, uint data, uint key)
     uint mask = nn_desc.fbe_set[word];
 
     if ((mask & bit) != 0) {
-	return 0;
+        return 0;
     }
 
     nn_desc.fbe_set[word] = mask | bit;
     nn_desc.sum += data;
 
     if (nn_desc.sum == 0 && nn_desc.word_count == nn_desc.word_len) {
-	nn_desc.block_count++;
-	sark_word_cpy((void *) nn_desc.load_addr, nn_desc.buf,
-		nn_desc.word_len * 4);
+        nn_desc.block_count++;
+        sark_word_cpy((void *) nn_desc.load_addr, nn_desc.buf,
+                nn_desc.word_len * 4);
     } else {
-	nn_desc.error = 1;
+        nn_desc.error = 1;
     }
 
     nn_desc.state = FF_ST_EXBLK;
@@ -1009,16 +1009,16 @@ uint nn_cmd_fbe(uint id, uint data, uint key)
 uint nn_cmd_ffe(uint id, uint data, uint key)
 {
     if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK) {
-	return 0;
+        return 0;
     }
 
     nn_desc.state = FF_ST_IDLE;
 
     if (nn_desc.error == 0 && nn_desc.block_count == nn_desc.block_len
-	    && nn_desc.load) {
-	if (!event_queue_proc(proc_start_app, (uint) nn_desc.aplx_addr,
-		data | nn_desc.cores, PRIO_0)) {
-	    sw_error(SW_OPT);
+            && nn_desc.load) {
+        if (!event_queue_proc(proc_start_app, (uint) nn_desc.aplx_addr,
+                data | nn_desc.cores, PRIO_0)) {
+            sw_error(SW_OPT);
         }
     }
 
@@ -1035,31 +1035,31 @@ void proc_pkt_bc(uint i_pkt, uint count)
     uint offset = (forward & 0x40) ? 0 : link;
 
     for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
-	if (forward & (1 << lnk)) {
-	    uint p = lnk + offset;
+        if (forward & (1 << lnk)) {
+            uint p = lnk + offset;
 
-	    if (p >= NUM_LINKS) {
-		p -= NUM_LINKS;
-	    }
+            if (p >= NUM_LINKS) {
+                p -= NUM_LINKS;
+            }
 
-	    if ((1 << p) & link_en) {
-		if (! pkt_tx(pkt->pkt.ctrl + (p << 18), pkt->pkt.data,
-			pkt->pkt.key)) {
-		    sw_error(SW_OPT);
-		}
-	    }
-	}
+            if ((1 << p) & link_en) {
+                if (! pkt_tx(pkt->pkt.ctrl + (p << 18), pkt->pkt.data,
+                        pkt->pkt.key)) {
+                    sw_error(SW_OPT);
+                }
+            }
+        }
     }
 
     count--;
 
     if (count != 0) {
-	if (!timer_schedule_proc(proc_pkt_bc, (uint) pkt, count,
-		pkt->delay)) {
-	    sw_error(SW_OPT);
-	}
+        if (!timer_schedule_proc(proc_pkt_bc, (uint) pkt, count,
+                pkt->delay)) {
+            sw_error(SW_OPT);
+        }
     } else {
-	pkt_buf_free(pkt);
+        pkt_buf_free(pkt);
     }
 }
 
@@ -1078,28 +1078,28 @@ void nn_cmd_biff(uint x, uint y, uint data)
 
     switch (type) {
     case 0: {
-	uint target_x = (data >> 27) & 7;
-	uint target_y = (data >> 24) & 7;
+        uint target_x = (data >> 27) & 7;
+        uint target_y = (data >> 24) & 7;
 
-	// Ignore if not targeted at this chip
-	if (target_x != x || target_y != y) {
-	    return;
-	}
+        // Ignore if not targeted at this chip
+        if (target_x != x || target_y != y) {
+            return;
+        }
 
-	// NB: *Dead* links are given as '1'
-	sv->link_en = link_en = ((~data) >> 18) & 0x3f;
+        // NB: *Dead* links are given as '1'
+        sv->link_en = link_en = ((~data) >> 18) & 0x3f;
 
-	// Kill any cores noted as dead (note this may kill the core running
-	// the monitor process, rendering the chip dead. This is the desired
-	// effect in this instance since rebooting another core as monitor
-	// would be difficult.
-	uint dead_cores = data & 0x3ffff;
-	remap_phys_cores(dead_cores);
-	break;
+        // Kill any cores noted as dead (note this may kill the core running
+        // the monitor process, rendering the chip dead. This is the desired
+        // effect in this instance since rebooting another core as monitor
+        // would be difficult.
+        uint dead_cores = data & 0x3ffff;
+        remap_phys_cores(dead_cores);
+        break;
     }
 
     default: // Ignore...
-	break;
+        break;
     }
 }
 
@@ -1115,25 +1115,25 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
 
     // Fliter the packet if it came from another board
     if (x >= 8 || x < 0 || y >= 8 || y < 0 ||
-	    eth_map[y][x] != ((x << 4) + y)) {
-	return;
+            eth_map[y][x] != ((x << 4) + y)) {
+        return;
     }
 
     uint id = (key >> 1) & 127;
 
     // Packets must have an ID at present
     if (id == 0) {
-	return;
+        return;
     }
 
     // Filter out packets we've seen before (note that IDs are only unique
     // within a board so this process must occur *after* filtering packets
     // from other boards.
-    uint word = id >> 5;			// Word in biff_id_set
-    uint bit = 1 << (id & 31);			// Bit in word
-    uint mask = nn_desc.biff_id_set[word];	// Get mask word from array
+    uint word = id >> 5;                        // Word in biff_id_set
+    uint bit = 1 << (id & 31);                  // Bit in word
+    uint mask = nn_desc.biff_id_set[word];      // Get mask word from array
     if (mask & bit) {
-	return;
+        return;
     }
 
     // Flag that this ID has been seen
@@ -1160,8 +1160,8 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     pkt_buf_t *pkt = pkt_buf_get();
 
     if (pkt == NULL) { // !! ??
-	sw_error(SW_OPT);
-	return;
+        sw_error(SW_OPT);
+        return;
     }
 
     pkt->fwd = 0x3e; // Don't return to sender...
@@ -1172,7 +1172,7 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     pkt->pkt = tp;
 
     if (!timer_schedule_proc(proc_pkt_bc, (uint) pkt, 1, 8)) {
-	sw_error(SW_OPT);
+        sw_error(SW_OPT);
     }
 }
 
@@ -1181,8 +1181,8 @@ void nn_rcv_pkt(uint link, uint data, uint key)
 {
     uint t = chksum_64(key, data);
     if (t != 0) {
-	nn_desc.errors++;
-	return;
+        nn_desc.errors++;
+        return;
     }
 
     uint cmd = (key >> 24) & 15;
@@ -1190,11 +1190,11 @@ void nn_rcv_pkt(uint link, uint data, uint key)
 
     // NN_CMD_BIFF and NN_CMD_P2PC are handled seperately
     if (cmd == NN_CMD_BIFF) {
-	nn_rcv_biff_pct(link, data, key);
-	return;
+        nn_rcv_biff_pct(link, data, key);
+        return;
     } else if (cmd == NN_CMD_P2PC) {
-	nn_rcv_p2pc_pct(link, data, key);
-	return;
+        nn_rcv_p2pc_pct(link, data, key);
+        return;
     }
 
 #ifdef NN_STATS
@@ -1202,85 +1202,85 @@ void nn_rcv_pkt(uint link, uint data, uint key)
 #endif
 
     if (cmd < 7 && id != 0) { //const - use (non-zero) ID to stop propagation
-	uint word = id >> 5;			// Word in id_set
-	uint bit = 1 << (id & 31);		// Bit in word
-	uint mask = nn_desc.id_set[word];	// Get mask word from array
-	if (mask & bit) {
-	    return;
+        uint word = id >> 5;                    // Word in id_set
+        uint bit = 1 << (id & 31);              // Bit in word
+        uint mask = nn_desc.id_set[word];       // Get mask word from array
+        if (mask & bit) {
+            return;
         }
 
-	nn_desc.id_set[word] = mask | bit;
-	word = (word + 2) % 4;
-	nn_desc.id_set[word] = 0;
+        nn_desc.id_set[word] = mask | bit;
+        word = (word + 2) % 4;
+        nn_desc.id_set[word] = 0;
     }
 
     switch (cmd) {
     case NN_CMD_SIG0:
-	if (nn_cmd_sig0(data)) {
-	    break;
+        if (nn_cmd_sig0(data)) {
+            break;
         }
-	return;
+        return;
 
     case NN_CMD_RTRC:
-	nn_cmd_rtrc(data);
-	break;
+        nn_cmd_rtrc(data);
+        break;
 
     case NN_CMD_LTPC:
-	t = sv->tp_timer + 2;
-	if ((t <= data) && ((t ^ data) & BIT_31) == 0) {
-	    sv->tp_timer = data - 1;
+        t = sv->tp_timer + 2;
+        if ((t <= data) && ((t ^ data) & BIT_31) == 0) {
+            sv->tp_timer = data - 1;
         } else {
             return;
         }
-	break;
+        break;
 
     case NN_CMD_SIG1:
-	nn_cmd_sig1(data, key);
-	break;
+        nn_cmd_sig1(data, key);
+        break;
 
     case NN_CMD_FFS:
-	nn_cmd_ffs(data, key);
-	break;
+        nn_cmd_ffs(data, key);
+        break;
 
     case NN_CMD_FFCS:
-	if (nn_cmd_ffcs(data, key)) {
-	    return;
+        if (nn_cmd_ffcs(data, key)) {
+            return;
         }
-	break;
+        break;
 
     case NN_CMD_P2PB:
-	data = nn_cmd_p2pb(id, data, link);
-	if (data & P2PB_STOP_BIT) {
-	    return;
+        data = nn_cmd_p2pb(id, data, link);
+        if (data & P2PB_STOP_BIT) {
+            return;
         }
-	break;
+        break;
 
     case NN_CMD_FBS:
-	if (nn_cmd_fbs(id, data, key)) {
-	    break;
+        if (nn_cmd_fbs(id, data, key)) {
+            break;
         }
-	return;
+        return;
 
     case NN_CMD_FBD:
-	if (nn_cmd_fbd(id, data, key)) {
-	    break;
+        if (nn_cmd_fbd(id, data, key)) {
+            break;
         }
-	return;
+        return;
 
     case NN_CMD_FBE:
-	if (nn_cmd_fbe(id, data, key)) {
-	    break;
+        if (nn_cmd_fbe(id, data, key)) {
+            break;
         }
-	return;
+        return;
 
     case NN_CMD_FFE:
-	if (nn_cmd_ffe(id, data, key)) {
-	    break;
+        if (nn_cmd_ffe(id, data, key)) {
+            break;
         }
-	return;
+        return;
 
     default: // Ignore...
-	return;
+        return;
     }
 
     // Now forward the incoming packet
@@ -1303,11 +1303,11 @@ void nn_rcv_pkt(uint link, uint data, uint key)
     uint forward, retry;
 
     if (cmd & 4) { //const
-	forward = nn_desc.forward;
-	retry = nn_desc.retry;
+        forward = nn_desc.forward;
+        retry = nn_desc.retry;
     } else {
-	forward = (key >> 16) & 255;
-	retry = (key >> 8) & 255;
+        forward = (key >> 16) & 255;
+        retry = (key >> 8) & 255;
     }
 
     key &= 0x0fffffff;
@@ -1316,8 +1316,8 @@ void nn_rcv_pkt(uint link, uint data, uint key)
     pkt_buf_t *pkt = pkt_buf_get();
 
     if (pkt == NULL) { // !! ??
-	sw_error(SW_OPT);
-	return;
+        sw_error(SW_OPT);
+        return;
     }
 
     pkt->fwd = forward;
@@ -1328,7 +1328,7 @@ void nn_rcv_pkt(uint link, uint data, uint key)
     pkt->pkt = tp;
 
     if (!timer_schedule_proc(proc_pkt_bc,
-	    (uint) pkt, (retry & 7) + 1, 8)) { // const
-	sw_error(SW_OPT);
+            (uint) pkt, (retry & 7) + 1, 8)) { // const
+        sw_error(SW_OPT);
     }
 }

@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// bmp_init.c	    System initialisation code for BMP LPC1768
+// bmp_init.c       System initialisation code for BMP LPC1768
 //
 // Copyright (C)    The University of Manchester - 2012-2015
 //
@@ -18,19 +18,19 @@
 
 // Linker generated symbols
 
-#define RO_BASE    	Image$$PROGRAM$$RO$$Base
-#define RO_LIMIT   	Image$$PROGRAM$$RO$$Limit
-#define RO_LENGTH  	Image$$PROGRAM$$RO$$Length
+#define RO_BASE         Image$$PROGRAM$$RO$$Base
+#define RO_LIMIT        Image$$PROGRAM$$RO$$Limit
+#define RO_LENGTH       Image$$PROGRAM$$RO$$Length
 
-#define RW_BASE    	Image$$SRAM$$RW$$Base
-#define RW_LIMIT     	Image$$SRAM$$RW$$Limit
-#define RW_LENGTH  	Image$$SRAM$$RW$$Length
+#define RW_BASE         Image$$SRAM$$RW$$Base
+#define RW_LIMIT        Image$$SRAM$$RW$$Limit
+#define RW_LENGTH       Image$$SRAM$$RW$$Length
 
-#define ZI_BASE    	Image$$SRAM$$ZI$$Base
-#define ZI_LIMIT     	Image$$SRAM$$ZI$$Limit
+#define ZI_BASE         Image$$SRAM$$ZI$$Base
+#define ZI_LIMIT        Image$$SRAM$$ZI$$Limit
 
-#define STACK_LIMIT  	Image$$STACK$$ZI$$Limit
-#define STACK_BASE 	Image$$STACK$$ZI$$Base
+#define STACK_LIMIT     Image$$STACK$$ZI$$Limit
+#define STACK_BASE      Image$$STACK$$ZI$$Base
 
 
 extern uint32_t RO_BASE, RO_LIMIT, RO_LENGTH;
@@ -53,7 +53,7 @@ extern void c_main(void);
 void  __attribute__((noreturn)) error_han(void)
 {
     while (1) {
-	die(12);
+        die(12);
     }
 }
 
@@ -66,7 +66,7 @@ void BusFault_Handler       (void) __attribute__ ((weak, alias ("error_han")));
 void UsageFault_Handler     (void) __attribute__ ((weak, alias ("error_han")));
 void SVC_Handler            (void) __attribute__ ((weak, alias ("error_han")));
 void DebugMon_Handler       (void) __attribute__ ((weak, alias ("error_han")));
-void PendSV_Handler	    (void) __attribute__ ((weak, alias ("error_han")));
+void PendSV_Handler         (void) __attribute__ ((weak, alias ("error_han")));
 void SysTick_Handler        (void) __attribute__ ((weak, alias ("error_han")));
 
 // LPC17xx specific interrupt handlers
@@ -109,7 +109,7 @@ void CANActivity_IRQHandler (void) __attribute__ ((weak, alias ("error_han")));
 
 
 const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) = {
-    (uint32_t *) &STACK_LIMIT,	   // 0:  Stack top
+    (uint32_t *) &STACK_LIMIT,     // 0:  Stack top
     (main_proc) c_main,            // 1:  Entry point
 
     NMI_Handler,                   // 2:  NMI Handler
@@ -127,58 +127,58 @@ const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) = {
     PendSV_Handler,                // 14: Pending SV Handler
     SysTick_Handler,               // 15: SysTick Handler
 
-    WDT_IRQHandler,            	   // 16: Watchdog Timer
-    TIMER0_IRQHandler,         	   // 17: Timer0
-    TIMER1_IRQHandler,         	   // 18: Timer1
-    TIMER2_IRQHandler,         	   // 19: Timer2
-    TIMER3_IRQHandler,         	   // 20: Timer3
-    UART0_IRQHandler,          	   // 21: UART0
-    UART1_IRQHandler,          	   // 22: UART1
-    UART2_IRQHandler,          	   // 23: UART2
-    UART3_IRQHandler,          	   // 24: UART3
-    PWM1_IRQHandler,           	   // 25: PWM1
-    I2C0_IRQHandler,           	   // 26: I2C0
-    I2C1_IRQHandler,           	   // 27: I2C1
-    I2C2_IRQHandler,           	   // 28: I2C2
-    SPI_IRQHandler,            	   // 29: SPI
-    SSP0_IRQHandler,           	   // 30: SSP0
-    SSP1_IRQHandler,           	   // 31: SSP1
+    WDT_IRQHandler,                // 16: Watchdog Timer
+    TIMER0_IRQHandler,             // 17: Timer0
+    TIMER1_IRQHandler,             // 18: Timer1
+    TIMER2_IRQHandler,             // 19: Timer2
+    TIMER3_IRQHandler,             // 20: Timer3
+    UART0_IRQHandler,              // 21: UART0
+    UART1_IRQHandler,              // 22: UART1
+    UART2_IRQHandler,              // 23: UART2
+    UART3_IRQHandler,              // 24: UART3
+    PWM1_IRQHandler,               // 25: PWM1
+    I2C0_IRQHandler,               // 26: I2C0
+    I2C1_IRQHandler,               // 27: I2C1
+    I2C2_IRQHandler,               // 28: I2C2
+    SPI_IRQHandler,                // 29: SPI
+    SSP0_IRQHandler,               // 30: SSP0
+    SSP1_IRQHandler,               // 31: SSP1
 
-    PLL0_IRQHandler,           	   // 32: PLL0 Lock (Main PLL)
-    RTC_IRQHandler,            	   // 33: Real Time Clock
-    EINT0_IRQHandler,          	   // 34: External Interrupt 0
-    EINT1_IRQHandler,          	   // 35: External Interrupt 1
-    EINT2_IRQHandler,          	   // 36: External Interrupt 2
-    EINT3_IRQHandler,          	   // 37: External Interrupt 3
-    ADC_IRQHandler,            	   // 38: A/D Converter
-    BOD_IRQHandler,            	   // 39: Brown-Out Detect
-    USB_IRQHandler,            	   // 40: USB
-    CAN_IRQHandler,            	   // 41: CAN
-    DMA_IRQHandler,            	   // 42: General Purpose DMA
-    I2S_IRQHandler,            	   // 43: I2S
-    ENET_IRQHandler,           	   // 44: Ethernet
-    RIT_IRQHandler,            	   // 45: Repetitive Interrupt Timer
-    MCPWM_IRQHandler,          	   // 46: Motor Control PWM
-    QEI_IRQHandler,            	   // 47: Quadrature Encoder Interface
-    PLL1_IRQHandler,           	   // 48: PLL1 Lock (USB PLL)
+    PLL0_IRQHandler,               // 32: PLL0 Lock (Main PLL)
+    RTC_IRQHandler,                // 33: Real Time Clock
+    EINT0_IRQHandler,              // 34: External Interrupt 0
+    EINT1_IRQHandler,              // 35: External Interrupt 1
+    EINT2_IRQHandler,              // 36: External Interrupt 2
+    EINT3_IRQHandler,              // 37: External Interrupt 3
+    ADC_IRQHandler,                // 38: A/D Converter
+    BOD_IRQHandler,                // 39: Brown-Out Detect
+    USB_IRQHandler,                // 40: USB
+    CAN_IRQHandler,                // 41: CAN
+    DMA_IRQHandler,                // 42: General Purpose DMA
+    I2S_IRQHandler,                // 43: I2S
+    ENET_IRQHandler,               // 44: Ethernet
+    RIT_IRQHandler,                // 45: Repetitive Interrupt Timer
+    MCPWM_IRQHandler,              // 46: Motor Control PWM
+    QEI_IRQHandler,                // 47: Quadrature Encoder Interface
+    PLL1_IRQHandler,               // 48: PLL1 Lock (USB PLL)
 
-    USBActivity_IRQHandler,    	   // 49: USB Activity
+    USBActivity_IRQHandler,        // 49: USB Activity
     CANActivity_IRQHandler,        // 50: CAN Activity
 
-    (handler) 0,		   // 51:
-    (handler) 0,		   // 52:
-    BUILD_DATE,			   // 53: Build date
-    BMP_VER_NUM,		   // 54: Version number
+    (handler) 0,                   // 51:
+    (handler) 0,                   // 52:
+    BUILD_DATE,                    // 53: Build date
+    BMP_VER_NUM,                   // 54: Version number
 
     (uint32_t) &RO_LENGTH,         // 55: RO_length
     (uint32_t) &RW_LENGTH,         // 56: RW_length
-    &RO_LIMIT,   		   // 57: RO_limit
-    &RW_BASE,	 		   // 58: RW_base
-    &RW_LIMIT,	 		   // 59: RW_limit
-    &ZI_BASE,	 		   // 60: ZI_base
-    &ZI_LIMIT,	 		   // 61: ZI_limit
-    &STACK_BASE, 		   // 62: stack_base
-    &STACK_LIMIT 		   // 63: stack_limit
+    &RO_LIMIT,                     // 57: RO_limit
+    &RW_BASE,                      // 58: RW_base
+    &RW_LIMIT,                     // 59: RW_limit
+    &ZI_BASE,                      // 60: ZI_base
+    &ZI_LIMIT,                     // 61: ZI_limit
+    &STACK_BASE,                   // 62: stack_base
+    &STACK_LIMIT                   // 63: stack_limit
 };
 
 
