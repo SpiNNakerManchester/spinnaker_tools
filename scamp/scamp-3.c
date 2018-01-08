@@ -1451,43 +1451,6 @@ void sark_config(void)
     sark_vec->app_flags &= ~(1 << APP_FLAG_WAIT); // Don't wait in SARK start-up
 }
 
-__asm void img_cp_exe (void) {
-	code32
-	preserve8
-
-	mov  	r0, #DMA_BASE   ;; DMA controller
-	mov  	r1, #SDRAM_BASE	;; boot image source
-	str  	r1, [r0, #0x04]
-	ldr  	r2, dmd0 	;; DTCM destination
-	str  	r2, [r0, #0x08]
-	ldr  	r3, dmc0 	;; DMA descriptor
-	str  	r3, [r0, #0x0c]
-
-	mov  	r2, #ITCM_BASE 	;; ITCM destination
-	str  	r2, [r0, #0x08]
-	ldr  	r3, dmc0
-	str  	r3, [r0, #0x0c]
-
-wt0	ldr  	r4, [r0, #0x14]	;; wait for DTCM DMA to complete
-        lsls  	r4, r4, #21
-        bpl  	wt0
-
-	mov  	r4, #08 	;; clear DMA interrupt
-	str  	r4, [r0, #0x10]
-
-wt1	ldr  	r4, [r0, #0x14]	;; wait for ITCM DMA to complete
-        lsls  	r4, r4, #21
-        bpl  	wt1
-
-	mov  	r4, #08 	;; clear DMA interrupt
-	str  	r4, [r0, #0x10]
-
-	bx      r2	        ;; branch to ITCM
-
-dmc0	dcd  	(1 << 24 | 4 << 21 | 0 << 19 | 0x7100)
-dmd0	dcd  	(DTCM_BASE + 0x00008000)
-}
-
 
 void delegate(uint del, uint del_mask)
 {

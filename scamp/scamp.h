@@ -314,6 +314,7 @@ extern uint cmd_srom(sdp_msg_t *msg);
 // scamp-isr.c
 
 extern void vic_setup(void);
+extern void img_cp_exe(void);
 
 // scamp-app.c
 
