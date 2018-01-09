@@ -317,7 +317,6 @@ void img_cp_exe (void) {
     dma[DMA_DESC] = 1 << 24 | 4 << 21 | 0 << 19 | 0x7100;
 
     // start boot image DMA to ITCM,
-    dma[DMA_ADRS] = (uint) SDRAM_BASE;
     dma[DMA_ADRT] = (uint) ITCM_BASE;
     dma[DMA_DESC] = 1 << 24 | 4 << 21 | 0 << 19 | 0x7100;
 
