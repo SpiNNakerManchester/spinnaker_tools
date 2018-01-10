@@ -754,7 +754,8 @@ void remap_phys_cores(uint phys_cores)
 
     boot_ap();
 
-    sark_word_set(sv_vcpu + num_cpus, 0, sizeof(vcpu_t));
+    sark_word_set(sv_vcpu + num_cpus, 0,
+		  (NUM_CPUS - num_cpus) * sizeof(vcpu_t));
 }
 
 //------------------------------------------------------------------------------
@@ -1370,7 +1371,7 @@ static uint pll_mult(uint freq)
 // Note that system bus is clocked at (cpu_freq * 2 / sys_div)
 // and router at (cpu_freq * 2 / rtr_div)
 //
-// To run CPUs at 150, SDRAM at 130, system bus and router at 100
+// To run CPUs at 200, SDRAM at 130, system bus and router at 133
 //
 void pll_init()
 {

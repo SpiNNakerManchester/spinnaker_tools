@@ -139,7 +139,7 @@ if ($text)
     if ($boot)
     {
 	printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n", # boot_aplx
-          0x7f00, -128, 128;
+          0x7f00, -128 & 0xffffffff, 128;
 	printf "\t\tdcd\tAPLX_RCOPY, 0x%08x, 0x%08x, 0x%08x\n", # def_app
           0x7000, 512-128-16, 3584;
 	printf "\t\tdcd\tAPLX_EXEC,  0x%08x, 0x%08x, 0x%08x\n", # dis. int.

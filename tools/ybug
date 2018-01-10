@@ -18,6 +18,7 @@ use warnings;
 my $crc32_enabled = 1;
 eval {
     require String::CRC32;
+    String::CRC32->import();
     print "CRC32 Enabled!\n";
     1;
 } or $crc32_enabled = 0;
@@ -2073,7 +2074,7 @@ my $spin_cmds =
         "Dump heaps"],
     reset =>     [\&cmd_reset,
         "",
-        "Reset Spinnakers via BMP"],
+        "Reset Spinnakers and FPGAs via BMP"],
     power =>     [\&cmd_power,
         "on|off",
         "Switch power on/off via BMP"],
