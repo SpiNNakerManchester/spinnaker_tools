@@ -1496,6 +1496,9 @@ void delegate(uint del, uint del_mask)
 
 void c_main(void)
 {
+    // the boot image carries a copy of sections of the local blacklist
+    ushort * img_bl = (ushort *) (DTCM_BASE + 0x00008100);
+
     // if this core is blacklisted it needs to delegate
     sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));
 
@@ -1510,15 +1513,24 @@ void c_main(void)
 	    uint * bl_dat   = sv->board_info + 1;
 	    uint   bl_cores = 0;
 
+	    // reset blacklist copy in boot image
+	    sark_word_set((void *) img_bl, 0, 128);
+
+	    // assemble blacklist copy from serial ROM 
 	    while (bl_len--) {
 	        uint data  = *(bl_dat++);
 		uint type  = data >> 30;
 		uint coord = (data >> 24) & 0x3f;
 
-		// get (0, 0) blacklist entry if it exists
-		if ((type == 0) && (coord == 0)) {
-		    bl_cores = data & 0x3ffff;
-		    break;
+		// assemble image copy
+		if (type == 0) {
+		    // get (0, 0) blacklist entry if it exists
+		    if (coord == 0) {
+		        bl_cores = data & 0x3ffff;
+		    } else {
+                        // fill in image copy
+		        img_bl[coord] = (ushort) data;
+		    }
 		}
 	    }
 

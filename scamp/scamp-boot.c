@@ -111,6 +111,22 @@ void nn_tx(uint key, uint data)
 }
 
 
+void link_tx(uint key, uint data, uint link)
+{
+    key |= chksum_64(key, data);
+
+    while ((cc[CC_TCR] & BIT_31) == 0) {
+        continue;
+    }
+
+    cc[CC_TCR] = 0x00820000 | link << 18;
+    cc[CC_TXDATA] = data;
+    cc[CC_TXKEY] = key;
+
+    sark_delay_us(sv->boot_delay);	// ST - 05jul12 - allow time to propagate...
+}
+
+
 void boot_nn(uint hw_ver)
 {
     uint * const image = (uint *) BOOT_BUF;
@@ -121,30 +137,111 @@ void boot_nn(uint hw_ver)
     boot_sv->hw_ver = hw_ver;
     boot_sv->root_chip = 0;
 
+    // flood-fill 'start' packet
     uint key = FF_START_PHASE_1;
     uint data = (FF_TARGET_MONITOR << 24) | ((BLOCK_COUNT - 1) << 16);
 
     nn_tx(key, data);
 
-    for (uint j = 0; j < BLOCK_COUNT; j++) {
+    // block 0 carries the blacklist - special treatment
+    // flood-fill 'block start' packet
+    key = FF_BLOCK_START_PHASE_1 | (0 << 16) | ((WORD_COUNT - 1) << 8);
+    data = 0;
+
+    nn_tx(key, data);
+
+    // boot_aplx.bin and scamp-3_boot.tab
+    for (uint k = 0; k < WORD_COUNT / 2; k++) {
+        // flood-fill 'block data' packet
+        key = FF_BLOCK_DATA_PHASE_1 | (0 << 16) | (k << 0x8);
+        data = image[k];
+
+        nn_tx(key, data);
+    }
+
+    // scamp-3.sv
+    for (uint k = (3 * WORD_COUNT) / 4; k < WORD_COUNT; k++) {
+        // flood-fill 'block data' packet
+        key = FF_BLOCK_DATA_PHASE_1 | (0 << 16) | (k << 0x8);
+        data = image[k];
+
+        nn_tx(key, data);
+    }
+
+    // image blacklist contains this core's coordinates
+    uint coord = image[64];
+    int x = (coord >> 4) & 0xf;
+    int y = coord & 0xf;
+
+    int lobl = coord & 0xffffff00;
+
+    uint * sync = (uint *) 0x60240000;
+    sync[8*6] = 0;
+    sync[8*6 + 1] = coord;
+
+    // send blacklist - treat each link separately
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        // our neighbour's coordinates
+        int nx = x - (int) lx[link];
+	int ny = y - (int) ly[link];
+
+	// check if neighbour should get blacklist
+	int t = eth_map[ny][nx];
+	int tx = t >> 4;
+	int ty = t & 0xf;
+
+	sync[8 * link]     = nx;
+	sync[8 * link + 1] = ny;
+	sync[8 * link + 2] = tx;
+	sync[8 * link + 3] = ty;
+
+	if ((nx == tx) && (ny == ty)) {
+//#	if ((nx == tx) && (ny == ty) && ((coord & 0xff) == 0)) {
+	    sync[8*6] += 1;
+
+	    // update neighbour's coordinates in blacklist 
+            image[64] = lobl | (nx << 4) | ny;
+
+	    for (uint k = WORD_COUNT / 2; k < (3 * WORD_COUNT) / 4; k++) {
+                // flood-fill 'block data' packet
+                key = FF_BLOCK_DATA_PHASE_1 | (0 << 16) | (k << 0x8);
+                data = image[k];
+
+                link_tx(key, data, link);
+            }
+
+            // flood-fill 'block end' packet
+            key = FF_BLOCK_END_PHASE_1 | (0 << 16);
+            data = crc32((uchar *) (image), BYTE_COUNT);
+
+            link_tx(key, data, link);
+	}
+    }
+
+    // rest of the blocks
+    for (uint j = 1; j < BLOCK_COUNT; j++) {
+        // flood-fill 'block start' packet
 	key = FF_BLOCK_START_PHASE_1 | (j << 16) | ((WORD_COUNT - 1) << 8);
 	data = j * BYTE_COUNT;
 
 	nn_tx(key, data);
 
 	for (uint k = 0; k < WORD_COUNT; k++) {
+            // flood-fill 'block data' packet
 	    key = FF_BLOCK_DATA_PHASE_1 | (j << 16) | (k << 0x8);
 	    data = image[j * WORD_COUNT + k];
 
 	    nn_tx(key, data);
 	}
 
+	// flood-fill 'block end' packet
 	key = FF_BLOCK_END_PHASE_1 | (j << 16);
 	data = crc32((uchar *) (image + j * WORD_COUNT), BYTE_COUNT);
 
 	nn_tx(key, data);
     }
 
+    // flood-fill 'control' packet
     key = FF_CONTROL_PHASE_1;
 
     nn_tx(key, 0);

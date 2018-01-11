@@ -287,6 +287,9 @@ extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 
 // scamp-nn.c
 
+extern const char eth_map[12][12];
+extern const signed char lx[6];
+extern const signed char ly[6];
 extern void compute_eth(void);
 extern void compute_level(uint p2p_addr);
 extern void level_config(void);
