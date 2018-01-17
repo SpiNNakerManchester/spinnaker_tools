@@ -48,7 +48,7 @@ random               V  0x3c  %08x  0           # Random seed
 
 root_chip            C  0x40  %d    0           # Set to 1 if "root chip"
 num_buf              C  0x41  %d    7           # Number of SHM buffers
-boot_delay           C  0x42  %d    10          # Delay between boot NN pkts (us)
+boot_delay           C  0x42  %d    20          # Delay between boot NN pkts (us)
 soft_wdog            C  0x43  %d    3           # Watchdog count (0 disables)
 
 __PAD3               V  0x44  %d    0           # Spare
