@@ -1575,9 +1575,18 @@ void c_main(void)
 
     while (1) {				// Run event loop (forever...)
 	event_run(0);
+
+	// interrupts must be disabled to avoid queue-access hazard
+	uint cpsr = cpu_int_disable();
+
+	// check if queue is empty
 	if (event.proc_queue->proc_head == NULL) {
+	    // NB: interrupts will wake up the core even if disabled
 	    cpu_wfi();
 	}
+
+	// re-enable interrupts to service them
+	cpu_int_restore(cpsr);
     }
 }
 
