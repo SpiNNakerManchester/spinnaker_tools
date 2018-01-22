@@ -2002,7 +2002,7 @@ my $bmp_cmds =
 		 'User specified command'],
     reset =>     [\&cmd_reset,
 		 '<mask> [<delay.D>',
-		 'Reset Spinnakers and FPGAs'],
+		 'Reset Spinnakers'],
     ip =>        [\&cmd_ip,
 		 '',
 		 'Display subrack IP addresses'],
