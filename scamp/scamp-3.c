@@ -1494,7 +1494,7 @@ void delegate(uint del, uint del_mask)
 }
 
 
-void c_main(void)
+void chk_bl_del(void)
 {
     // if this core is blacklisted it needs to delegate
     sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));
@@ -1538,6 +1538,14 @@ void c_main(void)
 	    }
 	}
     }
+}
+
+
+void c_main(void)
+{
+    // check blacklist and delegate if necessary
+    // NB: this function will not return if monitor is blacklisted
+    chk_bl_del();
 
     sark.cpu_clk = 160;			// BootROM uses 160 MHz
 
