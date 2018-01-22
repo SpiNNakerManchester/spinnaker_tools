@@ -5,7 +5,7 @@ use warnings;
 
 use String::CRC32;
 
-use SpiNN::Util qw/sllt_version/;
+use SpiNN::Util qw/bmp_version/;
 
 
 die "bad args\n" unless $#ARGV == 1;
@@ -39,7 +39,7 @@ if ($in =~ /BOOT/i)
 
 # Compute checksum, append to buffer and write out
 
-$out .= "-" . sllt_version ();
+$out .= "-" . bmp_version ();
 
 $buffer .= pack "V", ~crc32 ($buffer);
 

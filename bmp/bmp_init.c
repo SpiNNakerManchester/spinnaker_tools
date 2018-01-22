@@ -170,8 +170,8 @@ const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) = {
     BUILD_DATE,			   // 53: Build date
     BMP_VER_NUM,		   // 54: Version number
 
-    (uint32_t) &RO_LENGTH,         // 55: RO_length
-    (uint32_t) &RW_LENGTH,         // 56: RW_length
+    (uint32_t) &RO_LENGTH,         // 55: RO_length - NB: causes compiler warn
+    (uint32_t) &RW_LENGTH,         // 56: RW_length - NB: causes compiler warn
     &RO_LIMIT,   		   // 57: RO_limit
     &RW_BASE,	 		   // 58: RW_base
     &RW_LIMIT,	 		   // 59: RW_limit
