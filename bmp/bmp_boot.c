@@ -160,7 +160,9 @@ void __attribute__((noreturn)) boot_proc(void)
     // Call c_main...
     cortex_vec->main(cortex_vec, data_ok, 0, 0);
 
-    die(11);
+    while (1) {
+        die(11);
+    }
 }
 
 

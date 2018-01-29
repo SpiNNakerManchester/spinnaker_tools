@@ -2,7 +2,7 @@
 //
 // bmp.h	    Low-level hardware interface code for BMP LPC1768
 //
-// Copyright (C)    The University of Manchester - 2012-2016
+// Copyright (C)    The University of Manchester - 2012-2018
 //
 // Author           Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
@@ -14,12 +14,10 @@
 
 #include <stdbool.h>
 
-#include <version.h>
-
 //------------------------------------------------------------------------------
 
-#define BMP_VER_STR		SLLT_VER_STR
-#define BMP_VER_NUM		SLLT_VER_NUM
+#define BMP_VER_STR		"2.1.1"
+#define BMP_VER_NUM		0x020101
 
 #define BMP_ID_STR		"BC&MP/Spin5-BMP"
 

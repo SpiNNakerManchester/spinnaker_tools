@@ -1453,15 +1453,21 @@ void sark_config(void)
 }
 
 
-void delegate(uint del, uint del_mask)
+void delegate(uint bl_cores)
 {
     // start boot image DMA to SDRAM for delegate,
     dma[DMA_ADRS] = (uint) SDRAM_BASE;
     dma[DMA_ADRT] = (uint) DTCM_BASE + 0x00008000;
     dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | 0x7100;
 
-    // point boot area to system RAM,
-    sc[SC_MISC_CTRL] |= 1;
+    // choose delegate
+    uint del      = NUM_CPUS - 1;         // potential delegate
+    uint del_mask = 1 << (NUM_CPUS - 1);  // delegate mask
+
+    while ((bl_cores | ~sc[SC_CPU_OK]) & del_mask) {
+        del--;
+	del_mask = del_mask >> 1;
+    }
 
     // let system controller know of new monitor
     sc[SC_MON_ID] = SC_CODE + del;
@@ -1494,51 +1500,40 @@ void delegate(uint del, uint del_mask)
 }
 
 
-void c_main(void)
+void chk_bl_del(void)
 {
-    // if this core is blacklisted it needs to delegate
-    sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));
+    // get board blacklist,
+    get_board_info();
 
-    // check if there is access to the blacklist in serial ROM,
-    if (srom.flags & SRF_PRESENT) {
-	// get board blacklist,
-	get_board_info();
+    // and check if need to delegate
+    if (sv->board_info) {
+        uint   bl_len   = sv->board_info[0];
+	uint * bl_dat   = sv->board_info + 1;
+	uint   bl_cores = 0;
 
-	// and check if need to delegate
-	if (sv->board_info) {
-	    uint   bl_len   = sv->board_info[0];
-	    uint * bl_dat   = sv->board_info + 1;
-	    uint   bl_cores = 0;
+	// get (0, 0) blacklist entry if it exists,
+	while (bl_len--) {
+	    uint data  = *(bl_dat++);
+	    uint type  = data >> 30;
+	    uint coord = (data >> 24) & 0x3f;
 
-	    while (bl_len--) {
-	        uint data  = *(bl_dat++);
-		uint type  = data >> 30;
-		uint coord = (data >> 24) & 0x3f;
-
-		// get (0, 0) blacklist entry if it exists
-		if ((type == 0) && (coord == 0)) {
-		    bl_cores = data & 0x3ffff;
-		    break;
-		}
-	    }
-
-	    // and delegate if this core is blacklisted
-	    if (bl_cores & (1 << sark.phys_cpu)) {
-	        uint del      = NUM_CPUS - 1;         // potential delegate
-		uint del_mask = 1 << (NUM_CPUS - 1);  // delegate mask
-
-	        // choose delegate
-	        while ((bl_cores | ~sc[SC_CPU_OK]) & del_mask) {
-		    del--;
-		    del_mask = del_mask >> 1;
-		}
-
-		// NB: this function will not return, this core will die!
-		delegate(del, del_mask);
+	    if ((type == 0) && (coord == 0)) {
+	        bl_cores = data & 0x3ffff;
+		break;
 	    }
 	}
-    }
 
+	// and delegate if this core is blacklisted
+	if (bl_cores & (1 << sark.phys_cpu)) {
+	    // NB: this function will not return, this core will die!
+	    delegate(bl_cores);
+	}
+    }
+}
+
+
+void c_main(void)
+{
     sark.cpu_clk = 160;			// BootROM uses 160 MHz
 
     jtag_init();			// Reset JTAG internals
@@ -1547,6 +1542,19 @@ void c_main(void)
     wd[WD_CTRL] = 0;
 
     sc[SC_MISC_CTRL] |= 1;  		// Swap RAM/ROM
+
+    // board-local chip (0, 0) can access the blacklist in serial ROM,
+    sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));
+
+    // if board-local chip (0, 0) check blacklist and delegate if necessary
+    if (srom.flags & SRF_PRESENT) {
+        // NB: this function will not return if monitor is blacklisted
+        chk_bl_del();
+    }
+
+    if (sv->boot_delay) {		// If bootROM boot
+	boot_nn(sv->hw_ver);		// Flood fill neighbours
+    }
 
     assign_virt_cpu(sark.phys_cpu);	// Assign virtual CPUs
 
@@ -1557,9 +1565,6 @@ void c_main(void)
     random_init();			// Initialise random
     rtr_init(sark.phys_cpu);		// Initialise router
 
-    if (sv->boot_delay) {		// If bootROM boot
-	boot_nn(sv->hw_ver);		// Flood fill neighbours
-    }
     boot_ap();				// Start local APs
 
     timer1_init(sark.cpu_clk * 1000);	// Initialise 1ms timer
@@ -1575,9 +1580,18 @@ void c_main(void)
 
     while (1) {				// Run event loop (forever...)
 	event_run(0);
+
+	// interrupts must be disabled to avoid queue-access hazard
+	uint cpsr = cpu_int_disable();
+
+	// check if queue is empty
 	if (event.proc_queue->proc_head == NULL) {
+	    // NB: interrupts will wake up the core even if disabled
 	    cpu_wfi();
 	}
+
+	// re-enable interrupts to service them
+	cpu_int_restore(cpsr);
     }
 }
 

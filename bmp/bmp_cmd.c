@@ -258,7 +258,7 @@ static uint32_t cmd_sf(sdp_msg_t *msg)
 	r = len;
     } else if (op == 1) {
 	sf_write(addr, len, msg->data);
-	r = 0
+	r = 0;
     } else {
 	msg->arg1 = sf_crc32(addr, len);
 	r = 4;

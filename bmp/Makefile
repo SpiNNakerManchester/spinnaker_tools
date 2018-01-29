@@ -109,6 +109,6 @@ tar:
 clean:
 	$(RM) $(BOOT_OBJ) bmp_boot.o bmp_boot.elf bmp_boot.txt
 	$(RM) $(MAIN_OBJ) bmp_init.o bmp_main.elf bmp_main.txt
-	$(RM) bmp_tmp.c 
+	$(RM) bmp_tmp.c bin/bmp_boot bin/bmp_main
 
 .PHONY: all tar clean

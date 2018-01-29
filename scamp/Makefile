@@ -3,7 +3,7 @@ override THUMB := 1
 include ../make/Makefile.common
 
 SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
-             scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o \
+             scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o scamp-del.o \
              $(APP).o
 OBJS := $(SCAMP_OBJS:%.o=$(BUILD_DIR)%.o)
 
@@ -76,7 +76,7 @@ $(BUILD_DIR)boot_aplx.elf: $(BUILD_DIR)boot_aplx.gas $(BUILD_DIR)spinnaker.gas $
 	$(MKDIR) $(BUILD_DIR)
 	$(AS) -I $(BUILD_DIR) -o $(BUILD_DIR)boot_aplx.o $<
 	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx -nostartfiles $(BUILD_DIR)boot_aplx.o -o $@
-		
+
 else
 $(BUILD_DIR)boot_aplx.elf: boot_aplx.s $(BUILD_DIR)spinnaker.s $(BUILD_DIR)sark.s
 	$(MKDIR) $(BUILD_DIR)
@@ -90,15 +90,19 @@ $(BUILD_DIR)%.s: $(SPINN_INC_DIR)/%.h
 	$(MKDIR) $(BUILD_DIR)
 	h2asm $< > $@
 
-# Compile the interrupt state registers without THUMB
+# Compile the interrupt service routines without THUMB
 $(BUILD_DIR)scamp-isr.o: scamp-isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
 	$(CC_NO_THUMB) $(CFLAGS) scamp-isr.c -o $@
+
+# Compile the delegation boot-image copy and execute routine without THUMB
+$(BUILD_DIR)scamp-del.o: scamp-del.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
+	$(CC_NO_THUMB) $(CFLAGS) scamp-del.c -o $@
 
 tar:
 	tar -C .. -czf /tmp/scamp.tgz scamp/spinn_phy.c \
 	scamp/spinn_srom.c scamp/spinn_net.c scamp/scamp-app.c \
 	scamp/scamp-p2p.c scamp/scamp-nn.c scamp/scamp-cmd.c \
-	scamp/scamp-boot.c scamp/scamp-isr.c scamp/spinn_phy.h \
+	scamp/scamp-boot.c scamp/scamp-isr.c scamp/scamp-del.c scamp/spinn_phy.h \
 	scamp/scamp.h scamp/spinn_net.h scamp/spinn_srom.h scamp/spinn_regs.h \
 	scamp/boot_aplx.s scamp/$(APP).c scamp/$(APP).sct scamp/sark.c \
 	scamp/Makefile scamp/mkpad scamp/mksv
