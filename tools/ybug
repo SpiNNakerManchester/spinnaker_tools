@@ -1782,7 +1782,7 @@ sub cmd_rtr_diag
             $rcr->[0],
             ($rcr->[0] >> 8) & 31,
             rtr_wait ($rcr->[0] >> 16),
-            rtr_wait ($rcr->[0] >> 23);
+            rtr_wait ($rcr->[0] >> 24);
 
         my $es = $spin->read (0xe1000014, 4, type => "word", unpack => "V*");
         printf "Err Stat:  0x%08x\n\n", $es->[0];
