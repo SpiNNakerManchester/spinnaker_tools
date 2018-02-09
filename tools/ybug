@@ -1122,7 +1122,7 @@ sub cpu_dump
         printf "Core %2d: app \"%s\", state %s, app_id %d, running $et ($time)\n",
         $num, $sv->get_var ("vcpu.app_name"),
         $cs[$sv->get_var ("vcpu.cpu_state")],
-        $sv->get_var ("vcpu.app_id"), $time;
+        $sv->get_var ("vcpu.app_id");
 
         printf "AP mbox:   cmd      %02x  msg     %08x\n",
         $sv->get_var ("vcpu.mbox_ap_cmd"),
@@ -1782,7 +1782,7 @@ sub cmd_rtr_diag
             $rcr->[0],
             ($rcr->[0] >> 8) & 31,
             rtr_wait ($rcr->[0] >> 16),
-            rtr_wait ($rcr->[0] >> 23);
+            rtr_wait ($rcr->[0] >> 24);
 
         my $es = $spin->read (0xe1000014, 4, type => "word", unpack => "V*");
         printf "Err Stat:  0x%08x\n\n", $es->[0];

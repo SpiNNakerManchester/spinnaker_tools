@@ -121,7 +121,7 @@ sub parse_region
 
     return 0 if $level < 0 || $level > 3;
 
-    my ($x, $y) = (0, 0);
+    ($x, $y) = (0, 0);
 
     for (my $i = 0; $i < $level; $i++)
     {
