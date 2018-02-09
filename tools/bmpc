@@ -182,7 +182,7 @@ sub cmd_xreg
     my $cli = shift;
     my $ac = $cli->{arg_c};
 
-    return "bad args" unless $ac % 3 == 0;
+    return "bad args" unless ($ac == 1 && $cli->{arg_v}->[0] eq "clr") || $ac % 3 == 0;
     return "too many args" if $ac > 12 * 3;
 
     my @fpga_map = ("0  ", "1  ", "2  ", "0-2");
@@ -214,20 +214,27 @@ sub cmd_xreg
 
     my @data;
 
-    for (my $i = 0; $i < $ac; $i += 3)
+    if ($ac == 1)
     {
-	my $fpga = parse_bits ($cli->{arg_v}->[$i], 0, 2);
-	return "bad FPGA list" unless $fpga;
-	$fpga = $fpga_ok[$fpga];
-	return "bad FPGA list" if $fpga > 3;
+	push @data, 0xffffffff, 0xffffffff;
+    }
+    else
+    {
+	for (my $i = 0; $i < $ac; $i += 3)
+	{
+	    my $fpga = parse_bits ($cli->{arg_v}->[$i], 0, 2);
+	    return "bad FPGA list" unless $fpga;
+	    $fpga = $fpga_ok[$fpga];
+	    return "bad FPGA list" if $fpga > 3;
 
-	my $addr = $cli->{arg_x}->[$i+1];
-	return "bad address" if $addr & 3;
-	$addr |= $fpga;
+	    my $addr = $cli->{arg_x}->[$i+1];
+	    return "bad address" if $addr & 3;
+	    $addr |= $fpga;
 
-	my $data = $cli->{arg_x}->[$i+2];
+	    my $data = $cli->{arg_x}->[$i+2];
 
-	push @data, $addr, $data;
+	    push @data, $addr, $data;
+	}
     }
 
     for (my $i = $ac; $i < 12 * 3; $i += 3)
@@ -1953,8 +1960,8 @@ my $bmp_cmds =
 		 '<from.X> <to.X>',
 		 'erase BMP flash memory'],
     xreg =>     [\&cmd_xreg,
-		 '[<fpga_list> <addr.X> <data.X>]*',
-		 'set FPGA register preloads'],
+		 'clr | [<fpga_list> <addr.X> <data.X>]*',
+		 'clear/set FPGA register preloads'],
     xload =>    [\&cmd_xload,
 		 '<file.F> [<chipmask.D>]',
 		 'load FPGAs from file'],
