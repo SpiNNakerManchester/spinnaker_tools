@@ -88,9 +88,8 @@ nn_desc_t nn_desc;
 pkt_buf_t peek_pkt;
 pkt_buf_t poke_pkt;
 
-// Should all BIFF packets have been sent at this point?
-uint biff_complete;
-
+// delegate blacklisted monitor
+uint mon_del = 0;
 //------------------------------------------------------------------------------
 
 void nn_init()
@@ -1086,14 +1085,33 @@ void nn_cmd_biff(uint x, uint y, uint data)
 	    return;
 	}
 
-	// NB: *Dead* links are given as '1'
+	// disable blacklisted links
+	// NB: blacklisted links are given as '1'
 	sv->link_en = link_en = ((~data) >> 18) & 0x3f;
 
-	// Kill any cores noted as dead (note this may kill the core running
-	// the monitor process, rendering the chip dead. This is the desired
-	// effect in this instance since rebooting another core as monitor
-	// would be difficult.
+        // remember blacklisted cores
 	uint dead_cores = data & 0x3ffff;
+
+	// if blacklisted prepare to delegate
+	if (dead_cores & (1 << sark.phys_cpu)) {
+	    uint * boot_img = (uint *) (DTCM_BASE + 0x00008000);
+
+	    // modify aplx table to preserve variable sv
+	    boot_img[45] = 0;
+
+	    // start boot image DMA to SDRAM for delegate,
+	    dma[DMA_ADRS] = (uint) SDRAM_BASE;
+	    dma[DMA_ADRT] = (uint) boot_img;
+	    dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | 0x7100;
+
+	    // don't kill a blacklisted monitor just yet,
+	    dead_cores &= ~(1 << sark.phys_cpu);
+
+	    // and remember to delegate when ready
+  	    mon_del = 1;
+	}
+
+        // Kill blacklisted cores
 	remap_phys_cores(dead_cores);
 	break;
     }

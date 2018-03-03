@@ -203,6 +203,8 @@ enum netinit_phase_e {
     NETINIT_PHASE_P2P_TABLE,
     // Setting the Ethernet address
     NETINIT_PHASE_SET_ETHERNET_ADDR,
+    // blacklisted monitor delegates its functions to another core
+    NETINIT_PHASE_DEL,
     // The boot process is complete and the system is ready for use
     NETINIT_PHASE_DONE = 0xFF,
 };
@@ -306,6 +308,7 @@ extern void proc_ffe(uint aplx_addr, uint cpu_mask);
 extern uint iptag_new(void);
 extern void assign_virt_cpu(uint phys_cpu);
 extern void remap_phys_cores(uint phys_cores);
+extern void delegate(void);
 
 // spinn_srom.c
 
@@ -346,7 +349,7 @@ extern void boot_nn(uint hw_ver);
 
 //------------------------------------------------------------------------------
 
-extern uint biff_complete;
+extern uint mon_del;
 extern uint p2p_addr;
 extern uint p2p_dims;
 extern uint p2p_root;
