@@ -1268,6 +1268,7 @@ void proc_100hz(uint a1, uint a2)
 	    // take this core out of the application pool
 	    sc[SC_CLR_OK] = (1 << sark.phys_cpu);
 
+	    //NB this function will not return
 	    delegate();
 	}
 	break;
@@ -1492,18 +1493,23 @@ void delegate()
     // copy img_cp_exe to system RAM for delegate,
     sark_word_cpy (sysram, (void *) img_cp_exe, 128);
 
-    // let system controller know of new monitor
+    // let system controller know of new monitor,
     sc[SC_MON_ID] = SC_CODE + del;
 
-    // mark delegate as POWER DOWN to avoid triggering soft wdog
+    // mark delegate as POWER DOWN to avoid triggering soft wdog,
     vcpu_t *vcpu = sv_vcpu + sv->p2v_map[del];
     vcpu->cpu_state = 1;
 
-    // and start delegate
+    // start delegate,
     sc[SC_SOFT_RST_L] = SC_CODE + del_mask;
     clock_ap(del_mask, 1);
     sark_delay_us(5);
     sc[SC_SOFT_RST_L] = SC_CODE;
+
+    // and wait here for delegate to kill this core
+    while (1) {
+        cpu_wfi();
+    }
 }
 
 
@@ -1549,12 +1555,8 @@ void chk_bl_del(void)
 	    //NB not really needed - this core will die
 	    //dma[DMA_CTRL] = 1 << 3;
 
+	    //NB this function will not return
 	    delegate();
-
-	    // and wait here for delegate to kill this core
-	    while (1) {
-	        cpu_wfi();
-	    }
 	}
     }
 }
@@ -1629,8 +1631,8 @@ void c_main(void)
     } else {   // do not attempt to boot again
         del_track[0] |= 2;
 
-	// Set up VCPU blocks
-        //sark_word_set(sv_vcpu, 0, NUM_CPUS * VCPU_SIZE);
+	// fix VCPU block
+ 	sv_vcpu[0].phys_cpu = sark.phys_cpu;
 
 	remap_phys_cores(~sc[SC_CPU_OK]);  // re-assign application cores
 
