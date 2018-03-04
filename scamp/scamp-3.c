@@ -1257,10 +1257,7 @@ void proc_100hz(uint a1, uint a2)
         if (dma[DMA_STAT] & (1 << 10)) {
 	    // clear DMA transfer complete interrupt,
 	    //NB not really needed - this core will die
-	    dma[DMA_CTRL] = 1 << 3;
-
-	    // move on and don't try to delegate again
-	    netinit_phase = NETINIT_PHASE_DONE;
+	    //dma[DMA_CTRL] = 1 << 3;
 
 	    // take this core out of the application pool
 	    sc[SC_CLR_OK] = (1 << sark.phys_cpu);
