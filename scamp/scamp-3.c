@@ -74,9 +74,6 @@
 
 // VARS
 
-// keep track of delegate progress
-uint * del_track = (uint *) 0xf5003500;
-
 uint num_cpus;
 uint ping_cpu = 1;
 
@@ -1506,6 +1503,10 @@ void delegate()
     sark_delay_us(5);
     sc[SC_SOFT_RST_L] = SC_CODE;
 
+    // disable all interrupts,
+    vic[VIC_DISABLE] = 0xffffffff;
+    vic[VIC_SELECT] = 0;
+
     // and wait here for delegate to kill this core
     while (1) {
         cpu_wfi();
@@ -1576,17 +1577,12 @@ void c_main(void)
     // copy SROM block
     sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));
 
-    del_track[0] = 0x00000000;
-
     // check if this core is a delegate
     uint mon = (rtr[RTR_CONTROL] >> 8) & 0x1f;
     uint del = (sark.phys_cpu != mon);
     if (del) {
-        del_track[0] = 0xd0000000;
-
 	// if board-local (0, 0) stop treating as delegate
 	if (srom.flags & SRF_PRESENT) {
-	    del_track[0] |= 1;
   	    del = 0;
 	}
 
@@ -1629,8 +1625,6 @@ void c_main(void)
 	    eth_setup();	        // Set up Ethernet if present
 	}
     } else {   // do not attempt to boot again
-        del_track[0] |= 2;
-
 	// fix VCPU block
  	sv_vcpu[0].phys_cpu = sark.phys_cpu;
 
@@ -1647,14 +1641,10 @@ void c_main(void)
 	queue_init();			// Initialise various queues
 	nn_init();			// Initialise NN package
 	
-        del_track[0] |= 4;
-
 	// Record the coordinates/dimensions discovered by previous monitor
 	p2p_addr = sv->p2p_addr;
 	level_config();
 	p2p_up = sv->p2p_up;
-
-        del_track[1]  = p2p_addr;
 
 	// Reseed uniquely for each chip
 	sark_srand(p2p_addr);
@@ -1667,27 +1657,19 @@ void c_main(void)
 	ethinit_phase = ETHINIT_PHASE_DONE;
 
 	vic_setup();// Set VIC, interrupts on
-
-        del_track[0] |= 8;
     }
 
     while (1) {				// Run event loop (forever...)
 	event_run(0);
-
-        del_track[0] |= 16;
 
 	// interrupts must be disabled to avoid queue-access hazard
 	uint cpsr = cpu_int_disable();
 
 	// check if queue is empty
 	if (event.proc_queue->proc_head == NULL) {
-	    del_track[0] |= 32;
-
 	    // NB: interrupts will wake up the core even if disabled
 	    cpu_wfi();
 	}
-
-        del_track[0] |= 64;
 
 	// re-enable interrupts to service them
 	cpu_int_restore(cpsr);
