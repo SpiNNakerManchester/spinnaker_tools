@@ -25,14 +25,22 @@ extern iptag_t tag_table[];
 
 const uchar bc_mac[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 const uchar zero_mac[] = {0, 0, 0, 0, 0, 0};
+const uchar zero_ip[] = {0, 0, 0, 0};
 
+#define MAX_ARP_ENTRIES 5
+static struct arp_entry {
+    uchar mac[6];
+    uchar ip[4];
+    struct arp_entry *next;
+} arp_entries[MAX_ARP_ENTRIES];
+static uint next_arp_entry = MAX_ARP_ENTRIES;
 
 #ifdef LOCK_ETH
 
 static void lock_get(uint lock)
 {
     while (sc[SC_TAS0 + lock] & BIT_31) {
-	continue;
+        continue;
     }
 }
 
@@ -70,15 +78,15 @@ void eth_init(uchar *mac)
 uint ipsum(uchar *d, uint len, uint sum) // Use shorts for speed??
 {
     if (len & 1) {
-	sum += d[--len] << 8;
+        sum += d[--len] << 8;
     }
 
     for (uint i = 0; i < len; i += 2) {
-	sum += (d[i] << 8) + d[i+1];
+        sum += (d[i] << 8) + d[i+1];
     }
 
     while (sum >> 16) {
-	sum = (sum >> 16) + (sum & 0xffff);
+        sum = (sum >> 16) + (sum & 0xffff);
     }
 
     return sum;
@@ -145,13 +153,13 @@ void eth_transmit(uchar *buf, uint len, uint type, const uchar *dest)
 #endif
 
     while (er[ETH_STATUS] & 1) {
-	continue;
+        continue;
     }
 
     sark_word_cpy(eth_tx_ram, buf, len);
 
     if (len < 60) {
-	len = 60;
+        len = 60;
     }
 
     er[ETH_TX_LEN] = len;
@@ -170,7 +178,7 @@ void eth_transmit2(uchar *hdr, uchar *buf, uint hdr_len, uint buf_len)
 #endif
 
     while (er[ETH_STATUS] & 1) {
-	continue;
+        continue;
     }
 
     memcpy(eth_tx_ram, hdr, hdr_len);
@@ -178,7 +186,7 @@ void eth_transmit2(uchar *hdr, uchar *buf, uint hdr_len, uint buf_len)
 
     uint len = buf_len + hdr_len;
     if (len < 60) {
-	len = 60;
+        len = 60;
     }
 
     er[ETH_TX_LEN] = len;
@@ -191,7 +199,7 @@ void eth_transmit2(uchar *hdr, uchar *buf, uint hdr_len, uint buf_len)
 
 
 void send_arp_pkt(uchar *buf, const uchar *dest, const uchar *tha,
-	const uchar *tpa, uint type)
+        const uchar *tpa, uint type)
 {
     arp_pkt_t *arp = (arp_pkt_t *) (buf + MAC_HDR_SIZE);
 
@@ -213,6 +221,17 @@ void send_arp_pkt(uchar *buf, const uchar *dest, const uchar *tha,
 
 void arp_lookup(iptag_t *iptag)
 {
+
+    for (uint i = 0; i < MAX_ARP_ENTRIES; i++) {
+        if (cmp_ip(iptag->ip, arp_entries[i].ip)) {
+            copy_mac(arp_entries[i].mac, iptag->mac);
+            uint f = iptag->flags;
+            f &= ~IPFLAG_ARP;
+            iptag->flags = f | IPFLAG_VALID;
+            return;
+        }
+    }
+
     uchar buf[42];
 
     uchar *ip_addr = iptag->ip;
@@ -223,7 +242,7 @@ void arp_lookup(iptag_t *iptag)
     uchar *target_ip = ip_addr;
 
     if ((*my_ip & *mask) != (*ip & *mask)) {
-	target_ip = srom.gw_addr;
+        target_ip = srom.gw_addr;
     }
 
     copy_ip(target_ip, iptag->mac); // !! Bodge - target IP in MAC field!
@@ -241,34 +260,44 @@ void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size)
     eth_discard();
 
     if (! cmp_ip(arp->tpa, srom.ip_addr)) { // Ignore unless TPA matches
-	return;
+        return;
     }
 
     uint op = ntohs(arp->op);
     if (op == ARP_REQ) {
-	send_arp_pkt(buf, buf+6, arp->sha, arp->spa, ARP_REPLY);
+        send_arp_pkt(buf, buf+6, arp->sha, arp->spa, ARP_REPLY);
     } else if (op == ARP_REPLY) {	// Reply & TPA matches
-	iptag_t *tt = tag_table;
+        arp_add(arp->sha, arp->spa);
+        iptag_t *tt = tag_table;
 
-	for (uint i = 0; i < tag_table_size; i++) {
-	    uint f = tt->flags;
-	    if ((f & IPFLAG_ARP) && cmp_ip(arp->spa, tt->mac)) { // !! Bodge
-		copy_mac(arp->sha, tt->mac);
-		f &= ~IPFLAG_ARP;
-		tt->flags = f | IPFLAG_VALID;
-		break;
-	    }
-	    tt++;
-	}
+        for (uint i = 0; i < tag_table_size; i++) {
+            uint f = tt->flags;
+            if ((f & IPFLAG_ARP) && cmp_ip(arp->spa, tt->mac)) { // !! Bodge
+                copy_mac(arp->sha, tt->mac);
+                f &= ~IPFLAG_ARP;
+                tt->flags = f | IPFLAG_VALID;
+                break;
+            }
+            tt++;
+        }
     }
+}
+
+void arp_add(uchar *mac, uchar* ip) {
+    next_arp_entry += 1;
+    if (next_arp_entry >= MAX_ARP_ENTRIES) {
+        next_arp_entry = 0;
+    }
+    copy_mac(mac, arp_entries[next_arp_entry].mac);
+    copy_ip(ip, arp_entries[next_arp_entry].ip);
 }
 
 
 void icmp_pkt(uchar *rx_pkt, uint rx_len)
 {
     if (rx_len > 138) {		// MAC 14, IP_HDR 60, ICMP 64
-	eth_discard();
-	return;
+        eth_discard();
+        return;
     }
 
     uchar buf[138];
@@ -277,30 +306,30 @@ void icmp_pkt(uchar *rx_pkt, uint rx_len)
 
     ip_hdr_t *ip_hdr = (ip_hdr_t *) (buf + IP_HDR_OFFSET);
     if (!cmp_ip(ip_hdr->dest, srom.ip_addr)) {
-	return;
+        return;
     }
 
     uint ip_hdr_len = (ip_hdr->ver_len & 15) * 4;
     icmp_hdr_t *icmp = (icmp_hdr_t *) (buf + IP_HDR_OFFSET + ip_hdr_len);
 
     if (icmp->type == ICMP_ECHO_REQ) {
-	uint icmp_len = ntohs(ip_hdr->length) - ip_hdr_len; // Size of ICMP hdr+data
+        uint icmp_len = ntohs(ip_hdr->length) - ip_hdr_len; // Size of ICMP hdr+data
 
-	copy_ip_hdr(ip_hdr->srce, PROT_ICMP, ip_hdr, icmp_len + IP_HDR_SIZE);
+        copy_ip_hdr(ip_hdr->srce, PROT_ICMP, ip_hdr, icmp_len + IP_HDR_SIZE);
 
-	if (ip_hdr_len > IP_HDR_SIZE) {		// Copy down ICMP header & data
-	    icmp = (icmp_hdr_t *) (buf + IP_DATA_OFFSET);	// 'new' ICMP hdr
-	    sark_mem_cpy((uchar *) icmp, (uchar *) icmp + ip_hdr_len, icmp_len);
-	}
+        if (ip_hdr_len > IP_HDR_SIZE) {		// Copy down ICMP header & data
+            icmp = (icmp_hdr_t *) (buf + IP_DATA_OFFSET);	// 'new' ICMP hdr
+            sark_mem_cpy((uchar *) icmp, (uchar *) icmp + ip_hdr_len, icmp_len);
+        }
 
-	icmp->type = ICMP_ECHO_REPLY;		// ICMP reply
-	icmp->code = 0;				// ICMP code = 0
-	icmp->checksum = 0;
+        icmp->type = ICMP_ECHO_REPLY;		// ICMP reply
+        icmp->code = 0;				// ICMP code = 0
+        icmp->checksum = 0;
 
-	uint sum = ipsum((uchar *) icmp, icmp_len, 0);
-	icmp->checksum = htons(~sum);
+        uint sum = ipsum((uchar *) icmp, icmp_len, 0);
+        icmp->checksum = htons(~sum);
 
-	eth_transmit(buf, IP_DATA_OFFSET + icmp_len, ETYPE_IP, buf+6);
+        eth_transmit(buf, IP_DATA_OFFSET + icmp_len, ETYPE_IP, buf+6);
     }
 }
 
