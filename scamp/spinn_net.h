@@ -103,7 +103,7 @@ void eth_transmit(uchar *buf, uint len, uint type, const uchar *dest);
 void eth_transmit2(uchar *hdr, uchar *buf, uint hdr_len, uint buf_len);
 
 void send_arp_pkt(uchar *buf, const uchar *dest,
-                  const uchar *tha, const uchar *tpa, uint type);
+		  const uchar *tha, const uchar *tpa, uint type);
 void arp_lookup(iptag_t *iptag);
 void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size);
 void arp_add(uchar *mac, uchar *ip);
