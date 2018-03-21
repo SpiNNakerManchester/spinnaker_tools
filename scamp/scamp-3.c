@@ -814,7 +814,7 @@ void get_board_info(void)
     if (sv_board_info[0] < 64) {
 	sv->board_info = sv_board_info;
     } else {
-	// NB this function is now called before this value is set to 0
+	// NB: this function is now called before this value is set to 0
 	sv->board_info = 0;
     }
 }
@@ -823,7 +823,6 @@ void get_board_info(void)
 void sv_init(void)
 {
     sark_word_cpy(sv_vectors, rst_init, SV_VSIZE); 	// Copy Reset vectors
-//lap    sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));	// Copy SROM block
 
     sark_word_set((void *) 0xf5007fc0, 0, 64);		// Kludge...
 
@@ -903,7 +902,7 @@ void sdram_init(void)
     sv->hop_table = sark_xalloc(sv->sys_heap, HOP_TABLE_SIZE * 4, 0, 0);
     sark_word_set(sv->hop_table, 0x8000ffff, HOP_TABLE_SIZE * 4);
 
-    // Router MC table copy (NB 1 extra entry in copy table)
+    // Router MC table copy (NB: 1 extra entry in copy table)
 
     sv->rtr_copy = sark_xalloc(sv->sys_heap,
 	    (MC_TABLE_SIZE + 1) * sizeof(rtr_entry_t), 0, 0);
@@ -1259,13 +1258,13 @@ void proc_100hz(uint a1, uint a2)
         // delegate if boot image DMA completed
         if (dma[DMA_STAT] & (1 << 10)) {
 	    // clear DMA transfer complete interrupt,
-	    //NB not really needed - this core will die
+	    // NB: not really needed - this core will die
 	    //dma[DMA_CTRL] = 1 << 3;
 
 	    // take this core out of the application pool
 	    sc[SC_CLR_OK] = (1 << sark.phys_cpu);
 
-	    //NB this function will not return
+	    // NB: this function will not return
 	    delegate();
 	}
 	break;
@@ -1556,10 +1555,10 @@ void chk_bl_del(void)
 	    }
 
 	    // clear DMA transfer complete interrupt,
-	    //NB not really needed - this core will die
+	    // NB: not really needed - this core will die
 	    //dma[DMA_CTRL] = 1 << 3;
 
-	    //NB this function will not return
+	    // NB: this function will not return
 	    delegate();
 	}
     }
@@ -1662,22 +1661,24 @@ void c_main(void)
 	sv->netinit_phase = netinit_phase = NETINIT_PHASE_DONE;
 	ethinit_phase = ETHINIT_PHASE_DONE;
 
-	vic_setup();// Set VIC, interrupts on
+        // Set VIC, interrupts on
+	vic_setup();
     }
 
-    while (1) {				// Run event loop (forever...)
+    // Run event loop (forever...)
+    while (1) {
 	event_run(0);
 
-	// interrupts must be disabled to avoid queue-access hazard
+	// interrupts must be disabled to avoid queue-access hazard,
 	uint cpsr = cpu_int_disable();
 
-	// check if queue is empty
+	// check if queue is empty,
 	if (event.proc_queue->proc_head == NULL) {
 	    // NB: interrupts will wake up the core even if disabled
 	    cpu_wfi();
 	}
 
-	// re-enable interrupts to service them
+	// and re-enable interrupts to service any pending ones
 	cpu_int_restore(cpsr);
     }
 }

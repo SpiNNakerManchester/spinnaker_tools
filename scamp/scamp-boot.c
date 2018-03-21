@@ -16,13 +16,14 @@
 
 //------------------------------------------------------------------------------
 
-// This currently sends an image of 28KB at most. Images up to 32k are
-// possible.
+// This currently sends an image of 28kB at most.
+// Images up to 32kB are possible.
 
 #define BOOT_BUF (DTCM_BASE + 0x8000)
 
-#define BLOCK_COUNT	28	// From 1-256,
-#define WORD_COUNT	256	// From 1-256, BLOCK_COUNT * WORD_COUNT must be < 32kB
+// BLOCK_COUNT * BYTE_COUNT must be < 32kB
+#define BLOCK_COUNT	28	// From 1-256
+#define WORD_COUNT	256	// From 1-256
 #define BYTE_COUNT	(WORD_COUNT * sizeof(uint))
 
 
