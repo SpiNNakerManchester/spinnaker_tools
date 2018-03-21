@@ -350,6 +350,8 @@ extern void boot_nn(uint hw_ver);
 //------------------------------------------------------------------------------
 
 extern uint mon_del;
+extern srom_data_t srom;
+
 extern uint p2p_addr;
 extern uint p2p_dims;
 extern uint p2p_root;

@@ -813,6 +813,9 @@ void get_board_info(void)
 
     if (sv_board_info[0] < 64) {
 	sv->board_info = sv_board_info;
+    } else {
+	// NB this function is now called before this value is set to 0
+	sv->board_info = 0;
     }
 }
 
@@ -1544,6 +1547,9 @@ void chk_bl_del(void)
 	    // take blacklisted cores out of the application pool
 	    sc[SC_CLR_OK] = bl_cores;
 
+	    // copy SROM data to system RAM for delegate,
+	    sark_word_cpy (sysram + 128, sv_srom, sizeof(srom_data_t));
+
 	    // wait for boot image DMA to complete,
 	    while (!(dma[DMA_STAT] & (1 << 10))) {
 	        continue;
@@ -1571,13 +1577,13 @@ void c_main(void)
 
     sc[SC_MISC_CTRL] |= 1;  		// Swap RAM/ROM
 
-    // copy SROM block
-    sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));
-
     // check if this core is a delegate
     uint mon = (rtr[RTR_CONTROL] >> 8) & 0x1f;
     uint del = (sark.phys_cpu != mon);
     if (del) {
+        // get SROM block from copy made by monitor
+        sark_word_cpy(&srom, sysram + 128, sizeof(srom_data_t));
+
 	// if board-local (0, 0) stop treating as delegate
 	if (srom.flags & SRF_PRESENT) {
   	    del = 0;
@@ -1589,6 +1595,9 @@ void c_main(void)
 	// and disable the previous monitor
 	clock_ap(1 << mon, 0);
     } else {
+        // get original SROM block
+        sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));
+
 	// if board-local (0, 0) check blacklist and delegate if necessary
 	if (srom.flags & SRF_PRESENT) {
 	    // NB: this function will not return if monitor is blacklisted

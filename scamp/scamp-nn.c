@@ -1096,7 +1096,7 @@ void nn_cmd_biff(uint x, uint y, uint data)
 	if (dead_cores & (1 << sark.phys_cpu)) {
 	    uint * boot_img = (uint *) (DTCM_BASE + 0x00008000);
 
-	    // modify aplx table to preserve variable sv
+	    // modify aplx table to preserve variable sv,
 	    boot_img[45] = 0;
 
 	    // start boot image DMA to SDRAM for delegate,
@@ -1106,6 +1106,9 @@ void nn_cmd_biff(uint x, uint y, uint data)
 
 	    // don't kill a blacklisted monitor just yet,
 	    dead_cores &= ~(1 << sark.phys_cpu);
+
+	    // copy SROM data to system RAM for delegate,
+	    sark_word_cpy (sysram + 128, &srom, sizeof(srom_data_t));
 
 	    // and remember to delegate when ready
   	    mon_del = 1;
