@@ -25,7 +25,15 @@ extern iptag_t tag_table[];
 
 const uchar bc_mac[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 const uchar zero_mac[] = {0, 0, 0, 0, 0, 0};
+const uchar zero_ip[] = {0, 0, 0, 0};
 
+#define MAX_ARP_ENTRIES 5
+static struct arp_entry {
+    uchar mac[6];
+    uchar ip[4];
+    struct arp_entry *next;
+} arp_entries[MAX_ARP_ENTRIES];
+static uint next_arp_entry = MAX_ARP_ENTRIES;
 
 #ifdef LOCK_ETH
 
@@ -213,6 +221,17 @@ void send_arp_pkt(uchar *buf, const uchar *dest, const uchar *tha,
 
 void arp_lookup(iptag_t *iptag)
 {
+
+    for (uint i = 0; i < MAX_ARP_ENTRIES; i++) {
+	if (cmp_ip(iptag->ip, arp_entries[i].ip)) {
+	    copy_mac(arp_entries[i].mac, iptag->mac);
+	    uint f = iptag->flags;
+	    f &= ~IPFLAG_ARP;
+	    iptag->flags = f | IPFLAG_VALID;
+	    return;
+	}
+    }
+
     uchar buf[42];
 
     uchar *ip_addr = iptag->ip;
@@ -248,6 +267,7 @@ void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size)
     if (op == ARP_REQ) {
 	send_arp_pkt(buf, buf+6, arp->sha, arp->spa, ARP_REPLY);
     } else if (op == ARP_REPLY) {	// Reply & TPA matches
+	arp_add(arp->sha, arp->spa);
 	iptag_t *tt = tag_table;
 
 	for (uint i = 0; i < tag_table_size; i++) {
@@ -261,6 +281,15 @@ void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size)
 	    tt++;
 	}
     }
+}
+
+void arp_add(uchar *mac, uchar* ip) {
+    next_arp_entry += 1;
+    if (next_arp_entry >= MAX_ARP_ENTRIES) {
+	next_arp_entry = 0;
+    }
+    copy_mac(mac, arp_entries[next_arp_entry].mac);
+    copy_ip(ip, arp_entries[next_arp_entry].ip);
 }
 
 

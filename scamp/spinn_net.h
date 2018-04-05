@@ -106,6 +106,7 @@ void send_arp_pkt(uchar *buf, const uchar *dest,
 		  const uchar *tha, const uchar *tpa, uint type);
 void arp_lookup(iptag_t *iptag);
 void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size);
+void arp_add(uchar *mac, uchar *ip);
 
 void icmp_pkt(uchar *rx_pkt, uint rx_len);
 void copy_udp(uchar *buf, uint len, uint dest, uint srce);

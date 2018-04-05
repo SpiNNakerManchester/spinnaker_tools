@@ -346,6 +346,7 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
 
 	if ((flags & SDPF_REPLY) == 0 ||
 		(tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0)) {
+	    arp_add(rx_pkt+6, ip_hdr->srce);
 	    msg_queue_insert(msg, srce_ip);
 	} else {
 	    sark_msg_free(msg);
