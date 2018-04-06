@@ -346,6 +346,7 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
 
 	if ((flags & SDPF_REPLY) == 0 ||
 		(tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0)) {
+	    arp_add(rx_pkt+6, ip_hdr->srce);
 	    msg_queue_insert(msg, srce_ip);
 	} else {
 	    sark_msg_free(msg);
@@ -813,6 +814,9 @@ void get_board_info(void)
 
     if (sv_board_info[0] < 64) {
 	sv->board_info = sv_board_info;
+    } else {
+	// NB: this function is now called before this value is set to 0
+	sv->board_info = 0;
     }
 }
 
@@ -820,7 +824,6 @@ void get_board_info(void)
 void sv_init(void)
 {
     sark_word_cpy(sv_vectors, rst_init, SV_VSIZE); 	// Copy Reset vectors
-    sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));	// Copy SROM block
 
     sark_word_set((void *) 0xf5007fc0, 0, 64);		// Kludge...
 
@@ -900,7 +903,7 @@ void sdram_init(void)
     sv->hop_table = sark_xalloc(sv->sys_heap, HOP_TABLE_SIZE * 4, 0, 0);
     sark_word_set(sv->hop_table, 0x8000ffff, HOP_TABLE_SIZE * 4);
 
-    // Router MC table copy (NB 1 extra entry in copy table)
+    // Router MC table copy (NB: 1 extra entry in copy table)
 
     sv->rtr_copy = sark_xalloc(sv->sys_heap,
 	    (MC_TABLE_SIZE + 1) * sizeof(rtr_entry_t), 0, 0);
@@ -1229,7 +1232,12 @@ void proc_100hz(uint a1, uint a2)
 	    netinit_p2p_tick_counter = 0;
 
 	    if (sv->p2pb_repeats-- == 0) {
-		netinit_phase = NETINIT_PHASE_DONE;
+	        // check if delegating
+	        if (mon_del) {
+		    netinit_phase = NETINIT_PHASE_DEL;
+		} else {
+		    netinit_phase = NETINIT_PHASE_DONE;
+		}
 
 		level_config();
 		compute_st();
@@ -1246,6 +1254,21 @@ void proc_100hz(uint a1, uint a2)
 	}
 	break;
     }
+
+    case NETINIT_PHASE_DEL:
+        // delegate if boot image DMA completed
+        if (dma[DMA_STAT] & (1 << 10)) {
+	    // clear DMA transfer complete interrupt,
+	    // NB: not really needed - this core will die
+	    //dma[DMA_CTRL] = 1 << 3;
+
+	    // take this core out of the application pool
+	    sc[SC_CLR_OK] = (1 << sark.phys_cpu);
+
+	    // NB: this function will not return
+	    delegate();
+	}
+	break;
 
     case NETINIT_PHASE_DONE:
     default:
@@ -1453,6 +1476,96 @@ void sark_config(void)
 }
 
 
+void delegate()
+{
+    // choose delegate
+    uint del      = NUM_CPUS - 1;         // potential delegate
+    uint del_mask = 1 << (NUM_CPUS - 1);  // delegate mask
+
+    while (~sc[SC_CPU_OK] & del_mask) {
+        del--;
+	del_mask = del_mask >> 1;
+    }
+
+    // copy img_cp_exe to system RAM for delegate,
+    sark_word_cpy (sysram, (void *) img_cp_exe, 128);
+
+    // let system controller know of new monitor,
+    sc[SC_MON_ID] = SC_CODE + del;
+
+    // mark delegate as POWER DOWN to avoid triggering soft wdog,
+    vcpu_t *vcpu = sv_vcpu + sv->p2v_map[del];
+    vcpu->cpu_state = 1;
+
+    // start delegate,
+    sc[SC_SOFT_RST_L] = SC_CODE + del_mask;
+    clock_ap(del_mask, 1);
+    sark_delay_us(5);
+    sc[SC_SOFT_RST_L] = SC_CODE;
+
+    // disable all interrupts,
+    vic[VIC_DISABLE] = 0xffffffff;
+    vic[VIC_SELECT] = 0;
+
+    // and wait here for delegate to kill this core
+    while (1) {
+        cpu_wfi();
+    }
+}
+
+
+void chk_bl_del(void)
+{
+    // get board blacklist,
+    get_board_info();
+
+    // and check if need to delegate
+    if (sv->board_info) {
+        uint   bl_len   = sv->board_info[0];
+	uint * bl_dat   = sv->board_info + 1;
+	uint   bl_cores = 0;
+
+	// get (0, 0) blacklist entry if it exists,
+	while (bl_len--) {
+	    uint data  = *(bl_dat++);
+	    uint type  = data >> 30;
+	    uint coord = (data >> 24) & 0x3f;
+
+	    if ((type == 0) && (coord == 0)) {
+	        bl_cores = data & 0x3ffff;
+		break;
+	    }
+	}
+
+	// and delegate if this core is blacklisted
+	if (bl_cores & (1 << sark.phys_cpu)) {
+	    // start boot image DMA to SDRAM for delegate,
+	    dma[DMA_ADRS] = (uint) SDRAM_BASE;
+	    dma[DMA_ADRT] = (uint) DTCM_BASE + 0x00008000;
+	    dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | 0x7100;
+
+	    // take blacklisted cores out of the application pool
+	    sc[SC_CLR_OK] = bl_cores;
+
+	    // copy SROM data to system RAM for delegate,
+	    sark_word_cpy (sysram + 128, sv_srom, sizeof(srom_data_t));
+
+	    // wait for boot image DMA to complete,
+	    while (!(dma[DMA_STAT] & (1 << 10))) {
+	        continue;
+	    }
+
+	    // clear DMA transfer complete interrupt,
+	    // NB: not really needed - this core will die
+	    //dma[DMA_CTRL] = 1 << 3;
+
+	    // NB: this function will not return
+	    delegate();
+	}
+    }
+}
+
+
 void c_main(void)
 {
     sark.cpu_clk = 160;			// BootROM uses 160 MHz
@@ -1464,44 +1577,109 @@ void c_main(void)
 
     sc[SC_MISC_CTRL] |= 1;  		// Swap RAM/ROM
 
-    assign_virt_cpu(sark.phys_cpu);	// Assign virtual CPUs
+    // check if this core is a delegate
+    uint mon = (rtr[RTR_CONTROL] >> 8) & 0x1f;
+    uint del = (sark.phys_cpu != mon);
+    if (del) {
+        // get SROM block from copy made by monitor
+        sark_word_cpy(&srom, sysram + 128, sizeof(srom_data_t));
 
-    sv_init();				// Initialise system RAM
-    sark_led_init();			// Initialise LED drivers
-    pll_init();				// Restart PLLs
-    sdram_init();			// Initialise SDRAM
-    random_init();			// Initialise random
-    rtr_init(sark.phys_cpu);		// Initialise router
+	// if board-local (0, 0) stop treating as delegate
+	if (srom.flags & SRF_PRESENT) {
+  	    del = 0;
+	}
 
-    if (sv->boot_delay) {		// If bootROM boot
-	boot_nn(sv->hw_ver);		// Flood fill neighbours
+        // let router know of new monitor
+        rtr[RTR_CONTROL] = 0x00400001 | (sark.phys_cpu << 8);
+
+	// and disable the previous monitor
+	clock_ap(1 << mon, 0);
+    } else {
+        // get original SROM block
+        sark_word_cpy(&srom, sv_srom, sizeof(srom_data_t));
+
+	// if board-local (0, 0) check blacklist and delegate if necessary
+	if (srom.flags & SRF_PRESENT) {
+	    // NB: this function will not return if monitor is blacklisted
+	    chk_bl_del();
+	}
     }
-    boot_ap();				// Start local APs
 
-    timer1_init(sark.cpu_clk * 1000);	// Initialise 1ms timer
+    if (!del) {  // normal boot
+        assign_virt_cpu(sark.phys_cpu);	// Assign virtual CPUs
 
-    queue_init();			// Initialise various queues
-    nn_init();				// Initialise NN package
-    netinit_start();			// Initialise late-stage boot process datastructures
-    vic_setup();			// Set VIC, interrupts on
+        sv_init();			// Initialise system RAM
+	sark_led_init();		// Initialise LED drivers
+	pll_init();			// Restart PLLs
+	sdram_init();			// Initialise SDRAM
+	random_init();			// Initialise random
+	rtr_init(sark.phys_cpu);	// Initialise router
 
-    if (sv->boot_delay) {
-	eth_setup();		        // Set up Ethernet if present
+	if (sv->boot_delay) {		// If bootROM boot
+	    boot_nn(sv->hw_ver);	// Flood fill neighbours
+	}
+	boot_ap();			// Start local APs
+
+	timer1_init(sark.cpu_clk * 1000);	// Initialise 1ms timer
+
+	queue_init();			// Initialise various queues
+	nn_init();			// Initialise NN package
+	netinit_start();		// Initialise late-stage boot process datastructures
+	vic_setup();			// Set VIC, interrupts on
+
+	if (sv->boot_delay) {
+	    eth_setup();	        // Set up Ethernet if present
+	}
+    } else {   // do not attempt to boot again
+	// fix VCPU block
+ 	sv_vcpu[0].phys_cpu = sark.phys_cpu;
+
+	remap_phys_cores(~sc[SC_CPU_OK]);  // re-assign application cores
+
+	sark.cpu_clk = sv->cpu_clk;	// Set local values
+
+	// replace old monitor with new in MC route for signal distribution
+	uint sig_rt = rtr_ram[0] & ~MC_CORE_ROUTE(mon);
+	rtr_ram[0]  = sig_rt | MC_CORE_ROUTE(sark.phys_cpu);
+
+	timer1_init(sark.cpu_clk * 1000);  // Initialise 1ms timer
+
+	queue_init();			// Initialise various queues
+	nn_init();			// Initialise NN package
+	
+	// Record the coordinates/dimensions discovered by previous monitor
+	p2p_addr = sv->p2p_addr;
+	level_config();
+	p2p_up = sv->p2p_up;
+
+	// Reseed uniquely for each chip
+	sark_srand(p2p_addr);
+
+	// Set our P2P addr in the comms controller
+	cc[CC_SAR] = 0x07000000 + p2p_addr;
+
+        // Initialise, as DONE, late-stage boot process variables
+	sv->netinit_phase = netinit_phase = NETINIT_PHASE_DONE;
+	ethinit_phase = ETHINIT_PHASE_DONE;
+
+        // Set VIC, interrupts on
+	vic_setup();
     }
 
-    while (1) {				// Run event loop (forever...)
+    // Run event loop (forever...)
+    while (1) {
 	event_run(0);
 
-	// interrupts must be disabled to avoid queue-access hazard
+	// interrupts must be disabled to avoid queue-access hazard,
 	uint cpsr = cpu_int_disable();
 
-	// check if queue is empty
+	// check if queue is empty,
 	if (event.proc_queue->proc_head == NULL) {
 	    // NB: interrupts will wake up the core even if disabled
 	    cpu_wfi();
 	}
 
-	// re-enable interrupts to service them
+	// and re-enable interrupts to service any pending ones
 	cpu_int_restore(cpsr);
     }
 }
