@@ -10,9 +10,9 @@ set -a
 #-------------------------------------------------------------------------------
 
 # This file should be sourced, not executed!
-#if [ "$0" == "${BASH_SOURCE[0]}" ]; then
-#  echo "WARNING: $0 should be sourced, not executed. Try: source $0"
-#fi
+if [ "$0" == "${BASH_SOURCE[0]}" ]; then
+  echo "WARNING: $0 should be sourced, not executed. Try: source $0"
+fi
 
 #-------------------------------------------------------------------------------
 
@@ -48,13 +48,13 @@ PERL5LIB=$SPINN_DIRS/tools:$PERL5LIB
 
 # *** EDIT HERE ***
 
-#ARMTOOLS=/home/amulinks/spinnaker/tools/RVDS40
+ARMTOOLS=/home/amulinks/spinnaker/tools/RVDS40
 
-#ARMBIN=$ARMTOOLS/RVCT/Programs/4.0/400/linux-pentium
-#ARMLIB=$ARMTOOLS/RVCT/Data/4.0/400/lib
-#ARMINC=$ARMTOOLS/RVCT/Data/4.0/400/include/unix
+ARMBIN=$ARMTOOLS/RVCT/Programs/4.0/400/linux-pentium
+ARMLIB=$ARMTOOLS/RVCT/Data/4.0/400/lib
+ARMINC=$ARMTOOLS/RVCT/Data/4.0/400/include/unix
 
-#LM_LICENSE_FILE=PORT@SERVER.cs.man.ac.uk:$LM_LICENSE_FILE
+LM_LICENSE_FILE=PORT@SERVER.cs.man.ac.uk:$LM_LICENSE_FILE
 
 #-------------------------------------------------------------------------------
 

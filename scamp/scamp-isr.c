@@ -268,11 +268,13 @@ INT_HANDLER ap_int()
 	sdp_msg_t *msg = sark_msg_get();
 
 	if (msg != NULL) {
-		vcpu->mbox_mp_cmd = SHM_IDLE;
 	    sark_msg_cpy(msg, shm_msg);
+	    vcpu->mbox_mp_cmd = SHM_IDLE;
 	    msg_queue_insert(msg, 0);
 	    sark_shmsg_free(shm_msg);
 	} else {
+	    // failed to get buffer - do *not* flag
+	    // mailbox as IDLE to cause sender timeout
 	    sw_error(SW_OPT);
         }
 
