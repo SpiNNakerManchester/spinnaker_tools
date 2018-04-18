@@ -82,7 +82,7 @@
 // ----------------
 /* data transfer */
 // ----------------
-// DMA transfer parameters: 4-doubleword bursts
+// DMA transfer parameters: 16-doubleword bursts
 //TODO: may need adjustment for SpiNNaker
 #define DMA_BURST_SIZE        4
 #define DMA_WIDTH             1
