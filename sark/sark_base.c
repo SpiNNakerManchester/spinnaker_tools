@@ -529,6 +529,9 @@ uint sark_msg_send(sdp_msg_t *msg, uint timeout)
     }
 
     if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
+	// message sending failed - free mailbox,
+        // flag it as IDLE and return error code
+	sark.vcpu->mbox_mp_cmd = SHM_IDLE;
 	sark_shmsg_free(shm_msg);
 	return 0;
     }

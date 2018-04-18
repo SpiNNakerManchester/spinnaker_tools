@@ -1469,7 +1469,7 @@ void jtag_init(void)
 
 void sark_config(void)
 {
-    sark_vec->num_msgs = 16;		// Allocate 16 SDP messages
+    sark_vec->num_msgs = 32;		// Allocate 32 SDP messages
     sark_vec->num_events = 64;		// and 64 events
     sark_vec->app_id = 0;		// Just to be sure...
     sark_vec->app_flags &= ~(1 << APP_FLAG_WAIT); // Don't wait in SARK start-up
