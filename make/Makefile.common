@@ -1,0 +1,4 @@
+# THIS FILE IS A STUB FOR A RENAMED VERSION
+# IT IS KEPT FOR BACKWARD COMPATIBILITY ONLY
+$(warning inclusion of Makefile.common instead of spinnaker_tools.mk)
+include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))spinnaker_tools.mk
