@@ -6,7 +6,7 @@ else
     BUILD_DIR := ../build/arm
 endif
 override LIB := 1
-include ../make/Makefile.common
+include ../make/spinnaker_tools.mk
 
 SARKOPT := $(OSPACE)
 CFLAGS += -DSARK_API $(SARKOPT)

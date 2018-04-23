@@ -150,7 +150,7 @@ endif
 #  1) Link application object(s), build file and library to make the ELF
 #  2) Create a list file
 $(BUILD_DIR)%.elf: $(OBJECTS) $(BUILD_DIR)%_build.o
-	# Makefile.common elf
+	# spinnaker_tools.mk elf
 	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
 	$(OD) $(BUILD_DIR)$*.txt $@
 	
@@ -160,11 +160,11 @@ $(BUILD_DIR)%_build.c:
 	$(SPINN_TOOLS_DIR)/mkbuild $* > $@
 
 $(BUILD_DIR)%.o: %.c
-	# Makefile.common c
+	# spinnaker_tools.mk c
 	$(MKDIR) $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
 	
 $(BUILD_DIR)%.o: %.cpp
-	# Makefile.common cpp
+	# spinnaker_tools.mk cpp
 	$(MKDIR) $(BUILD_DIR)
 	$(CXX) $(CFLAGS) $(CXXFLAGS) -o $@ $<
