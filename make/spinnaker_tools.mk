@@ -129,7 +129,6 @@ endif
 $(APP_OUTPUT_DIR)%.aplx: $(BUILD_DIR)%.bin $(BUILD_DIR)%.nm
 	$(MKDIR) $(APP_OUTPUT_DIR)
 	$(SPINN_TOOLS_DIR)/mkaplx $(BUILD_DIR)$*.nm | $(CAT) - $(BUILD_DIR)$*.bin > $@
-	$(LS) $@
 
 # Create a list of the objects in the file using nm
 $(BUILD_DIR)%.nm: $(BUILD_DIR)%.elf
