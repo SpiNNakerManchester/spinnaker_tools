@@ -149,7 +149,7 @@ endif
 # Build the ELF file
 #  1) Link application object(s), build file and library to make the ELF
 #  2) Create a list file
-$(BUILD_DIR)%.elf: $(OBJECTS) $(SCRIPT) $(BUILD_DIR)%_build.o
+$(BUILD_DIR)%.elf: $(OBJECTS) $(BUILD_DIR)%_build.o
 	$(MKDIR) $(BUILD_DIR)
 	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
 	$(OD) $(BUILD_DIR)$*.txt $@
