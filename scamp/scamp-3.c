@@ -1647,10 +1647,14 @@ void c_main(void)
 	queue_init();			// Initialise various queues
 	nn_init();			// Initialise NN package
 	
-	// Record the coordinates/dimensions discovered by previous monitor
+	// recover the coordinates/dimensions discovered by previous monitor
 	p2p_addr = sv->p2p_addr;
+	p2p_dims = sv->p2p_dims;
+	p2p_root = sv->p2p_root;
+	p2p_up   = sv->p2p_up;
+
+	// (re-)construct the level/region information (not in shared memory)
 	level_config();
-	p2p_up = sv->p2p_up;
 
 	// Reseed uniquely for each chip
 	sark_srand(p2p_addr);
