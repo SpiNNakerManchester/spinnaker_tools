@@ -258,7 +258,7 @@ uint pkt_tx(uint tcr, uint data, uint key)
     }
 
     if (txq->count == 0) {
-	    vic[VIC_ENABLE] = 1 << CC_TMT_INT;
+	vic[VIC_ENABLE] = 1 << CC_TMT_INT;
     }
 
     txq->count++;
@@ -678,8 +678,14 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
     uint dest_port = msg->dest_port >> PORT_SHIFT;
     if (dest_port == 0) {
-	msg->length = 12 + scamp_debug(msg, srce_ip);
-	return_msg(msg, 0);
+	uint len = scamp_debug(msg, srce_ip);
+
+        // a 'wrong' length indicates that the return
+	// message should not be sent at this time.
+	if (len <= SDP_BUF_SIZE) {
+	    msg->length = 12 + len;  // !!const
+	    return_msg(msg, 0);
+	}
     } else {
 	return_msg(msg, RC_PORT);	// APs should not do this!!
     }

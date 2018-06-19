@@ -417,6 +417,7 @@ uint cmd_info(sdp_msg_t *msg)
 
 extern level_t levels[4];
 extern uint pkt_tx(uint tcr, uint data, uint key);
+extern void return_msg(sdp_msg_t *msg, uint rc);
 
 #define MODE_OR  	0
 #define MODE_AND 	1
@@ -436,6 +437,19 @@ void p2p_send_reg(uint ctrl, uint addr, uint data)
 
     (void) pkt_tx(PKT_P2P_PL, data, addr);
 }
+
+
+void proc_ret_msg(uint arg1, uint level)
+{
+    sdp_msg_t *msg = (sdp_msg_t *) arg1;
+    msg->arg1 = levels[level].result;
+    msg->length = sizeof(cmd_hdr_t);
+
+    return_msg(msg, 0);
+}
+
+
+void proc_gather(uint level, uint mode);
 
 
 void proc_send(uint data, uint mask)
@@ -462,6 +476,8 @@ void proc_send(uint data, uint mask)
 	    }
 	}
     }
+
+    timer_schedule_proc(proc_gather, level, mode, 250 * (4 - level));
 }
 
 
@@ -471,6 +487,51 @@ void proc_gather(uint level, uint mode)
     uint srce = levels[level].parent;
     uint d = (mode << 20) + ((level - 1) << 26) + levels[level].result;
 
+    p2p_send_reg(APP_RET << 22, srce, d);
+}
+
+
+void proc_process(uint data, uint srce)
+{
+    uint mode = (data >> 20) & 3;
+    uint app_id = data & 255;
+    uint app_mask = (data >> 8) & 255;
+    uint state = (data >> 16) & 15;
+    uint mask = 0;
+
+    for (uint i = 1; i < num_cpus; i++) {
+        uint b = (core_app[i] & app_mask) == app_id;
+	mask |= b << i;
+    }
+
+    uint result = 0;
+    if (mode == MODE_SUM) {
+        for (uint i = 1; i < num_cpus; i++) {
+	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
+	        result++;
+	    }
+	}
+    } else if (mode == MODE_OR) {
+        for (uint i = 1; i < num_cpus; i++) {
+	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
+	        result = 1 << 16;
+	    }
+	}
+
+	result++;
+    } else {		// MODE_AND
+        result = 1 << 16;
+
+	for (uint i = 1; i < num_cpus; i++) {
+	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state != state)) {
+	        result = 0;
+	    }
+	}
+
+	result++;
+    }
+
+    uint d = (mode << 20) + (3 << 26) + result;
     p2p_send_reg(APP_RET << 22, srce, d);
 }
 
@@ -509,8 +570,9 @@ void p2p_region(uint data, uint srce)
     if (level != 0) {
 	levels[level].parent = srce;
 	data &= 0x0fffffff;
-	timer_schedule_proc(proc_send, data, 0xffffffff, 5);
-	timer_schedule_proc(proc_gather, level, mode, 200 * (4 - level));
+
+	// schedule the sending of packets to subregions
+	event_queue_proc(proc_send, data, 0xffffffff, PRIO_0);
 
 	return;
     }
@@ -520,43 +582,9 @@ void p2p_region(uint data, uint srce)
     uint result = 1;
 
     if (cmd == APP_STAT) {
-	uint app_id = data & 255;
-	uint app_mask = (data >> 8) & 255;
-	uint state = (data >> 16) & 15;
-	uint mask = 0;
-
-	for (uint i = 1; i < num_cpus; i++) {
-	    uint b = (core_app[i] & app_mask) == app_id;
-	    mask |= b << i;
-	}
-
-	result = 0;
-
-	if (mode == MODE_SUM) {
-	    for (uint i = 1; i < num_cpus; i++) {
-		if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
-		    result++;
-		}
-	    }
-	} else if (mode == MODE_OR) {
-	    for (uint i = 1; i < num_cpus; i++) {
-		if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
-		    result = 1 << 16;
-		}
-	    }
-
-	    result++;
-	} else {		// MODE_AND
-	    result = 1 << 16;
-
-	    for (uint i = 1; i < num_cpus; i++) {
-		if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state != state)) {
-		    result = 0;
-		}
-	    }
-
-	    result++;
-	}
+	// schedule the processing of the packet
+	event_queue_proc(proc_process, data, srce, PRIO_0);
+	return;
     } else if (cmd == APP_SIG) {
 	signal_app(data);
     }
@@ -589,10 +617,13 @@ uint cmd_sig(sdp_msg_t *msg)
 	uint level = (data >> 26) & 3;
 
 	proc_send(data, mask);
-	sark_delay_us(10000);
-	msg->arg1 = levels[level].result;
 
-	return 4;
+	// schedule the return message with plenty of time to finish
+	timer_schedule_proc(proc_ret_msg, (uint) msg, level, 10000);
+
+	// return a 'wrong' message length to indicate the
+	// return message should not be sent at this time
+	return 0xffff0000;
     } else if (type == 2) {
 	ff_nn_send((NN_CMD_SIG0 << 24) + 0x3f0000,
 		(5 << 28) + data, 0x3f00, 1);
