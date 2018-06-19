@@ -734,6 +734,7 @@ sub cmd_app_sig
 
     return "bad app_id" unless $app_id >=0 && $app_id <= 255;
 
+    my $save_region = $region;
     $region = parse_region ($region);
 
     return "bad region" if $region == 0;
@@ -775,23 +776,49 @@ sub cmd_app_sig
     printf "Type %d data %08x mask %08x\n", $type, $data, $mask if $debug;
     printf "Region %08x signal %d state %d\n", $region, $signal, $state if $debug;
 
-    eval
+    if ($type == 1)
     {
-        my $data = $spin->signal ($type, $data, $mask, addr => []);
+	my $xb = $region >> 24;
+	my $yb = ($region >> 16) & 0xfc;
 
-        if ($type == 1)
-        {
-            my $r = unpack "V", $data;
-            if ($signal == 18) # Count
-            {
-                printf "Count %d\n", $r;
-            }
-            else
-            {
-                printf "Mask 0x%08x\n", $r;
-            }
-        }
-    };
+	# find a working chip in the target region (try at most 16 addresses)
+	for (my $i = 0; $i < 16; $i++)
+	{
+	    my $addr = [$xb + ($i >> 2), $yb + ($i & 3), 0];
+	    my $res;
+
+	    eval
+	    {
+		$res = $spin->signal ($type, $data, $mask, addr => $addr);
+	    };
+
+	    if (index($@, "RC_") != -1)
+	    {
+		next;
+	    };
+
+	    my $r = unpack "V", $res;
+	    if ($signal == 18) # Count
+	    {
+		printf "Count %d\n", $r;
+	    }
+	    else
+	    {
+		printf "Mask 0x%08x\n", $r;
+	    }
+
+	    return $@;
+	}
+
+	printf "Region $save_region is unreachable\n";
+    }
+    else
+    {
+	eval
+	{
+	    my $data = $spin->signal ($type, $data, $mask, addr => []);
+	};
+    }
 
     return $@;
 }

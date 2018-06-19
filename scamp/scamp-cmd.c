@@ -445,7 +445,12 @@ void proc_ret_msg(uint arg1, uint level)
     msg->arg1 = levels[level].result;
     msg->length = sizeof(cmd_hdr_t);
 
-    return_msg(msg, 0);
+    // check that replies actually arrived
+    if (levels[level].rcvd != 0) {
+        return_msg(msg, 0);
+    } else {
+        return_msg(msg, RC_P2P_NOREPLY);
+    }
 }
 
 
@@ -477,7 +482,10 @@ void proc_send(uint data, uint mask)
 	}
     }
 
-    timer_schedule_proc(proc_gather, level, mode, 250 * (4 - level));
+    // schedule the sending of the return message in plenty of time
+    if (mask & 0xffff0000) {
+        timer_schedule_proc(proc_gather, level, mode, 250 * (4 - level));
+    }
 }
 
 
@@ -618,12 +626,18 @@ uint cmd_sig(sdp_msg_t *msg)
 
 	proc_send(data, mask);
 
-	// schedule the return message with plenty of time to finish
-	timer_schedule_proc(proc_ret_msg, (uint) msg, level, 10000);
+	// check that packets were actually sent (i.e., chips are listening)
+	if (levels[level].sent != 0) {
+	    // schedule the return message with plenty of time to finish
+	    timer_schedule_proc(proc_ret_msg, (uint) msg, level, 10000);
 
-	// return a 'wrong' message length to indicate the
-	// return message should not be sent at this time
-	return 0xffff0000;
+	    // a 'wrong' message length indicates that the
+	    // return message should not be sent at this time
+	    return 0xffff0000;
+	} else {
+	    msg->cmd_rc = RC_ROUTE;
+	    return 0;
+	}
     } else if (type == 2) {
 	ff_nn_send((NN_CMD_SIG0 << 24) + 0x3f0000,
 		(5 << 28) + data, 0x3f00, 1);
