@@ -451,6 +451,9 @@ void proc_ret_msg(uint arg1, uint level)
     } else {
         return_msg(msg, RC_P2P_NOREPLY);
     }
+
+    //NB: clear result just in case
+    levels[level].result = 0;
 }
 
 
@@ -484,7 +487,7 @@ void proc_send(uint data, uint mask)
 
     // schedule the sending of the return message in plenty of time
     if (mask & 0xffff0000) {
-        timer_schedule_proc(proc_gather, level, mode, 250 * (4 - level));
+        timer_schedule_proc(proc_gather, level, mode, 500 * (4 - level));
     }
 }
 
@@ -496,6 +499,9 @@ void proc_gather(uint level, uint mode)
     uint d = (mode << 20) + ((level - 1) << 26) + levels[level].result;
 
     p2p_send_reg(APP_RET << 22, srce, d);
+
+    //NB: clear result just in case
+    levels[level].result = 0;
 }
 
 

@@ -792,6 +792,11 @@ sub cmd_app_sig
 		$res = $spin->signal ($type, $data, $mask, addr => $addr);
 	    };
 
+	    if (index($@, "retries") != -1)
+	    {
+		return $@;
+	    };
+
 	    if (index($@, "RC_") != -1)
 	    {
 		next;
