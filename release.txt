@@ -4,6 +4,27 @@
 #
 #-------------------------------------------------------------------------------
 
+
+Version 3.2.1 - Bug fixing
+
+Bug Fixes:
+
+* SCAMP: Fixes implementation of signal 'count'
+
+* SCAMP: Fixes a race condition in access to SDP mailboxes
+
+#-------------------------------------------------------------------------------
+
+
+Version 3.2.0 - New feature
+
+New Feature:
+
+* monitor delegation (when monitor is blacklisted)
+
+#-------------------------------------------------------------------------------
+
+
 Version 3.1.1 - Bug fixing
 
 Bug Fixes:
