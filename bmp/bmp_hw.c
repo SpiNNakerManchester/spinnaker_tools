@@ -665,11 +665,8 @@ static uint32_t configure_pins(void)
     //-----------------
     // Configure Port 1
 
-    // don't touch the SpiNNaker array if triggered by a watchdog reset
-    if ((uni_vec[0] & 4) == 0) {
-        LPC_GPIO1->FIOSET = P1_INIT;	// Initialise outputs
-        LPC_GPIO1->FIODIR = P1_EN;	// Enable outputs
-    }
+    LPC_GPIO1->FIOSET = P1_INIT;	// Initialise outputs
+    LPC_GPIO1->FIODIR = P1_EN;	// Enable outputs
 
     config_pin(PINSEL_PORT_1,  0, PINSEL_FUNC_1); // MII TXD0
     config_pin(PINSEL_PORT_1,  1, PINSEL_FUNC_1); // MII TXD1
@@ -1057,16 +1054,12 @@ void proc_setup(uint32_t d1, uint32_t d2)
     }
 
     configure_eth(bmp_ip.mac_addr);
+    configure_spin();
 
-    // don't touch the SpiNNaker array if triggered by a watchdog reset
-    if ((uni_vec[0] & 4) == 0) {
-        configure_spin();
+    uint32_t flags = d1 >> 24;
 
-	uint32_t flags = d1 >> 24;
-
-	if ((flags & 2) == 0) {
-	    proc_power(((10 * board_ID) << 16) + 1, 1 << board_ID);
-	}
+    if ((flags & 2) == 0) {
+        proc_power(((10 * board_ID) << 16) + 1, 1 << board_ID);
     }
 }
 
