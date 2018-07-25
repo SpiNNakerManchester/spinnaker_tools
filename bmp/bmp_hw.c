@@ -665,8 +665,11 @@ static uint32_t configure_pins(void)
     //-----------------
     // Configure Port 1
 
-    LPC_GPIO1->FIOSET = P1_INIT;	// Initialise outputs
-    LPC_GPIO1->FIODIR = P1_EN;		// Enable outputs
+    // don't touch the SpiNNaker array if triggered by a watchdog reset
+    if ((uni_vec[0] & 4) == 0) {
+        LPC_GPIO1->FIOSET = P1_INIT;	// Initialise outputs
+        LPC_GPIO1->FIODIR = P1_EN;	// Enable outputs
+    }
 
     config_pin(PINSEL_PORT_1,  0, PINSEL_FUNC_1); // MII TXD0
     config_pin(PINSEL_PORT_1,  1, PINSEL_FUNC_1); // MII TXD1
@@ -856,7 +859,7 @@ void read_temp(void)
 // The top LED is turned on (Red on Spin5) and the code is put on the next
 // 4 LEDs (Green on Spin5). The bottom 3 LEDs are turned off.
 
-void die(uint32_t code)
+void __attribute__((noreturn)) die(uint32_t code)
 {
     __disable_irq();
 
@@ -871,8 +874,10 @@ void die(uint32_t code)
     LPC_GPIO0->FIOCLR = LED_MASK;
     LPC_GPIO0->FIOSET = bits;
 
+    // wait for a watchdog reset
     while (1) {
-	refresh_wdt();
+        //refresh_wdt();
+        continue;
     }
 }
 
@@ -1052,12 +1057,16 @@ void proc_setup(uint32_t d1, uint32_t d2)
     }
 
     configure_eth(bmp_ip.mac_addr);
-    configure_spin();
 
-    uint32_t flags = d1 >> 24;
+    // don't touch the SpiNNaker array if triggered by a watchdog reset
+    if ((uni_vec[0] & 4) == 0) {
+        configure_spin();
 
-    if ((flags & 2) == 0) {
-	proc_power(((10 * board_ID) << 16) + 1, 1 << board_ID);
+	uint32_t flags = d1 >> 24;
+
+	if ((flags & 2) == 0) {
+	    proc_power(((10 * board_ID) << 16) + 1, 1 << board_ID);
+	}
     }
 }
 
