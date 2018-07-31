@@ -678,8 +678,14 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
     uint dest_port = msg->dest_port >> PORT_SHIFT;
     if (dest_port == 0) {
-	msg->length = 12 + scamp_debug(msg, srce_ip);
-	return_msg(msg, 0);
+	uint len = scamp_debug(msg, srce_ip);
+
+        // a 'wrong' length indicates that the return
+	// message should not be sent at this time.
+	if (len <= SDP_BUF_SIZE) {
+	    msg->length = 12 + len;  // !!const
+	    return_msg(msg, 0);
+	}
     } else {
 	return_msg(msg, RC_PORT);	// APs should not do this!!
     }
@@ -1674,11 +1680,22 @@ void c_main(void)
     while (1) {
 	event_run(0);
 
-	// interrupts must be disabled to avoid queue-access hazard,
+	uint empty = 1;
+
+	// disable interrupts to avoid queue access hazard,
 	uint cpsr = cpu_int_disable();
 
-	// check if queue is empty,
-	if (event.proc_queue->proc_head == NULL) {
+	// check if event queues are empty,
+	for (uint i = PRIO_0; i <= PRIO_MAX; i++) {
+	    if (event.proc_queue[i].proc_head != NULL) {
+	        // do not sleep if events pending
+	        empty = 0;
+		break;
+	    }
+	}
+
+        // go to sleep if no pending events,
+	if (empty) {
 	    // NB: interrupts will wake up the core even if disabled
 	    cpu_wfi();
 	}
