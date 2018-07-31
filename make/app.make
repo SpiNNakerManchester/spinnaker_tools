@@ -10,7 +10,7 @@ ifndef OBJECTS
     OBJECTS = $(BUILD_DIR)$(APP).o
 endif
 
-include $(SPINN_DIRS)/make/Makefile.common
+include $(SPINN_DIRS)/make/spinnaker_tools.mk
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx
 	

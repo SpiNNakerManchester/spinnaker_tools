@@ -1,6 +1,6 @@
 APP := scamp-3
 override THUMB := 1
-include ../make/Makefile.common
+include ../make/spinnaker_tools.mk
 
 SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
              scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o scamp-del.o \
