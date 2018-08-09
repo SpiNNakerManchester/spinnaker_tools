@@ -462,6 +462,10 @@ void refresh_wdt(void)
 // 1 - count of WDT timeouts
 // 2 - up time (seconds)
 // 3 - time of last WDT (copy of up time)
+// 4 - count of SYSRESETs
+// 5 - NVIC->IABR[0]: active interrupts @ call to 'die'
+// 6 - NVIC->IABR[1]: active interrupts @ call to 'die'
+// 7 - count of calls to 'die'
 
 
 static void process_reset(void)
@@ -485,6 +489,17 @@ static void process_reset(void)
 	uni_vec[2] += 10;		// Try to keep uptime correct
 
 	LPC_SC->RSID = 4;
+    }
+
+    // Process SYSRESET reset
+    if (rsid & 16) {
+	LPC_GPIO0->FIOSET = LED_7;
+
+	uni_vec[4]++;			// bump SYSRESET count
+	uni_vec[3] = uni_vec[2];	// copy uptime;
+	uni_vec[2] += 1;		// try to keep uptime correct
+
+	LPC_SC->RSID = 16;
     }
 
     // Save RSID register
@@ -852,26 +867,22 @@ void read_temp(void)
 //------------------------------------------------------------------------------
 
 
-// Curl up and die (probably because of hardware failure or misconfiguration.
-// The top LED is turned on (Red on Spin5) and the code is put on the next
-// 4 LEDs (Green on Spin5). The bottom 3 LEDs are turned off.
+// curl up and reset (probably because of hardware failure/misconfiguration)
 
 void __attribute__((noreturn)) die(uint32_t code)
 {
     __disable_irq();
 
-    uint32_t bits = LED_7;
+    // record active interrupts (sticky),
+    uni_vec[5] |= NVIC->IABR[0];
+    uni_vec[6] |= NVIC->IABR[1];
+    uni_vec[7]++;
 
-    for (uint32_t i = 0; i < 4; i++) {
-	if (code & (1 << i)) {
-	    bits |= led_bit[i+3];
-	}
-    }
-
-    LPC_GPIO0->FIOCLR = LED_MASK;
-    LPC_GPIO0->FIOSET = bits;
-
-    // wait for a watchdog reset
+    // and trigger a SYSRESET reset
+    uint32_t aircr = SCB->AIRCR & ~SCB_AIRCR_VECTKEY_Msk;
+    aircr |= (0x5FA << SCB_AIRCR_VECTKEY_Pos);  // insert security key
+    aircr |= SCB_AIRCR_SYSRESETREQ_Msk;         // set SYSRESET bit
+    SCB->AIRCR = aircr;
     while (1) {
         //refresh_wdt();
         continue;
