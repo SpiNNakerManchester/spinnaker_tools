@@ -47,13 +47,22 @@ const int pad __attribute__ ((section (".padding"))) = 0xdeaddead;
 
 // Cortex M3 vector tables for BMP LPC1768
 
-extern void die(uint32_t code);
 extern void c_main(void);
 
 void  __attribute__((noreturn)) error_han(void)
 {
+    // remember active interrupts (sticky),
+    uni_vec[5] |= NVIC->IABR[0];
+    uni_vec[6] |= NVIC->IABR[1];
+    uni_vec[7]++;
+
+    // and trigger a SYSRESET
+    uint32_t aircr = SCB->AIRCR & ~SCB_AIRCR_VECTKEY_Msk;
+    aircr |= (0x5FA << SCB_AIRCR_VECTKEY_Pos);  // insert security key
+    aircr |= SCB_AIRCR_SYSRESETREQ_Msk;         // set SYSRESET bit
+    SCB->AIRCR = aircr;
     while (1) {
-	die(12);
+        refresh_wdt();
     }
 }
 
