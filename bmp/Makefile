@@ -46,14 +46,14 @@ bmp_main.elf: $(MAIN_OBJ) $(MAIN_SCT) bmp_init.c
 	$(CC) $(CFLAGS) -o bmp_init.o bmp_tmp.c
 	$(RM) bmp_tmp.c 
 
+	$(LD) $(MAIN_LFLAGS_H) $(MAIN_OBJ) bmp_init.o -o bmp_main.elf
+	$(OBJCOPY) --bin --output bin/bmp_main bmp_main.elf
+	perl sum.pl bin/bmp_main bin/PROGH
+
 	$(LD) $(MAIN_LFLAGS_L) $(MAIN_OBJ) bmp_init.o -o bmp_main.elf
 	$(OBJDUMP) bmp_main.elf -o bmp_main.txt
 	$(OBJCOPY) --bin --output bin/bmp_main bmp_main.elf
 	perl sum.pl bin/bmp_main bin/PROGL
-
-	$(LD) $(MAIN_LFLAGS_H) $(MAIN_OBJ) bmp_init.o -o bmp_main.elf
-	$(OBJCOPY) --bin --output bin/bmp_main bmp_main.elf
-	perl sum.pl bin/bmp_main bin/PROGH
 
 # bmp_boot.o: bmp_boot.c bmp.h
 # 	$(CC) $(CFLAGS) $<
