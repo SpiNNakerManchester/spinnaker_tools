@@ -1,4 +1,4 @@
-SpiNNaker Low-Level Software Tools - Release 3.0.1
+SpiNNaker Low-Level Software Tools - Release 3.2.2
 ==================================================
 
 Installation and Setup
@@ -120,7 +120,7 @@ Use of the Tools
         quit
 
     Note: If you have a SpiNN-1, SpiNN-2 or SpiNN-3 board and want all the LEDs
-    on those boards to function (not just the green LED0), the one of the
+    on those boards to function (not just the green LED0), then one of the
     following alternative boot commands may be used:
 
         boot scamp.boot spin1.conf
