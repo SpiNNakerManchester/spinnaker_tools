@@ -16,8 +16,8 @@
 
 //------------------------------------------------------------------------------
 
-#define BMP_VER_STR		"2.1.254"
-#define BMP_VER_NUM		0x0201fe
+#define BMP_VER_STR		"2.1.1"
+#define BMP_VER_NUM		0x020101
 
 #define BMP_ID_STR		"BC&MP/Spin5-BMP"
 
