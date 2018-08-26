@@ -456,36 +456,29 @@ void refresh_wdt(void)
 }
 
 
-// uni_vec word allocation
-//
-// 0 - copy of last RSID register
-// 1 - count of WDT timeouts
-// 2 - up time (seconds)
-// 3 - time of last WDT (copy of up time)
-// 4 - count of SYSRESETs
-// 5 - NVIC->IABR[0]: active interrupts @ call to 'error_han'
-// 6 - NVIC->IABR[1]: active interrupts @ call to 'error_han'
-// 7 - count of calls to 'error_han'
-
-
 static void process_reset(void)
 {
     uint32_t rsid = LPC_SC->RSID;
 
-    // Clear uninitialised vector if POR or EXTR
+    // Clear uninitialised vectors only if POR or EXTR
     if ((rsid & 3) != 0) {
 	for (uint32_t i = 0; i < 8; i++) {
 	    uni_vec[i] = 0;
 	}
+
+	for (uint32_t i = 0; i < 16; i++) {
+	    dbg_vec[i] = 0;
+	}
+
 	LPC_SC->RSID = 3;
     }
 
     // Process watchdog reset
     if (rsid & 4) {
-	LPC_GPIO0->FIOSET = LED_7;
+        LPC_GPIO0->FIOSET = LED_7;      // turn on led 7
 
 	uni_vec[1]++;			// Bump WDT count
-	uni_vec[3] = uni_vec[2];	// Copy uptime;
+	uni_vec[3] = uni_vec[2];	// save uptime at time of reset
 	uni_vec[2] += 10;		// Try to keep uptime correct
 
 	LPC_SC->RSID = 4;
@@ -493,10 +486,10 @@ static void process_reset(void)
 
     // Process SYSRESET
     if (rsid & 16) {
-	LPC_GPIO0->FIOSET = LED_7;
+	LPC_GPIO0->FIOSET = LED_7;      // turn on led 7
 
 	uni_vec[4]++;			// bump SYSRESET count
-	uni_vec[3] = uni_vec[2];	// copy uptime;
+	uni_vec[3] = uni_vec[2];	// save uptime at time of reset
 	uni_vec[2] += 1;		// try to keep uptime correct
 
 	LPC_SC->RSID = 16;

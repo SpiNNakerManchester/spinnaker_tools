@@ -24,7 +24,7 @@ static uint32_t event_id;	// Makes unique ID for active events
 static uint32_t event_count;	// Number of events currently in use
 static uint32_t event_max;	// Maximum number ever used
 
-#define NUM_EVENTS 16
+#define NUM_EVENTS 32
 
 static event_t events[NUM_EVENTS];
 
@@ -109,6 +109,8 @@ void TIMER3_IRQHandler(void)
 {
     LPC_TIM3->IR = 1;			// Clear MR0 interrupt
 
+    uint32_t cpsr = cpu_int_off();
+
     event_t *e = event_queue;		// Pointer to event queue
     event_t *eq = NULL;			// Accumulates list of events to execute
 
@@ -131,16 +133,22 @@ void TIMER3_IRQHandler(void)
 	LPC_TIM3->TCR = 1;		// Enable counting
     }
 
+    cpu_int_restore(cpsr);
+
     while (eq != NULL) {		// Run the execute queue
 	if (eq->proc != NULL) {		// Execute proc if non-NULL
 	    eq->proc(eq->arg1, eq->arg2);
 	}
 	event_t *next = eq->next;
 
+	uint32_t cpsr = cpu_int_off();
+
 	eq->next = event_list;		// Return to free queue
 	event_list = eq;
 	eq->ID = 0;
 	event_count--;
+
+	cpu_int_restore(cpsr);
 
 	eq = next;
     }
