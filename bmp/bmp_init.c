@@ -54,7 +54,7 @@ void  __attribute__((noreturn)) error_han(void)
     // remember active interrupts (sticky),
     uni_vec[5] |= NVIC->IABR[0];
 
-    // remember exception type 
+    // remember exception type
     uni_vec[6] = __get_IPSR();
 
     // bump error count
