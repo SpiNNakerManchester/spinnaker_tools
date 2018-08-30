@@ -432,7 +432,7 @@ static uint32_t * const uni_vec = (uint32_t *) 0x10001000;
 // 13 - memory mgmt fault address
 // 14 - exc_return
 
-#define DBG_VEC_SIZE		8
+#define DBG_VEC_SIZE		16
 static uint32_t * const dbg_vec = (uint32_t *) 0x10001020;
 
 //------------------------------------------------------------------------------
