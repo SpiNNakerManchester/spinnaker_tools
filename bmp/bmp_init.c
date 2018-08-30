@@ -74,24 +74,24 @@ void  __attribute__((noreturn)) error_han(void)
 
 // HardFault: copy relevant data to SRAM buffer and reset
 void HardFault_Handler_C(
-  uint32_t * hardfault_args, uint32_t lr_value)
+  uint32_t * stack_frame, uint32_t lr_value)
 {
     // store relevant register contents in SRAM,
-    dbg_vec[0]  = hardfault_args[0];  // stacked r0
-    dbg_vec[1]  = hardfault_args[1];  // stacked r1
-    dbg_vec[2]  = hardfault_args[2];  // stacked r2
-    dbg_vec[3]  = hardfault_args[3];  // stacked r3
-    dbg_vec[4]  = hardfault_args[4];  // stacked r12
-    dbg_vec[5]  = hardfault_args[5];  // stacked lr
-    dbg_vec[6]  = hardfault_args[6];  // stacked pc
-    dbg_vec[7]  = hardfault_args[7];  // stacked psr
-    dbg_vec[8]  = SCB->CFSR;          // Configurable Fault Status Register
-    dbg_vec[9]  = SCB->HFSR;          // Hard Fault Status Register
-    dbg_vec[10] = SCB->DFSR;          // Debug Fault Status Register
-    dbg_vec[11] = SCB->AFSR;          // Auxiliary Fault Status Register
-    dbg_vec[12] = SCB->BFAR;          // bus fault address
-    dbg_vec[13] = SCB->MMFAR;         // memory mgmt fault address
-    dbg_vec[14] = lr_value;           // exc_return
+    dbg_vec[0]  = stack_frame[0];  // stacked r0
+    dbg_vec[1]  = stack_frame[1];  // stacked r1
+    dbg_vec[2]  = stack_frame[2];  // stacked r2
+    dbg_vec[3]  = stack_frame[3];  // stacked r3
+    dbg_vec[4]  = stack_frame[4];  // stacked r12
+    dbg_vec[5]  = stack_frame[5];  // stacked lr
+    dbg_vec[6]  = stack_frame[6];  // stacked pc
+    dbg_vec[7]  = stack_frame[7];  // stacked psr
+    dbg_vec[8]  = SCB->CFSR;       // Configurable Fault Status Register
+    dbg_vec[9]  = SCB->HFSR;       // Hard Fault Status Register
+    dbg_vec[10] = SCB->DFSR;       // Debug Fault Status Register
+    dbg_vec[11] = SCB->AFSR;       // Auxiliary Fault Status Register
+    dbg_vec[12] = SCB->BFAR;       // bus fault address
+    dbg_vec[13] = SCB->MMFAR;      // memory mgmt fault address
+    dbg_vec[14] = lr_value;        // exc_return
 
     // and transfer to error handler
     error_han();

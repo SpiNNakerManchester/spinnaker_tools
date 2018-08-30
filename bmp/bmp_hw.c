@@ -462,11 +462,11 @@ static void process_reset(void)
 
     // Clear uninitialised vectors only if POR or EXTR
     if ((rsid & 3) != 0) {
-	for (uint32_t i = 0; i < 8; i++) {
+	for (uint32_t i = 0; i < UNI_VEC_SIZE; i++) {
 	    uni_vec[i] = 0;
 	}
 
-	for (uint32_t i = 0; i < 16; i++) {
+	for (uint32_t i = 0; i < DBG_VEC_SIZE; i++) {
 	    dbg_vec[i] = 0;
 	}
 

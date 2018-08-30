@@ -16,8 +16,8 @@
 
 //------------------------------------------------------------------------------
 
-#define BMP_VER_STR		"2.1.1"
-#define BMP_VER_NUM		0x020101
+#define BMP_VER_STR		"2.1.2"
+#define BMP_VER_NUM		0x020102
 
 #define BMP_ID_STR		"BC&MP/Spin5-BMP"
 
@@ -412,9 +412,10 @@ static uint32_t * const flash_buf = (uint32_t *) 0x10000000;
 // 6 - IPSR: exception that caused call to 'error_han'
 // 7 - count of calls to 'error_han'
 
+#define UNI_VEC_SIZE		8
 static uint32_t * const uni_vec = (uint32_t *) 0x10001000;
 
-// 64 byte (16 word) uninitialised vector (for debugging)
+// 64 byte (16 word) uninitialised fault debug vector
 //  0 - stacked r0
 //  1 - stacked r1
 //  2 - stacked r2
@@ -431,6 +432,7 @@ static uint32_t * const uni_vec = (uint32_t *) 0x10001000;
 // 13 - memory mgmt fault address
 // 14 - exc_return
 
+#define DBG_VEC_SIZE		8
 static uint32_t * const dbg_vec = (uint32_t *) 0x10001020;
 
 //------------------------------------------------------------------------------

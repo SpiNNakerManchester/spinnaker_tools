@@ -24,7 +24,7 @@ static uint32_t event_id;	// Makes unique ID for active events
 static uint32_t event_count;	// Number of events currently in use
 static uint32_t event_max;	// Maximum number ever used
 
-#define NUM_EVENTS 32
+#define NUM_EVENTS 16
 
 static event_t events[NUM_EVENTS];
 
