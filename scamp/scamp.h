@@ -358,7 +358,6 @@ extern uint p2p_root;
 extern uint p2p_up;
 extern uint link_en;
 extern uint num_cpus;
-extern uchar v2p_map[MAX_CPUS];
 
 extern uint* hop_table;
 
