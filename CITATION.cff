@@ -1,0 +1,74 @@
+cff-version: 1.0.3
+message: If you use this software, please cite it as below.
+authors:
+- family-names: Stokes
+  given-names: Alan
+  orcid: https://orcid.org/0000-0002-6110-1484
+  affiliation: "University Of Manchester"
+  email: alan.stokes-2@manchester.ac.uk
+  website: http://www.cs.man.ac.uk/~stokesa6/
+- family-names: Rowley
+  given-names: Andrew
+  orcid: https://orcid.org/0000-0002-2646-8520
+  affiliation: "University Of Manchester"
+  email: Andrew.Rowley@manchester.ac.uk
+  website: https://www.researchgate.net/profile/Andrew_Rowley2
+- family-names: Brenninkmeijer
+  given-names: Christian Y.
+  orcid: https://orcid.org/0000-0002-2937-7819
+  affiliation: "University Of Manchester"
+  email: christian.brenninkmeijer@manchester.ac.uk
+  website: https://www.researchgate.net/profile/Christian_Brenninkmeijer
+- family-names: Fellows
+  given-names: Donal
+  orcid: https://orcid.org/0000-0002-9091-5938
+  affiliation: "University Of Manchester"
+  email: donal.k.fellows@manchester.ac.uk
+  website: http://www.cs.manchester.ac.uk/about-us/staff/profile/?ea=donal.k.fellows
+- family-names: Plana
+  given-names: Luis
+  orcid: https://orcid.org/0000-0002-6113-3929
+  affiliation: "University Of Manchester"
+  email: luis.plana@manchester.ac.uk
+  website: https://www.research.manchester.ac.uk/portal/luis.plana.html
+- family-names: Heathcote
+  given-names: Jonathan
+  affiliation: "University Of Manchester"
+  email: jheathcote@cs.man.ac.uk
+  website: http://apt.cs.manchester.ac.uk/people/jheathcote/
+- family-names: Mundy
+  given-names: Andrew
+  affiliation: "University Of Manchester"
+  email: andrew.mundy@ieee.org
+  website: https://www.linkedin.com/in/andrew-mundy-56422627/
+- family-names: Knight
+  given-names: James
+  affiliation: "University Of Sussex"
+  email: J.C.Knight@sussex.ac.uk
+  website: http://www.sussex.ac.uk/profiles/415734
+- family-names: Davies
+  given-names: Sergio
+  affiliation: "University Of Manchester"
+  email: sergio.davies@gmail.com
+  website: http://apt.cs.manchester.ac.uk/people/daviess/
+  orcid: https://orcid.org/0000-0001-5330-5527
+- family-names: Temple
+  given-names: Steve
+  affiliation: "University Of Manchester"
+  email: temples@cs.man.ac.uk
+  website: http://apt.cs.manchester.ac.uk/people/stemple/
+- family-names: Peres
+  given-names: Lucas
+  affiliation: "University Of Manchester"
+  email: luca.peres@icloud.com
+
+title: Low level tools for using and debugging applications on SpiNNaker machines
+version:
+date-released: 2017-09-17
+url: http://spinnakermanchester.github.io/
+repository: https://github.com/SpiNNakerManchester/spinnaker_tools
+contact:
+- name: SpiNNaker Software team
+address: IT 302, It building, Oxford road, University of Manchester, Manchester, M13 9PL
+email: spinnakerusers@googlegroups.com
+
