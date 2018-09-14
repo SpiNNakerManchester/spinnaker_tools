@@ -16,8 +16,8 @@
 
 //------------------------------------------------------------------------------
 
-#define BMP_VER_STR		"2.1.1"
-#define BMP_VER_NUM		0x020101
+#define BMP_VER_STR		"2.1.2"
+#define BMP_VER_NUM		0x020102
 
 #define BMP_ID_STR		"BC&MP/Spin5-BMP"
 
@@ -403,8 +403,37 @@ static LPC_IAP const lpc_iap = (LPC_IAP) 0x1fff1ff1;
 static uint32_t * const flash_buf = (uint32_t *) 0x10000000;
 
 // 32 byte (8 word) uninitialised vector
+// 0 - copy of last RSID register
+// 1 - count of WDT timeouts
+// 2 - up time (seconds)
+// 3 - time of last WDT/SYSRESET (copy of up time)
+// 4 - count of SYSRESETs
+// 5 - NVIC->IABR[0]: active interrupts @ call to 'error_han'
+// 6 - IPSR: exception that caused call to 'error_han'
+// 7 - count of calls to 'error_han'
 
+#define UNI_VEC_SIZE		8
 static uint32_t * const uni_vec = (uint32_t *) 0x10001000;
+
+// 64 byte (16 word) uninitialised fault debug vector
+//  0 - stacked r0
+//  1 - stacked r1
+//  2 - stacked r2
+//  3 - stacked r3
+//  4 - stacked r12
+//  5 - stacked lr
+//  6 - stacked pc
+//  7 - stacked psr
+//  8 - Configurable Fault Status Register
+//  9 - Hard Fault Status Register
+// 10 - Debug Fault Status Register
+// 11 - Auxiliary Fault Status Register
+// 12 - bus fault address
+// 13 - memory mgmt fault address
+// 14 - exc_return
+
+#define DBG_VEC_SIZE		16
+static uint32_t * const dbg_vec = (uint32_t *) 0x10001020;
 
 //------------------------------------------------------------------------------
 // bmp_event.c
