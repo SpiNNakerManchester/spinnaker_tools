@@ -1,5 +1,0 @@
-__version__ = "3.2.2"
-__version_month__ = "September"
-__version_year__ = "2017"
-__version_day__ = "25"
-__version_name__ = "Riptalon"
