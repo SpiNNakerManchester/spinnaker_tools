@@ -15,9 +15,9 @@ IMAGE BASE
 		bmp_init.o (.padding, +LAST)
   	}
 
-// Allow 4K bytes for Flash buffer and 32 bytes for uninitialised data
+// Allow 4K bytes for Flash buffer and 96 bytes for uninitialised data
 
-  	SRAM 0x10001020 0x00007800
+  	SRAM 0x10001060 0x000067a0
   	{
     		* (+RW)
 		* (+ZI)

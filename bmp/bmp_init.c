@@ -47,20 +47,69 @@ const int pad __attribute__ ((section (".padding"))) = 0xdeaddead;
 
 // Cortex M3 vector tables for BMP LPC1768
 
-extern void die(uint32_t code);
 extern void c_main(void);
 
 void  __attribute__((noreturn)) error_han(void)
 {
+    // remember active interrupts (sticky),
+    uni_vec[5] |= NVIC->IABR[0];
+
+    // remember exception type
+    uni_vec[6] = __get_IPSR();
+
+    // bump error count
+    uni_vec[7]++;
+
+    // and trigger a SYSRESET
+    uint32_t aircr = SCB->AIRCR & ~SCB_AIRCR_VECTKEY_Msk;
+    aircr |= (0x5FA << SCB_AIRCR_VECTKEY_Pos);  // insert security key
+    aircr |= SCB_AIRCR_SYSRESETREQ_Msk;         // set SYSRESET bit
+    SCB->AIRCR = aircr;
     while (1) {
-	die(12);
+        refresh_wdt();
     }
 }
 
 // Cortex M3 core interrupt handlers
 
+// HardFault: copy relevant data to SRAM buffer and reset
+void HardFault_Handler_C(
+  uint32_t * stack_frame, uint32_t lr_value)
+{
+    // store relevant register contents in SRAM,
+    dbg_vec[0]  = stack_frame[0];  // stacked r0
+    dbg_vec[1]  = stack_frame[1];  // stacked r1
+    dbg_vec[2]  = stack_frame[2];  // stacked r2
+    dbg_vec[3]  = stack_frame[3];  // stacked r3
+    dbg_vec[4]  = stack_frame[4];  // stacked r12
+    dbg_vec[5]  = stack_frame[5];  // stacked lr
+    dbg_vec[6]  = stack_frame[6];  // stacked pc
+    dbg_vec[7]  = stack_frame[7];  // stacked psr
+    dbg_vec[8]  = SCB->CFSR;       // Configurable Fault Status Register
+    dbg_vec[9]  = SCB->HFSR;       // Hard Fault Status Register
+    dbg_vec[10] = SCB->DFSR;       // Debug Fault Status Register
+    dbg_vec[11] = SCB->AFSR;       // Auxiliary Fault Status Register
+    dbg_vec[12] = SCB->BFAR;       // bus fault address
+    dbg_vec[13] = SCB->MMFAR;      // memory mgmt fault address
+    dbg_vec[14] = lr_value;        // exc_return
+
+    // and transfer to error handler
+    error_han();
+}
+
+// HardFault: extract the location of the stack frame and
+// lr/exc_return and pass them to the handler written in C
+__asm void HardFault_Handler(void)
+{
+    tst     lr, #4
+    ite     eq
+    mrseq   r0, msp
+    mrsne   r0, psp
+    mov     r1, lr
+    b       __cpp(HardFault_Handler_C)
+}
+
 void NMI_Handler            (void) __attribute__ ((weak, alias ("error_han")));
-void HardFault_Handler      (void) __attribute__ ((weak, alias ("error_han")));
 void MemManage_Handler      (void) __attribute__ ((weak, alias ("error_han")));
 void BusFault_Handler       (void) __attribute__ ((weak, alias ("error_han")));
 void UsageFault_Handler     (void) __attribute__ ((weak, alias ("error_han")));

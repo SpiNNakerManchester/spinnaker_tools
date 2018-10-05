@@ -456,35 +456,43 @@ void refresh_wdt(void)
 }
 
 
-// uni_vec word allocation
-//
-// 0 - copy of last RSID register
-// 1 - count of WDT timeouts
-// 2 - up time (seconds)
-// 3 - time of last WDT (copy of up time)
-
-
 static void process_reset(void)
 {
     uint32_t rsid = LPC_SC->RSID;
 
-    // Clear uninitialised vector if POR or EXTR
+    // Clear uninitialised vectors only if POR or EXTR
     if ((rsid & 3) != 0) {
-	for (uint32_t i = 0; i < 8; i++) {
+	for (uint32_t i = 0; i < UNI_VEC_SIZE; i++) {
 	    uni_vec[i] = 0;
 	}
+
+	for (uint32_t i = 0; i < DBG_VEC_SIZE; i++) {
+	    dbg_vec[i] = 0;
+	}
+
 	LPC_SC->RSID = 3;
     }
 
     // Process watchdog reset
     if (rsid & 4) {
-	LPC_GPIO0->FIOSET = LED_7;
+        LPC_GPIO0->FIOSET = LED_7;      // turn on led 7
 
 	uni_vec[1]++;			// Bump WDT count
-	uni_vec[3] = uni_vec[2];	// Copy uptime;
+	uni_vec[3] = uni_vec[2];	// save uptime at time of reset
 	uni_vec[2] += 10;		// Try to keep uptime correct
 
 	LPC_SC->RSID = 4;
+    }
+
+    // Process SYSRESET
+    if (rsid & 16) {
+	LPC_GPIO0->FIOSET = LED_7;      // turn on led 7
+
+	uni_vec[4]++;			// bump SYSRESET count
+	uni_vec[3] = uni_vec[2];	// save uptime at time of reset
+	uni_vec[2] += 1;		// try to keep uptime correct
+
+	LPC_SC->RSID = 16;
     }
 
     // Save RSID register
@@ -666,7 +674,7 @@ static uint32_t configure_pins(void)
     // Configure Port 1
 
     LPC_GPIO1->FIOSET = P1_INIT;	// Initialise outputs
-    LPC_GPIO1->FIODIR = P1_EN;		// Enable outputs
+    LPC_GPIO1->FIODIR = P1_EN;	// Enable outputs
 
     config_pin(PINSEL_PORT_1,  0, PINSEL_FUNC_1); // MII TXD0
     config_pin(PINSEL_PORT_1,  1, PINSEL_FUNC_1); // MII TXD1
@@ -863,7 +871,7 @@ void die(uint32_t code)
     uint32_t bits = LED_7;
 
     for (uint32_t i = 0; i < 4; i++) {
-	if (code & (1 << i)) {
+        if (code & (1 << i)) {
 	    bits |= led_bit[i+3];
 	}
     }
@@ -872,7 +880,7 @@ void die(uint32_t code)
     LPC_GPIO0->FIOSET = bits;
 
     while (1) {
-	refresh_wdt();
+        refresh_wdt();
     }
 }
 
@@ -1057,7 +1065,7 @@ void proc_setup(uint32_t d1, uint32_t d2)
     uint32_t flags = d1 >> 24;
 
     if ((flags & 2) == 0) {
-	proc_power(((10 * board_ID) << 16) + 1, 1 << board_ID);
+        proc_power(((10 * board_ID) << 16) + 1, 1 << board_ID);
     }
 }
 
