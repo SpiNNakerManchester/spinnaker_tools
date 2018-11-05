@@ -129,10 +129,107 @@ uint spin1_send_sdp_msg (sdp_msg_t *msg, uint timeout);
 // ------------------------------------------------------------------------
 //  interrupt control functions
 // ------------------------------------------------------------------------
+
+#ifdef THUMB
 uint spin1_irq_disable(void);
 uint spin1_fiq_disable(void);
 uint spin1_int_disable(void);
 void spin1_mode_restore(uint sr);
+
+#elif defined(__GNUC__)
+static inline uint spin1_irq_disable(void)
+{
+    uint old_val, new_val;
+
+    asm volatile (
+    "mrs	%[old_val], cpsr \n\
+     orr	%[new_val], %[old_val], #0x80 \n\
+     msr	cpsr_c, %[new_val] \n"
+     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
+     :
+     : );
+
+    return old_val;
+}
+
+static inline uint spin1_fiq_disable(void)
+{
+    uint old_val, new_val;
+
+    asm volatile (
+    "mrs	%[old_val], cpsr \n\
+     orr	%[new_val], %[old_val], #0x40 \n\
+     msr	cpsr_c, %[new_val] \n"
+     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
+     :
+     : );
+
+    return old_val;
+}
+
+static inline uint spin1_int_disable(void)
+{
+    uint old_val, new_val;
+
+    asm volatile (
+    "mrs	%[old_val], cpsr \n\
+     orr	%[new_val], %[old_val], #0xc0 \n\
+     msr	cpsr_c, %[new_val] \n"
+     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
+     :
+     : );
+
+    return old_val;
+}
+
+static inline void spin1_mode_restore(uint cpsr)
+{
+    asm volatile (
+    "msr	cpsr_c, %[cpsr]"
+    :
+    : [cpsr] "r" (cpsr)
+    :);
+}
+#else // !THUMB && !__GNUC__
+static __forceinline uint spin1_irq_disable(void)
+{
+    uint old_val, new_val;
+
+    __asm { mrs old_val, cpsr }
+    __asm { orr new_val, old_val, 0x80 }
+    __asm { msr cpsr_c, new_val }
+
+    return old_val;
+}
+
+static __forceinline uint spin1_fiq_disable(void)
+{
+    uint old_val, new_val;
+
+    __asm { mrs old_val, cpsr }
+    __asm { orr new_val, old_val, 0x40 }
+    __asm { msr cpsr_c, new_val }
+
+    return old_val;
+}
+
+static __forceinline uint spin1_int_disable(void)
+{
+    uint old_val, new_val;
+
+    __asm { mrs old_val, cpsr }
+    __asm { orr new_val, old_val, 0xc0 }
+    __asm { msr cpsr_c, new_val }
+
+    return old_val;
+}
+
+static __forceinline void spin1_mode_restore(uint sr)
+{
+    __asm { msr cpsr_c, sr }
+}
+#endif // !THUMB && !__GNUC__
+
 // ------------------------------------------------------------------------
 
 
