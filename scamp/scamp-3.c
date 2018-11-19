@@ -1046,6 +1046,26 @@ void soft_wdog(uint max)
 // functionality, e.g. P2P tables and addresses
 
 
+// Initialise inter-chip link state bitmap
+void init_link_en(void)
+{
+    uint timeout = sv->peek_time;
+    uint remote_chip_id;
+    for (uint link = 0; link < NUM_LINKS; link++) {
+	// a link is deemed working if a link read of the
+        // corresponding neighbouring chip succeeds
+	if (link_en & (1 << link)) {
+	    uint rc = link_read_word((uint) (sc + SC_CHIP_ID), link,
+		    &remote_chip_id, timeout);
+	    if (rc != RC_OK) {
+	      link_en &= ~(1 << link);
+	    }
+	}
+    }
+
+    sv->link_en = link_en;
+}
+
 // Start the higher-level network initialisation process. Must be called only
 // once, before the nearest neighbour interrupt handler is enabled.
 void netinit_start(void)
@@ -1084,7 +1104,7 @@ void compute_st(void)
     uint word = p2p_root >> P2P_LOG_EPW;
     uint offset = P2P_BPE * (p2p_root & P2P_EMASK);
 
-    // Definately route here
+    // Definitely route here
     uint route = MC_CORE_ROUTE(0);
 
     // Compile the set of neighbours which route to the root via this chip
@@ -1132,12 +1152,12 @@ void proc_100hz(uint a1, uint a2)
     // Boot-up related packet sending and boot-phase advancing
     switch (netinit_phase) {
     case NETINIT_PHASE_P2P_ADDR:
-	// Periodically re-send the neighbours their P2P address as
+	// Periodically re-send the neighbours our P2P address as
 	// neighbouring chips may take some time to come online.
 	p2pc_addr_nn_send(0, 0);
 
 	// If no new P2P addresses have been broadcast for a while we can
-	// assume all chips are have a valid P2P address so it is now time to
+	// assume all chips have a valid P2P address so it is now time to
 	// determine the system's dimensions.
 	if (ticks_since_last_p2pc_new++ > (uint)sv->netinit_bc_wait) {
 	    netinit_phase = NETINIT_PHASE_P2P_DIMS;
@@ -1171,6 +1191,9 @@ void proc_100hz(uint a1, uint a2)
 	    sv->p2p_root = p2p_root = (-p2p_min_x << 8) | -p2p_min_y;
 
 	    sv->p2p_active += 1;
+
+	    // Initialise link_en to avoid broken inter-chip links
+	    init_link_en();
 
 	    // Reseed uniquely for each chip
 	    sark_srand(p2p_addr);
@@ -1653,6 +1676,9 @@ void c_main(void)
 	queue_init();			// Initialise various queues
 	nn_init();			// Initialise NN package
 	
+	// recover the link enable map
+	link_en = sv->link_en;
+
 	// recover the coordinates/dimensions discovered by previous monitor
 	p2p_addr = sv->p2p_addr;
 	p2p_dims = sv->p2p_dims;

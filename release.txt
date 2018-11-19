@@ -4,6 +4,17 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.2.3 - Bug fixing
+
+Bug fix:
+
+* SCAMP: the state of the inter-chip links is checked before P2P table
+  setup to avoid using a broken link as part of a P2P route. Note that
+  links can be working in one direction but broken in the reverse one.
+
+#-------------------------------------------------------------------------------
+
+
 Version 3.2.2 - Refactoring
 
 Refactoring:

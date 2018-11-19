@@ -1087,7 +1087,7 @@ void nn_cmd_biff(uint x, uint y, uint data)
 
 	// disable blacklisted links
 	// NB: blacklisted links are given as '1'
-	sv->link_en = link_en = ((~data) >> 18) & 0x3f;
+	sv->link_en = link_en = ((~data) >> 18) & link_en;
 
         // remember blacklisted cores
 	uint dead_cores = data & 0x3ffff;
