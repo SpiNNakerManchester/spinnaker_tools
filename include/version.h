@@ -12,7 +12,7 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#define	SLLT_VER_STR	"3.2.2"
-#define	SLLT_VER_NUM	0x030202
+#define	SLLT_VER_STR	"3.2.3"
+#define	SLLT_VER_NUM	0x030203
 
 #endif
