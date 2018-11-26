@@ -805,14 +805,14 @@ void nn_cmd_sig1(uint data, uint key)
 // P2P Broadcast - used to propagate P2P addresses and maintain the P2P
 // routing table.
 
-// Two additional tables are kept with entries for each possible address.
-// The "hop table" contains the number of hops to the address (initialised
-// with 65535) and the "id table" contains the last ID that was used to
-// update the tables (initialised to 128)
+// Table "hop_table" has entries of type (id << 24, hops) for each possible
+// P2P address. Field "hops" contains the number of hops to the address
+// (initialised to 65535) and "id" contains the ID of the last packet
+// used to update the table (initialised to 128).
 
-// An update occurs when a packet with a new ID arrives or a packet with a
-// lower hop count than the current one via an enabled link. The link on which
-// the packet arrived is used to update the P2P routing table.
+// An update occurs when a packet with a lower hop count than the current
+// one arrives via an enabled link. The link on which the packet arrived
+// is used to update the P2P routing table.
 
 // Returns data with P2P_STOP_BIT set if the packet should not be propagated
 
@@ -823,12 +823,13 @@ uint nn_cmd_p2pb(uint id, uint data, uint link)
     uint addr = data >> 16;
     uint hops = data & 0x3ff;	// Bottom 10 bits
 
-    uint table_id = hop_table[addr] >> 24;
     uint table_hops = hop_table[addr] & 0xffff;
 
     if (addr != p2p_addr &&
-	    (id != table_id || hops < table_hops) &&
-	    (link_en & (1 << link))) {
+	(hops < table_hops) &&
+	(link_en & (1 << link))) {
+
+        // keep a count of reported P2P addresses 
 	if (table_hops == 0xffff) {
 	    sv->p2p_active++;
 	}
