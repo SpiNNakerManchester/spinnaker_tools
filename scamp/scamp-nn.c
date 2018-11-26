@@ -829,7 +829,7 @@ uint nn_cmd_p2pb(uint id, uint data, uint link)
 	(hops < table_hops) &&
 	(link_en & (1 << link))) {
 
-        // keep a count of reported P2P addresses 
+        // keep a count of P2P addresses we've heard of
 	if (table_hops == 0xffff) {
 	    sv->p2p_active++;
 	}
