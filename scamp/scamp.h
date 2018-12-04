@@ -39,13 +39,16 @@
 #define IPTAG_GET		2
 #define IPTAG_CLR		3
 #define IPTAG_TTO		4
+#define IPTAG_LKP               5
 
-#define IPTAG_MAX		4
+#define IPTAG_MAX		5
+
 
 #define IPFLAG_VALID		0x8000	// Entry is valid
 #define IPFLAG_TRANS		0x4000	// Entry is transient
 #define IPFLAG_ARP		0x2000	// Awaiting ARP resolution
 
+#define IPFLAG_USE_SENDER       0x0400  // Use sender address and port
 #define IPFLAG_REV		0x0200  // Reverse IPTag
 #define IPFLAG_STRIP		0x0100  // Strip SDP headers
 
