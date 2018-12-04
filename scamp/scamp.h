@@ -39,10 +39,8 @@
 #define IPTAG_GET		2
 #define IPTAG_CLR		3
 #define IPTAG_TTO		4
-#define IPTAG_LKP               5
 
-#define IPTAG_MAX		5
-
+#define IPTAG_MAX		4
 
 #define IPFLAG_VALID		0x8000	// Entry is valid
 #define IPFLAG_TRANS		0x4000	// Entry is transient

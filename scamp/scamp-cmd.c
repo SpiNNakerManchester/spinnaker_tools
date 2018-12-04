@@ -96,7 +96,7 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
 
 	if (tag != TAG_NONE) {
 	    iptag_t *tt = tag_table + tag;
-            iptag_t *source_tag = tag_table + msg->tag;
+	    iptag_t *source_tag = tag_table + msg->tag;
 
 	    sark_word_set(tt, 0, sizeof(iptag_t));
 
@@ -116,12 +116,12 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
 	    if (msg->arg3 != 0) {
 		uchar *ip_addr = (uchar *) &msg->arg3;
 		copy_ip(ip_addr, tt->ip);
-	    } else if (!(flags & IPFLAG_REV)) {
-	        if (flags & IPFLAG_USE_SENDER) {
-	            copy_ip(source_tag->ip, tt->ip);
-	        } else {
+	    } else if (! (flags & IPFLAG_REV)) {
+		if (flags & IPFLAG_USE_SENDER) {
+		    copy_ip(source_tag->ip, tt->ip);
+		} else {
 		    copy_ip((uchar *) &srce_ip, tt->ip);
-	        }
+		}
 	    }
 
 	    if (flags & IPFLAG_REV) {
@@ -129,11 +129,11 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
 
 		tt->flags |= IPFLAG_VALID;
 	    } else {
-	        if (flags & IPFLAG_USE_SENDER) {
-	            tt->tx_port = source_tag->tx_port;
-	        } else {
+		if (flags & IPFLAG_USE_SENDER) {
+		    tt->tx_port = source_tag->tx_port;
+		} else {
 		    tt->tx_port = msg->arg2 & 0xffff;
-	        }
+		}
 
 		tt->flags |= IPFLAG_ARP;
 		arp_lookup(tt);
@@ -167,11 +167,6 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
 	return 4;
     } else if (op == IPTAG_CLR) {
 	tag_table[tag].flags = 0;
-    } else { // IPTAG_LKP
-        iptag_t *tt = tag_table + msg->tag;
-        msg->arg1 = tt->tx_port;
-        copy_ip(tt->ip, (uchar*) &msg->arg2);
-
     }
 
     return 0;
