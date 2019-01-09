@@ -46,6 +46,7 @@
 #define IPFLAG_TRANS		0x4000	// Entry is transient
 #define IPFLAG_ARP		0x2000	// Awaiting ARP resolution
 
+#define IPFLAG_USE_SENDER       0x0400  // Use sender address and port
 #define IPFLAG_REV		0x0200  // Reverse IPTag
 #define IPFLAG_STRIP		0x0100  // Strip SDP headers
 
