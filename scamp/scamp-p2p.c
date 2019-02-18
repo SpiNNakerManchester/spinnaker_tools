@@ -327,6 +327,7 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 	    timer_schedule(e, open_ack_time);
 	} else {
 	    sw_error(SW_OPT);
+	    return RC_BUF;
 	}
 
 	p2p_send_ctl(P2P_OPEN_REQ, addr, (len << 8) + ctrl);
@@ -379,6 +380,7 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 			timer_schedule(e, data_ack_time);
 		    } else {
 			sw_error(SW_OPT);
+			return RC_BUF;
 		    }
 		}
 
