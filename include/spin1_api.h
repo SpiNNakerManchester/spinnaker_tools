@@ -81,10 +81,28 @@ static inline void spin1_set_timer_tick(uint time)
 }
 
 uint spin1_get_simulation_time(void);
-void spin1_delay_us (uint n);
 void spin1_pause (void);
 void spin1_resume (sync_bool sync);
 void spin1_rte (rte_code code);
+
+/****f* spin1_api.h/spin1_delay_us
+*
+* SUMMARY
+*  This function implements a delay measured in microseconds
+*  The function busy waits to implement the delay.
+*
+* SYNOPSIS
+*  void spin1_delay_us(uint n)
+*
+* INPUTS
+*  uint n: requested delay (in microseconds)
+*
+* SOURCE
+*/
+static inline void spin1_delay_us(uint n) {
+    sark_delay_us(n);
+}
+
 // ------------------------------------------------------------------------
 
 
@@ -110,29 +128,256 @@ void spin1_memcpy(void *dst, void const *src, uint len);
 // ------------------------------------------------------------------------
 //  communications functions
 // ------------------------------------------------------------------------
-uint spin1_send_mc_packet(uint key, uint data, uint load);
-uint spin1_send_fr_packet(uint key, uint data, uint load);
+
+/****f* spin1_api.h/spin1_send_mc_packet
+*
+* SUMMARY
+*  This function enqueues a request to send a multicast packet. If
+*  the software buffer is full then a failure code is returned. If the comms
+*  controller hardware buffer and the software buffer are empty then the
+*  the packet is sent immediately, otherwise it is placed in a queue to be
+*  consumed later by cc_tx_empty interrupt service routine.
+*
+* SYNOPSIS
+*  uint spin1_send_mc_packet(uint key, uint data, uint load)
+*
+* INPUTS
+*  uint key: packet routining key
+*  uint data: packet payload
+*  uint load: 0 = no payload (ignore data param), 1 = send payload
+*
+* OUTPUTS
+*  1 if packet is enqueued or sent successfully, 0 otherwise
+*
+* SOURCE
+*/
+
+static inline uint spin1_send_mc_packet(uint key, uint data, uint load) {
+    uint tcr = (load) ? PKT_MC_PL : PKT_MC;
+
+    return spin1_send_packet(key, data, tcr);
+}
+
+/****f* spin1_api.h/spin1_send_ft_packet
+*
+* SUMMARY
+*  This function enqueues a request to send a fixed-route packet. If
+*  the software buffer is full then a failure code is returned. If the comms
+*  controller hardware buffer and the software buffer are empty then the
+*  the packet is sent immediately, otherwise it is placed in a queue to be
+*  consumed later by cc_tx_empty interrupt service routine.
+*
+* SYNOPSIS
+*  uint spin1_send_fr_packet(uint key, uint data, uint load)
+*
+* INPUTS
+*  uint key: packet routining key
+*  uint data: packet payload
+*  uint load: 0 = no payload (ignore data param), 1 = send payload
+*
+* OUTPUTS
+*  1 if packet is enqueued or sent successfully, 0 otherwise
+*
+* SOURCE
+*/
+
+static inline uint spin1_send_fr_packet(uint key, uint data, uint load) {
+    uint tcr = (load) ? PKT_FR_PL : PKT_FR;
+
+    return spin1_send_packet(key, data, tcr);
+}
+
 void spin1_flush_rx_packet_queue(void);
 void spin1_flush_tx_packet_queue(void);
+uint spin1_send_packet(uint key, uint data, uint TCR);
 // ------------------------------------------------------------------------
 
 
 // ------------------------------------------------------------------------
 // SDP related functions
 // ------------------------------------------------------------------------
-void spin1_msg_free (sdp_msg_t *msg);
-sdp_msg_t* spin1_msg_get (void);
-uint spin1_send_sdp_msg (sdp_msg_t *msg, uint timeout);
+
+static inline void spin1_msg_free(sdp_msg_t *msg) {
+    sark_msg_free(msg);
+}
+
+static inline sdp_msg_t* spin1_msg_get(void) {
+    return sark_msg_get();
+}
+
+static inline uint spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout) {
+    return sark_msg_send(msg, timeout);
+}
+
 // ------------------------------------------------------------------------
 
 
 // ------------------------------------------------------------------------
 //  interrupt control functions
 // ------------------------------------------------------------------------
-uint spin1_irq_disable(void);
-uint spin1_fiq_disable(void);
-uint spin1_int_disable(void);
-void spin1_mode_restore(uint sr);
+/****f* spin1_api.h/spin1_irq_disable
+*
+* SUMMARY
+*  This function sets the I bit in the CPSR in order to disable IRQ
+*  interrupts to the processor.
+*
+* SYNOPSIS
+*  uint spin1_irq_disable()
+*
+* OUTPUTS
+*  state of the CPSR before the interrupt disable
+*
+* SOURCE
+*/
+#ifdef THUMB
+extern uint spin1_irq_disable(void);
+#elif defined(__GNUC__)
+__inline uint spin1_irq_disable(void)
+{
+    uint old_val, new_val;
+
+    asm volatile (
+    "mrs	%[old_val], cpsr \n\
+     orr	%[new_val], %[old_val], #0x80 \n\
+     msr	cpsr_c, %[new_val] \n"
+     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
+     :
+     : );
+
+    return old_val;
+}
+#else
+__forceinline uint spin1_irq_disable(void)
+{
+    uint old_val, new_val;
+
+    __asm { mrs old_val, cpsr }
+    __asm { orr new_val, old_val, 0x80 }
+    __asm { msr cpsr_c, new_val }
+
+    return old_val;
+}
+#endif
+
+/****f* spin1_api.h/spin1_fiq_disable
+*
+* SUMMARY
+*  This function sets the F bit in the CPSR in order to disable
+*  FIQ interrupts in the processor.
+*
+* SYNOPSIS
+*  uint spin1_fiq_disable()
+*
+* OUTPUTS
+*  state of the CPSR before the interrupts disable
+*
+* SOURCE
+*/
+#ifdef THUMB
+extern uint spin1_fiq_disable(void);
+#elif defined(__GNUC__)
+__inline uint spin1_fiq_disable(void)
+{
+    uint old_val, new_val;
+
+    asm volatile (
+    "mrs	%[old_val], cpsr \n\
+     orr	%[new_val], %[old_val], #0x40 \n\
+     msr	cpsr_c, %[new_val] \n"
+     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
+     :
+     : );
+
+    return old_val;
+}
+#else
+__forceinline uint spin1_fiq_disable(void)
+{
+    uint old_val, new_val;
+
+    __asm { mrs old_val, cpsr }
+    __asm { orr new_val, old_val, 0x40 }
+    __asm { msr cpsr_c, new_val }
+
+    return old_val;
+}
+#endif
+
+/****f* spin1_api.h/spin1_int_disable
+*
+* SUMMARY
+*  This function sets the F and I bits in the CPSR in order to disable
+*  FIQ and IRQ interrupts in the processor.
+*
+* SYNOPSIS
+*  uint spin1_int_disable()
+*
+* OUTPUTS
+*  state of the CPSR before the interrupts disable
+*
+* SOURCE
+*/
+#ifdef THUMB
+extern uint spin1_int_disable(void);
+#elif defined(__GNUC__)
+__inline uint spin1_int_disable(void)
+{
+    uint old_val, new_val;
+
+    asm volatile (
+    "mrs	%[old_val], cpsr \n\
+     orr	%[new_val], %[old_val], #0xc0 \n\
+     msr	cpsr_c, %[new_val] \n"
+     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
+     :
+     : );
+
+    return old_val;
+}
+#else
+__forceinline uint spin1_int_disable(void)
+{
+    uint old_val, new_val;
+
+    __asm { mrs old_val, cpsr }
+    __asm { orr new_val, old_val, 0xc0 }
+    __asm { msr cpsr_c, new_val }
+
+    return old_val;
+}
+#endif
+
+/****f* spin1_api.h/spin1_mode_restore
+*
+* SUMMARY
+*  This function sets the CPSR to the value given in parameter sr, in order to
+*  restore the CPSR following a call to spin1_irq_disable.
+*
+* SYNOPSIS
+*  void spin1_mode_restore(uint sr)
+*
+* INPUTS
+*  uint sr: value with which to set the CPSR
+*
+* SOURCE
+*/
+#ifdef THUMB
+extern void spin1_mode_restore(uint cpsr);
+#elif defined(__GNUC__)
+__inline void spin1_mode_restore(uint cpsr)
+{
+    asm volatile (
+    "msr	cpsr_c, %[cpsr]"
+    :
+    : [cpsr] "r" (cpsr)
+    :);
+}
+#else
+__forceinline void spin1_mode_restore(uint sr)
+{
+    __asm { msr cpsr_c, sr }
+}
+#endif
 // ------------------------------------------------------------------------
 
 
@@ -142,17 +387,93 @@ void spin1_mode_restore(uint sr);
 uint  spin1_get_id(void);
 uint  spin1_get_core_id(void);
 uint  spin1_get_chip_id(void);
-void  spin1_led_control (uint p);
 uint  spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route);
-void* spin1_malloc(uint bytes);
+
+/****f* spin1_api.h/spin1_malloc
+*
+* SUMMARY
+*  This function returns a pointer to a block of memory of size "bytes".
+*
+* SYNOPSIS
+*  void * spin1_malloc(uint bytes)
+*
+* INPUTS
+*  uint bytes: size, in bytes, of the requested memory block
+*
+* OUTPUTS
+*  pointer to the requested memory block or 0 if unavailable
+*
+* SOURCE
+*/
+static inline void* spin1_malloc(uint bytes) {
+    return sark_alloc(bytes, 1);
+}
+
+/****f* spin1_api.h/spin1_led_control
+*
+* SUMMARY
+*  This function controls LEDs according to an input pattern.
+*  Macros for turning LED number N on, off or inverted are
+*  defined in spinnaker.h.
+*
+*  To turn LEDs 0 and 1 on, then invert LED2 and finally
+*  turn LED 0 off:
+*
+*   spin1_led_control (LED_ON (0) + LED_ON (1));
+*   spin1_led_control (LED_INV (2));
+*   spin1_led_control (LED_OFF (0));
+*
+* SYNOPSIS
+*  void spin1_set_leds(uint p);
+*
+* INPUTS
+*  uint p: led control word
+*
+* SOURCE
+*/
+static inline void spin1_led_control(uint p) {
+    sark_led_set(p);
+}
 // ------------------------------------------------------------------------
 
 
 // ----------------------------------
 // pseudo-random number generation
 // ----------------------------------
-void  spin1_srand (uint seed);
-uint  spin1_rand  (void);
+
+/****f* spin1_api.h/spin1_srand
+*
+* SUMMARY
+*  This function is used to initialize the seed for the
+*  pseudo-random number generator.
+*
+* SYNOPSIS
+*  void spin1_srand (uint seed)
+*
+* SOURCE
+*/
+static inline void spin1_srand(uint seed) {
+    sark_srand(seed);
+}
+
+/****f* spin1_api.h/spin1_rand
+*
+* SUMMARY
+*  This function generates a pseudo-random 32-bit integer.
+*  Taken from "Programming Techniques"
+*  ARM document ARM DUI 0021A
+*
+* SYNOPSIS
+*  uint spin1_rand (void)
+*
+* OUTPUTS
+*  32-bit pseudo-random integer
+*
+* SOURCE
+*/
+static inline uint spin1_rand(void) {
+    return sark_rand();
+}
 
 
 // ------------------------------------------------------------------------
