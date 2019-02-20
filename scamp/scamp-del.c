@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// scamp-del.c	    SC&MP monitor delegation routines
+// scamp-del.c      SC&MP monitor delegation routines
 //
 // Copyright (C)    The University of Manchester - 2017, 2018
 //

@@ -54,24 +54,24 @@ void process_sdp(uint m, uint port)
 
     io_printf(IO_STD, "SDP len %d, port %d - %s\n", msg->length, port, msg->data);
 
-    if (port == 1) {		// Port 1 - echo to sender
-	swap_sdp_hdr(msg);
-	(void) spin1_send_sdp_msg(msg, 10);
-    } else if (port == 2) {	// Port 2 - send via IPTAG 1
-	msg->tag = 1;				// IPTag 1
-	msg->dest_port = PORT_ETH;		// Ethernet
-	msg->dest_addr = sv->dbg_addr; 		// Root chip
-	msg->flags = 0x07;			// Flags = 7
-	msg->srce_port = spin1_get_core_id();	// Source port
-	msg->srce_addr = spin1_get_chip_id();	// Source addr
+    if (port == 1) {            // Port 1 - echo to sender
+        swap_sdp_hdr(msg);
+        (void) spin1_send_sdp_msg(msg, 10);
+    } else if (port == 2) {     // Port 2 - send via IPTAG 1
+        msg->tag = 1;                           // IPTag 1
+        msg->dest_port = PORT_ETH;              // Ethernet
+        msg->dest_addr = sv->dbg_addr;          // Root chip
+        msg->flags = 0x07;                      // Flags = 7
+        msg->srce_port = spin1_get_core_id();   // Source port
+        msg->srce_addr = spin1_get_chip_id();   // Source addr
 
-	(void) spin1_send_sdp_msg(msg, 10);
+        (void) spin1_send_sdp_msg(msg, 10);
     }
 
     spin1_msg_free(msg);
 
     if (port == 7) {
-	spin1_exit(0);
+        spin1_exit(0);
     }
 }
 

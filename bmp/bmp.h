@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// bmp.h	    Low-level hardware interface code for BMP LPC1768
+// bmp.h            Low-level hardware interface code for BMP LPC1768
 //
 // Copyright (C)    The University of Manchester - 2012-2018
 //
@@ -16,14 +16,14 @@
 
 //------------------------------------------------------------------------------
 
-#define BMP_VER_STR		"2.1.2"
-#define BMP_VER_NUM		0x020102
+#define BMP_VER_STR             "2.1.2"
+#define BMP_VER_NUM             0x020102
 
-#define BMP_ID_STR		"BC&MP/Spin5-BMP"
+#define BMP_ID_STR              "BC&MP/Spin5-BMP"
 
 //------------------------------------------------------------------------------
 
-#define CCLK			100000000	// CPU clock - 100 MHz
+#define CCLK                    100000000       // CPU clock - 100 MHz
 
 #ifndef NULL
 #define NULL 0
@@ -31,102 +31,102 @@
 
 //------------------------------------------------------------------------------
 
-#define LED_0 	    		(1 << 4)	// Green
-#define LED_1 	    		(1 << 5)	// Orange
-#define LED_2 	    		(1 << 19)	// Red
-#define LED_3 	    		(1 << 20)	// Green
-#define LED_4 	    		(1 << 21)	// Green
-#define LED_5 	    		(1 << 22)	// Green
-#define LED_6	    		(1 << 29)	// Green
-#define LED_7 	    		(1 << 30)	// Red
+#define LED_0                   (1 << 4)        // Green
+#define LED_1                   (1 << 5)        // Orange
+#define LED_2                   (1 << 19)       // Red
+#define LED_3                   (1 << 20)       // Green
+#define LED_4                   (1 << 21)       // Green
+#define LED_5                   (1 << 22)       // Green
+#define LED_6                   (1 << 29)       // Green
+#define LED_7                   (1 << 30)       // Red
 
-#define LED_MASK    		(LED_0 + LED_1 + LED_2 + LED_3 + \
+#define LED_MASK                (LED_0 + LED_1 + LED_2 + LED_3 + \
                                  LED_4 + LED_5 + LED_6 + LED_7)
 
-#define SF_NCS      		(1 << 16)
+#define SF_NCS                  (1 << 16)
 
-#define XFSEL_0     		(1 << 25)	// Port 3
-#define XFSEL_1     		(1 << 26)	// Port 3
-#define XFSEL_2     		(1 << 29)	// Port 4
-
-//------------------------------------------------------------------------------
-
-#define NUM_FPGAS		3
-
-#define FPGA_READ		0
-#define FPGA_WRITE		1
+#define XFSEL_0                 (1 << 25)       // Port 3
+#define XFSEL_1                 (1 << 26)       // Port 3
+#define XFSEL_2                 (1 << 29)       // Port 4
 
 //------------------------------------------------------------------------------
 
-#define CMD_VER			0
-#define CMD_RUN			1
-#define CMD_READ		2
-#define CMD_WRITE		3
-#define CMD_FILL		5
+#define NUM_FPGAS               3
 
-#define CMD_FPGA_READ  		17	// SPI interface to FPGAs
-#define CMD_FPGA_WRITE 		18	//
+#define FPGA_READ               0
+#define FPGA_WRITE              1
 
-#define CMD_LED 		25
-#define CMD_IPTAG 		26
+//------------------------------------------------------------------------------
 
-#define CMD_BMP_INFO		48
-#define CMD_FLASH_COPY		49
-#define CMD_FLASH_ERASE		50
-#define CMD_FLASH_WRITE		51
-#define CMD_XXX_52		52
-#define CMD_BMP_SF		53
-#define CMD_BMP_EE		54
-#define CMD_RESET		55
-#define CMD_XILINX		56
-#define CMD_POWER		57
+#define CMD_VER                 0
+#define CMD_RUN                 1
+#define CMD_READ                2
+#define CMD_WRITE               3
+#define CMD_FILL                5
 
-#define CMD_BMP_TEST	        63
+#define CMD_FPGA_READ           17      // SPI interface to FPGAs
+#define CMD_FPGA_WRITE          18      //
 
-#define CMD_TUBE  		64
+#define CMD_LED                 25
+#define CMD_IPTAG               26
+
+#define CMD_BMP_INFO            48
+#define CMD_FLASH_COPY          49
+#define CMD_FLASH_ERASE         50
+#define CMD_FLASH_WRITE         51
+#define CMD_XXX_52              52
+#define CMD_BMP_SF              53
+#define CMD_BMP_EE              54
+#define CMD_RESET               55
+#define CMD_XILINX              56
+#define CMD_POWER               57
+
+#define CMD_BMP_TEST            63
+
+#define CMD_TUBE                64
 
 
-#define TYPE_BYTE 		0
-#define TYPE_HALF 		1
-#define TYPE_WORD 		2
+#define TYPE_BYTE               0
+#define TYPE_HALF               1
+#define TYPE_WORD               2
 
-#define RC_OK 			0x80	// Command completed OK
-#define RC_LEN 			0x81	// Bad packet length
-#define RC_SUM 			0x82	// Bad checksum
-#define RC_CMD 			0x83	// Bad/invalid command
-#define RC_ARG     		0x84	// Invalid arguments
+#define RC_OK                   0x80    // Command completed OK
+#define RC_LEN                  0x81    // Bad packet length
+#define RC_SUM                  0x82    // Bad checksum
+#define RC_CMD                  0x83    // Bad/invalid command
+#define RC_ARG                  0x84    // Invalid arguments
 
-#define RC_OK 			0x80	// Command completed OK
-#define RC_LEN 			0x81	// Bad packet length
-#define RC_SUM 			0x82	// Bad checksum
-#define RC_CMD 			0x83	// Bad/invalid command
-#define RC_ARG     		0x84	// Invalid arguments
-#define RC_PORT	 		0x85	// Bad port number
-#define RC_TIMEOUT 		0x86	// Timeout
-#define RC_ROUTE 		0x87	// No P2P route
-#define RC_CPU	 		0x88	// Bad CPU number
+#define RC_OK                   0x80    // Command completed OK
+#define RC_LEN                  0x81    // Bad packet length
+#define RC_SUM                  0x82    // Bad checksum
+#define RC_CMD                  0x83    // Bad/invalid command
+#define RC_ARG                  0x84    // Invalid arguments
+#define RC_PORT                 0x85    // Bad port number
+#define RC_TIMEOUT              0x86    // Timeout
+#define RC_ROUTE                0x87    // No P2P route
+#define RC_CPU                  0x88    // Bad CPU number
 
-#define BOARD_MASK		31
+#define BOARD_MASK              31
 
-#define FLASH_BYTES		4096	// Size of flash buffer
-#define FLASH_WORDS		1024
+#define FLASH_BYTES             4096    // Size of flash buffer
+#define FLASH_WORDS             1024
 
 // IPTAG definitions
 
-#define IPTAG_NEW		0
-#define IPTAG_SET		1
-#define IPTAG_GET		2
-#define IPTAG_CLR		3
-#define IPTAG_TTO		4
+#define IPTAG_NEW               0
+#define IPTAG_SET               1
+#define IPTAG_GET               2
+#define IPTAG_CLR               3
+#define IPTAG_TTO               4
 
-#define IPTAG_MAX		4
+#define IPTAG_MAX               4
 
-#define IPTAG_VALID		0x8000	// Entry is valid
-#define IPTAG_TRANS		0x4000	// Entry is transient
-#define IPTAG_ARP		0x2000	// Awaiting ARP resolution
+#define IPTAG_VALID             0x8000  // Entry is valid
+#define IPTAG_TRANS             0x4000  // Entry is transient
+#define IPTAG_ARP               0x2000  // Awaiting ARP resolution
 
-#define TAG_NONE  		255	// Invalid tag/transient request
-#define TAG_HOST 		0	// Reserved for host
+#define TAG_NONE                255     // Invalid tag/transient request
+#define TAG_HOST                0       // Reserved for host
 
 
 #define TAG_FIXED_SIZE          8       // At bottom of table
@@ -136,10 +136,10 @@
 #define LAST_POOL_TAG           (TAG_FIXED_SIZE + TAG_POOL_SIZE - 1)
 
 #define TAG_TABLE_SIZE          (TAG_FIXED_SIZE + TAG_POOL_SIZE)
-#define SDPF_REPLY		0x80
+#define SDPF_REPLY              0x80
 
 
-typedef struct {		// IPTAG entry (24 bytes)
+typedef struct {                // IPTAG entry (24 bytes)
     uint8_t ip[4];
     uint8_t mac[6];
     uint16_t port;
@@ -151,13 +151,13 @@ typedef struct {		// IPTAG entry (24 bytes)
 
 //------------------------------------------------------------------------------
 
-#define PORT_SHIFT		5
-#define PORT_MASK		7
-#define BOARD_MASK		31
+#define PORT_SHIFT              5
+#define PORT_MASK               7
+#define BOARD_MASK              31
 
-#define PORT_ETH 		(7 << PORT_SHIFT)	// Port 7
+#define PORT_ETH                (7 << PORT_SHIFT)       // Port 7
 
-#define SDP_BUF_SIZE 		256
+#define SDP_BUF_SIZE            256
 
 // ------------------------------------------------------------------------
 // SDP type definitions
@@ -166,56 +166,56 @@ typedef struct {		// IPTAG entry (24 bytes)
 // the checksum. It will be a minimum of 8 as the SDP header
 // should always be present.
 
-typedef struct sdp_msg {	// SDP message (=292 bytes)
-    struct sdp_msg *next;	// Next in free list
-    uint16_t length;		// length
-    uint16_t checksum;		// checksum (if used)
+typedef struct sdp_msg {        // SDP message (=292 bytes)
+    struct sdp_msg *next;       // Next in free list
+    uint16_t length;            // length
+    uint16_t checksum;          // checksum (if used)
 
     // sdp_hdr_t
 
-    uint8_t flags;		// SDP flag byte
-    uint8_t tag;		// SDP IPtag
-    uint8_t dest_port;		// SDP destination port/CPU
-    uint8_t srce_port;		// SDP source port/CPU
-    uint16_t dest_addr;		// SDP destination address
-    uint16_t srce_addr;		// SDP source address
+    uint8_t flags;              // SDP flag byte
+    uint8_t tag;                // SDP IPtag
+    uint8_t dest_port;          // SDP destination port/CPU
+    uint8_t srce_port;          // SDP source port/CPU
+    uint16_t dest_addr;         // SDP destination address
+    uint16_t srce_addr;         // SDP source address
 
     // cmd_hdr_t (optional)
 
-    uint16_t cmd_rc;		// Command/Return Code
-    uint16_t seq;		// Sequence number
-    uint32_t arg1;		// Arg 1
-    uint32_t arg2;		// Arg 2
-    uint32_t arg3;		// Arg 3
+    uint16_t cmd_rc;            // Command/Return Code
+    uint16_t seq;               // Sequence number
+    uint32_t arg1;              // Arg 1
+    uint32_t arg2;              // Arg 2
+    uint32_t arg3;              // Arg 3
 
     // user data (optional)
 
-    uint8_t data[SDP_BUF_SIZE];	// User data (256 bytes)
+    uint8_t data[SDP_BUF_SIZE]; // User data (256 bytes)
 
-    uint32_t _PAD;		// Private padding
+    uint32_t _PAD;              // Private padding
 } sdp_msg_t;
 
 //------------------------------------------------------------------------------
 
-#define IO_STD 		((char *) 0)		// Stream numbers
-#define IO_DBG   	((char *) 1)
-#define IO_LCD   	((char *) 2)
-#define IO_NULL    	((char *) 3)
+#define IO_STD          ((char *) 0)            // Stream numbers
+#define IO_DBG          ((char *) 1)
+#define IO_LCD          ((char *) 2)
+#define IO_NULL         ((char *) 3)
 
-#define LCD_POS(x, y)	(0x80 + (y) * 64 + (x))
+#define LCD_POS(x, y)   (0x80 + (y) * 64 + (x))
 
 //------------------------------------------------------------------------------
 
-#define FL_DIR_SIZE 	16		// Number of fl_dir entries
+#define FL_DIR_SIZE     16              // Number of fl_dir entries
 
 // Values in fl_dir->type
 
-#define FL_BMP_IP	1
-#define FL_SPIN_IP 	2
-#define FL_FPGA      	3
-#define FL_XREG      	4
+#define FL_BMP_IP       1
+#define FL_SPIN_IP      2
+#define FL_FPGA         3
+#define FL_XREG         4
 
-typedef struct {	// 128 bytes
+typedef struct {        // 128 bytes
     uint8_t type;
     uint8_t size;
     uint16_t flags;
@@ -229,41 +229,41 @@ typedef struct {	// 128 bytes
     uint8_t data[96];
 } fl_dir_t;
 
-typedef struct {	// 256 bytes
-    uint8_t marker;		// 0 0x96
-    uint8_t sw_ver;		// 1 EE Data format version
-    uint8_t hw_ver;		// 2 Backplane HW version (0..7)
-    uint8_t frame_ID;		// 3 Frame Identifier
+typedef struct {        // 256 bytes
+    uint8_t marker;             // 0 0x96
+    uint8_t sw_ver;             // 1 EE Data format version
+    uint8_t hw_ver;             // 2 Backplane HW version (0..7)
+    uint8_t frame_ID;           // 3 Frame Identifier
 
-    uint32_t mod_date;		// 4 Date written
-    uint8_t gw_addr[4];		// 8 Gateway address (& IP base)
-    uint8_t flags;		// 12 8 flag bits
-    uint8_t mask_bits;		// 13 IP mask bits (0..31)
-    uint8_t mac_byte;		// 14 Byte 1 of MAC address
-    uint8_t LCD_time;		// 15 Time (secs) for initial display
+    uint32_t mod_date;          // 4 Date written
+    uint8_t gw_addr[4];         // 8 Gateway address (& IP base)
+    uint8_t flags;              // 12 8 flag bits
+    uint8_t mask_bits;          // 13 IP mask bits (0..31)
+    uint8_t mac_byte;           // 14 Byte 1 of MAC address
+    uint8_t LCD_time;           // 15 Time (secs) for initial display
 
     uint8_t __PAD1[16];
 
-    int8_t warn_int[4];		// 32 Int Temp Warning settings
-    int8_t shut_int[4];		// 36 Int Temp Shutdown settings
+    int8_t warn_int[4];         // 32 Int Temp Warning settings
+    int8_t shut_int[4];         // 36 Int Temp Shutdown settings
 
-    int8_t warn_ext[4];		// 40 Ext Temp Warning settings
-    int8_t shut_ext[4];		// 44 Ext Temp Shutdown settings
+    int8_t warn_ext[4];         // 40 Ext Temp Warning settings
+    int8_t shut_ext[4];         // 44 Ext Temp Shutdown settings
 
-    uint8_t warn_fan[4];	// 48 Fan Speed Warning settings
-    uint8_t shut_fan[4];	// 52 Fan Speed Shutdown settings
+    uint8_t warn_fan[4];        // 48 Fan Speed Warning settings
+    uint8_t shut_fan[4];        // 52 Fan Speed Shutdown settings
 
-    uint8_t warn_vlow[8];	// 56 Under-voltage Warning settings
-    uint8_t shut_vlow[8];	// 64 Under-voltage Shutdown settings
+    uint8_t warn_vlow[8];       // 56 Under-voltage Warning settings
+    uint8_t shut_vlow[8];       // 64 Under-voltage Shutdown settings
 
-    uint8_t warn_vhigh[8];	// 72 Over-voltage Warning settings
-    uint8_t shut_vhigh[8];	// 80 Over-voltage Shutdown settings
+    uint8_t warn_vhigh[8];      // 72 Over-voltage Warning settings
+    uint8_t shut_vhigh[8];      // 80 Over-voltage Shutdown settings
 
-    uint8_t __PAD2[164];	// 88
-    uint32_t CRC32;		// 252
+    uint8_t __PAD2[164];        // 88
+    uint32_t CRC32;             // 252
 } ee_data_t;
 
-typedef struct {	// 48 bytes
+typedef struct {        // 48 bytes
     uint16_t adc[8];
     int16_t t_int[4];
     int16_t t_ext[4];
@@ -272,7 +272,7 @@ typedef struct {	// 48 bytes
     uint32_t shutdown;
 } board_stat_t;
 
-typedef struct {	// 32 bytes
+typedef struct {        // 32 bytes
     uint16_t flags;
     uint8_t mac_addr[6];
     uint8_t ip_addr[4];
@@ -293,10 +293,10 @@ typedef void (*proc4) (uint32_t, uint32_t, uint32_t, uint32_t);
 typedef void (*main_proc) (void *, uint32_t, uint32_t, uint32_t);
 
 typedef struct {
-    uint32_t *stack_top;	// 0
+    uint32_t *stack_top;        // 0
     main_proc main;
 
-    handler NMI;		// 2
+    handler NMI;                // 2
     handler HardFault;
     handler MemManage;
     handler BusFault;
@@ -311,7 +311,7 @@ typedef struct {
     handler PendSV;
     handler SysTickH;
 
-    handler WDT;		// 16
+    handler WDT;                // 16
     handler TIMER0;
     handler TIMER1;
     handler TIMER2;
@@ -328,7 +328,7 @@ typedef struct {
     handler SSP0;
     handler SSP1;
 
-    handler PLL0;		// 32
+    handler PLL0;               // 32
     handler RTC;
     handler EINT0;
     handler EINT1;
@@ -345,17 +345,17 @@ typedef struct {
     handler MCPWM;
     handler QEI;
 
-    handler PLL1;		// 48
+    handler PLL1;               // 48
     handler USBActivity;
     handler CANActivity;
 
-    handler Rsvd_51;		// 51
+    handler Rsvd_51;            // 51
     handler Rsvd_52;
 
-    uint32_t build_date;	// 53
+    uint32_t build_date;        // 53
     uint32_t sw_ver;
 
-    uint32_t RO_length;		// 55
+    uint32_t RO_length;         // 55
     uint32_t RW_length;
     uint32_t *RO_limit;
     uint32_t *RW_base;
@@ -363,18 +363,18 @@ typedef struct {
     uint32_t *ZI_base;
     uint32_t *ZI_limit;
     uint32_t *stack_base;
-    uint32_t *stack_limit;	// 63
+    uint32_t *stack_limit;      // 63
 } cortex_vec_t;
 
 typedef struct {
-    uint32_t *stack_top;	// 0
-    handler boot_proc;		// 1
-    proc4 flash_copy;		// 2
-    proc4 Rsvd_3;		// 3
-    proc4 Rsvd_4;		// 4
-    uint32_t build_date;	// 5
-    uint32_t sw_ver;		// 6
-    uint32_t checksum;		// 7
+    uint32_t *stack_top;        // 0
+    handler boot_proc;          // 1
+    proc4 flash_copy;           // 2
+    proc4 Rsvd_3;               // 3
+    proc4 Rsvd_4;               // 4
+    uint32_t build_date;        // 5
+    uint32_t sw_ver;            // 6
+    uint32_t checksum;          // 7
 } boot_vec_t;
 
 static boot_vec_t * const boot_vec = (boot_vec_t *) 0;
@@ -412,7 +412,7 @@ static uint32_t * const flash_buf = (uint32_t *) 0x10000000;
 // 6 - IPSR: exception that caused call to 'error_han'
 // 7 - count of calls to 'error_han'
 
-#define UNI_VEC_SIZE		8
+#define UNI_VEC_SIZE            8
 static uint32_t * const uni_vec = (uint32_t *) 0x10001000;
 
 // 64 byte (16 word) uninitialised fault debug vector
@@ -432,7 +432,7 @@ static uint32_t * const uni_vec = (uint32_t *) 0x10001000;
 // 13 - memory mgmt fault address
 // 14 - exc_return
 
-#define DBG_VEC_SIZE		16
+#define DBG_VEC_SIZE            16
 static uint32_t * const dbg_vec = (uint32_t *) 0x10001020;
 
 //------------------------------------------------------------------------------
@@ -441,12 +441,12 @@ static uint32_t * const dbg_vec = (uint32_t *) 0x10001020;
 typedef void (*event_proc) (uint32_t, uint32_t);
 
 typedef struct event {
-    event_proc proc;	// Proc to be called or NULL
-    uint32_t arg1;	// First arg to proc
-    uint32_t arg2;	// Second arg to proc
-    uint32_t time;	// Time (CPU ticks) until event due (0 if at head of Q)
-    uint32_t ID;	// Unique ID for active event (0 if inactive)
-    struct event *next;	// Next in Q or NULL
+    event_proc proc;    // Proc to be called or NULL
+    uint32_t arg1;      // First arg to proc
+    uint32_t arg2;      // Second arg to proc
+    uint32_t time;      // Time (CPU ticks) until event due (0 if at head of Q)
+    uint32_t ID;        // Unique ID for active event (0 if inactive)
+    struct event *next; // Next in Q or NULL
 } event_t;
 
 void event_init (uint32_t priority);
@@ -473,10 +473,10 @@ void configure_i2c (void);
 uint32_t i2c_poll (LPC_I2C_TypeDef *i2c, uint32_t ctrl);
 
 uint32_t i2c_receive (LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
-		      uint32_t length, void *buf);
+                      uint32_t length, void *buf);
 
 uint32_t i2c_send (LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
-		   uint32_t length, void *buf);
+                   uint32_t length, void *buf);
 
 int16_t read_ts (LPC_I2C_TypeDef *i2c, uint32_t addr);
 

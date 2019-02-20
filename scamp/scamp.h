@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// scamp.h	    Header file for SC&MP
+// scamp.h          Header file for SC&MP
 //
 // Copyright (C)    The University of Manchester - 2009-2013
 //
@@ -16,47 +16,47 @@
 
 // Misc constants
 
-#define MAX_CPUS 		20			// Legacy const!
+#define MAX_CPUS                20                      // Legacy const!
 
-#define MONITOR_CPU 		0			// Virtual CPU number
+#define MONITOR_CPU             0                       // Virtual CPU number
 
 //------------------------------------------------------------------------------
 
 // IPTag table sizes
 
-#define TAG_FIXED_SIZE		8	// At bottom of table
-#define TAG_POOL_SIZE		8
+#define TAG_FIXED_SIZE          8       // At bottom of table
+#define TAG_POOL_SIZE           8
 
-#define FIRST_POOL_TAG		TAG_FIXED_SIZE
-#define LAST_POOL_TAG		(TAG_FIXED_SIZE + TAG_POOL_SIZE - 1)
+#define FIRST_POOL_TAG          TAG_FIXED_SIZE
+#define LAST_POOL_TAG           (TAG_FIXED_SIZE + TAG_POOL_SIZE - 1)
 
-#define TAG_TABLE_SIZE 		(TAG_FIXED_SIZE + TAG_POOL_SIZE)
+#define TAG_TABLE_SIZE          (TAG_FIXED_SIZE + TAG_POOL_SIZE)
 
 // IPTAG definitions
 
-#define IPTAG_NEW		0
-#define IPTAG_SET		1
-#define IPTAG_GET		2
-#define IPTAG_CLR		3
-#define IPTAG_TTO		4
+#define IPTAG_NEW               0
+#define IPTAG_SET               1
+#define IPTAG_GET               2
+#define IPTAG_CLR               3
+#define IPTAG_TTO               4
 
-#define IPTAG_MAX		4
+#define IPTAG_MAX               4
 
-#define IPFLAG_VALID		0x8000	// Entry is valid
-#define IPFLAG_TRANS		0x4000	// Entry is transient
-#define IPFLAG_ARP		0x2000	// Awaiting ARP resolution
+#define IPFLAG_VALID            0x8000  // Entry is valid
+#define IPFLAG_TRANS            0x4000  // Entry is transient
+#define IPFLAG_ARP              0x2000  // Awaiting ARP resolution
 
 #define IPFLAG_USE_SENDER       0x0400  // Use sender address and port
-#define IPFLAG_REV		0x0200  // Reverse IPTag
-#define IPFLAG_STRIP		0x0100  // Strip SDP headers
+#define IPFLAG_REV              0x0200  // Reverse IPTag
+#define IPFLAG_STRIP            0x0100  // Strip SDP headers
 
 //------------------------------------------------------------------------------
 
 // Bits in SDP Flags byte (3 used)
 
-#define SDPF_REPLY		0x80	// Reply expected
-#define SDPF_SUM		0x40	// Checksum before routing
-#define SDPF_NR			0x20	// Don't route via P2P
+#define SDPF_REPLY              0x80    // Reply expected
+#define SDPF_SUM                0x40    // Checksum before routing
+#define SDPF_NR                 0x20    // Don't route via P2P
 
 //------------------------------------------------------------------------------
 
@@ -69,25 +69,25 @@
 // HW errors have bit 7 set & bit 6 set
 // SW errors have bit 7 set & bit 6 clr
 
-#define FAIL_RESET		0xc0		// Catch-all - set at reset
-#define FAIL_ROMX		0xc1		// Exception in ROM code
-#define FAIL_ITCM0		0xc2		// ITCM top 512 failure
-#define FAIL_ITCM1		0xc3		// ITCM main test failure
-#define FAIL_DTCM		0xc4		// DTCM test failure
+#define FAIL_RESET              0xc0            // Catch-all - set at reset
+#define FAIL_ROMX               0xc1            // Exception in ROM code
+#define FAIL_ITCM0              0xc2            // ITCM top 512 failure
+#define FAIL_ITCM1              0xc3            // ITCM main test failure
+#define FAIL_DTCM               0xc4            // DTCM test failure
 
-#define FAIL_TIMER		0xc5		// Timer reg test failed
-#define FAIL_VIC		0xc6		// VIC reg test failed
-#define FAIL_CC			0xc7		// Comms ctlr reg test failed
-#define FAIL_DMA		0xc8		// DMAC reg test failed
+#define FAIL_TIMER              0xc5            // Timer reg test failed
+#define FAIL_VIC                0xc6            // VIC reg test failed
+#define FAIL_CC                 0xc7            // Comms ctlr reg test failed
+#define FAIL_DMA                0xc8            // DMAC reg test failed
 
-#define FAIL_MP			0xc9		// Previous monitor proc failure
-#define FAIL_LATE		0xca		// App CPU failed to set CPU_OK
-#define FAIL_MANUF		0xcb		// App CPU in manuf test
-#define FAIL_SLEEP		0xcc		// Ordered to sleep in startup
+#define FAIL_MP                 0xc9            // Previous monitor proc failure
+#define FAIL_LATE               0xca            // App CPU failed to set CPU_OK
+#define FAIL_MANUF              0xcb            // App CPU in manuf test
+#define FAIL_SLEEP              0xcc            // Ordered to sleep in startup
 
-#define FAIL_TLM		0xcf		// Special for TLM
+#define FAIL_TLM                0xcf            // Special for TLM
 
-#define FAIL_VEC		0xa0		// Unhandled exception
+#define FAIL_VEC                0xa0            // Unhandled exception
 
 //------------------------------------------------------------------------------
 
@@ -128,25 +128,25 @@
 //   key[1] Must be 0, differentiator between peek/poke responses and other
 //          NN packets
 
-#define NN_CMD_SIG0		0	// Misc (GTPC, Set FwdRty, LED, etc)
-#define NN_CMD_RTRC 		1	// Router Control Reg
-#define NN_CMD_LTPC		2	// Local Time Phase Ctrl (ID=0, Fwd=0)
-#define NN_CMD_SP_3		3	// Spare
+#define NN_CMD_SIG0             0       // Misc (GTPC, Set FwdRty, LED, etc)
+#define NN_CMD_RTRC             1       // Router Control Reg
+#define NN_CMD_LTPC             2       // Local Time Phase Ctrl (ID=0, Fwd=0)
+#define NN_CMD_SP_3             3       // Spare
 
-#define NN_CMD_SIG1     	4	// Misc (MEM, etc)
-#define NN_CMD_P2PC 		5	// P2P Address setup (Handled specially)
-#define NN_CMD_FFS   		6	// Flood fill start
-#define NN_CMD_FFCS		7       // Flood fill core and region select
+#define NN_CMD_SIG1             4       // Misc (MEM, etc)
+#define NN_CMD_P2PC             5       // P2P Address setup (Handled specially)
+#define NN_CMD_FFS              6       // Flood fill start
+#define NN_CMD_FFCS             7       // Flood fill core and region select
 
-#define NN_CMD_P2PB		8	// Hop count limited
-#define NN_CMD_SP_9		9	// Spare
-#define NN_CMD_SP_10 		10	// Spare
-#define NN_CMD_BIFF		11	// Board-info flood-fill (handled specially)
+#define NN_CMD_P2PB             8       // Hop count limited
+#define NN_CMD_SP_9             9       // Spare
+#define NN_CMD_SP_10            10      // Spare
+#define NN_CMD_BIFF             11      // Board-info flood-fill (handled specially)
 
-#define NN_CMD_FBS 		12	// Filtered in FF code
-#define NN_CMD_FBD 		13
-#define NN_CMD_FBE 		14
-#define NN_CMD_FFE 		15
+#define NN_CMD_FBS              12      // Filtered in FF code
+#define NN_CMD_FBD              13
+#define NN_CMD_FBE              14
+#define NN_CMD_FFE              15
 
 // NN_CMD_P2PC sub-command codes
 #define P2PC_ADDR 0  // Your P2P address is...
@@ -157,28 +157,28 @@
 
 // Values in P2P type (seq) field
 
-#define P2P_DATA		0
-#define P2P_CTRL		1
-#define P2P_LEVEL		2
+#define P2P_DATA                0
+#define P2P_CTRL                1
+#define P2P_LEVEL               2
 
 // Distinguish data/control packets in SDP/P2P
 
-#define P2P_OPEN_REQ   		(1 << 24)
-#define P2P_OPEN_ACK   		(2 << 24)
-#define P2P_DATA_ACK   		(3 << 24)
-#define P2P_CLOSE_REQ  		(4 << 24)
-#define P2P_CLOSE_ACK  		(5 << 24)
+#define P2P_OPEN_REQ            (1 << 24)
+#define P2P_OPEN_ACK            (2 << 24)
+#define P2P_DATA_ACK            (3 << 24)
+#define P2P_CLOSE_REQ           (4 << 24)
+#define P2P_CLOSE_ACK           (5 << 24)
 
-#define P2P_DEF_SQL  		4			// Seq len = 2^4
+#define P2P_DEF_SQL             4                       // Seq len = 2^4
 
 
 //------------------------------------------------------------------------------
 
 // Hop table
 
-#define NN_HOP_MASK 		0x3ff		// !! Allows hops <= 1023
+#define NN_HOP_MASK             0x3ff           // !! Allows hops <= 1023
 
-#define HOP_TABLE_SIZE		65536
+#define HOP_TABLE_SIZE          65536
 
 //------------------------------------------------------------------------------
 
@@ -223,20 +223,20 @@ enum ethinit_phase_e {
 //------------------------------------------------------------------------------
 
 enum alloc_cmd_e {
-    ALLOC_SDRAM,		//!< Allocate SDRAM
-    FREE_SDRAM,		 	//!< Free SDRAM
-    FREE_SDRAM_ID,		//!< Free DRAM by ID
-    ALLOC_RTR,		 	//!< Allocate Router
-    FREE_RTR,	 		//!< Free Router
-    FREE_RTR_ID,		//!< Free Router by ID
-    SDRAM_SPACE,		//!< Total free space & largest free block
-    HEAP_TAG_PTR,		//!< Heap block from tag & ID
-    ALLOC_MAX=HEAP_TAG_PTR 	//!< Maximum command
+    ALLOC_SDRAM,                //!< Allocate SDRAM
+    FREE_SDRAM,                 //!< Free SDRAM
+    FREE_SDRAM_ID,              //!< Free DRAM by ID
+    ALLOC_RTR,                  //!< Allocate Router
+    FREE_RTR,                   //!< Free Router
+    FREE_RTR_ID,                //!< Free Router by ID
+    SDRAM_SPACE,                //!< Total free space & largest free block
+    HEAP_TAG_PTR,               //!< Heap block from tag & ID
+    ALLOC_MAX=HEAP_TAG_PTR      //!< Maximum command
 };
 
 //------------------------------------------------------------------------------
 
-typedef struct {		// IPTAG entry (32 bytes)
+typedef struct {                // IPTAG entry (32 bytes)
     uchar ip[4];
     uchar mac[6];
     ushort tx_port;
@@ -250,9 +250,9 @@ typedef struct {		// IPTAG entry (32 bytes)
 } iptag_t;
 
 
-#define PKT_QUEUE_SIZE 		32
+#define PKT_QUEUE_SIZE          32
 
-typedef struct pkt_queue_t {	// Queue of packets
+typedef struct pkt_queue_t {    // Queue of packets
     uchar insert;
     uchar remove;
     volatile uchar count;
@@ -261,7 +261,7 @@ typedef struct pkt_queue_t {	// Queue of packets
 } pkt_queue_t;
 
 
-typedef struct pkt_buf_t {	// Holds a NN packet awaiting transmission
+typedef struct pkt_buf_t {      // Holds a NN packet awaiting transmission
     struct pkt_buf_t *next;
     volatile uchar flags;
     uchar fwd;
@@ -271,15 +271,15 @@ typedef struct pkt_buf_t {	// Holds a NN packet awaiting transmission
 } pkt_buf_t;
 
 
-typedef struct {	// 64 bytes
-    uint   level_addr;	// 0: This chip's region at this level
-    ushort sent;	// 4: Number of requests sent out in this region
-    ushort rcvd;	// 6: Number of responses received
-    ushort parent;	// 8: P2P address of the chip which sent the last request
-    ushort __PAD1;	// 10
-    uint result;	// 12: Result accumulated within this region
-    ushort addr[16];	// 16: A working chip p2p for each subregion, if valid
-    uchar  valid[16];	// 48: Is at least one chip in each sub-region known to be alive?
+typedef struct {        // 64 bytes
+    uint   level_addr;  // 0: This chip's region at this level
+    ushort sent;        // 4: Number of requests sent out in this region
+    ushort rcvd;        // 6: Number of responses received
+    ushort parent;      // 8: P2P address of the chip which sent the last request
+    ushort __PAD1;      // 10
+    uint result;        // 12: Result accumulated within this region
+    ushort addr[16];    // 16: A working chip p2p for each subregion, if valid
+    uchar  valid[16];   // 48: Is at least one chip in each sub-region known to be alive?
 } level_t;
 
 //------------------------------------------------------------------------------
@@ -382,10 +382,10 @@ extern volatile int p2p_max_y;
 extern uchar *p2p_addr_table;
 
 // Initial value of p2p_addr_guess_{x,y} when not the root chip
-#define NO_IDEA			(-1024)
+#define NO_IDEA                 (-1024)
 
 // Size of p2p_addr_table in bytes.
-#define P2P_ADDR_TABLE_BYTES	(512 * 512 / 8)
+#define P2P_ADDR_TABLE_BYTES    (512 * 512 / 8)
 
 //------------------------------------------------------------------------------
 
