@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// spinn_net.h	    Ethernet/IP support routines for Spinnaker
+// spinn_net.h      Ethernet/IP support routines for Spinnaker
 //
 // Copyright (C)    The University of Manchester - 2009, 2010
 //
@@ -12,28 +12,28 @@
 #ifndef SPINN_NET_H
 #define SPINN_NET_H
 
-#define MAC_HDR_SIZE    	14
-#define IP_HDR_SIZE     	20
-#define UDP_HDR_SIZE		8
-#define SDP_PAD_SIZE		2
+#define MAC_HDR_SIZE            14
+#define IP_HDR_SIZE             20
+#define UDP_HDR_SIZE            8
+#define SDP_PAD_SIZE            2
 
-#define IP_HDR_OFFSET   	MAC_HDR_SIZE
-#define IP_DATA_OFFSET  	(IP_HDR_OFFSET + IP_HDR_SIZE)
+#define IP_HDR_OFFSET           MAC_HDR_SIZE
+#define IP_DATA_OFFSET          (IP_HDR_OFFSET + IP_HDR_SIZE)
 
-#define UDP_HDR_OFFSET		IP_DATA_OFFSET
-#define UDP_DATA_OFFSET		(UDP_HDR_OFFSET + UDP_HDR_SIZE)
+#define UDP_HDR_OFFSET          IP_DATA_OFFSET
+#define UDP_DATA_OFFSET         (UDP_HDR_OFFSET + UDP_HDR_SIZE)
 
-#define ETYPE_IP  		0x0800
-#define ETYPE_ARP 		0x0806
+#define ETYPE_IP                0x0800
+#define ETYPE_ARP               0x0806
 
-#define PROT_ICMP 		1
-#define PROT_UDP  		17
+#define PROT_ICMP               1
+#define PROT_UDP                17
 
-#define ARP_REQ 		1
-#define ARP_REPLY 		2
+#define ARP_REQ                 1
+#define ARP_REPLY               2
 
-#define ICMP_ECHO_REPLY 	0
-#define ICMP_ECHO_REQ 		8
+#define ICMP_ECHO_REPLY         0
+#define ICMP_ECHO_REQ           8
 
 
 typedef struct {
@@ -103,7 +103,7 @@ void eth_transmit(uchar *buf, uint len, uint type, const uchar *dest);
 void eth_transmit2(uchar *hdr, uchar *buf, uint hdr_len, uint buf_len);
 
 void send_arp_pkt(uchar *buf, const uchar *dest,
-		  const uchar *tha, const uchar *tpa, uint type);
+                  const uchar *tha, const uchar *tpa, uint type);
 void arp_lookup(iptag_t *iptag);
 void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size);
 void arp_add(uchar *mac, uchar *ip);

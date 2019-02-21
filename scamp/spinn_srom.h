@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// spinn_srom.h	    Serial ROM interface routines for Spinnaker
+// spinn_srom.h     Serial ROM interface routines for Spinnaker
 //
 // Copyright (C)    The University of Manchester - 2009, 2010
 //

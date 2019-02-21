@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// bmp_ssp.c	    SSP peripheral handling for BC&MP
+// bmp_ssp.c        SSP peripheral handling for BC&MP
 //
 // Copyright (C)    The University of Manchester - 2012-2015
 //
@@ -31,21 +31,21 @@
 
 //------------------------------------------------------------------------------
 
-static void delay(uint32_t n)		// 30ns per loop?
+static void delay(uint32_t n)           // 30ns per loop?
 {
     while (n--) {
-	continue;
+        continue;
     }
 }
 
 void ssp1_copy(uint32_t count, uint8_t *buf)
 {
     while (count--) {
-	while ((LPC_SSP1->SR & 2) == 0)	{// Loop while full
-	    continue;
-	}
+        while ((LPC_SSP1->SR & 2) == 0) {// Loop while full
+            continue;
+        }
 
-	LPC_SSP1->DR = *buf++;
+        LPC_SSP1->DR = *buf++;
     }
 }
 
@@ -56,11 +56,11 @@ void fpga_word(uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
     // Assert select
 
     if (fpga == 0) {
-	LPC_GPIO3->FIOCLR = XFSEL_0;
+        LPC_GPIO3->FIOCLR = XFSEL_0;
     } else if (fpga == 1) {
-	LPC_GPIO3->FIOCLR = XFSEL_1;
+        LPC_GPIO3->FIOCLR = XFSEL_1;
     } else {
-	LPC_GPIO4->FIOCLR = XFSEL_2;
+        LPC_GPIO4->FIOCLR = XFSEL_2;
     }
     delay(10);
 
@@ -69,54 +69,54 @@ void fpga_word(uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
     addr = addr & ~3;
 
     if (dir == FPGA_WRITE) {
-	addr += 1;
-	data = *buf;
+        addr += 1;
+        data = *buf;
     }
 
     // Wait until TxFIFO empties & flush RxFIFO
     while ((LPC_SSP1->SR & 1) == 0) {
-	continue;
+        continue;
     }
     while ((LPC_SSP1->SR & 4) != 0) {
-	(void) LPC_SSP1->DR;
+        (void) LPC_SSP1->DR;
     }
 
     // Send address word
     for (uint32_t i = 0; i < 4; i++) {
-	LPC_SSP1->DR = addr >> 24;
-	addr <<= 8;
+        LPC_SSP1->DR = addr >> 24;
+        addr <<= 8;
     }
 
     // and data word (or zero)
     for (uint32_t i = 0; i < 4; i++) {
-	LPC_SSP1->DR = data >> 24;
-	data <<= 8;
+        LPC_SSP1->DR = data >> 24;
+        data <<= 8;
     }
 
     // Wait until TxFIFO empties
     while ((LPC_SSP1->SR & 1) == 0) {
-	continue;
+        continue;
     }
 
     // Throw away returned address
     for (uint32_t i = 0; i < 4; i++) {
-	while ((LPC_SSP1->SR & 4) == 0)	{	// Wait for NotEmpty
-	    continue;
-	}
-	(void) LPC_SSP1->DR;
+        while ((LPC_SSP1->SR & 4) == 0) {       // Wait for NotEmpty
+            continue;
+        }
+        (void) LPC_SSP1->DR;
     }
 
     // Read returned data
     for (uint32_t i = 0; i < 4; i++) {
-	while ((LPC_SSP1->SR & 4) == 0) {	// Wait for NotEmpty
-	    continue;
-	}
-	data <<= 8;
-	data |= LPC_SSP1->DR;
+        while ((LPC_SSP1->SR & 4) == 0) {       // Wait for NotEmpty
+            continue;
+        }
+        data <<= 8;
+        data |= LPC_SSP1->DR;
     }
 
     if (dir == FPGA_READ) {
-	*buf = data;
+        *buf = data;
     }
     delay(30);
 
@@ -128,82 +128,82 @@ void fpga_word(uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
 
 static void ssp0_send(uint32_t d)
 {
-    while ((LPC_SSP0->SR & 2) == 0) {	// Loop while full
-	continue;
+    while ((LPC_SSP0->SR & 2) == 0) {   // Loop while full
+        continue;
     }
     LPC_SSP0->DR = d;
 }
 
 void ssp0_write(uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
 {
-    LPC_GPIO0->FIOCLR = SF_NCS;		// Assert NCS
+    LPC_GPIO0->FIOCLR = SF_NCS;         // Assert NCS
 
-    ssp0_send(0x06);			// Sent write enable
+    ssp0_send(0x06);                    // Sent write enable
 
-    while ((LPC_SSP0->SR & 1) == 0) {	// Wait until TxFIFO empties
-	continue;
+    while ((LPC_SSP0->SR & 1) == 0) {   // Wait until TxFIFO empties
+        continue;
     }
 
     delay(10);
-    LPC_GPIO0->FIOSET = SF_NCS;		// Deassert NCS
+    LPC_GPIO0->FIOSET = SF_NCS;         // Deassert NCS
 
-    delay(10);				// Ensure NCS high for a while
-    LPC_GPIO0->FIOCLR = SF_NCS;		// Assert NCS
+    delay(10);                          // Ensure NCS high for a while
+    LPC_GPIO0->FIOCLR = SF_NCS;         // Assert NCS
 
     ssp0_send(cmd);
 
     if (addr != 0xffffffff) {
-	ssp0_send(addr >> 16);
-	ssp0_send(addr >> 8);
-	ssp0_send(addr);
+        ssp0_send(addr >> 16);
+        ssp0_send(addr >> 8);
+        ssp0_send(addr);
     }
 
     while (len--) {
-	while ((LPC_SSP0->SR & 2) == 0)	{ // Loop while full
-	    continue;
+        while ((LPC_SSP0->SR & 2) == 0) { // Loop while full
+            continue;
         }
-	LPC_SSP0->DR = *buf++;
+        LPC_SSP0->DR = *buf++;
     }
 
-    while ((LPC_SSP0->SR & 1) == 0) {	// Wait until TxFIFO empties
-	continue;
+    while ((LPC_SSP0->SR & 1) == 0) {   // Wait until TxFIFO empties
+        continue;
     }
     delay(10);
-    LPC_GPIO0->FIOSET = SF_NCS;		// Deassert NCS
+    LPC_GPIO0->FIOSET = SF_NCS;         // Deassert NCS
 }
 
 void ssp0_read(uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
 {
-    LPC_GPIO0->FIOCLR = SF_NCS;		// Assert NCS
+    LPC_GPIO0->FIOCLR = SF_NCS;         // Assert NCS
 
     ssp0_send(cmd);
 
     if (addr != 0xffffffff) {
-	ssp0_send(addr >> 16);
-	ssp0_send(addr >> 8);
-	ssp0_send(addr);
+        ssp0_send(addr >> 16);
+        ssp0_send(addr >> 8);
+        ssp0_send(addr);
     }
 
-    while ((LPC_SSP0->SR & 1) == 0) {	// Wait until TxFIFO empties
-	continue;
+    while ((LPC_SSP0->SR & 1) == 0) {   // Wait until TxFIFO empties
+        continue;
     }
-    while ((LPC_SSP0->SR & 4) != 0) {	// Flush RxFIFO
-	(void) LPC_SSP0->DR;
+    while ((LPC_SSP0->SR & 4) != 0) {   // Flush RxFIFO
+        (void) LPC_SSP0->DR;
     }
     while (len--) {
-	LPC_SSP0->DR = 0;		// Trigger read
+        LPC_SSP0->DR = 0;               // Trigger read
 
-	while ((LPC_SSP0->SR & 4) == 0) { // Loop while empty
-	    continue;
+        while ((LPC_SSP0->SR & 4) == 0) { // Loop while empty
+            continue;
         }
-	*buf++ = LPC_SSP0->DR;
+        *buf++ = LPC_SSP0->DR;
     }
 
-    while ((LPC_SSP0->SR & 1) == 0) {	// Wait until TxFIFO empties
-	continue;
+    while ((LPC_SSP0->SR & 1) == 0) {   // Wait until TxFIFO empties
+        continue;
     }
     delay(10);
-    LPC_GPIO0->FIOSET = SF_NCS;		// Deassert NCS
+    LPC_GPIO0->FIOSET = SF_NCS;         // Deassert NCS
 }
 
 //------------------------------------------------------------------------------
@@ -212,7 +212,7 @@ void ssp0_read(uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
 
 void ssp0_copy(uint32_t addr, uint32_t len)
 {
-    LPC_GPIO0->FIOCLR = SF_NCS;		// Assert NCS
+    LPC_GPIO0->FIOCLR = SF_NCS;         // Assert NCS
 
     ssp0_send(0x03);
 
@@ -220,26 +220,26 @@ void ssp0_copy(uint32_t addr, uint32_t len)
     ssp0_send(addr >> 8);
     ssp0_send(addr);
 
-    while ((LPC_SSP0->SR & 1) == 0) {	// Wait until TxFIFO empties
-	continue;
+    while ((LPC_SSP0->SR & 1) == 0) {   // Wait until TxFIFO empties
+        continue;
     }
-    while ((LPC_SSP0->SR & 4) != 0) {	// Flush RxFIFO
-	(void) LPC_SSP0->DR;
+    while ((LPC_SSP0->SR & 4) != 0) {   // Flush RxFIFO
+        (void) LPC_SSP0->DR;
     }
     while (len--) {
-	LPC_SSP0->DR = 0;		// Trigger read
+        LPC_SSP0->DR = 0;               // Trigger read
 
-	while ((LPC_SSP0->SR & 4) == 0) { // Loop while empty
-	    continue;
+        while ((LPC_SSP0->SR & 4) == 0) { // Loop while empty
+            continue;
         }
-	LPC_SSP1->DR = LPC_SSP0->DR;	// Copy to SSP1
+        LPC_SSP1->DR = LPC_SSP0->DR;    // Copy to SSP1
     }
 
-    while ((LPC_SSP0->SR & 1) == 0) {	// Wait until TxFIFO empties
-	continue;
+    while ((LPC_SSP0->SR & 1) == 0) {   // Wait until TxFIFO empties
+        continue;
     }
     delay(10);
-    LPC_GPIO0->FIOSET = SF_NCS;		// Deassert NCS
+    LPC_GPIO0->FIOSET = SF_NCS;         // Deassert NCS
 }
 
 //------------------------------------------------------------------------------
@@ -249,24 +249,24 @@ void sf_write(uint32_t addr, uint32_t len, uint8_t *buf)
     uint8_t status[4];
 
     while (len != 0) {
-	if ((addr & 0xfff) == 0) {		// On 4K boundary?
-	    ssp0_write(0x39, addr, 0, NULL);	// Unprotect sector
-	    ssp0_write(0x20, addr, 0, NULL);	// Erase 4K sector
+        if ((addr & 0xfff) == 0) {              // On 4K boundary?
+            ssp0_write(0x39, addr, 0, NULL);    // Unprotect sector
+            ssp0_write(0x20, addr, 0, NULL);    // Erase 4K sector
 
-	    do {
-		ssp0_read(0x05, 0xffffffff, 4, status);
-	    } while (status[0] & 1);
-	}
+            do {
+                ssp0_read(0x05, 0xffffffff, 4, status);
+            } while (status[0] & 1);
+        }
 
-	uint32_t bytes = (len > 256) ? 256 : len;
-	ssp0_write(0x02, addr, bytes, buf);
+        uint32_t bytes = (len > 256) ? 256 : len;
+        ssp0_write(0x02, addr, bytes, buf);
 
-	do {
-	    ssp0_read(0x05, 0xffffffff, 4, status);
-	} while (status[0] & 1);
-	len -= bytes;
-	addr += bytes;
-	buf += bytes;
+        do {
+            ssp0_read(0x05, 0xffffffff, 4, status);
+        } while (status[0] & 1);
+        len -= bytes;
+        addr += bytes;
+        buf += bytes;
     }
 }
 
@@ -281,11 +281,11 @@ uint32_t sf_crc32(uint32_t addr, uint32_t len)
     uint32_t crc = 0xffffffff;
 
     while (len != 0) {
-	uint32_t size = (len > FLASH_BYTES) ? FLASH_BYTES : len;
-	ssp0_read(0x03, addr, size, buf);
-	crc = crc32(buf, size, crc);
-	len -= size;
-	addr += size;
+        uint32_t size = (len > FLASH_BYTES) ? FLASH_BYTES : len;
+        ssp0_read(0x03, addr, size, buf);
+        crc = crc32(buf, size, crc);
+        len -= size;
+        addr += size;
     }
 
     return ~crc;
@@ -293,9 +293,9 @@ uint32_t sf_crc32(uint32_t addr, uint32_t len)
 
 //------------------------------------------------------------------------------
 
-#define SSP0_CLK   25000000	// 25 MHz
-#define SSP1_CLK_H 25000000	// 25 MHz
-#define SSP1_CLK_L  5000000	//  5 MHz
+#define SSP0_CLK   25000000     // 25 MHz
+#define SSP1_CLK_H 25000000     // 25 MHz
+#define SSP1_CLK_L  5000000     //  5 MHz
 
 void ssp1_slow(void)
 {
