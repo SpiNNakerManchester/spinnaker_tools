@@ -1,11 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// sark_io.c	    Simple character I/O library for Spinnaker
+// sark_io.c        Simple character I/O library for Spinnaker
 //
 // Copyright (C)    The University of Manchester - 2009, 2010, 2011
 //
 // Author           Steve Temple, APT Group, School of Computer Science
-//		    Fixed point formats by Paul Richmond (Univ. of Sheffield)
+//                  Fixed point formats by Paul Richmond (Univ. of Sheffield)
 //                                     and Dave Lester (APT Group)
 //
 // Email            temples@cs.man.ac.uk
@@ -35,11 +35,11 @@ typedef struct iobuf {
 } iobuf_t;
 
 
-static uint sp_ptr;		// Buffer pointer for 'sprintf'
-static uint buf_ptr;		// Buffer pointer for IO_BUF
+static uint sp_ptr;             // Buffer pointer for 'sprintf'
+static uint buf_ptr;            // Buffer pointer for IO_BUF
 
-static sdp_msg_t *io_msg;	// Points to SDP buffer
-static iobuf_t   *io_buf;	// Points to SDRAM buffer
+static sdp_msg_t *io_msg;       // Points to SDP buffer
+static iobuf_t   *io_buf;       // Points to SDRAM buffer
 
 static const char hex[] = "0123456789abcdef";
 
@@ -53,20 +53,20 @@ static sdp_msg_t *io_std_init()
 {
     sdp_msg_t *msg = sark_alloc(1, sizeof(sdp_msg_t));
     if (msg == NULL) {
-	rt_error(RTE_IOBUF);
+        rt_error(RTE_IOBUF);
     }
 
     msg->flags = 0x07;
     msg->tag = TAG_HOST;
 
-    msg->dest_port = PORT_ETH;	// Take from dbg_addr?
+    msg->dest_port = PORT_ETH;  // Take from dbg_addr?
     msg->dest_addr = sv->dbg_addr;
 
     msg->srce_port = sark.virt_cpu;
     msg->srce_addr = sv->p2p_addr;
 
     msg->cmd_rc = CMD_TUBE;
-    msg->length = 12;		// !! const (SDP header + command word)
+    msg->length = 12;           // !! const (SDP header + command word)
 
     return msg;
 }
@@ -75,9 +75,9 @@ static sdp_msg_t *io_std_init()
 static iobuf_t *io_buf_init()
 {
     iobuf_t *iobuf = sark_xalloc(sv->sys_heap,
-	    sizeof(iobuf_t) + sv->iobuf_size, 0, 1);
+            sizeof(iobuf_t) + sv->iobuf_size, 0, 1);
     if (iobuf == NULL) {
-	rt_error(RTE_IOBUF);
+        rt_error(RTE_IOBUF);
     }
 
     iobuf->unix_time = sv->unix_time;
@@ -112,14 +112,14 @@ void sark_io_buf_reset(void)
 
     // if there are other iobuf blocks, cycle and free
     while (io_buf_to_free != NULL) {
-	// record location of next iobuf block
-	iobuf_t *next_io_buf = io_buf_to_free->next;
+        // record location of next iobuf block
+        iobuf_t *next_io_buf = io_buf_to_free->next;
 
-	// free the current iobuf block
-	sark_xfree(sv->sys_heap, (void *) io_buf_to_free, 1);
+        // free the current iobuf block
+        sark_xfree(sv->sys_heap, (void *) io_buf_to_free, 1);
 
-	// update current pointer to next iobuf block
-	io_buf_to_free = next_io_buf;
+        // update current pointer to next iobuf block
+        io_buf_to_free = next_io_buf;
     }
 }
 
@@ -134,35 +134,35 @@ void sark_io_buf_reset(void)
 void io_put_char(char *stream, uint c)
 {
     if (stream > IO_NULL) {
-	stream[sp_ptr++] = c;
-	stream[sp_ptr] = 0;
+        stream[sp_ptr++] = c;
+        stream[sp_ptr] = 0;
     } else if (stream == IO_STD) {
-	if (io_msg == NULL) {
-	    io_msg = io_std_init();
-	}
+        if (io_msg == NULL) {
+            io_msg = io_std_init();
+        }
 
-	uchar *buf = (uchar *) &io_msg->flags;	// Point at start of msg
+        uchar *buf = (uchar *) &io_msg->flags;  // Point at start of msg
 
-	buf[io_msg->length++] = c;		// Insert char at end
+        buf[io_msg->length++] = c;              // Insert char at end
 
-	if (c == '\n' || c == 0 || io_msg->length == SDP_BUF_SIZE + 12) { // !! const
-	    sark_msg_send(io_msg, 10);	// !! const
-	    io_msg->length = 12;	// !! const
-	}
+        if (c == '\n' || c == 0 || io_msg->length == SDP_BUF_SIZE + 12) { // !! const
+            sark_msg_send(io_msg, 10);  // !! const
+            io_msg->length = 12;        // !! const
+        }
     } else if (stream == IO_BUF) {
-	if (io_buf == NULL) {
-	    io_buf = sark.vcpu->iobuf = io_buf_init();
-	}
+        if (io_buf == NULL) {
+            io_buf = sark.vcpu->iobuf = io_buf_init();
+        }
 
-	io_buf->buf[buf_ptr++] = c;
+        io_buf->buf[buf_ptr++] = c;
 
-	if (buf_ptr == sv->iobuf_size) {
-	    io_buf->ptr = buf_ptr;
-	    io_buf->next = io_buf_init();
-	    io_buf = io_buf->next;
-	} else if (c == '\n' || c == 0) {
-	    io_buf->ptr = buf_ptr;
-	}
+        if (buf_ptr == sv->iobuf_size) {
+            io_buf->ptr = buf_ptr;
+            io_buf->next = io_buf_init();
+            io_buf = io_buf->next;
+        } else if (c == '\n' || c == 0) {
+            io_buf->ptr = buf_ptr;
+        }
     }
 }
 
@@ -180,13 +180,13 @@ static void io_put_str(char *stream, char *s, int d)
     int n = 0;
 
     while (*t++) {
-	n++;
+        n++;
     }
     while (d-- > n) {
-	io_put_char(stream, ' ');
+        io_put_char(stream, ' ');
     }
     while (*s) {
-	io_put_char(stream, *s++);
+        io_put_char(stream, *s++);
     }
 }
 
@@ -201,28 +201,28 @@ static void io_put_int(char *stream, int n, uint d, uint pad) // pad not used!
     uint neg = 0;
 
     if (n < 0) {
-	n = -n;
-	neg = '-';
+        n = -n;
+        neg = '-';
     }
 
     do {
-	divmod_t r = sark_div10(n);
+        divmod_t r = sark_div10(n);
 
-	s[i++] = r.mod + '0';
-	n = r.div;
+        s[i++] = r.mod + '0';
+        n = r.div;
     } while (n != 0);
 
     while (i > 0 && s[--i] == '0') {
-	continue;
+        continue;
     }
     if (neg) {
-	s[++i] = neg;
+        s[++i] = neg;
     }
     while (d-- > i + 1) {
-	io_put_char(stream, ' ');
+        io_put_char(stream, ' ');
     }
     while (i >= 0) {
-	io_put_char(stream, s[i--]);
+        io_put_char(stream, s[i--]);
     }
 }
 
@@ -236,20 +236,20 @@ static void io_put_uint(char *stream, uint n, uint d, uint pad)
     int i = 0;
 
     do {
-	divmod_t r = sark_div10(n);
+        divmod_t r = sark_div10(n);
 
-	s[i++] = r.mod + '0';
-	n = r.div;
+        s[i++] = r.mod + '0';
+        n = r.div;
     } while (n != 0);
 
     while (i > 0 && s[--i] == '0') {
-	continue;
+        continue;
     }
     while (d-- > i + 1) {
-	io_put_char(stream, pad);
+        io_put_char(stream, pad);
     }
     while (i >= 0) {
-	io_put_char(stream, s[i--]);
+        io_put_char(stream, s[i--]);
     }
 }
 
@@ -260,7 +260,7 @@ static void io_put_uint(char *stream, uint n, uint d, uint pad)
 static void io_put_zhex(char *stream, uint n, uint d)
 {
     for (int i = d - 1; i >= 0; i--) {
-	io_put_char(stream, hex[(n >> (4 * i)) & 15]);
+        io_put_char(stream, hex[(n >> (4 * i)) & 15]);
     }
 }
 
@@ -274,18 +274,18 @@ static void io_put_hex(char *stream, uint n, uint d, uint pad)
     int i = 0;
 
     do {
-	s[i++] = hex[n & 15];
-	n = n >> 4;
+        s[i++] = hex[n & 15];
+        n = n >> 4;
     } while (n != 0);
 
     while (i > 0 && s[--i] == '0') {
-	continue;
+        continue;
     }
     while (d-- > i + 1) {
-	io_put_char(stream, pad);
+        io_put_char(stream, pad);
     }
     while (i >= 0) {
-	io_put_char(stream, s[i--]);
+        io_put_char(stream, s[i--]);
     }
 }
 
@@ -298,10 +298,10 @@ static void io_put_hex(char *stream, uint n, uint d, uint pad)
 static void io_put_mac(char *stream, uchar *s)
 {
     for (uint i = 0; i < 6; i++) {
-	io_put_zhex(stream, s[i], 2);
-	if (i != 5) {
-	    io_put_char(stream, ':');
-	}
+        io_put_zhex(stream, s[i], 2);
+        if (i != 5) {
+            io_put_char(stream, ':');
+        }
     }
 }
 
@@ -309,10 +309,10 @@ static void io_put_mac(char *stream, uchar *s)
 static void io_put_ip(char *stream, uchar *s)
 {
     for (uint i = 0; i < 4; i++) {
-	io_put_int(stream, s[i], 0, 0);
-	if (i != 3) {
-	    io_put_char(stream, '.');
-	}
+        io_put_int(stream, s[i], 0, 0);
+        if (i != 3) {
+            io_put_char(stream, '.');
+        }
     }
 }
 #endif
@@ -334,14 +334,14 @@ void io_put_fixed(char *stream, uint n, uint d, uint a, uint pad, int neg)
     // fractional part
 
     f = n;
-    if (a > 12) {	// maximum precision of 12 to prevent overflow
-	a = 12;
+    if (a > 12) {       // maximum precision of 12 to prevent overflow
+        a = 12;
     }
 
     while (i < a) {
-	f &= 0x0000ffff;
-	f *= 10;
-	s[a - ++i] = (f >> 16) + '0';
+        f &= 0x0000ffff;
+        f *= 10;
+        s[a - ++i] = (f >> 16) + '0';
     }
 
     //set carry for rounding
@@ -354,40 +354,40 @@ void io_put_fixed(char *stream, uint n, uint d, uint a, uint pad, int neg)
 
     f = 0;
     while ((c) && (f < a)) {
-	if (s[f] >= '9') {
-	    s[f++] = '0';
-	} else {
-	    s[f++]++;
-	    c=0;
-	}
+        if (s[f] >= '9') {
+            s[f++] = '0';
+        } else {
+            s[f++]++;
+            c=0;
+        }
     }
 
     // add decimal
 
     if (a) {
-	s[i++] = '.';
+        s[i++] = '.';
     }
 
     // integer part
 
-    n = (n >> 16) + c;	// add the carry
+    n = (n >> 16) + c;  // add the carry
 
     do {
-	divmod_t r = sark_div10(n);
+        divmod_t r = sark_div10(n);
 
-	s[i++] = r.mod + '0';
-	n = r.div;
+        s[i++] = r.mod + '0';
+        n = r.div;
     } while (n != 0);
 
-    if (neg) {		// <drl add>
-	s[i++] = '-';
+    if (neg) {          // <drl add>
+        s[i++] = '-';
     }
 
     while (d-- > (i+1)) {
-	io_put_char(stream, pad);
+        io_put_char(stream, pad);
     }
     while (i > 0) {
-	io_put_char(stream, s[--i]);
+        io_put_char(stream, s[--i]);
     }
 }
 
@@ -429,87 +429,87 @@ void io_printf(char *stream, char *f, ...)
     va_list ap;
 
     if (stream == IO_NULL) {
-	return;
+        return;
     } else if (stream > IO_NULL) {
-	sp_ptr = stream[0] = 0;
+        sp_ptr = stream[0] = 0;
     }
 
     va_start(ap, f);
 
     while (1) {
-	char c = *f++;
+        char c = *f++;
 
-	if (c == 0) {
-	    return;
-	}
+        if (c == 0) {
+            return;
+        }
 
-	if (c != '%') {
-	    io_put_char(stream, c);
-	    continue;
-	}
+        if (c != '%') {
+            io_put_char(stream, c);
+            continue;
+        }
 
-	c = *f++;
+        c = *f++;
 
-	if (c == 0) {
-	    return;
-	}
+        if (c == 0) {
+            return;
+        }
 
-	char pad = ' ';
+        char pad = ' ';
 
-	if (c == '0') {
-	    pad = c;
-	}
+        if (c == '0') {
+            pad = c;
+        }
 
-	uint size = 0;
+        uint size = 0;
 
-	while (c >= '0' && c <= '9') {
-	    size = 10 * size + c - '0';
-	    c = *f++;
-	    if (c == 0) {
-		return;
-	    }
-	}
+        while (c >= '0' && c <= '9') {
+            size = 10 * size + c - '0';
+            c = *f++;
+            if (c == 0) {
+                return;
+            }
+        }
 
 #ifdef SPINN_IO_FIX
-	uint precision = 6;
+        uint precision = 6;
 
-	if (c == '.') {
-	    precision = 0;
-	    c = *f++;
+        if (c == '.') {
+            precision = 0;
+            c = *f++;
 
-	    while (c >= '0' && c <= '9') {
-		precision = 10 * precision + c - '0';
-		c = *f++;
-	    }
+            while (c >= '0' && c <= '9') {
+                precision = 10 * precision + c - '0';
+                c = *f++;
+            }
 
-	    if (c == 0) {
-		return;
-	    }
-	}
+            if (c == 0) {
+                return;
+            }
+        }
 #endif // SPINN_IO_FIX
 
 #ifdef SPINN_IO_NET
-	uint t;
+        uint t;
 #endif // SPINN_IO_NET
 
-	switch (c) {
-	case 'c':
-	    io_put_char(stream, va_arg(ap, uint));
-	    break;
+        switch (c) {
+        case 'c':
+            io_put_char(stream, va_arg(ap, uint));
+            break;
 
-	case 's':
-	    io_put_str(stream, va_arg(ap, char *), size);
-	    break;
+        case 's':
+            io_put_str(stream, va_arg(ap, char *), size);
+            break;
 
-	case 'd':
-	    io_put_int(stream, va_arg(ap, int), size, pad);
-	    break;
+        case 'd':
+            io_put_int(stream, va_arg(ap, int), size, pad);
+            break;
 
-	case 'u':
-	    io_put_uint(stream, va_arg(ap, uint), size, pad);
-	    break;
+        case 'u':
+            io_put_uint(stream, va_arg(ap, uint), size, pad);
+            break;
 #ifdef SPINN_IO_FIX
-	case 'f': // Paul Richmond's FP format (u1616)
+        case 'f': // Paul Richmond's FP format (u1616)
 // <drl add>
         case 'K': // ISO unsigned accum (u1616)
             io_put_ufixed(stream, va_arg(ap, uint), size, precision, pad);
@@ -525,37 +525,37 @@ void io_printf(char *stream, char *f, ...)
             break;
 // </drl add>
 #endif // SPINN_IO_FIX
-	case 'x': // hex, digits as needed
-	    io_put_hex(stream, va_arg(ap, uint), size, pad);
-	    break;
+        case 'x': // hex, digits as needed
+            io_put_hex(stream, va_arg(ap, uint), size, pad);
+            break;
 
-	case 'z': // zero prefixed hex, exactly "size" digits
-	    io_put_zhex(stream, va_arg(ap, uint), size);
-	    break;
+        case 'z': // zero prefixed hex, exactly "size" digits
+            io_put_zhex(stream, va_arg(ap, uint), size);
+            break;
 #ifdef SPINN_IO_NET
-	case 'h': // pointer to network short (hex)
-	    t = va_arg(ap, uint);
-	    t = * (ushort *) t;
-	    io_put_zhex(stream, ntohs(t), size);
-	    break;
+        case 'h': // pointer to network short (hex)
+            t = va_arg(ap, uint);
+            t = * (ushort *) t;
+            io_put_zhex(stream, ntohs(t), size);
+            break;
 
-	case 'i': // pointer to network short (decimal)
-	    t = va_arg(ap, uint);
-	    t = * (ushort *) t;
-	    io_put_uint(stream, ntohs(t), size, pad);
-	    break;
+        case 'i': // pointer to network short (decimal)
+            t = va_arg(ap, uint);
+            t = * (ushort *) t;
+            io_put_uint(stream, ntohs(t), size, pad);
+            break;
 
-	case 'p': // pointer to IP address
-	    io_put_ip(stream, va_arg(ap, uchar *));
-	    break;
+        case 'p': // pointer to IP address
+            io_put_ip(stream, va_arg(ap, uchar *));
+            break;
 
-	case 'm': // pointer to MAC address
-	    io_put_mac(stream, va_arg(ap, uchar *));
-	    break;
+        case 'm': // pointer to MAC address
+            io_put_mac(stream, va_arg(ap, uchar *));
+            break;
 #endif // SPINN_IO_NET
-	default:
-	    io_put_char(stream, c);
-	}
+        default:
+            io_put_char(stream, c);
+        }
     }
     //  va_end(ap);
 }

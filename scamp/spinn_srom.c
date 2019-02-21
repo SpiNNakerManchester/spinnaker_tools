@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// spinn_srom.c	    Serial ROM interface routines for Spinnaker
+// spinn_srom.c     Serial ROM interface routines for Spinnaker
 //
 // Copyright (C)    The University of Manchester - 2009, 2010
 //
@@ -15,17 +15,17 @@
 
 // Serial ROM command codes
 
-#define SROM_READ  	(0x03U << 24)
-#define SROM_WRITE 	(0x02U << 24)
-#define SROM_WREN  	(0x06U << 24)
-#define SROM_WRDI  	(0x04U << 24)
-#define SROM_RDSR  	(0x05U << 24)
-#define SROM_WRSR  	(0x01U << 24)
-#define SROM_PE    	(0x42U << 24)
-#define SROM_SE    	(0xd8U << 24)
-#define SROM_CE    	(0xc7U << 24)
-#define SROM_RDID  	(0xabU << 24)
-#define SROM_DPD   	(0xb9U << 24)
+#define SROM_READ       (0x03U << 24)
+#define SROM_WRITE      (0x02U << 24)
+#define SROM_WREN       (0x06U << 24)
+#define SROM_WRDI       (0x04U << 24)
+#define SROM_RDSR       (0x05U << 24)
+#define SROM_WRSR       (0x01U << 24)
+#define SROM_PE         (0x42U << 24)
+#define SROM_SE         (0xd8U << 24)
+#define SROM_CE         (0xc7U << 24)
+#define SROM_RDID       (0xabU << 24)
+#define SROM_DPD        (0xb9U << 24)
 
 #define WAIT 0x40
 #define WREN 0x80
@@ -62,16 +62,16 @@ static void clock()
 static void send(uint v, uint n)
 {
     do {
-	if (v & 0x80000000) {
-	    sc[GPIO_SET] = SERIAL_SI;
-	} else {
+        if (v & 0x80000000) {
+            sc[GPIO_SET] = SERIAL_SI;
+        } else {
             sc[GPIO_CLR] = SERIAL_SI;
-	}
+        }
 
-	clock();
+        clock();
 
-	v = v << 1;
-	n--;
+        v = v << 1;
+        n--;
     } while (n != 0);
 
     sc[GPIO_CLR] = SERIAL_SI;
@@ -84,15 +84,15 @@ static uint read8()
     uint n = 8;
 
     do {
-	uint p = sc[GPIO_READ];
-	if (p & SERIAL_SO) {
-	    r |= 1;
-	}
+        uint p = sc[GPIO_READ];
+        if (p & SERIAL_SO) {
+            r |= 1;
+        }
 
-	clock();
+        clock();
 
-	r = r << 1;
-	n--;
+        r = r << 1;
+        n--;
     } while (n != 0);
 
     return r >> 1;
@@ -117,14 +117,14 @@ static uint read8()
 uint cmd_srom(sdp_msg_t *msg)
 {
     uint arg1 = msg->arg1;
-    uint port = sc[GPIO_PORT];	// Preserve output state
+    uint port = sc[GPIO_PORT];  // Preserve output state
 
     ncs_high();
 
     if (arg1 & WREN) {
-	ncs_low();
-	send(SROM_WREN, 8);
-	ncs_high();
+        ncs_low();
+        send(SROM_WREN, 8);
+        ncs_high();
     }
 
     ncs_low();
@@ -136,32 +136,32 @@ uint cmd_srom(sdp_msg_t *msg)
     uchar* rbuf = (uchar *) &msg->arg1;
 
     while (len) {
-	if (arg1 & WRITE) {
-	    send(*wbuf++ << 24, 8);
+        if (arg1 & WRITE) {
+            send(*wbuf++ << 24, 8);
         } else {
             *rbuf++ = read8();
         }
 
-	len--;
+        len--;
     }
 
     ncs_high();
 
     while (arg1 & WAIT) {
-	ncs_low();
-	send(SROM_RDSR, 8);
-	uint sr = read8();
-	ncs_high();
+        ncs_low();
+        send(SROM_RDSR, 8);
+        uint sr = read8();
+        ncs_high();
 
-	if ((sr & 1) == 0) {
-	    break;
-	}
+        if ((sr & 1) == 0) {
+            break;
+        }
     }
 
     sc[GPIO_PORT] = port;
 
     if (arg1 & WRITE) {
-	return 0;
+        return 0;
     }
 
     return arg1 >> 16;

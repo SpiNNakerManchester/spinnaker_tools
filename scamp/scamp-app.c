@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// scamp-app.c	    Application support for SC&MP
+// scamp-app.c      Application support for SC&MP
 //
 // Copyright (C)    The University of Manchester - 2009-2012
 //
@@ -24,9 +24,9 @@ void clock_ap(uint phys_mask, uint enable)
     uint state = sc[SC_CPU_DIS];
 
     if (enable) {
-	state &= ~phys_mask;
+        state &= ~phys_mask;
     } else {
-	state |= phys_mask;
+        state |= phys_mask;
     }
 
     sc[SC_CPU_DIS] = SC_CODE + state;
@@ -68,11 +68,11 @@ void boot_ap(void)
 void signal_sark(uint cmd, uint data, uint virt_mask, uint phys_mask)
 {
     for (uint cpu = 1; cpu < num_cpus; cpu++) {
-	if (virt_mask & (1 << cpu)) {
-	    vcpu_t *vcpu = sv_vcpu + cpu;
-	    vcpu->mbox_ap_cmd = cmd;
-	    vcpu->mbox_ap_msg = (void *) data;
-	}
+        if (virt_mask & (1 << cpu)) {
+            vcpu_t *vcpu = sv_vcpu + cpu;
+            vcpu->mbox_ap_cmd = cmd;
+            vcpu->mbox_ap_msg = (void *) data;
+        }
     }
 
     sc[SC_SET_IRQ] = SC_CODE + phys_mask;
@@ -84,15 +84,15 @@ void signal_sark(uint cmd, uint data, uint virt_mask, uint phys_mask)
 void set_cpu_info(uint virt_mask, uint state, uint app_id)
 {
     for (uint cpu = 1; cpu < num_cpus; cpu++) {
-	if (virt_mask & (1 << cpu)) {
-	    vcpu_t *vcpu = sv_vcpu + cpu;
+        if (virt_mask & (1 << cpu)) {
+            vcpu_t *vcpu = sv_vcpu + cpu;
 
-	    vcpu->cpu_state = state;
-	    vcpu->time = sv->unix_time;
+            vcpu->cpu_state = state;
+            vcpu->time = sv->unix_time;
 
-	    vcpu->app_id = app_id;
-	    core_app[cpu] = app_id;
-	}
+            vcpu->app_id = app_id;
+            core_app[cpu] = app_id;
+        }
     }
 }
 
@@ -106,7 +106,7 @@ uint find_lead(uint mask)
     uint count = 0;
 
     while ((mask != 0) && ((mask & (1 << count)) == 0)) {
-	count++;
+        count++;
     }
 
     return count;
@@ -119,7 +119,7 @@ void proc_start_app(uint aplx_addr, uint id_op_mask)
     uint virt_mask = id_op_mask & 0x0003ffff;
 
     if (virt_mask == 0) {
-	return;
+        return;
     }
 
     uint app_id = id_op_mask >> 24;
@@ -128,10 +128,10 @@ void proc_start_app(uint aplx_addr, uint id_op_mask)
     app_data_t *app = sv->app_data + app_id;
 
     if (app->cores == 0) {
-	app->clean = 0;
-	app->sema = 0;
-	app->mask = 0;
-	app->lead = find_lead(virt_mask);
+        app->clean = 0;
+        app->sema = 0;
+        app->mask = 0;
+        app->lead = find_lead(virt_mask);
     }
 
     app->cores += sark_count_bits(virt_mask);
@@ -155,7 +155,7 @@ void clean_app_id(uint app_id)
     app_data_t *app = sv->app_data + app_id;
 
     if (app->clean) {
-	return;
+        return;
     }
 
     sark_xfree_id(sv->sdram_heap,  app_id, 1);
@@ -196,8 +196,8 @@ void proc_stop_app(uint app_id_and_virt_mask, uint app_mask_and_phys_mask)
 
     uint candidate_app_id = app_id;
     while ((candidate_app_id & app_mask) == app_id) {
-	clean_app_id(candidate_app_id);
-	candidate_app_id++;
+        clean_app_id(candidate_app_id);
+        candidate_app_id++;
     }
 
     proc_init_cores(virt_mask, phys_mask);
@@ -226,34 +226,34 @@ void signal_app(uint data)
     uint phys_mask = 0;
 
     for (uint i = 1; i < num_cpus; i++) {
-	uint b = (core_app[i] & app_mask) == app_id;
-	virt_mask |= b << i;
-	phys_mask |= b << v2p_map[i];
+        uint b = (core_app[i] & app_mask) == app_id;
+        virt_mask |= b << i;
+        phys_mask |= b << v2p_map[i];
     }
 
     switch (sig) {
     case SIG_INIT:
-	event_queue_proc(proc_init_cores, virt_mask, phys_mask, PRIO_0);
-	break;
+        event_queue_proc(proc_init_cores, virt_mask, phys_mask, PRIO_0);
+        break;
 
     case SIG_PWRDN:
-	event_queue_proc(proc_power_down, virt_mask, phys_mask, PRIO_0);
-	break;
+        event_queue_proc(proc_power_down, virt_mask, phys_mask, PRIO_0);
+        break;
 
     case SIG_STOP:
-	event_queue_proc(proc_stop_app, (app_id << 24) | virt_mask,
-		(app_mask << 24) | phys_mask, PRIO_0);
-	break;
+        event_queue_proc(proc_stop_app, (app_id << 24) | virt_mask,
+                (app_mask << 24) | phys_mask, PRIO_0);
+        break;
 
     case SIG_SYNC0:
-	sc[SC_CLRFLAG] = virt_mask;
-	sc[SC_SET_IRQ] = SC_CODE + phys_mask;
-	break;
+        sc[SC_CLRFLAG] = virt_mask;
+        sc[SC_SET_IRQ] = SC_CODE + phys_mask;
+        break;
 
     case SIG_SYNC1:
-	sc[SC_SETFLAG] = virt_mask;
-	sc[SC_SET_IRQ] = SC_CODE + phys_mask;
-	break;
+        sc[SC_SETFLAG] = virt_mask;
+        sc[SC_SET_IRQ] = SC_CODE + phys_mask;
+        break;
 
     case SIG_TIMER:
     case SIG_USR0:
@@ -264,7 +264,7 @@ void signal_app(uint data)
     case SIG_CONT:
     case SIG_EXIT:
     case SIG_START:
-	signal_sark(SHM_SIGNAL, sig, virt_mask, phys_mask);
-	break;
+        signal_sark(SHM_SIGNAL, sig, virt_mask, phys_mask);
+        break;
     }
 }

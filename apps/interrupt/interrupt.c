@@ -20,13 +20,13 @@ uint ticks;
 
 INT_HANDLER timer_int_han(void)
 {
-    tc[T1_INT_CLR] = (uint) tc;			// Clear interrupt in timer
+    tc[T1_INT_CLR] = (uint) tc;                 // Clear interrupt in timer
 
-    sark_led_set(LED_FLIP(1));			// Flip a LED
+    sark_led_set(LED_FLIP(1));                  // Flip a LED
 
-    io_printf(IO_BUF, "Tick %d\n", ++ticks);	// Write message to buffer
+    io_printf(IO_BUF, "Tick %d\n", ++ticks);    // Write message to buffer
 
-    vic[VIC_VADDR] = (uint) vic;		// Tell VIC we're done
+    vic[VIC_VADDR] = (uint) vic;                // Tell VIC we're done
 }
 
 
@@ -37,10 +37,10 @@ INT_HANDLER timer_int_han(void)
 
 void timer_setup(uint period)
 {
-    tc[T1_CONTROL] = 0xe2;			// Set up count-down mode
-    tc[T1_LOAD] = sark.cpu_clk * period;	// Load time in microsecs
+    tc[T1_CONTROL] = 0xe2;                      // Set up count-down mode
+    tc[T1_LOAD] = sark.cpu_clk * period;        // Load time in microsecs
 
-    sark_vic_set(SLOT_0, TIMER1_INT, 1, timer_int_han);	// Set VIC slot 0
+    sark_vic_set(SLOT_0, TIMER1_INT, 1, timer_int_han); // Set VIC slot 0
 }
 
 
@@ -49,9 +49,9 @@ void timer_setup(uint period)
 
 void c_main(void)
 {
-    io_printf(IO_STD, "Timer interrupt example\n");	// Say hello
+    io_printf(IO_STD, "Timer interrupt example\n");     // Say hello
 
-    timer_setup(500000);		// This is 500,000 us (0.5 secs)
+    timer_setup(500000);                // This is 500,000 us (0.5 secs)
 
-    cpu_sleep();			// Send core to sleep
+    cpu_sleep();                        // Send core to sleep
 }

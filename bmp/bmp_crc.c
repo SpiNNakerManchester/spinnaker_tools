@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// bmp_crc.c	    CRC32 routines for BMP LPC1768
+// bmp_crc.c        CRC32 routines for BMP LPC1768
 //
 // Author           Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
@@ -70,7 +70,7 @@ uint32_t crc32(void *buf, uint32_t len, uint32_t crc)
     uint8_t *buffer = (uint8_t *) buf;
 
     for (int32_t i = 0; i < len; i++) {
-	crc = crc_table[(crc ^ (*buffer++)) & 0xff] ^ (crc >> 8);
+        crc = crc_table[(crc ^ (*buffer++)) & 0xff] ^ (crc >> 8);
     }
     return crc;
 }
@@ -82,7 +82,7 @@ uint32_t crc32_chk(void *buf, uint32_t len)
     uint32_t crc = 0xffffffff;
 
     while (len--) {
-	crc = crc_table[(crc ^ (*buffer++)) & 0xff] ^ (crc >> 8);
+        crc = crc_table[(crc ^ (*buffer++)) & 0xff] ^ (crc >> 8);
     }
     return crc;
 }
@@ -97,13 +97,13 @@ void crc32_buf(void *buf, uint32_t len)
     uint32_t crc = 0xffffffff;
 
     while (len > 4) {
-	crc = crc_table[(crc ^ (*buffer++)) & 0xff] ^ (crc >> 8);
-	len--;
+        crc = crc_table[(crc ^ (*buffer++)) & 0xff] ^ (crc >> 8);
+        len--;
     }
 
     while (len--) {
-	*buffer++ = crc;
-	crc = crc >> 8;
+        *buffer++ = crc;
+        crc = crc >> 8;
     }
 }
 
@@ -118,18 +118,18 @@ int main()
     uint32_t count = 0;
 
     for (int i = 0; i < 4096; i++) {
-	buf[i] = 0xff;
+        buf[i] = 0xff;
     }
     crc32_insert(buf, 4096);
     fwrite(buf, 1, 4096, stdout);
 
     while (1) {
-	uint32_t r = fread(buf, 1, 4096, stdin);
-	if (r == 0) {
-	    break;
-	}
-	count++;
-	crc = crc32(buf, r, crc);
+        uint32_t r = fread(buf, 1, 4096, stdin);
+        if (r == 0) {
+            break;
+        }
+        count++;
+        crc = crc32(buf, r, crc);
     }
 
     fprintf(stderr, "CRC32 %08x (%d)\n", crc, count);
