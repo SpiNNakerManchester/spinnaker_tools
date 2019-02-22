@@ -1237,7 +1237,7 @@ dumped.
 \param ... further (integer) arguments
 */
 
-void rt_error (uint code, ...);
+void rt_error (uint code, ...) __attribute__((noreturn));
 
 /*!
 Copy "n" bytes of memory from "src" to "dest". The memory is copied
