@@ -13,6 +13,10 @@
 
 //------------------------------------------------------------------------------
 
+event_t cancelled;  // placeholder for events cancelled @ timer_queue head
+
+//------------------------------------------------------------------------------
+
 
 extern INT_HANDLER timer2_int_han(void);
 
@@ -38,11 +42,15 @@ void event_register_timer(vic_slot slot)
 
 void timer_schedule(event_t *e, uint time)
 {
-    time *= sark.cpu_clk;                       // Convert us to timer ticks
+    if (e->proc == NULL){               // may compromise cancelled placeholder
+        return;
+    }
+
+    time *= sark.cpu_clk;               // Convert us to timer ticks
 
     uint cpsr = cpu_int_disable();
 
-    if (event.timer_queue == NULL) {            // Queue empty - just insert
+    if (event.timer_queue == NULL) {    // Queue empty - just insert
         event.timer_queue = e;
 
         tc[T2_LOAD] = time;
@@ -54,12 +62,18 @@ void timer_schedule(event_t *e, uint time)
 
     uint t2c = tc[T2_COUNT];
 
-    if (time < t2c) {                           // Earlier than current head - replace
-        tc[T2_LOAD] = time;                     // Set counter to new time
+    if (time < t2c) {                   // Earlier than current head - replace
+        tc[T2_LOAD] = time;             // Set counter to new time
 
-        event.timer_queue->time = t2c - time;   // Adjust old head time
+        // remove cancelled placeholder if present
+        // NOTE: placeholder must only be present at head of queue
+        if (event.timer_queue->proc == NULL){
+            event.timer_queue = event.timer_queue->next;
+        }
 
-        e->next = event.timer_queue;            // and insert new timer at head
+        event.timer_queue->time += t2c - time;   // Adjust old head time
+
+        e->next = event.timer_queue;   // and insert new timer at head
         event.timer_queue = e;
 
         cpu_int_restore(cpsr);
@@ -124,9 +138,10 @@ uint timer_schedule_proc(event_proc proc, uint arg1, uint arg2, uint time)
 // allocated when the timer was created must be given in case the
 // timer has already executed and possibly been recycled.
 
-// It is potentially quite difficult to cancel an timer at the head
-// of the timer queue so in this case the "proc" is made NULL and
-// the timer left to terminate on the timer interrupt.
+// It is potentially quite difficult to cancel a timer at the head
+// of the timer queue so in that case the timer is replaced with a
+// placeholder with "proc" set to NULL and the placeholder is left
+// to terminate on the timer interrupt.
 
 
 void timer_cancel(event_t *e, uint ID)
@@ -142,8 +157,9 @@ void timer_cancel(event_t *e, uint ID)
     uint cpsr = cpu_int_disable();
     event_t* q = event.timer_queue;
 
-    if (q == e) {               // At head of queue - nullify proc
-        e->proc = NULL;
+    if (q == e) {   // At head of queue - replace with cancelled placeholder
+        cancelled.next    = e->next;
+        event.timer_queue = &cancelled;
     } else {                    // Further down queue - remove
         event_t* pq = q;
         q = q->next;
@@ -156,11 +172,6 @@ void timer_cancel(event_t *e, uint ID)
                     e->next->time += e->time;
                 }
 
-                e->next = event.free;   // Return to free queue
-                event.free = e;
-                e->ID = 0;
-                event.count--;
-
                 break;
             }
 
@@ -169,7 +180,40 @@ void timer_cancel(event_t *e, uint ID)
         }
     }
 
+    // update event if cancelled
+    if (q != NULL) {
+        e->ID = 0;                  // mark event as inactive
+
+        // free event if not reused
+        if (e->reuse == 0) {
+            e->next = event.free;   // Return to free queue
+            event.free = e;
+            event.count--;
+        }
+    }
+
     cpu_int_restore(cpsr);
+}
+
+
+//------------------------------------------------------------------------------
+
+
+// Initialise a statically-allocated event that can be used in place
+// of an event that is cancelled at the head of the timer queue.
+
+// It is potentially quite difficult to cancel a timer at the head
+// of the timer queue so in that case the timer is replaced with a
+// placeholder with "proc" set to NULL and the placeholder is left
+// to terminate on the timer interrupt.
+
+
+void timer_cancel_init(void)
+{
+    cancelled.proc  = (event_proc) NULL;
+    cancelled.ID    = 0;
+    cancelled.time  = 0;
+    cancelled.reuse = 1;                // event must not be freed!
 }
 
 
@@ -201,16 +245,21 @@ void timer2_int(void)
     }
 
     while (eq != NULL) {                // Run the execute queue
+        // mark event as inactive - do it here in case 'proc' reuses it
+        eq->ID = 0;
+
         if (eq->proc != NULL) {         // Execute proc if non-NULL
             eq->proc(eq->arg1, eq->arg2);
         }
 
         event_t* next = eq->next;
 
-        eq->next = event.free;          // Return to free queue
-        event.free = eq;
-        eq->ID = 0;
-        event.count--;
+        // free event if not reused
+        if (eq->reuse == 0) {
+            eq->next = event.free;      // Return to free queue
+            event.free = eq;
+            event.count--;
+        }
 
         eq = next;
     }

@@ -552,6 +552,10 @@ SDP message definition
 Note that the length field is the number of bytes following the
 checksum. It will be a minimum of 8 as the SDP header should always
 be present.
+
+NOTE: make sure to comply with 'sark_block_init()' requirements:
+    1. size must be a non-zero multiple of 4 bytes.
+    2. first field must be a pointer to same struct type.
 */
 
 typedef struct sdp_msg {        // SDP message - 292 bytes
@@ -760,9 +764,13 @@ the event is invoked, the proc is called with the two supplied
 arguments. Queues of events are maintained either on a timer queue for
 events which have to occur at a particular time or on a set of
 priority ordered queues for events which are processed by a scheduler.
+
+NOTE: make sure to comply with 'sark_block_init()' requirements:
+    1. size must be a non-zero multiple of 4 bytes.
+    2. first field must be a pointer to same struct type.
 */
 
-typedef struct event {          // 24 bytes
+typedef struct event {          // 28 bytes
     struct event *next;         //!< Next in Q or NULL
 
     event_proc proc;            //!< Proc to be called or NULL
@@ -771,6 +779,11 @@ typedef struct event {          // 24 bytes
     uint time;                  //!< Time (CPU ticks) until event due
                                 //!< (or 0 if at head of Q)
     uint ID;                    //!< Unique ID for active event (0 if inactive)
+
+    uchar reuse;                //!< do not free event after queue processing
+    uchar __PAD1;               //!< (spare - included for correct size)
+    uchar __PAD2;               //!< (spare - included for correct size)
+    uchar __PAD3;               //!< (spare - included for correct size)
 } event_t;
 
 /*!
@@ -809,7 +822,7 @@ typedef struct event_data {
     uint rc;                    //!< Failure codes
 
     volatile uchar state;       //!< Stop/pauses event loop
-    uchar __PAD1;               //!< (Spare)
+    uchar id_rsvd;              //!< number of reserved IDs
     uchar wait;                 //!< Wait state
     uchar user;                 //!< Non-zero if user event pending
 
@@ -2242,6 +2255,19 @@ and "arg2" fields. The "ID", "next" and "time" fields are also set.
 
 event_t* event_new (event_proc proc, uint arg1, uint arg2);
 
+/*
+// Configure a (reusable) event that has already been allocated.
+// Configure fields "proc", "arg1" and "arg2" from the parameters.
+// Fields "next" and "time" are set to default values.
+
+\param event pointer to an event (to be configured)
+\param proc pointer to an event_proc
+\param arg1 argument 1 to the event_proc
+\param arg2 argument 2 to the event_proc
+*/
+
+void event_config(event_t* event, event_proc proc, uint arg1, uint arg2);
+
 /*!
 Transmit a packet which contains only a key. The packet is placed on a
 transmit queue and sent when it reaches the head of the queue. The
@@ -2526,15 +2552,29 @@ means that a timer event which may be cancelled must be allocated by
 event_new, the ID noted and the event then scheduled with
 timer_schedule.
 
-It is potentially quite difficult to cancel an timer at the head
-of the timer queue so in this case the "proc" is made NULL and
-the timer left to terminate on the timer interrupt.
+It is potentially quite difficult to cancel a timer at the head
+of the timer queue so in that case the timer is replaced with a
+placeholder with "proc" set to NULL and the placeholder is left
+to terminate on the timer interrupt.
 
 \param e event to cancel
 \param ID ID of event to cancel
 */
 
 void timer_cancel (event_t *e, uint ID);
+
+/*!
+Initialise a statically allocated event to be used in place
+of an event that is cancelled at the head of the timer queue.
+
+It is potentially quite difficult to cancel a timer at the head
+of the timer queue so in that case the timer is replaced with a
+placeholder with "proc" set to NULL and the placeholder is left
+to terminate on the timer interrupt.
+*/
+
+void timer_cancel_init(void);
+
 
 //------------------------------------------------------------------------------
 

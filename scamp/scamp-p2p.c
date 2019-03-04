@@ -129,6 +129,45 @@ uint close_ack_time = 250;
 
 //------------------------------------------------------------------------------
 
+/*
+ initialise TX and RX descriptors
+*/
+
+void desc_init(void)
+{
+    tx_desc_t *tdesc = &tx_desc;
+
+    // initialise TX descriptor reusable event
+    event_t* e = event_new((event_proc) NULL, 0, 0);
+    tdesc->event = e;
+    tdesc->event_id = e->ID;
+    e->ID = 0;                          // mark event as inactive
+    e->reuse = 1;                       // mark event as reused
+
+    rx_desc_t *rdesc = rx_desc_table;
+
+    // initialise RX descriptors reusable events
+    for (uint i = 0; i < P2P_NUM_STR; i++) {
+        e = event_new((event_proc) NULL, 0, 0);
+        rdesc->event = e;
+        rdesc->event_id = e->ID;
+        e->ID = 0;                      // mark event as inactive
+        e->reuse = 1;                   // mark event as reused
+
+        rdesc++;
+    }
+
+    // update number of reserved event IDs
+    uint cpsr = cpu_int_disable();
+
+    event.id_rsvd += P2P_NUM_STR + 1;
+
+    cpu_int_restore(cpsr);
+}
+
+
+//------------------------------------------------------------------------------
+
 // #define ASM
 
 #ifdef ASM // !! Needs updating
@@ -316,19 +355,17 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
     p2p_stats[P2P_SENDS]++;
 #endif
 
+    event_t *e = desc->event;                   // pre-allocated reused event
+
     while (1) {
         desc->ack = 0;
 
-        //##event_t* e = event_new(proc_byte_set, (uint) &desc->ack, 2);
-        event_t* e = event_new(p2p_open_timeout, (uint) desc, 2);
-        desc->event = e;
-        if (e != NULL) {
-            desc->event_id = e->ID;
-            timer_schedule(e, open_ack_time);
-        } else {
-            sw_error(SW_OPT);
-            return RC_BUF;
-        }
+        // configure event for timeout
+        event_config(e, p2p_open_timeout, (uint) desc, 2);
+        e->ID = desc->event_id;
+
+        // schedule timeout
+        timer_schedule(e, open_ack_time);
 
         p2p_send_ctl(P2P_OPEN_REQ, addr, (len << 8) + ctrl);
 
@@ -373,15 +410,12 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
                 if (is_last_seq || (next_mask == 0)) {
                     desc->ack = 0;
 
-                    event_t* e = event_new(p2p_ack_timeout, (uint) desc, 0);
-                    if (e != NULL) {
-                        desc->event = e;
-                        desc->event_id = e->ID;
-                        timer_schedule(e, data_ack_time);
-                    } else {
-                        sw_error(SW_OPT);
-                        return RC_BUF;
-                    }
+                    // configure event for timeout
+                    event_config(e, p2p_ack_timeout, (uint) desc, 0);
+                    e->ID = desc->event_id;
+
+                    // schedule timeout
+                    timer_schedule(e, data_ack_time);
                 }
 
                 uint data = (desc->rid << 29) + (desc->phase << 28) //##
@@ -441,14 +475,14 @@ void p2p_data_timeout(uint rxd, uint a2)
         p2p_send_ctl(P2P_DATA_ACK, desc->srce,
                 (desc->phase << 21) + (desc->tid << 16) + desc->mask);
 
-        event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
-        if (e != NULL) {
-            desc->event = e;
-            desc->event_id = e->ID;
-            timer_schedule(e, data_time);
-        } else {
-            sw_error(SW_OPT);
-        }
+        event_t* e = desc->event;   // pre-allocated reused event
+
+        // configure event for timeout
+        event_config(e, p2p_data_timeout, (uint) desc, 0);
+        e->ID = desc->event_id;
+
+        // schedule timeout
+        timer_schedule(e, data_time);
     }
 }
 
@@ -507,6 +541,8 @@ void p2p_open_req(uint data, uint addr)
     rx_desc_t *desc = rx_desc_table;
     uint rid = P2P_NUM_STR;
 
+    // find free stream - unless it is a repeated request
+    // NOTE: make sure to check all streams before exiting the loop!
     for (uint i = 0; i < P2P_NUM_STR; i++) {
         if (desc->state == RX_OPEN && desc->srce == addr
                 && desc->tid == tid) {                  // Already open
@@ -518,14 +554,14 @@ void p2p_open_req(uint data, uint addr)
 
             desc->tcount = open_ack_retry;
 
-            event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
-            if (e != NULL) {
-                desc->event = e;
-                desc->event_id = e->ID;
-                timer_schedule(e, data_time);
-            } else {
-                sw_error(SW_OPT);
-            }
+            event_t* e = desc->event;   // pre-allocated reused event
+
+            // configure event for timeout
+            event_config(e, p2p_data_timeout, (uint) desc, 0);
+            e->ID = desc->event_id;
+
+            // schedule timeout
+            timer_schedule(e, data_time);
 
             return;
         }
@@ -583,14 +619,14 @@ void p2p_open_req(uint data, uint addr)
     p2p_stats[P2P_OPENS]++;
 #endif
 
-    event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
-    if (e != NULL) {
-        desc->event = e;
-        desc->event_id = e->ID;
-        timer_schedule(e, data_time);
-    } else {
-        sw_error(SW_OPT);
-    }
+    event_t* e = desc->event;           // pre-allocated reused event
+
+    // configure event for timeout
+    event_config(e, p2p_data_timeout, (uint) desc, 0);
+    e->ID = desc->event_id;
+
+    // schedule timeout
+    timer_schedule(e, data_time);
 }
 
 
@@ -617,14 +653,14 @@ void p2p_close_timeout(uint rxd, uint rid)
     p2p_send_ctl(P2P_CLOSE_REQ, desc->srce,
             (rid << 21) + (desc->tid << 16)); //##
 
-    event_t* e = event_new(p2p_close_timeout, (uint) desc, rid);
-    if (e != NULL) {
-        desc->event = e;
-        desc->event_id = e->ID;
-        timer_schedule(e, close_ack_time);
-    } else {
-        sw_error(SW_OPT);
-    }
+    event_t* e = desc->event;
+
+    // configure event for timeout
+    event_config(e, p2p_close_timeout, (uint) desc, rid);
+    e->ID = desc->event_id;
+
+    // schedule timeout
+    timer_schedule(e, close_ack_time);
 }
 
 
@@ -689,16 +725,16 @@ void p2p_rcv_data(uint data, uint addr)
                 p2p_send_ctl(P2P_CLOSE_REQ, desc->srce,
                         (rid << 21) + (desc->tid << 16)); //##
 
-                // start close timout - mustn't exit until have CLOSE_ACK
+                // start close timeout - mustn't exit until have CLOSE_ACK
 
-                event_t* e = event_new(p2p_close_timeout, (uint) desc, rid);
-                if (e != NULL) {
-                    desc->event = e;
-                    desc->event_id = e->ID;
-                    timer_schedule(e, close_ack_time);
-                } else {
-                    sw_error(SW_OPT);
-                }
+                event_t* e = desc->event;
+
+                // configure event for timeout
+                event_config(e, p2p_close_timeout, (uint) desc, rid);
+                e->ID = desc->event_id;
+
+                // schedule timeout
+                timer_schedule(e, close_ack_time);
             } else {                            // more to do
                 uint phase = desc->phase ^= 1;
                 desc->base += (3 * desc->seq_len);
@@ -709,14 +745,14 @@ void p2p_rcv_data(uint data, uint addr)
 
                 desc->tcount = data_ack_retry;
 
-                event_t* e = event_new(p2p_data_timeout, (uint) desc, 0);
-                if (e != NULL) {
-                    desc->event = e;
-                    desc->event_id = e->ID;
-                    timer_schedule(e, data_time);
-                } else {
-                    sw_error(SW_OPT);
-                }
+                event_t* e = desc->event;
+
+                // configure event for timeout
+                event_config(e, p2p_data_timeout, (uint) desc, 0);
+                e->ID = desc->event_id;
+
+                // schedule timeout
+                timer_schedule(e, data_time);
             }
         }
     }

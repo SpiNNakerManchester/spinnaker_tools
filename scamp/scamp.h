@@ -333,6 +333,7 @@ extern void reset_ap(uint virt_mask);
 // scamp-p2p.c
 
 extern uint p2p_send_msg(uint addr, sdp_msg_t *msg);
+extern void desc_init(void);
 
 // scamp-nn.c
 extern void p2pc_addr_nn_send(uint arg1, uint arg2);

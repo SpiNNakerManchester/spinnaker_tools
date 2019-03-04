@@ -363,16 +363,21 @@ void event_run(uint restart)
         while (e != NULL) {
             event_t* next = e->next;
 
+            // mark event as inactive - do it here in case 'proc' reuses it
+            e->ID = 0;
+
             e->proc(e->arg1, e->arg2);  // No need to check for NULL here
 
-            uint cpsr = cpu_int_disable();
+            // free event if not reused
+            if (e->reuse == 0) {
+                uint cpsr = cpu_int_disable();
 
-            e->next = event.free;       // Return to free queue
-            event.free = e;
-            e->ID = 0;
-            event.count--;
+                e->next = event.free;   // Return to free queue
+                event.free = e;
+                event.count--;
 
-            cpu_int_restore(cpsr);
+                cpu_int_restore(cpsr);
+            }
 
             e = next;
         }
@@ -407,16 +412,21 @@ void event_run2(uint restart)
 
         cpu_int_restore(cpsr);          // Interrupts on again
 
+        // mark event as inactive - do it here in case 'proc' reuses it
+        e->ID = 0;
+
         e->proc(e->arg1, e->arg2);      // Execute the "proc"
 
-        cpsr = cpu_int_disable();       // Return to free queue
+        // free event if not reused
+        if (e->reuse == 0) {
+            cpsr = cpu_int_disable();   // Return to free queue
 
-        e->next = event.free;
-        event.free = e;
-        e->ID = 0;
-        event.count--;
+            e->next = event.free;
+            event.free = e;
+            event.count--;
 
-        cpu_int_restore(cpsr);
+            cpu_int_restore(cpsr);
+        }
 
         if (restart) {                  // Back to priority 0 if anything
             priority = PRIO_0;          // executed
@@ -441,7 +451,7 @@ event_t* event_new(event_proc proc, uint arg1, uint arg2)
         uint next_id = event.id + 1;
 
         if (next_id == 0) {
-            next_id = 1;
+            next_id = event.id_rsvd + 1;  // "jump" over reserved IDs
         }
 
         event.free = e->next;
@@ -482,6 +492,13 @@ uint event_alloc(uint events)
     if (head != NULL) {
         event_t *tail = sark_block_init(head, events, sizeof(event_t));
 
+        // initialise all events to 'not reused'
+        event_t *e = head;
+        while (events--) {
+            e->reuse = 0;
+            e = e->next;
+        }
+
         uint cpsr = cpu_int_disable();
 
         tail->next = event.free;
@@ -494,6 +511,22 @@ uint event_alloc(uint events)
 
     event.rc |= EFAIL(EFAIL_ALLOC);
     return 0;
+}
+
+
+//------------------------------------------------------------------------------
+
+// Configure a (reusable) event that has already been allocated.
+// Configure fields "proc", "arg1" and "arg2" from the parameters.
+// Fields "next" and "time" are set to default values.
+
+void event_config(event_t* e, event_proc proc, uint arg1, uint arg2)
+{
+    e->next = NULL;
+    e->proc = proc;
+    e->arg1 = arg1;
+    e->arg2 = arg2;
+    e->time = 0;
 }
 
 
