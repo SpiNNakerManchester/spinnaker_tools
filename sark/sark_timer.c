@@ -38,6 +38,9 @@ void event_register_timer(vic_slot slot)
 
 // Schedule an event to occur at some time in the future (measured in
 // microseconds).
+// NOTE: this procedure assumes the following event conditions on entry:
+// e->next == NULL
+// e->time == 0
 
 
 void timer_schedule(event_t *e, uint time)
@@ -69,6 +72,7 @@ void timer_schedule(event_t *e, uint time)
         // NOTE: placeholder must only be present at head of queue
         if (event.timer_queue->proc == NULL){
             event.timer_queue = event.timer_queue->next;
+            cancelled.next = NULL;      // prepare placeholder for next use
         }
 
         event.timer_queue->time += t2c - time;   // Adjust old head time
@@ -245,14 +249,15 @@ void timer2_int(void)
     }
 
     while (eq != NULL) {                // Run the execute queue
-        // mark event as inactive - do it here in case 'proc' reuses it
+        event_t* next = eq->next;
+
+        // mark event as inactive - do it here in case proc reuses it
         eq->ID = 0;
+        eq->next = NULL;                // for cancelled placeholder!
 
         if (eq->proc != NULL) {         // Execute proc if non-NULL
             eq->proc(eq->arg1, eq->arg2);
         }
-
-        event_t* next = eq->next;
 
         // free event if not reused
         if (eq->reuse == 0) {

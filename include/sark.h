@@ -2524,6 +2524,10 @@ uint event_user (uint arg1, uint arg2);
 Schedule an event to occur at some time in the future. Requires that
 the second timer has been set up by a call to timer_register.
 
+NOTE: this procedure assumes the following event conditions on entry:
+e->next == NULL
+e->time == 0
+
 \param e event to execute
 \param time delay in microseconds (non-zero)
 */
