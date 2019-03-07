@@ -37,7 +37,8 @@ void event_register_timer(vic_slot slot)
 //------------------------------------------------------------------------------
 
 // Schedule an event to occur at some time in the future (measured in
-// microseconds).
+// microseconds).  Requires that (hardware) TIMER2 has been set up by
+// a call to timer_register.
 // NOTE: this procedure assumes the following event conditions on entry:
 // e->next == NULL
 // e->time == 0

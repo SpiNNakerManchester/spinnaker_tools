@@ -909,7 +909,7 @@ SV_SV       +-------------------------------+   f5007f00
 SV_VECTORS  +-------------------------------+   f5007ee0
             | 64 bytes                      |
 SV_RANDOM   +-------------------------------+   f5007ea0
-            | xxx bytes                     |
+            | 1440 bytes                    |
 SV_SPARE    +-------------------------------+   f5007900
             | NUM_CPUS * VCPU_SIZE          |
 SV_VCPU     +-------------------------------+   f5007000 sv->sysram_top
@@ -2522,7 +2522,7 @@ uint event_user (uint arg1, uint arg2);
 
 /*!
 Schedule an event to occur at some time in the future. Requires that
-the second timer has been set up by a call to timer_register.
+(hardware) TIMER2 has been set up by a call to timer_register.
 
 NOTE: this procedure assumes the following event conditions on entry:
 e->next == NULL

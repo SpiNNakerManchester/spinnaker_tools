@@ -146,7 +146,7 @@ void desc_init(void)
 
     rx_desc_t *rdesc = rx_desc_table;
 
-    // initialise RX descriptors reusable events
+    // initialise RX descriptor reusable events
     for (uint i = 0; i < P2P_NUM_STR; i++) {
         e = event_new((event_proc) NULL, 0, 0);
         rdesc->event = e;
