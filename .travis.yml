@@ -10,7 +10,11 @@ addons:
       - freeglut3-dev
 
 install:
-  - export SPINN_DIRS=$PWD SPINN_PATH=$SPINN_DIRS/tools/boot PATH=$SPINN_DIRS/tools:$PATH PERL5LIB=$SPINN_DIRS/tools:$PERL5LIB GCC_COLORS='error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32'
+  - export SPINN_DIRS=$PWD
+  - export SPINN_PATH=$SPINN_DIRS/tools/boot
+  - export PATH=$SPINN_DIRS/tools:$PATH
+  - export PERL5LIB=$SPINN_DIRS/tools:$PERL5LIB
+  - export GCC_COLORS='error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32'
 
 before_script:
   - git clone https://github.com/SpiNNakerManchester/SupportScripts.git support
