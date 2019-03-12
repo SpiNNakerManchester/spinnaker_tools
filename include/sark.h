@@ -1841,7 +1841,7 @@ less all of the static variables used by the application.
 \return pointer to block or NULL
 */
 
-__attribute__((malloc, alloc_size(1,2))) void *
+__attribute__((malloc, alloc_size(1, 2))) void *
 sark_alloc(uint count, uint size);
 
 /*!
