@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// sark_base.c	    SARK - Spinnaker Application Runtime Kernel
+// sark_base.c      SARK - Spinnaker Application Runtime Kernel
 //
 // Copyright (C)    The University of Manchester - 2010-2013
 //
@@ -20,13 +20,13 @@
 cback_t __attribute__((weak)) callback[NUM_EVENTS];
 
 void __attribute__((weak)) schedule_sysmode(uchar event_id,
-					    uint arg0, uint arg1) {}
+                                            uint arg0, uint arg1) {}
 
 #endif
 
 //------------------------------------------------------------------------------
 
-#define SARK_ID_STR		"SARK/SpiNNaker"
+#define SARK_ID_STR             "SARK/SpiNNaker"
 
 sark_data_t sark;
 
@@ -80,8 +80,8 @@ uint sark_count_bits(uint word)
     uint count = 0;
 
     while (word != 0) {
-	count++;
-	word &= word - 1;
+        count++;
+        word &= word - 1;
     }
 
     return count;
@@ -94,7 +94,7 @@ uint sark_str_len(char *string)
     uint count = 0;
 
     while (*string++) {
-	count++;
+        count++;
     }
 
     return count;
@@ -159,15 +159,15 @@ void sw_error_fl(sw_err_mode mode, char* file, uint line)
     sark.vcpu->sw_line = line;
 
     if (sark.vcpu->sw_count != 0xffff) {
-	sark.vcpu->sw_count++;
+        sark.vcpu->sw_count++;
     }
 
     if (sark.virt_cpu != 0) {
-	sv->led_period = 16;
+        sv->led_period = 16;
     }
 
     if (mode == SW_RTE || (mode == SW_OPT && sark.sw_rte)) {
-	rt_error(RTE_SWERR);
+        rt_error(RTE_SWERR);
     }
 }
 
@@ -188,14 +188,14 @@ void *sark_alloc(uint count, uint size)
     uint words = (bytes + 3) / sizeof(uint);
 
     if (words == 0) {
-	return 0;
+        return 0;
     }
 
     uint *base = sark.heap_ptr;
     uint *next = sark.heap_ptr + words;
 
     if (next > sark.stack_base) {
-	return 0;
+        return 0;
     }
 
     sark.heap_ptr = next;
@@ -226,9 +226,9 @@ void *sark_block_init(void *buf, uint count, uint size)
     mem_link_t *m = buf;
 
     while (--count) {
-	buf = (uchar *) buf + size;
-	m->next = buf;
-	m = buf;
+        buf = (uchar *) buf + size;
+        m->next = buf;
+        m = buf;
     }
 
     m->next = NULL;
@@ -248,12 +248,12 @@ sdp_msg_t *sark_msg_get(void)
     mem_link_t *blk = root->free;
 
     if (blk != NULL) {
-	root->free = blk->next;
+        root->free = blk->next;
 
-	root->count++;
-	if (root->count > root->max) {
-	    root->max = root->count;
-	}
+        root->count++;
+        if (root->count > root->max) {
+            root->max = root->count;
+        }
     }
 
     cpu_int_restore(cpsr);
@@ -291,12 +291,12 @@ void *sark_block_get(mem_block_t *root)
     mem_link_t *blk = root->free;
 
     if (blk != NULL) {
-	root->free = blk->next;
+        root->free = blk->next;
 
-	root->count++;
-	if (root->count > root->max) {
-	    root->max = root->count;
-	}
+        root->count++;
+        if (root->count > root->max) {
+            root->max = root->count;
+        }
     }
 
     cpu_int_restore(cpsr);
@@ -333,12 +333,12 @@ sdp_msg_t* sark_shmsg_get()
     mem_link_t *blk = root->free;
 
     if (blk != NULL) {
-	root->free = blk->next;
+        root->free = blk->next;
 
-	root->count++;
-	if (root->count > root->max) {
-	    root->max = root->count;
-	}
+        root->count++;
+        if (root->count > root->max) {
+            root->max = root->count;
+        }
     }
 
     sark_lock_free(cpsr, LOCK_MSG);
@@ -373,7 +373,7 @@ void sark_call_cpp_constructors(void)
 {
     // Loop through any C++ constructors that may be present and call them
     for (constructor_t *p = &__init_array_start; p < &__init_array_end; p++) {
-	(*p)();
+        (*p)();
     }
 }
 #else  // Not GCC: No C++ support
@@ -432,28 +432,28 @@ uint __attribute__((weak)) sark_init(uint *stack)
     // done if we are not the Monitor processor
 
     if (sark.phys_cpu != (sc[SC_MON_ID] & 31)) {
-	sark.vcpu = sv_vcpu + sark.virt_cpu;
-	sark.sdram_buf = (void *)
-		(sv->sdram_bufs + sv->sysbuf_size * sark.virt_cpu);
+        sark.vcpu = sv_vcpu + sark.virt_cpu;
+        sark.sdram_buf = (void *)
+                (sv->sdram_bufs + sv->sysbuf_size * sark.virt_cpu);
 
-	sark_word_set(sark.vcpu, 0, sizeof(vcpu_t) - 4 * sizeof(uint));
-	sark.vcpu->cpu_state = CPU_STATE_WAIT;
-	sark.vcpu->phys_cpu = sark.phys_cpu;
+        sark_word_set(sark.vcpu, 0, sizeof(vcpu_t) - 4 * sizeof(uint));
+        sark.vcpu->cpu_state = CPU_STATE_WAIT;
+        sark.vcpu->phys_cpu = sark.phys_cpu;
 
-	sark.vcpu->app_id = sark_vec->app_id;
-	sark.vcpu->time = sv->unix_time;
-	sark.vcpu->sw_ver = SLLT_VER_NUM;
-	sark_str_cpy(sark.vcpu->app_name, build_name);
+        sark.vcpu->app_id = sark_vec->app_id;
+        sark.vcpu->time = sv->unix_time;
+        sark.vcpu->sw_ver = SLLT_VER_NUM;
+        sark_str_cpy(sark.vcpu->app_name, build_name);
 
-	// Check software version number
-	//   Major must match
-	//   Minor must be LE
-	//   Patch is ignored
+        // Check software version number
+        //   Major must match
+        //   Minor must be LE
+        //   Patch is ignored
 
-	if ((SLLT_VER_NUM & 0x00ff0000) != (sv->sw_ver & 0x00ff0000) ||
-		(SLLT_VER_NUM & 0x0000ff00) > (sv->sw_ver & 0x0000ff00)) {
-	    rt_error(RTE_VER);
-	}
+        if ((SLLT_VER_NUM & 0x00ff0000) != (sv->sw_ver & 0x00ff0000) ||
+                (SLLT_VER_NUM & 0x0000ff00) > (sv->sw_ver & 0x0000ff00)) {
+            rt_error(RTE_VER);
+        }
     }
 
     // Set up VIC - disable everything
@@ -497,7 +497,7 @@ uint sark_msg_send(sdp_msg_t *msg, uint timeout)
     sdp_msg_t *shm_msg = sark_shmsg_get();
 
     if (shm_msg == NULL) {
-	return 0;
+        return 0;
     }
 
     sark_msg_cpy(shm_msg, msg);
@@ -512,7 +512,7 @@ uint sark_msg_send(sdp_msg_t *msg, uint timeout)
     sv->mbox_flags = t | (1 << sark.virt_cpu);
 
     if (t == 0) {
-	sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
+        sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
     }
 
     sark_lock_free(cpsr, LOCK_MBOX);
@@ -523,17 +523,17 @@ uint sark_msg_send(sdp_msg_t *msg, uint timeout)
     uint start = *ms;
 
     while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-	if (*ms - start > timeout) {
-	    break;
-	}
+        if (*ms - start > timeout) {
+            break;
+        }
     }
 
     if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-	// message sending failed - free mailbox,
+        // message sending failed - free mailbox,
         // flag it as IDLE and return error code
-	sark.vcpu->mbox_mp_cmd = SHM_IDLE;
-	sark_shmsg_free(shm_msg);
-	return 0;
+        sark.vcpu->mbox_mp_cmd = SHM_IDLE;
+        sark_shmsg_free(shm_msg);
+        return 0;
     }
 
     sark.msg_sent++;
@@ -563,34 +563,34 @@ uint sark_cmd_read(sdp_msg_t *msg) // arg1=addr, arg2=len, arg3=type
     uint type = msg->arg3;
 
     if (len > SDP_BUF_SIZE || type > TYPE_WORD) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint addr = msg->arg1;
     uchar *buffer = (uchar *) &msg->arg1;
 
     if (type == TYPE_BYTE) {
-	uchar *mem = (uchar *) addr;
-	uchar *buf = (uchar *) buffer;
+        uchar *mem = (uchar *) addr;
+        uchar *buf = (uchar *) buffer;
 
-	for (uint i = 0; i < len; i++) {
-	    buf[i] = mem[i];
-	}
+        for (uint i = 0; i < len; i++) {
+            buf[i] = mem[i];
+        }
     } else if (type == TYPE_HALF) {
-	ushort *mem = (ushort *) addr;
-	ushort *buf = (ushort *) buffer;
+        ushort *mem = (ushort *) addr;
+        ushort *buf = (ushort *) buffer;
 
-	for (uint i = 0; i < len / 2; i++) {
-	    buf[i] = mem[i];
-	}
+        for (uint i = 0; i < len / 2; i++) {
+            buf[i] = mem[i];
+        }
     } else {
-	uint *mem = (uint *) addr;
-	uint *buf = (uint *) buffer;
+        uint *mem = (uint *) addr;
+        uint *buf = (uint *) buffer;
 
-	for (uint i = 0; i < len / 4; i++) {
-	    buf[i] = mem[i];
-	}
+        for (uint i = 0; i < len / 4; i++) {
+            buf[i] = mem[i];
+        }
     }
 
     return len;
@@ -603,34 +603,34 @@ uint sark_cmd_write(sdp_msg_t *msg) // arg1=addr, arg2=len, arg3=type
     uint type = msg->arg3;
 
     if (len > SDP_BUF_SIZE || type > TYPE_WORD) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint addr = msg->arg1;
     uchar *buffer = msg->data;
 
     if (type == TYPE_BYTE) {
-	uchar *mem = (uchar*) addr;
-	uchar *buf = (uchar*) buffer;
+        uchar *mem = (uchar*) addr;
+        uchar *buf = (uchar*) buffer;
 
-	for (uint i = 0; i < len; i++) {
-	    mem[i] = buf[i];
-	}
+        for (uint i = 0; i < len; i++) {
+            mem[i] = buf[i];
+        }
     } else if (type == TYPE_HALF) {
-	ushort* mem = (ushort*) addr;
-	ushort* buf = (ushort*) buffer;
+        ushort* mem = (ushort*) addr;
+        ushort* buf = (ushort*) buffer;
 
-	for (uint i = 0; i < len / 2; i++) {
-	    mem[i] = buf[i];
-	}
+        for (uint i = 0; i < len / 2; i++) {
+            mem[i] = buf[i];
+        }
     } else {
-	uint *mem = (uint *) addr;
-	uint *buf = (uint *) buffer;
+        uint *mem = (uint *) addr;
+        uint *buf = (uint *) buffer;
 
-	for (uint i = 0; i < len / 4; i++) {
-	    mem[i] = buf[i];
-	}
+        for (uint i = 0; i < len / 4; i++) {
+            mem[i] = buf[i];
+        }
     }
 
     return 0;
@@ -651,22 +651,22 @@ static uint sark_debug(sdp_msg_t *msg)
 {
     uint len = msg->length;
 
-    if (len < 24) {		// !! const
-	msg->cmd_rc = RC_LEN;
-	return 0;
+    if (len < 24) {             // !! const
+        msg->cmd_rc = RC_LEN;
+        return 0;
     }
 
     uint t = msg->cmd_rc;
     msg->cmd_rc = RC_OK;
 
     if (t == CMD_VER) {
-	return sark_cmd_ver(msg);
+        return sark_cmd_ver(msg);
     } else if (t == CMD_READ) {
-	return sark_cmd_read(msg);
+        return sark_cmd_read(msg);
     } else if (t == CMD_WRITE) {
-	return sark_cmd_write(msg);
+        return sark_cmd_write(msg);
     } else if (t == CMD_FILL) {
-	return sark_cmd_fill(msg);
+        return sark_cmd_fill(msg);
     }
 
     msg->cmd_rc = RC_CMD;
@@ -694,7 +694,7 @@ static void swap_hdr(sdp_msg_t *msg)
 void sark_wait(void)
 {
     while (sark_vec->app_flags & (1 << APP_FLAG_WAIT)) {
-	cpu_wfi();
+        cpu_wfi();
     }
 }
 #endif
@@ -710,103 +710,103 @@ void sark_wait(void)
 
 void sark_int(void *pc)
 {
-    sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);	// Ack the interrupt
+    sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);    // Ack the interrupt
 
-    uint cmd = sark.vcpu->mbox_ap_cmd;			// Get command code
+    uint cmd = sark.vcpu->mbox_ap_cmd;                  // Get command code
 
     if (cmd == SHM_IDLE) {
-	return;
+        return;
     }
 
-    uint data = (uint) sark.vcpu->mbox_ap_msg;		// and data word
+    uint data = (uint) sark.vcpu->mbox_ap_msg;          // and data word
 
-    if (cmd == SHM_NOP) {				// Send back PC if NOP
-	sark.vcpu->mbox_ap_msg = pc;
+    if (cmd == SHM_NOP) {                               // Send back PC if NOP
+        sark.vcpu->mbox_ap_msg = pc;
     }
 
-    sark.vcpu->mbox_ap_cmd = SHM_IDLE;			// and go back to idle
+    sark.vcpu->mbox_ap_cmd = SHM_IDLE;                  // and go back to idle
 
 #ifdef SARK_EVENT
     if (cmd == SHM_SIGNAL) {
-	switch (data) {
-	case SIG_PAUSE:
-	    event_pause(1);
-	    return;
+        switch (data) {
+        case SIG_PAUSE:
+            event_pause(1);
+            return;
 
-	case SIG_CONT:
-	    event_pause(0);
-	    return;
+        case SIG_CONT:
+            event_pause(0);
+            return;
 
-	case SIG_EXIT:
-	    event_stop(255);	// !! const
-	    return;
+        case SIG_EXIT:
+            event_stop(255);    // !! const
+            return;
 
-	case SIG_START:
-	    sark_vec->app_flags &= ~(1 << APP_FLAG_WAIT);
-	    return;
+        case SIG_START:
+            sark_vec->app_flags &= ~(1 << APP_FLAG_WAIT);
+            return;
 
-	case SIG_USR0:
-	case SIG_USR1:
-	case SIG_USR2:
-	case SIG_USR3:
-	    event.signal = data;
-	    vic[VIC_SOFT_SET] = 1 << SARK_SIG_INT;
-	    return;
+        case SIG_USR0:
+        case SIG_USR1:
+        case SIG_USR2:
+        case SIG_USR3:
+            event.signal = data;
+            vic[VIC_SOFT_SET] = 1 << SARK_SIG_INT;
+            return;
 
-	case SIG_TIMER:
-	    vic[VIC_SOFT_SET] = 1 << TIMER1_INT;
-	    return;
+        case SIG_TIMER:
+            vic[VIC_SOFT_SET] = 1 << TIMER1_INT;
+            return;
 
-	default:
-	    return;
-	}
+        default:
+            return;
+        }
     }
 #endif
 
     if (cmd == SHM_MSG) {
-	sdp_msg_t *shm_msg = (sdp_msg_t *) data;
-	sdp_msg_t *msg = sark_msg_get();
+        sdp_msg_t *shm_msg = (sdp_msg_t *) data;
+        sdp_msg_t *msg = sark_msg_get();
 
-	if (msg != NULL) {
-	    sark_msg_cpy(msg, shm_msg);
-	    sark_shmsg_free(shm_msg);
+        if (msg != NULL) {
+            sark_msg_cpy(msg, shm_msg);
+            sark_shmsg_free(shm_msg);
 
-	    sark.msg_rcvd++;
+            sark.msg_rcvd++;
 
-	    uint dp = msg->dest_port;
+            uint dp = msg->dest_port;
 
-	    if ((dp & PORT_MASK) == 0) {	// Port 0 is for us
-		msg->length = 12 + sark_debug(msg);
-		swap_hdr(msg);
+            if ((dp & PORT_MASK) == 0) {        // Port 0 is for us
+                msg->length = 12 + sark_debug(msg);
+                swap_hdr(msg);
 
-		sark_msg_send(msg, 10);
-		sark_msg_free(msg);
-	    } else {				// else send msg to application...
-		if (sark_vec->api) {
+                sark_msg_send(msg, 10);
+                sark_msg_free(msg);
+            } else {                            // else send msg to application...
+                if (sark_vec->api) {
 #ifdef SARK_API
-		    if (callback[SDP_PACKET_RX].cback != NULL) {
-			uint cpsr = cpu_int_disable();
-			schedule_sysmode(SDP_PACKET_RX, (uint) msg,
-				dp >> PORT_SHIFT);
-			cpu_int_restore(cpsr);
-		    } else {
-			sark_msg_free(msg);
-		    }
+                    if (callback[SDP_PACKET_RX].cback != NULL) {
+                        uint cpsr = cpu_int_disable();
+                        schedule_sysmode(SDP_PACKET_RX, (uint) msg,
+                                dp >> PORT_SHIFT);
+                        cpu_int_restore(cpsr);
+                    } else {
+                        sark_msg_free(msg);
+                    }
 #endif // SARK_API
-		} else {
+                } else {
 #ifdef SARK_EVENT
-		    if (vic[VIC_ENABLE] & (1 << SARK_MSG_INT)) {
-			event.msg = msg;
-			vic[VIC_SOFT_SET] = 1 << SARK_MSG_INT;
-		    } else {
-			sark_msg_free(msg);
-		    }
+                    if (vic[VIC_ENABLE] & (1 << SARK_MSG_INT)) {
+                        event.msg = msg;
+                        vic[VIC_SOFT_SET] = 1 << SARK_MSG_INT;
+                    } else {
+                        sark_msg_free(msg);
+                    }
 #endif // SARK_EVENT
-		}
-	    }
-	} else {
-	    sark_shmsg_free(shm_msg);
-	}
+                }
+            }
+        } else {
+            sark_shmsg_free(shm_msg);
+        }
     }
 }
 

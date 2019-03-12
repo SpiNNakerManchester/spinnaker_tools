@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// bmp_flash.c	    Flash routines for BMP LPC1768
+// bmp_flash.c      Flash routines for BMP LPC1768
 //
 // Copyright (C)    The University of Manchester - 2013-2015
 //
@@ -23,9 +23,9 @@ uint32_t is_blank(void *buf, uint32_t len)
     uint8_t *buffer = (uint8_t *) buf;
 
     for (uint32_t i = 0; i < len; i++) {
-	if (buffer[i] != 0xff) {
-	    return 0;
-	}
+        if (buffer[i] != 0xff) {
+            return 0;
+        }
     }
     return 1;
 }
@@ -40,9 +40,9 @@ uint32_t is_blank(void *buf, uint32_t len)
 uint32_t flash_sector(uint32_t addr)
 {
     if (addr < 0x10000) {
-	return addr / 4096;
+        return addr / 4096;
     } else {
-	return 16 + (addr - 0x10000) / 32768;
+        return 16 + (addr - 0x10000) / 32768;
     }
 }
 
@@ -59,16 +59,16 @@ uint32_t flash_erase(uint32_t start, uint32_t end)
     uint32_t iap_cmd[5];
     uint32_t iap_res[4];
 
-    iap_cmd[0] = 50;			// Flash prepare
+    iap_cmd[0] = 50;                    // Flash prepare
     iap_cmd[1] = ss;
     iap_cmd[2] = es;
 
     lpc_iap(iap_cmd, iap_res);
 
     if (iap_res[0] == 0) {
-	iap_cmd[0] = 52;		// Flash erase
-	iap_cmd[3] = CCLK / 1000;
-	lpc_iap(iap_cmd, iap_res);
+        iap_cmd[0] = 52;                // Flash erase
+        iap_cmd[3] = CCLK / 1000;
+        lpc_iap(iap_cmd, iap_res);
     }
 
     return iap_res[0];
@@ -88,20 +88,20 @@ uint32_t flash_write(uint32_t addr, uint32_t length, uint32_t *buffer)
     uint32_t iap_cmd[5];
     uint32_t iap_res[4];
 
-    iap_cmd[0] = 50;			// Flash prepare
+    iap_cmd[0] = 50;                    // Flash prepare
     iap_cmd[1] = ss;
     iap_cmd[2] = ss;
 
     lpc_iap(iap_cmd, iap_res);
 
     if (iap_res[0] == 0) {
-	iap_cmd[0] = 51;		// Flash copy
-	iap_cmd[1] = addr;
-	iap_cmd[2] = (uint32_t) buffer;
-	iap_cmd[3] = length;
-	iap_cmd[4] = CCLK / 1000;
+        iap_cmd[0] = 51;                // Flash copy
+        iap_cmd[1] = addr;
+        iap_cmd[2] = (uint32_t) buffer;
+        iap_cmd[3] = length;
+        iap_cmd[4] = CCLK / 1000;
 
-	lpc_iap(iap_cmd, iap_res);
+        lpc_iap(iap_cmd, iap_res);
     }
 
     return iap_res[0];

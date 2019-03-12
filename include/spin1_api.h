@@ -109,9 +109,11 @@ static inline void spin1_delay_us(uint n) {
 // ------------------------------------------------------------------------
 // callback and task functions
 // ------------------------------------------------------------------------
-void spin1_callback_on(uint event_id, callback_t cback, int priority) __attribute__((nonnull));
+void spin1_callback_on(uint event_id, callback_t cback, int priority)
+        __attribute__((nonnull));
 void spin1_callback_off(uint event_id);
-uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1, uint priority) __attribute__((nonnull));
+uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1, uint priority)
+        __attribute__((nonnull));
 uint spin1_trigger_user_event(uint arg0, uint arg1);
 // ------------------------------------------------------------------------
 
@@ -120,7 +122,7 @@ uint spin1_trigger_user_event(uint arg0, uint arg1);
 //  data transfer functions
 // ------------------------------------------------------------------------
 uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
-	uint direction, uint length) __attribute__((nonnull));
+        uint direction, uint length) __attribute__((nonnull));
 void spin1_memcpy(void *dst, void const *src, uint len) __attribute__((nonnull));
 // ------------------------------------------------------------------------
 
@@ -205,7 +207,9 @@ static inline sdp_msg_t* spin1_msg_get(void) {
     return sark_msg_get();
 }
 
-static inline uint spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout) __attribute__((nonnull)) {
+static inline uint spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout)
+        __attribute__((nonnull))
+{
     return sark_msg_send(msg, timeout);
 }
 
@@ -482,26 +486,26 @@ static inline uint spin1_rand(void) {
 //  diagnostic data available to the application
 // ------------------------------------------------------------------------
 typedef struct {
-    uint exit_code;			// simulation exit code
-    uint warnings;			// warnings type bit map
-    uint total_mc_packets;		// total routed MC packets during simulation
-    uint dumped_mc_packets;		// total dumped MC packets by the router
-    volatile uint discarded_mc_packets;	// total discarded MC packets by API
-    uint dma_transfers;			// total DMA transfers requested
-    uint dma_bursts;			// total DMA bursts completed
-    uint dma_queue_full;		// dma queue full count
-    uint task_queue_full;		// task queue full count
-    uint tx_packet_queue_full;		// transmitter packet queue full count
-    uint writeBack_errors;		// write-back buffer error count
-    uint total_fr_packets;		// total routed FR packets during simulation
-    uint dumped_fr_packets;		// total dumped FR packets by the router
-    uint discarded_fr_packets;		// total discarded FR packets by API
-    uint in_timer_callback;		// bool which states if currently in timer callback
-    uint number_timer_tic_in_queue;	// the number of timer tic callbacks in the queue
+    uint exit_code;                     // simulation exit code
+    uint warnings;                      // warnings type bit map
+    uint total_mc_packets;              // total routed MC packets during simulation
+    uint dumped_mc_packets;             // total dumped MC packets by the router
+    volatile uint discarded_mc_packets; // total discarded MC packets by API
+    uint dma_transfers;                 // total DMA transfers requested
+    uint dma_bursts;                    // total DMA bursts completed
+    uint dma_queue_full;                // dma queue full count
+    uint task_queue_full;               // task queue full count
+    uint tx_packet_queue_full;          // transmitter packet queue full count
+    uint writeBack_errors;              // write-back buffer error count
+    uint total_fr_packets;              // total routed FR packets during simulation
+    uint dumped_fr_packets;             // total dumped FR packets by the router
+    uint discarded_fr_packets;          // total discarded FR packets by API
+    uint in_timer_callback;             // bool which states if currently in timer callback
+    uint number_timer_tic_in_queue;     // the number of timer tic callbacks in the queue
     uint largest_number_of_concurrent_timer_tic_overruns;
-					// the max number of timer tics callbacks being queued at any time
+                                        // the max number of timer tics callbacks being queued at any time
     uint total_times_tick_tic_callback_overran;
-					// the total number of times the timer tic callback overran
+                                        // the total number of times the timer tic callback overran
 } diagnostics_t;
 
 extern diagnostics_t diagnostics;

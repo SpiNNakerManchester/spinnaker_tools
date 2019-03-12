@@ -14,13 +14,13 @@
 //
 // ----------------------------------------------------------------------------
 
-#define API	// Undef to use SARK event library
+#define API     // Undef to use SARK event library
 
 #include <sark.h>
 #include <spin1_api.h>
 
 
-#define SDP_HEADER_SIZE	(24)
+#define SDP_HEADER_SIZE (24)
 
 const uint firstByte  = 0xff;
 const uint secondByte = 0xff00;
@@ -45,30 +45,30 @@ unsigned int nextNode = 0;
 // in the payload and the x and y coords of that pixel in the key and payload.
 
 void mc_packet_callback(
-	uint key,
-	uint payload)
+        uint key,
+        uint payload)
 {
     sark.vcpu->user0++;
 
     // Unpack the x,y coords, RGB values
-    pixelMessage.data[pixel*7]   = key & firstByte;		// x1
+    pixelMessage.data[pixel*7]   = key & firstByte;             // x1
     pixelMessage.data[pixel*7+1] = (payload & fourthByte) >> 24;// x2
-    pixelMessage.data[pixel*7+2] = (key & fourthByte) >> 24;	// y1
-    pixelMessage.data[pixel*7+3] = (key & thirdByte) >> 16;	// y2
-    pixelMessage.data[pixel*7+4] = (payload & thirdByte) >> 16;	// r
-    pixelMessage.data[pixel*7+5] = (payload & secondByte) >> 8;	// g
-    pixelMessage.data[pixel*7+6] = payload & firstByte;		// b
+    pixelMessage.data[pixel*7+2] = (key & fourthByte) >> 24;    // y1
+    pixelMessage.data[pixel*7+3] = (key & thirdByte) >> 16;     // y2
+    pixelMessage.data[pixel*7+4] = (payload & thirdByte) >> 16; // r
+    pixelMessage.data[pixel*7+5] = (payload & secondByte) >> 8; // g
+    pixelMessage.data[pixel*7+6] = payload & firstByte;         // b
 
     pixel += 1;
 
     // We have enough pixels to fill an SDP packet payload
     if (pixel == 36) {
-	sark.vcpu->user2++;
-	pixelMessage.length = SDP_HEADER_SIZE + pixel*7;
-	pixelMessage.arg1   = pixel;
-	sark_msg_send(&pixelMessage, 10);
+        sark.vcpu->user2++;
+        pixelMessage.length = SDP_HEADER_SIZE + pixel*7;
+        pixelMessage.arg1   = pixel;
+        sark_msg_send(&pixelMessage, 10);
 
-	pixel = 0;
+        pixel = 0;
     }
 }
 
@@ -83,8 +83,8 @@ int status = 0; // Tells us if we're waiting for status acks or trace acks
 // ID is in order to determine what subset of the image to work on.
 
 void timer_callback(
-	uint time,
-	uint none)
+        uint time,
+        uint none)
 {
     sark.vcpu->user1++;
 
@@ -92,23 +92,23 @@ void timer_callback(
 
     unsigned int i, j, k;
     for (i=0; i<xChips; i++) {
-	for (j=0; j<yChips; j++) {
-	    for (k=0; k<cores; k++) {
-		// In the array 'nodes':
-		// <=-10 is the initial state - means we haven't heard a status check ack from this node
-		// >=0 means we have heard a status check ack and the node has a global ID
+        for (j=0; j<yChips; j++) {
+            for (k=0; k<cores; k++) {
+                // In the array 'nodes':
+                // <=-10 is the initial state - means we haven't heard a status check ack from this node
+                // >=0 means we have heard a status check ack and the node has a global ID
 
-		// If minimum value in array is 0 (excluding -3) then we've heard back
-		// from all of them and we can start sending trace messages.
+                // If minimum value in array is 0 (excluding -3) then we've heard back
+                // from all of them and we can start sending trace messages.
 
-		// -2 means we've heard a trace ack
-		// -3 means ignore this node (used for 0,0,0 and for nodes that haven't responded)
+                // -2 means we've heard a trace ack
+                // -3 means ignore this node (used for 0,0,0 and for nodes that haven't responded)
 
-		if (status == 0) { // Asking nodes their status. We're interested in <=-10 nodes
-		    if (nodes[i][j][k] <= -10) { // If we haven't heard from the node
-			if (nodes[i][j][k] < -20) { // Cull any nodes we're still waiting for
-						    // after many attempts
-			    nodes[i][j][k] = -3;
+                if (status == 0) { // Asking nodes their status. We're interested in <=-10 nodes
+                    if (nodes[i][j][k] <= -10) { // If we haven't heard from the node
+                        if (nodes[i][j][k] < -20) { // Cull any nodes we're still waiting for
+                                                    // after many attempts
+                            nodes[i][j][k] = -3;
                         } else {
                             numberWaitingToHearBackFrom ++;
                             nodes[i][j][k] -= 1; // Track number of attempts
@@ -119,43 +119,43 @@ void timer_callback(
                             sark_msg_send(&statusMessage, 10); // Query status
 
                             if (numberWaitingToHearBackFrom > 50) {
-                        	// Only try to send 50 status messages at a time
-                        	i = 10000;
-                        	j = 10000;
-                        	k = 10000;
+                                // Only try to send 50 status messages at a time
+                                i = 10000;
+                                j = 10000;
+                                k = 10000;
                             }
                         }
                     }
                 } else if (status == 1) { // waiting for trace ack. We're interested in >=0 nodes
                     if (nodes[i][j][k] >= 0) { // if it's a node that we're waiting on a trace ack from
-                	if (nodes[i][j][k] > 350000) {	// Cull any nodes we're still waiting for
-							// after many attempts
-                	    nodes[i][j][k] = -3;
-                	} else {
-                	    nodes[i][j][k] += 10000; // Track number of attempts
+                        if (nodes[i][j][k] > 350000) {  // Cull any nodes we're still waiting for
+                                                        // after many attempts
+                            nodes[i][j][k] = -3;
+                        } else {
+                            nodes[i][j][k] += 10000; // Track number of attempts
 
-                	    numberWaitingToHearBackFrom++;
+                            numberWaitingToHearBackFrom++;
 
-                	    traceMessage.dest_port = (1<<5) | (k+1);
-                	    traceMessage.dest_addr = (i<<8) + j;
+                            traceMessage.dest_port = (1<<5) | (k+1);
+                            traceMessage.dest_addr = (i<<8) + j;
 
-                	    // fill in node ID and number of nodes
-                	    traceMessage.data[14*4+1] = (unsigned char)(((((unsigned int)
-                		    nodes[i][j][k]) % 10000) & secondByte) >> 8);
-                	    traceMessage.data[14*4] = (unsigned char)((((unsigned int)
-                		    nodes[i][j][k]) % 10000) & firstByte);
-                	    traceMessage.data[15*4+1] = (unsigned char)((
-                		    numberOfNodes & secondByte)>>8);
-                	    traceMessage.data[15*4] = (unsigned char)(
-                		    numberOfNodes & firstByte);
+                            // fill in node ID and number of nodes
+                            traceMessage.data[14*4+1] = (unsigned char)(((((unsigned int)
+                                    nodes[i][j][k]) % 10000) & secondByte) >> 8);
+                            traceMessage.data[14*4] = (unsigned char)((((unsigned int)
+                                    nodes[i][j][k]) % 10000) & firstByte);
+                            traceMessage.data[15*4+1] = (unsigned char)((
+                                    numberOfNodes & secondByte)>>8);
+                            traceMessage.data[15*4] = (unsigned char)(
+                                    numberOfNodes & firstByte);
 
-                	    sark_msg_send(&traceMessage, 10);
+                            sark_msg_send(&traceMessage, 10);
 
-                	    if (numberWaitingToHearBackFrom > 50) {
-                		// Only try to send 50 trace messages at a time
-                		i = 10000;
-                		j = 10000;
-                		k = 10000;
+                            if (numberWaitingToHearBackFrom > 50) {
+                                // Only try to send 50 trace messages at a time
+                                i = 10000;
+                                j = 10000;
+                                k = 10000;
                             }
                         }
                     }
@@ -167,11 +167,11 @@ void timer_callback(
     // We've received all ACKs we're expecting
 
     if (numberWaitingToHearBackFrom == 0) {
-	if (status == 0) {
-	    // If we had been listening for status query ACK messages, it's
-	    // now time to start sending trace messages.
-	    status = 1; // Now we're waiting for trace ACKs
-	    io_printf(IO_BUF, "Recruited %d nodes.\n", numberOfNodes);
+        if (status == 0) {
+            // If we had been listening for status query ACK messages, it's
+            // now time to start sending trace messages.
+            status = 1; // Now we're waiting for trace ACKs
+            io_printf(IO_BUF, "Recruited %d nodes.\n", numberOfNodes);
         } else if (status == 1) {
             // If we had been listening for trace ACKs, we now know that all
             // nodes are tracing the image.
@@ -197,119 +197,119 @@ void timer_callback(
 // 3: An ACK from SpiNNaker processors in response to a trace image message
 
 void sdp_packet_callback(
-	uint msg,
-	uint port)
+        uint msg,
+        uint port)
 {
     sdp_msg_t *sdp_msg = (sdp_msg_t *) msg;
 
     io_printf(IO_BUF, "SDP cmd %d, port %d\n", sdp_msg->cmd_rc, port);
 
     if (sdp_msg->cmd_rc == 4) {
-	// 1. it's a trace message from the host
-	io_printf(IO_BUF, "Received trigger message from host PC.\n");
-	int i;
-	for (i=0; i<(sdp_msg->length-24)/4; i++) {
-	    int var = 0;
-	    var += (sdp_msg->data[i*4]<<0);
-	    var += (sdp_msg->data[i*4+1]<<8);
-	    var += (sdp_msg->data[i*4+2]<<16);
-	    var += (sdp_msg->data[i*4+3]<<24);
+        // 1. it's a trace message from the host
+        io_printf(IO_BUF, "Received trigger message from host PC.\n");
+        int i;
+        for (i=0; i<(sdp_msg->length-24)/4; i++) {
+            int var = 0;
+            var += (sdp_msg->data[i*4]<<0);
+            var += (sdp_msg->data[i*4+1]<<8);
+            var += (sdp_msg->data[i*4+2]<<16);
+            var += (sdp_msg->data[i*4+3]<<24);
 
-	    traceMessage.length		= sdp_msg->length;
-	    traceMessage.data[i*4]	= sdp_msg->data[i*4];
-	    traceMessage.data[i*4+1]	= sdp_msg->data[i*4+1];
-	    traceMessage.data[i*4+2]	= sdp_msg->data[i*4+2];
-	    traceMessage.data[i*4+3]	= sdp_msg->data[i*4+3];
+            traceMessage.length         = sdp_msg->length;
+            traceMessage.data[i*4]      = sdp_msg->data[i*4];
+            traceMessage.data[i*4+1]    = sdp_msg->data[i*4+1];
+            traceMessage.data[i*4+2]    = sdp_msg->data[i*4+2];
+            traceMessage.data[i*4+3]    = sdp_msg->data[i*4+3];
 
-	    // The payload carries...
-	    switch (i) {
-		// The position and orientation of the camera
-	    case 0: camx = var; break;
-	    case 1: camy = var; break;
-	    case 2: camz = var; break;
-	    case 3: lookx = var; break;
-	    case 4: looky = var; break;
-	    case 5: lookz = var; break;
-	    case 6: upx = var; break;
-	    case 7: upy = var; break;
-	    case 8: upz = var; break;
-		// The dimensions of the image and the field of view
-	    case 9: width = var; break;
-	    case 10: height = var; break;
-	    case 11: hField = var; break;
-	    case 12: vField = var; break;
-		// The antialiasing factor
-	    case 13: antialiasing = var; break;
-		// The width and height of the grid of chips to try to recruit
-		// Now worked out locally
-	    case 14: break; //xChips = var; break;
-	    case 15: break; //yChips = var; break;
-		// The number of cores on each chip to try to recruit
-	    case 16: cores = var; break;
+            // The payload carries...
+            switch (i) {
+                // The position and orientation of the camera
+            case 0: camx = var; break;
+            case 1: camy = var; break;
+            case 2: camz = var; break;
+            case 3: lookx = var; break;
+            case 4: looky = var; break;
+            case 5: lookz = var; break;
+            case 6: upx = var; break;
+            case 7: upy = var; break;
+            case 8: upz = var; break;
+                // The dimensions of the image and the field of view
+            case 9: width = var; break;
+            case 10: height = var; break;
+            case 11: hField = var; break;
+            case 12: vField = var; break;
+                // The antialiasing factor
+            case 13: antialiasing = var; break;
+                // The width and height of the grid of chips to try to recruit
+                // Now worked out locally
+            case 14: break; //xChips = var; break;
+            case 15: break; //yChips = var; break;
+                // The number of cores on each chip to try to recruit
+            case 16: cores = var; break;
             }
         }
 
-	xChips = (sv->p2p_dims >> 8) & 0xFF;
-	yChips = (sv->p2p_dims >> 0) & 0xFF;
+        xChips = (sv->p2p_dims >> 8) & 0xFF;
+        yChips = (sv->p2p_dims >> 0) & 0xFF;
 
-	traceMessage.data[14*4+2] = 0;
-	traceMessage.data[14*4+3] = 0;
-	traceMessage.data[15*4+2] = 0;
-	traceMessage.data[15*4+3] = 0;
+        traceMessage.data[14*4+2] = 0;
+        traceMessage.data[14*4+3] = 0;
+        traceMessage.data[15*4+2] = 0;
+        traceMessage.data[15*4+3] = 0;
 
-	// Construct an array representing processors on the SpiNNaker board
+        // Construct an array representing processors on the SpiNNaker board
 
-	nodes = (int***) sark_xalloc(sv->sdram_heap,
-		xChips * sizeof(int**), 0, ALLOC_LOCK);
+        nodes = (int***) sark_xalloc(sv->sdram_heap,
+                xChips * sizeof(int**), 0, ALLOC_LOCK);
 
-	for (int i = 0; i < xChips; i++) {
-	    nodes[i] = (int**) sark_xalloc(sv->sdram_heap,
-		    yChips * sizeof(int*), 0, ALLOC_LOCK);
-	    for (int j = 0; j < yChips; j++) {
-		nodes[i][j] = (int*) sark_xalloc(sv->sdram_heap,
-			cores * sizeof(int), 0, ALLOC_LOCK);
-	    }
+        for (int i = 0; i < xChips; i++) {
+            nodes[i] = (int**) sark_xalloc(sv->sdram_heap,
+                    yChips * sizeof(int*), 0, ALLOC_LOCK);
+            for (int j = 0; j < yChips; j++) {
+                nodes[i][j] = (int*) sark_xalloc(sv->sdram_heap,
+                        cores * sizeof(int), 0, ALLOC_LOCK);
+            }
         }
 
-	// Initialise the nodes' statuses
-	// <-10 means 'not received' anything
-	// >=0 indicates the node has an ID
-	// -2 means node is tracing an image
-	// -3 means ignore this node
+        // Initialise the nodes' statuses
+        // <-10 means 'not received' anything
+        // >=0 indicates the node has an ID
+        // -2 means node is tracing an image
+        // -3 means ignore this node
 
-	for (int i = 0; i < xChips; i++) {
-	    for (int j = 0; j < yChips; j++) {
-		for (int k = 0; k < cores; k++) {
-		    nodes[i][j][k] = (i + j + k == 0 ? -3 : -10);
+        for (int i = 0; i < xChips; i++) {
+            for (int j = 0; j < yChips; j++) {
+                for (int k = 0; k < cores; k++) {
+                    nodes[i][j][k] = (i + j + k == 0 ? -3 : -10);
                 }
             }
         }
 
-	// The timer callback deals with handshaking, which is now required
+        // The timer callback deals with handshaking, which is now required
 #ifdef API
-	spin1_callback_on(TIMER_TICK, timer_callback, 3);
+        spin1_callback_on(TIMER_TICK, timer_callback, 3);
 #else
-	event_enable(EVENT_TIMER, 1);
+        event_enable(EVENT_TIMER, 1);
 #endif
     } else if (sdp_msg->cmd_rc == 7 && status == 0) {
-	// 2. a status ACK when we're waiting for them
-	int processor = sdp_msg->srce_port - (1<<5) - 1;
-	int x = (sdp_msg->srce_addr & secondByte) >> 8;
-	int y = sdp_msg->srce_addr & firstByte;
-	// If we hadn't already heard back from this node
-	if (nodes[x][y][processor] <= -10) {
-	    // Give the node a global ID, increment the number of nodes
-	    nodes[x][y][processor] = nextNode;
-	    nextNode++;
-	    numberOfNodes = nextNode;
+        // 2. a status ACK when we're waiting for them
+        int processor = sdp_msg->srce_port - (1<<5) - 1;
+        int x = (sdp_msg->srce_addr & secondByte) >> 8;
+        int y = sdp_msg->srce_addr & firstByte;
+        // If we hadn't already heard back from this node
+        if (nodes[x][y][processor] <= -10) {
+            // Give the node a global ID, increment the number of nodes
+            nodes[x][y][processor] = nextNode;
+            nextNode++;
+            numberOfNodes = nextNode;
         }
     } else if (sdp_msg->cmd_rc == 5 && status == 1) {
-	// a trace ack when we're waiting for them
-	int processor = sdp_msg->srce_port - (1<<5) - 1;
-	int x = (sdp_msg->srce_addr & secondByte) >> 8;
-	int y = sdp_msg->srce_addr & firstByte;
-	// Set the node status to 'tracing'
-	nodes[x][y][processor] = -2;
+        // a trace ack when we're waiting for them
+        int processor = sdp_msg->srce_port - (1<<5) - 1;
+        int x = (sdp_msg->srce_addr & secondByte) >> 8;
+        int y = sdp_msg->srce_addr & firstByte;
+        // Set the node status to 'tracing'
+        nodes[x][y][processor] = -2;
     }
 
     sark_msg_free(sdp_msg);
