@@ -1841,7 +1841,7 @@ less all of the static variables used by the application.
 \return pointer to block or NULL
 */
 
-__attribute__((malloc, alloc_size(1, 2))) void *
+__attribute__((malloc, alloc_size(1, 2), assume_aligned(4))) void *
 sark_alloc(uint count, uint size);
 
 /*!
@@ -1882,7 +1882,7 @@ up by a stop signal.
 \return pointer to allocated block or NULL on failure
 */
 
-__attribute__((malloc, alloc_size(2))) void *
+__attribute__((malloc, alloc_size(2), assume_aligned(4))) void *
 sark_xalloc(heap_t *heap, uint size, uint tag, uint flag);
 
 /*!
