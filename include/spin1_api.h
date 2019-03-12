@@ -109,9 +109,9 @@ static inline void spin1_delay_us(uint n) {
 // ------------------------------------------------------------------------
 // callback and task functions
 // ------------------------------------------------------------------------
-void spin1_callback_on(uint event_id, callback_t cback, int priority);
+void spin1_callback_on(uint event_id, callback_t cback, int priority) __attribute__((nonnull));
 void spin1_callback_off(uint event_id);
-uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1, uint priority);
+uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1, uint priority) __attribute__((nonnull));
 uint spin1_trigger_user_event(uint arg0, uint arg1);
 // ------------------------------------------------------------------------
 
@@ -120,8 +120,8 @@ uint spin1_trigger_user_event(uint arg0, uint arg1);
 //  data transfer functions
 // ------------------------------------------------------------------------
 uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
-	uint direction, uint length);
-void spin1_memcpy(void *dst, void const *src, uint len);
+	uint direction, uint length) __attribute__((nonnull));
+void spin1_memcpy(void *dst, void const *src, uint len) __attribute__((nonnull));
 // ------------------------------------------------------------------------
 
 
@@ -142,7 +142,7 @@ void spin1_memcpy(void *dst, void const *src, uint len);
 *  uint spin1_send_mc_packet(uint key, uint data, uint load)
 *
 * INPUTS
-*  uint key: packet routining key
+*  uint key: packet routing key
 *  uint data: packet payload
 *  uint load: 0 = no payload (ignore data param), 1 = send payload
 *
@@ -171,7 +171,7 @@ static inline uint spin1_send_mc_packet(uint key, uint data, uint load) {
 *  uint spin1_send_fr_packet(uint key, uint data, uint load)
 *
 * INPUTS
-*  uint key: packet routining key
+*  uint key: packet routing key
 *  uint data: packet payload
 *  uint load: 0 = no payload (ignore data param), 1 = send payload
 *
@@ -197,7 +197,7 @@ uint spin1_send_packet(uint key, uint data, uint TCR);
 // SDP related functions
 // ------------------------------------------------------------------------
 
-static inline void spin1_msg_free(sdp_msg_t *msg) {
+static inline void spin1_msg_free(sdp_msg_t *msg) __attribute__((nonnull)) {
     sark_msg_free(msg);
 }
 
@@ -205,7 +205,7 @@ static inline sdp_msg_t* spin1_msg_get(void) {
     return sark_msg_get();
 }
 
-static inline uint spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout) {
+static inline uint spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout) __attribute__((nonnull)) {
     return sark_msg_send(msg, timeout);
 }
 
@@ -232,7 +232,7 @@ static inline uint spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout) {
 #ifdef THUMB
 extern uint spin1_irq_disable(void);
 #elif defined(__GNUC__)
-__inline uint spin1_irq_disable(void)
+__inline uint spin1_irq_disable(void) __attribute__((always_inline))
 {
     uint old_val, new_val;
 
@@ -276,7 +276,7 @@ __forceinline uint spin1_irq_disable(void)
 #ifdef THUMB
 extern uint spin1_fiq_disable(void);
 #elif defined(__GNUC__)
-__inline uint spin1_fiq_disable(void)
+__inline uint spin1_fiq_disable(void) __attribute__((always_inline))
 {
     uint old_val, new_val;
 
@@ -320,7 +320,7 @@ __forceinline uint spin1_fiq_disable(void)
 #ifdef THUMB
 extern uint spin1_int_disable(void);
 #elif defined(__GNUC__)
-__inline uint spin1_int_disable(void)
+__inline uint spin1_int_disable(void) __attribute__((always_inline))
 {
     uint old_val, new_val;
 
@@ -364,7 +364,7 @@ __forceinline uint spin1_int_disable(void)
 #ifdef THUMB
 extern void spin1_mode_restore(uint cpsr);
 #elif defined(__GNUC__)
-__inline void spin1_mode_restore(uint cpsr)
+__inline void spin1_mode_restore(uint cpsr) __attribute__((always_inline))
 {
     asm volatile (
     "msr	cpsr_c, %[cpsr]"
@@ -405,7 +405,9 @@ uint  spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route);
 *
 * SOURCE
 */
-static inline void* spin1_malloc(uint bytes) {
+static inline void* spin1_malloc(uint bytes)
+        __attribute__((alloc_size(1), malloc, assume_aligned(4)))
+{
     return sark_alloc(bytes, 1);
 }
 
