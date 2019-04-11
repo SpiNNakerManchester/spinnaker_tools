@@ -193,6 +193,10 @@ void configure_timer1(uint time, uint phase)
 /*
 *******/
 
+#ifndef VIC_ENABLE_VECTOR
+#define VIC_ENABLE_VECTOR (0x20)
+#endif //VIC_ENABLE_VECTOR
+
 /****f* spin1_api.c/configure_vic
 *
 * SUMMARY
@@ -262,33 +266,33 @@ void configure_vic(uint enable_timer)
     vic_controls[sark_vec->sark_slot] = 0;        // Disable previous slot
 
     vic_vectors[SARK_PRIORITY]  = sark_int_han;
-    vic_controls[SARK_PRIORITY] = 0x20 | CPU_INT;
+    vic_controls[SARK_PRIORITY] = VIC_ENABLE_VECTOR | CPU_INT;
 
     // Configure API callback interrupts
     vic_vectors[RX_READY_PRIORITY] = cc_rx_ready_isr;
-    vic_controls[RX_READY_PRIORITY] = 0x20 | CC_MC_INT;
+    vic_controls[RX_READY_PRIORITY] = VIC_ENABLE_VECTOR | CC_MC_INT;
 
     vic_vectors[FR_READY_PRIORITY] = cc_fr_ready_isr;
-    vic_controls[FR_READY_PRIORITY] = 0x20 | CC_FR_INT;
+    vic_controls[FR_READY_PRIORITY] = VIC_ENABLE_VECTOR | CC_FR_INT;
 
     vic_vectors[DMA_DONE_PRIORITY]  = dma_done_isr;
-    vic_controls[DMA_DONE_PRIORITY] = 0x20 | DMA_DONE_INT;
+    vic_controls[DMA_DONE_PRIORITY] = VIC_ENABLE_VECTOR | DMA_DONE_INT;
 
     vic_vectors[TIMER1_PRIORITY]  = timer1_isr;
-    vic_controls[TIMER1_PRIORITY] = 0x20 | TIMER1_INT;
+    vic_controls[TIMER1_PRIORITY] = VIC_ENABLE_VECTOR | TIMER1_INT;
 
     // configure the TX empty interrupt but don't enable it yet!
     vic_vectors[CC_TMT_PRIORITY] = cc_tx_empty_isr;
-    vic_controls[CC_TMT_PRIORITY] = 0x20 | CC_TMT_INT;
+    vic_controls[CC_TMT_PRIORITY] = VIC_ENABLE_VECTOR | CC_TMT_INT;
 
     // configure the software interrupt
     vic_vectors[SOFT_INT_PRIORITY]  = soft_int_isr;
-    vic_controls[SOFT_INT_PRIORITY] = 0x20 | SOFTWARE_INT;
+    vic_controls[SOFT_INT_PRIORITY] = VIC_ENABLE_VECTOR | SOFTWARE_INT;
 
 #if USE_WRITE_BUFFER == TRUE
     /* configure the DMA error interrupt */
     vic_vectors[DMA_ERR_PRIORITY]  = dma_error_isr;
-    vic_controls[DMA_ERR_PRIORITY] = 0x20 | DMA_ERR_INT;
+    vic_controls[DMA_ERR_PRIORITY] = VIC_ENABLE_VECTOR | DMA_ERR_INT;
 #endif // USE_WRITE_BUFFER == TRUE
 
     vic[VIC_SELECT] = fiq_select;
