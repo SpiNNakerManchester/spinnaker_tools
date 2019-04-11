@@ -4,20 +4,20 @@
 
 IMAGE 0
 {
-      	ITCM 0 0x7f00
-  	{   
-    	    	* (_alib_reset, +FIRST)
-    		* (+RO)
-		* (_alib_align, +LAST)
-  	}
+        ITCM 0 0x7f00
+        {
+                * (_alib_reset, +FIRST)
+                * (+RO)
+                * (_alib_align, +LAST)
+        }
 
-  	DTCM 0x00400000 0x00003800 
-  	{
-    		* (+RW)
-		* (+ZI)
-  	}
+        DTCM 0x00400000
+        {
+                * (+RW)
+                * (+ZI)
+        }
 
-	STACK 0x00404000 EMPTY -0x800
-	{
-	}
+        STACK 0x00408000 EMPTY -0x800
+        {
+        }
 }

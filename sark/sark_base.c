@@ -466,6 +466,7 @@ uint __attribute__((weak)) sark_init(uint *stack)
 
 #ifdef SARK_EVENT
     event_alloc(sark_vec->num_events);
+    timer_cancel_init();
 #endif
 
     // Finally return target mode

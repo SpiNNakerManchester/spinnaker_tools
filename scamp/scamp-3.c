@@ -1651,6 +1651,7 @@ void c_main(void)
 
         timer1_init(sark.cpu_clk * 1000);       // Initialise 1ms timer
 
+        desc_init();                    // Initialise TX and RX descriptors
         queue_init();                   // Initialise various queues
         nn_init();                      // Initialise NN package
         netinit_start();                // Initialise late-stage boot process datastructures
@@ -1673,9 +1674,10 @@ void c_main(void)
 
         timer1_init(sark.cpu_clk * 1000);  // Initialise 1ms timer
 
+        desc_init();                    // Initialise TX and RX descriptors
         queue_init();                   // Initialise various queues
         nn_init();                      // Initialise NN package
-        
+
         // recover the link enable map
         link_en = sv->link_en;
 
