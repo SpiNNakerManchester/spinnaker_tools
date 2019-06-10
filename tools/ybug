@@ -750,13 +750,12 @@ sub cmd_app_sig
         $state = $state{$state};
     }
 
+    my $level = ($region >> 16) & 3;
     my $data = ($app_mask << 8) + $app_id;
     my $mask = $region & 0xffff;
 
     if ($type == 1)
     {
-        my $level = ($region >> 16) & 3;
-
         my ($op, $mode) = (2, 2);	# sig, sum
         $op = 1 if $signal >= 16;	# stat
 
@@ -782,9 +781,11 @@ sub cmd_app_sig
 	my $yb = ($region >> 16) & 0xfc;
 
 	# find a working chip in the target region (try at most 16 addresses)
+	my $inc = ($level == 3) ? 1 : 2;  # if possible, spread out target chips
+	
 	for (my $i = 0; $i < 16; $i++)
 	{
-	    my $addr = [$xb + ($i >> 2), $yb + ($i & 3), 0];
+	    my $addr = [$xb + ($inc * ($i >> 2)), $yb + ($inc * ($i & 3)), 0];
 	    my $res;
 
 	    eval

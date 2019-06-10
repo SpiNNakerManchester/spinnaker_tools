@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// scamp-cmd.c	    Command handling for SC&MP
+// scamp-cmd.c      Command handling for SC&MP
 //
 // Copyright (C)    The University of Manchester - 2009-2011
 //
@@ -19,7 +19,7 @@
 
 // Version command string for SC&MP
 
-#define SCAMP_ID_STR  		"SC&MP/SpiNNaker"
+#define SCAMP_ID_STR            "SC&MP/SpiNNaker"
 
 //------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ uint cmd_ffd(sdp_msg_t *msg)
 
     uint key = (NN_CMD_FBS << 24) + (msg->arg2 & 0x00ffff00) + ID;
 
-    ff_nn_send(key, sum, fwd_rty, 0);	//## Changed log 1->0 10may13
+    ff_nn_send(key, sum, fwd_rty, 0);   //## Changed log 1->0 10may13
 
     uint words = ((msg->arg2 >> 8) & 255) + 1;
 
@@ -61,9 +61,9 @@ uint cmd_ffd(sdp_msg_t *msg)
     uint *ptr = (uint *) msg->data;
 
     for (uint w = 0; w < words; w++) {
-	uint data = *ptr++;
-	sum += data;
-	ff_nn_send(key + (w << 8), data, fwd_rty, 0);
+        uint data = *ptr++;
+        sum += data;
+        ff_nn_send(key + (w << 8), data, fwd_rty, 0);
     }
 
     key = (NN_CMD_FBE << 24) + (msg->arg2 & 0x00ff0000) + ID;
@@ -85,79 +85,88 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
     uint tag = msg->arg1 & 255;
 
     if (op > IPTAG_MAX || tag >= TAG_TABLE_SIZE) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     if (op == IPTAG_NEW || op == IPTAG_SET) {
-	if (op == IPTAG_NEW) {
-	    tag = iptag_new();
-	}
+        if (op == IPTAG_NEW) {
+            tag = iptag_new();
+        }
 
-	if (tag != TAG_NONE) {
-	    iptag_t *tt = tag_table + tag;
+        if (tag != TAG_NONE) {
+            iptag_t *tt = tag_table + tag;
+            iptag_t *source_tag = tag_table + msg->tag;
 
-	    sark_word_set(tt, 0, sizeof(iptag_t));
+            sark_word_set(tt, 0, sizeof(iptag_t));
 
-	    uint timeout = (msg->arg1 >> 24) & 15;
-	    uint flags = (msg->arg1 >> 20) & 0x0f00;
+            uint timeout = (msg->arg1 >> 24) & 15;
+            uint flags = (msg->arg1 >> 20) & 0x0f00;
 
-	    if (timeout != 0) {
-		timeout = 1 << (timeout - 1);
-	    }
+            if (timeout != 0) {
+                timeout = 1 << (timeout - 1);
+            }
 
-	    tt->timeout = timeout;
-	    tt->flags = flags |= timeout;
+            tt->timeout = timeout;
+            tt->flags = flags |= timeout;
 
-	    tt->dest_addr = msg->arg2 >> 16;
-	    tt->dest_port = (msg->arg1 >> 8) & 255;
+            tt->dest_addr = msg->arg2 >> 16;
+            tt->dest_port = (msg->arg1 >> 8) & 255;
 
-	    if (msg->arg3 != 0) {
-		uchar *ip_addr = (uchar *) &msg->arg3;
-		copy_ip(ip_addr, tt->ip);
-	    } else if (! (flags & IPFLAG_REV)) {
-		copy_ip((uchar *) &srce_ip, tt->ip);
-	    }
+            if (msg->arg3 != 0) {
+                uchar *ip_addr = (uchar *) &msg->arg3;
+                copy_ip(ip_addr, tt->ip);
+            } else if (! (flags & IPFLAG_REV)) {
+                if (flags & IPFLAG_USE_SENDER) {
+                    copy_ip(source_tag->ip, tt->ip);
+                } else {
+                    copy_ip((uchar *) &srce_ip, tt->ip);
+                }
+            }
 
-	    if (flags & IPFLAG_REV) {
-		tt->rx_port = msg->arg2 & 0xffff;
+            if (flags & IPFLAG_REV) {
+                tt->rx_port = msg->arg2 & 0xffff;
 
-		tt->flags |= IPFLAG_VALID;
-	    } else {
-		tt->tx_port = msg->arg2 & 0xffff;
+                tt->flags |= IPFLAG_VALID;
+            } else {
+                if (flags & IPFLAG_USE_SENDER) {
+                    tt->tx_port = source_tag->tx_port;
+                } else {
+                    tt->tx_port = msg->arg2 & 0xffff;
+                }
 
-		tt->flags |= IPFLAG_ARP;
-		arp_lookup(tt);
-	    }
-	}
+                tt->flags |= IPFLAG_ARP;
+                arp_lookup(tt);
+            }
+        }
 
-	msg->arg1 = tag;
+        msg->arg1 = tag;
 
-	return 4;
+        return 4;
     } else if (op == IPTAG_GET) {
-	iptag_t *tt = tag_table + tag;
-	uint size = msg->arg2 * sizeof(iptag_t);
+        iptag_t *tt = tag_table + tag;
+        uint size = msg->arg2 * sizeof(iptag_t);
 
-	if (size > SDP_BUF_SIZE) {
-	    msg->cmd_rc = RC_ARG;
-	    return 0;
-	}
+        if (size > SDP_BUF_SIZE) {
+            msg->cmd_rc = RC_ARG;
+            return 0;
+        }
 
-	sark_mem_cpy(&msg->arg1, tt, size);
+        sark_mem_cpy(&msg->arg1, tt, size);
 
-	return size;
+        return size;
     } else if (op == IPTAG_TTO) {
-	msg->arg1 = (TAG_FIXED_SIZE << 24) +
-		(TAG_POOL_SIZE << 16) +
-		(sizeof(iptag_t) << 8) +
-		tag_tto;
+        msg->arg1 = (TAG_FIXED_SIZE << 24) +
+                (TAG_POOL_SIZE << 16) +
+                (sizeof(iptag_t) << 8) +
+                tag_tto;
 
-	if (msg->arg2 < 16) {
-	    tag_tto = msg->arg2;
-	}
-	return 4;
-    } else {	// IPTAG_CLR
-	tag_table[tag].flags = 0;
+        if (msg->arg2 < 16) {
+            tag_tto = msg->arg2;
+        }
+        return 4;
+    } else if (op == IPTAG_CLR) {
+        tag_table[tag].flags = 0;
     }
 
     return 0;
@@ -170,9 +179,9 @@ uint cmd_ver(sdp_msg_t *msg)
     // Report P2P address of 255,255 until boot completes (as an indication
     // of system readiness)
     uint p2p_addr =
-	    ((netinit_phase == NETINIT_PHASE_DONE) &&
-		    (ethinit_phase == ETHINIT_PHASE_DONE))
-	    ? sv->p2p_addr : 0xFFFF;
+            ((netinit_phase == NETINIT_PHASE_DONE) &&
+                    (ethinit_phase == ETHINIT_PHASE_DONE))
+            ? sv->p2p_addr : 0xFFFF;
 
     msg->arg1 = (p2p_addr << 16) + (sark.phys_cpu << 8) + sark.virt_cpu;
     msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
@@ -196,8 +205,8 @@ uint cmd_link_read(sdp_msg_t *msg)
     uint link = msg->arg3;
 
     if (len > SDP_BUF_SIZE || link > NUM_LINKS - 1) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint addr = msg->arg1;
@@ -206,14 +215,14 @@ uint cmd_link_read(sdp_msg_t *msg)
     uint timeout = sv->peek_time;
 
     for (uint i = 0; i < len / 4; i++) {
-	uint rc = link_read_word(addr, link, buf, timeout);
-	if (rc != RC_OK) {
-	    msg->cmd_rc = rc;
-	    return 0;
-	}
+        uint rc = link_read_word(addr, link, buf, timeout);
+        if (rc != RC_OK) {
+            msg->cmd_rc = rc;
+            return 0;
+        }
 
-	addr += 4;
-	buf += 1;
+        addr += 4;
+        buf += 1;
     }
 
     return len;
@@ -231,8 +240,8 @@ uint cmd_link_write(sdp_msg_t *msg)
     uint link = msg->arg3;
 
     if (len > SDP_BUF_SIZE || link > NUM_LINKS - 1) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint addr = msg->arg1;
@@ -241,14 +250,14 @@ uint cmd_link_write(sdp_msg_t *msg)
     uint timeout = sv->peek_time;
 
     for (uint i = 0; i < len / 4; i++) {
-	uint rc = link_write_word(addr, link, buf, timeout);
-	if (rc != RC_OK) {
-	    msg->cmd_rc = rc;
-	    return 0;
-	}
+        uint rc = link_write_word(addr, link, buf, timeout);
+        if (rc != RC_OK) {
+            msg->cmd_rc = rc;
+            return 0;
+        }
 
-	addr += 4;
-	buf += 1;
+        addr += 4;
+        buf += 1;
     }
 
     return 0;
@@ -272,9 +281,9 @@ uint cmd_ar(sdp_msg_t *msg)
 {
     uint id_op_mask = msg->arg1;
 
-    if (id_op_mask & 1) {		// Can't reset monitor
-	msg->cmd_rc = RC_ARG;
-	return 0;
+    if (id_op_mask & 1) {               // Can't reset monitor
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     proc_start_app((uint) sv->sdram_sys, id_op_mask);
@@ -300,26 +309,26 @@ uint cmd_rtr(sdp_msg_t *msg)
     uint count = msg->arg1 >> 16;
 
     if (op == 0) {
-	rtr_mc_init(1);
+        rtr_mc_init(1);
     } else if (op == 1) {
-	if (! rtr_mc_clear(msg->arg2, count)) {
-	    msg->cmd_rc = RC_ARG;
-	}
+        if (! rtr_mc_clear(msg->arg2, count)) {
+            msg->cmd_rc = RC_ARG;
+        }
     } else if (op == 2) {
-	rtr_entry_t *table = (rtr_entry_t *) msg->arg2;
-	uint offset = msg->arg3;
+        rtr_entry_t *table = (rtr_entry_t *) msg->arg2;
+        uint offset = msg->arg3;
 
-	if (! rtr_mc_load(table, count, offset, app_id)) {
-	    msg->cmd_rc = RC_ARG;
-	}
+        if (! rtr_mc_load(table, count, offset, app_id)) {
+            msg->cmd_rc = RC_ARG;
+        }
     } else if (op == 3) {
-	if (msg->arg2 & BIT_31) {
-	    msg->arg1 = rtr_fr_get();
-	    return 4;
-	}
-	rtr_fr_set(msg->arg2);
+        if (msg->arg2 & BIT_31) {
+            msg->arg1 = rtr_fr_get();
+            return 4;
+        }
+        rtr_fr_set(msg->arg2);
     } else {
-	msg->cmd_rc = RC_ARG;
+        msg->cmd_rc = RC_ARG;
     }
 
   return 0;
@@ -373,18 +382,18 @@ uint cmd_info(sdp_msg_t *msg)
     uint timeout = sv->peek_time;
     uint local_chip_id = sc[SC_CHIP_ID];
     for (uint link = 0; link < NUM_LINKS; link++) {
-	// A link is determined working if: a link read of the remote system
-	// controller's chip ID returns and the chip ID matches this chip's
-	// ID (i.e. the remote chip is the same type of chip as this one!).
-	// Mark "disabled" links as not working.
-	if (link_en & (1 << link)) {
-	    uint remote_chip_id;
-	    uint rc = link_read_word((uint) (sc + SC_CHIP_ID), link,
-		    &remote_chip_id, timeout);
-	    if (rc == RC_OK && remote_chip_id == local_chip_id) {
-		msg->arg1 |= 1 << (link + 8);
-	    }
-	}
+        // A link is determined working if: a link read of the remote system
+        // controller's chip ID returns and the chip ID matches this chip's
+        // ID (i.e. the remote chip is the same type of chip as this one!).
+        // Mark "disabled" links as not working.
+        if (link_en & (1 << link)) {
+            uint remote_chip_id;
+            uint rc = link_read_word((uint) (sc + SC_CHIP_ID), link,
+                    &remote_chip_id, timeout);
+            if (rc == RC_OK && remote_chip_id == local_chip_id) {
+                msg->arg1 |= 1 << (link + 8);
+            }
+        }
     }
 
     // Get largest free block in SDRAM
@@ -396,7 +405,7 @@ uint cmd_info(sdp_msg_t *msg)
     // Add core states to the message
     uchar *buf = (uchar*) &(msg->data);
     for (uint core = 0; core < NUM_CPUS; core++) {
-	*(buf++) = sv_vcpu[core].cpu_state;
+        *(buf++) = sv_vcpu[core].cpu_state;
     }
 
     // Add the nearest Ethernet P2P id
@@ -419,15 +428,15 @@ extern level_t levels[4];
 extern uint pkt_tx(uint tcr, uint data, uint key);
 extern void return_msg(sdp_msg_t *msg, uint rc);
 
-#define MODE_OR  	0
-#define MODE_AND 	1
-#define MODE_SUM 	2
-#define MODE_3   	3
+#define MODE_OR         0
+#define MODE_AND        1
+#define MODE_SUM        2
+#define MODE_3          3
 
-#define APP_RET		0
-#define APP_STAT	1
-#define APP_SIG		2
-#define APP_3		3
+#define APP_RET         0
+#define APP_STAT        1
+#define APP_SIG         2
+#define APP_3           3
 
 void p2p_send_reg(uint ctrl, uint addr, uint data)
 {
@@ -473,16 +482,16 @@ void proc_send(uint data, uint mask)
     levels[level].result = (mode == MODE_AND) ? (1 << 16) : 0;
 
     for (uint i = 0; i < 16; i++) {
-	if (mask & (1 << i)) {
-	    uint valid = levels[level].valid[i];
+        if (mask & (1 << i)) {
+            uint valid = levels[level].valid[i];
 
-	    if (valid) {
-		uint addr = levels[level].addr[i];
+            if (valid) {
+                uint addr = levels[level].addr[i];
 
-		levels[level].sent++;
-		p2p_send_reg(data & (3 << 22), addr, data); //##
-	    }
-	}
+                levels[level].sent++;
+                p2p_send_reg(data & (3 << 22), addr, data); //##
+            }
+        }
     }
 
     // schedule the sending of the return message in plenty of time
@@ -515,34 +524,34 @@ void proc_process(uint data, uint srce)
 
     for (uint i = 1; i < num_cpus; i++) {
         uint b = (core_app[i] & app_mask) == app_id;
-	mask |= b << i;
+        mask |= b << i;
     }
 
     uint result = 0;
     if (mode == MODE_SUM) {
         for (uint i = 1; i < num_cpus; i++) {
-	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
-	        result++;
-	    }
-	}
+            if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
+                result++;
+            }
+        }
     } else if (mode == MODE_OR) {
         for (uint i = 1; i < num_cpus; i++) {
-	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
-	        result = 1 << 16;
-	    }
-	}
+            if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
+                result = 1 << 16;
+            }
+        }
 
-	result++;
-    } else {		// MODE_AND
+        result++;
+    } else {            // MODE_AND
         result = 1 << 16;
 
-	for (uint i = 1; i < num_cpus; i++) {
-	    if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state != state)) {
-	        result = 0;
-	    }
-	}
+        for (uint i = 1; i < num_cpus; i++) {
+            if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state != state)) {
+                result = 0;
+            }
+        }
 
-	result++;
+        result++;
     }
 
     uint d = (mode << 20) + (3 << 26) + result;
@@ -556,7 +565,7 @@ void p2p_region(uint data, uint srce)
 {
     uint t = chksum_32(data);
     if (t != 0) {
-	return;
+        return;
     }
 
     uint cmd = (data >> 22) & 3;
@@ -564,31 +573,31 @@ void p2p_region(uint data, uint srce)
     uint mode = (data >> 20) & 3;
 
     if (cmd == APP_RET) {
-	data &= 0x000fffff;	// trim to 20 bits
+        data &= 0x000fffff;     // trim to 20 bits
 
-	if (mode == MODE_OR) {
-	    levels[level].result += data & 0xffff;
-	    levels[level].result |= data & (1 << 16);
-	} else if (mode == MODE_AND) {
-	    uint count = (levels[level].result + data) & 0xffff;
-	    uint bit = levels[level].result & data & (1 << 16);
-	    levels[level].result = bit | count;
-	} else {
-	    levels[level].result += data;
-	}
+        if (mode == MODE_OR) {
+            levels[level].result += data & 0xffff;
+            levels[level].result |= data & (1 << 16);
+        } else if (mode == MODE_AND) {
+            uint count = (levels[level].result + data) & 0xffff;
+            uint bit = levels[level].result & data & (1 << 16);
+            levels[level].result = bit | count;
+        } else {
+            levels[level].result += data;
+        }
 
-	levels[level].rcvd++;
-	return;
+        levels[level].rcvd++;
+        return;
     }
 
     if (level != 0) {
-	levels[level].parent = srce;
-	data &= 0x0fffffff;
+        levels[level].parent = srce;
+        data &= 0x0fffffff;
 
-	// schedule the sending of packets to subregions
-	event_queue_proc(proc_send, data, 0xffffffff, PRIO_0);
+        // schedule the sending of packets to subregions
+        event_queue_proc(proc_send, data, 0xffffffff, PRIO_0);
 
-	return;
+        return;
     }
 
     // Level == 0 - process packet
@@ -596,13 +605,13 @@ void p2p_region(uint data, uint srce)
     uint result = 1;
 
     if (cmd == APP_STAT) {
-	// schedule the processing of the packet
-	event_queue_proc(proc_process, data, srce, PRIO_0);
-	return;
+        // schedule the processing of the packet
+        event_queue_proc(proc_process, data, srce, PRIO_0);
+        return;
     } else if (cmd == APP_SIG) {
-	signal_app(data);
+        signal_app(data);
     }
-    // else	// APP_3
+    // else     // APP_3
 
     uint d = (mode << 20) + (3 << 26) + result;
     p2p_send_reg(APP_RET << 22, srce, d);
@@ -615,40 +624,40 @@ uint cmd_sig(sdp_msg_t *msg)
     uint data = msg->arg2;
 
     if (type == 0) {
-	if (p2p_addr != sv->p2p_root) {
-	    msg->cmd_rc = RC_ARG;
-	    return 0;
-	}
-	pkt_tx(PKT_MC_PL, data, 0xffff5555);
+        if (p2p_addr != sv->p2p_root) {
+            msg->cmd_rc = RC_ARG;
+            return 0;
+        }
+        pkt_tx(PKT_MC_PL, data, 0xffff5555);
     } else if (type == 1) {
-	uint mask = msg->arg3;
+        uint mask = msg->arg3;
 
-	if (mask == 0) {
-	    msg->cmd_rc = RC_ARG;
-	    return 0;
-	}
+        if (mask == 0) {
+            msg->cmd_rc = RC_ARG;
+            return 0;
+        }
 
-	uint level = (data >> 26) & 3;
+        uint level = (data >> 26) & 3;
 
-	proc_send(data, mask);
+        proc_send(data, mask);
 
-	// check that packets were actually sent (i.e., chips are listening)
-	if (levels[level].sent != 0) {
-	    // schedule the return message with plenty of time to finish
-	    timer_schedule_proc(proc_ret_msg, (uint) msg, level, 10000);
+        // check that packets were actually sent (i.e., chips are listening)
+        if (levels[level].sent != 0) {
+            // schedule the return message with plenty of time to finish
+            timer_schedule_proc(proc_ret_msg, (uint) msg, level, 10000);
 
-	    // a 'wrong' message length indicates that the
-	    // return message should not be sent at this time
-	    return 0xffff0000;
-	} else {
-	    msg->cmd_rc = RC_ROUTE;
-	    return 0;
-	}
+            // a 'wrong' message length indicates that the
+            // return message should not be sent at this time
+            return 0xffff0000;
+        } else {
+            msg->cmd_rc = RC_ROUTE;
+            return 0;
+        }
     } else if (type == 2) {
-	ff_nn_send((NN_CMD_SIG0 << 24) + 0x3f0000,
-		(5 << 28) + data, 0x3f00, 1);
+        ff_nn_send((NN_CMD_SIG0 << 24) + 0x3f0000,
+                (5 << 28) + data, 0x3f00, 1);
     } else {
-	msg->cmd_rc = RC_ARG;
+        msg->cmd_rc = RC_ARG;
     }
 
     return 0;
@@ -673,48 +682,48 @@ uint cmd_alloc(sdp_msg_t *msg)
     uint op = msg->arg1 & 255;
     uint app_id = (msg->arg1 >> 8) & 255;
     if (op > ALLOC_MAX) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     switch (op) {
     case ALLOC_SDRAM:
-	msg->arg1 = (uint) sark_xalloc(sv->sdram_heap,
-		msg->arg2,
-		msg->arg3,
-		ALLOC_LOCK + ALLOC_ID + (app_id << 8));
-	sv->app_data[app_id].clean = 0;
-	break;
+        msg->arg1 = (uint) sark_xalloc(sv->sdram_heap,
+                msg->arg2,
+                msg->arg3,
+                ALLOC_LOCK + ALLOC_ID + (app_id << 8));
+        sv->app_data[app_id].clean = 0;
+        break;
 
     case FREE_SDRAM:
-	sark_xfree(sv->sdram_heap, (void *) msg->arg2, ALLOC_LOCK);
-	return 0;
+        sark_xfree(sv->sdram_heap, (void *) msg->arg2, ALLOC_LOCK);
+        return 0;
 
     case FREE_SDRAM_ID:
-	msg->arg1 = sark_xfree_id(sv->sdram_heap, app_id, ALLOC_LOCK);
-	break;
+        msg->arg1 = sark_xfree_id(sv->sdram_heap, app_id, ALLOC_LOCK);
+        break;
 
     case ALLOC_RTR:
-	msg->arg1 = rtr_alloc_id(msg->arg2, app_id);
-	sv->app_data[app_id].clean = 0;
-	break;
+        msg->arg1 = rtr_alloc_id(msg->arg2, app_id);
+        sv->app_data[app_id].clean = 0;
+        break;
 
     case FREE_RTR:
-	rtr_free(msg->arg2, msg->arg3);
-	return 0;
+        rtr_free(msg->arg2, msg->arg3);
+        return 0;
 
     case FREE_RTR_ID:
-	msg->arg1 = rtr_free_id(app_id, msg->arg2);
-	break;
+        msg->arg1 = rtr_free_id(app_id, msg->arg2);
+        break;
 
     case SDRAM_SPACE:
-	msg->arg1 = sv->sdram_heap->free_bytes;
-	msg->arg2 = sark_heap_max(sv->sdram_heap, ALLOC_LOCK);
-	return 8;
+        msg->arg1 = sv->sdram_heap->free_bytes;
+        msg->arg2 = sark_heap_max(sv->sdram_heap, ALLOC_LOCK);
+        return 8;
 
     case HEAP_TAG_PTR:
-	msg->arg1 = (uint) sark_tag_ptr(msg->arg2 & 255, app_id);
-	break;
+        msg->arg1 = (uint) sark_tag_ptr(msg->arg2 & 255, app_id);
+        break;
     }
 
     return 4;
@@ -733,21 +742,21 @@ uint cmd_remap(sdp_msg_t *msg)
     uint virt_core, phys_core;
 
     if (core > NUM_CPUS) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
-    if (flags & 1) {			// Arg is physical core
-	virt_core = sv->p2v_map[core];
-	phys_core = core;
-    } else {				// Arg is virtual core
-	virt_core = core;
-	phys_core = v2p_map[virt_core];
+    if (flags & 1) {                    // Arg is physical core
+        virt_core = sv->p2v_map[core];
+        phys_core = core;
+    } else {                            // Arg is virtual core
+        virt_core = core;
+        phys_core = v2p_map[virt_core];
     }
 
     if (virt_core == 0 || virt_core >= num_cpus) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     remap_phys_cores(1 << phys_core);
@@ -762,8 +771,8 @@ uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
 {
     uint len = msg->length;
     if (len < 24) {
-	msg->cmd_rc = RC_LEN;
-	return 0;
+        msg->cmd_rc = RC_LEN;
+        return 0;
     }
 
     uint t = msg->cmd_rc;
@@ -771,45 +780,45 @@ uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
 
     switch (t) {
     case CMD_VER:
-	return cmd_ver(msg);
+        return cmd_ver(msg);
     case CMD_READ:
-	return sark_cmd_read(msg);
+        return sark_cmd_read(msg);
     case CMD_WRITE:
-	return sark_cmd_write(msg);
+        return sark_cmd_write(msg);
     case CMD_FILL:
-	return sark_cmd_fill(msg);
+        return sark_cmd_fill(msg);
     case CMD_LED:
-	sark_led_set(msg->arg1);
-	return 0;
+        sark_led_set(msg->arg1);
+        return 0;
     case CMD_SROM:
-	return cmd_srom(msg);
+        return cmd_srom(msg);
     case CMD_LINK_READ:
-	return cmd_link_read(msg);
+        return cmd_link_read(msg);
     case CMD_LINK_WRITE:
-	return cmd_link_write(msg);
+        return cmd_link_write(msg);
     case CMD_FFD:
-	return cmd_ffd(msg);
+        return cmd_ffd(msg);
     case CMD_IPTAG:
-	return cmd_iptag(msg, srce_ip);
+        return cmd_iptag(msg, srce_ip);
     case CMD_NNP:
-	return cmd_nnp(msg);
+        return cmd_nnp(msg);
     case CMD_AS:
-	return cmd_as(msg);
+        return cmd_as(msg);
     case CMD_AR:
-	return cmd_ar(msg);
+        return cmd_ar(msg);
     case CMD_REMAP:
-	return cmd_remap(msg);
+        return cmd_remap(msg);
     case CMD_ALLOC:
-	return cmd_alloc(msg);
+        return cmd_alloc(msg);
     case CMD_SIG:
-	return cmd_sig(msg);
+        return cmd_sig(msg);
     case CMD_RTR:
-	return cmd_rtr(msg);
+        return cmd_rtr(msg);
     case CMD_INFO:
-	return cmd_info(msg);
+        return cmd_info(msg);
     default:
-	msg->cmd_rc = RC_CMD;
-	return 0;
+        msg->cmd_rc = RC_CMD;
+        return 0;
     }
 }
 

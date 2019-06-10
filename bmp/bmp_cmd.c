@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// bmp_cmd.c	    Command handling for BC&MP
+// bmp_cmd.c        Command handling for BC&MP
 //
 // Copyright (C)    The University of Manchester - 2012-2016
 //
@@ -39,17 +39,17 @@ static void fpga_xreg(uint32_t count, uint8_t *data)
     uint32_t *words = (uint32_t *) data;
 
     for (uint32_t i = 0; i < count; i++) {
-	uint32_t addr = words[2 * i];
-	uint32_t *data = words + 2 * i + 1;
-	uint32_t fpga = addr & 3;
+        uint32_t addr = words[2 * i];
+        uint32_t *data = words + 2 * i + 1;
+        uint32_t fpga = addr & 3;
 
-	fpga = (fpga == 3) ? 7 : 1 << fpga;
+        fpga = (fpga == 3) ? 7 : 1 << fpga;
 
-	for (uint32_t f = 0; f < 3; f++) {
-	    if (fpga & (1 << f)) {
-		fpga_word(addr, f, data, FPGA_WRITE);
-	    }
-	}
+        for (uint32_t f = 0; f < 3; f++) {
+            if (fpga & (1 << f)) {
+                fpga_word(addr, f, data, FPGA_WRITE);
+            }
+        }
     }
 }
 
@@ -60,16 +60,16 @@ static void fpga_xreg(uint32_t count, uint8_t *data)
 static void sf_scan(void)
 {
     if (! data_ok) {
-	return;
+        return;
     }
     ssp1_fast();
 
     for (uint32_t i = 0; i < FL_DIR_SIZE; i++) {
-	fl_dir_t *e = fl_dir + i;
+        fl_dir_t *e = fl_dir + i;
 
-	if (e->type == FL_FPGA && e->length != 0 && (e->flags & 0x8000) != 0) {
-	    fpga_boot(e->base, e->length, e->flags);
-	}
+        if (e->type == FL_FPGA && e->length != 0 && (e->flags & 0x8000) != 0) {
+            fpga_boot(e->base, e->length, e->flags);
+        }
     }
 
     // Reset line high, wait a while then process "xreg" blocks
@@ -78,11 +78,11 @@ static void sf_scan(void)
     delay_ms(5);
 
     for (uint32_t i = 0; i < FL_DIR_SIZE; i++) {
-	fl_dir_t *e = fl_dir + i;
+        fl_dir_t *e = fl_dir + i;
 
-	if (e->type == FL_XREG && e->size > 0) {
-	    fpga_xreg(e->size, e->data);
-	}
+        if (e->type == FL_XREG && e->size > 0) {
+            fpga_xreg(e->size, e->data);
+        }
     }
 }
 
@@ -93,7 +93,7 @@ static void sf_scan(void)
 void flash_buf_init(void)
 {
     for (uint32_t i = 0; i < FLASH_WORDS; i++) {
-	flash_buf[i] = 0xffffffff;
+        flash_buf[i] = 0xffffffff;
     }
 }
 
@@ -107,9 +107,9 @@ static uint32_t cmd_flash_erase (sdp_msg_t *msg)
     flash_buf_init();
 
     if (msg->arg1 == 0) {
-	msg->arg1 = (uint32_t) flash_buf;
+        msg->arg1 = (uint32_t) flash_buf;
     } else {
-	msg->cmd_rc = RC_ARG;
+        msg->cmd_rc = RC_ARG;
     }
     return 4;
 }
@@ -126,18 +126,18 @@ static uint32_t cmd_flash_write(sdp_msg_t *msg)
     uint32_t erase = msg->arg3;
 
     if (erase) {
-	msg->arg1 = flash_erase(start, start + length - 1);
-	if (msg->arg1 != 0) {
-	    msg->cmd_rc = RC_ARG;
-	    return 4;
-	}
+        msg->arg1 = flash_erase(start, start + length - 1);
+        if (msg->arg1 != 0) {
+            msg->cmd_rc = RC_ARG;
+            return 4;
+        }
     }
 
     msg->arg1 = flash_write(start, length, flash_buf);
     flash_buf_init();
 
     if (msg->arg1 == 0) {
-	return 0;
+        return 0;
     }
     msg->cmd_rc = RC_ARG;
     return 4;
@@ -155,21 +155,21 @@ static uint32_t cmd_xilinx(sdp_msg_t *msg)
 {
     uint32_t op = msg->arg1;
 
-    if (op == 0) {		// Send config bitfile
-	ssp1_fast();
-	ssp1_copy(msg->arg2, msg->data);
-    } else if (op == 1) {	// Initialise FPGA
-	if (! fpga_init(msg->arg2)) {
-	    msg->cmd_rc = RC_TIMEOUT;
-	}
-    } else if (op == 2) {	// Reset FPGA
-	if (msg->arg2 <= 2) {
-	    fpga_reset(msg->arg2);
-	} else {
-	    msg->cmd_rc = RC_ARG;
-	}
+    if (op == 0) {              // Send config bitfile
+        ssp1_fast();
+        ssp1_copy(msg->arg2, msg->data);
+    } else if (op == 1) {       // Initialise FPGA
+        if (! fpga_init(msg->arg2)) {
+            msg->cmd_rc = RC_TIMEOUT;
+        }
+    } else if (op == 2) {       // Reset FPGA
+        if (msg->arg2 <= 2) {
+            fpga_reset(msg->arg2);
+        } else {
+            msg->cmd_rc = RC_ARG;
+        }
     } else {
-	msg->cmd_rc = RC_ARG;
+        msg->cmd_rc = RC_ARG;
     }
 
     return 0;
@@ -188,8 +188,8 @@ uint32_t cmd_fpga_read(sdp_msg_t *msg)
     uint32_t link = msg->arg3;
 
     if (len > SDP_BUF_SIZE || link > NUM_FPGAS - 1) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint32_t addr = msg->arg1;
@@ -198,9 +198,9 @@ uint32_t cmd_fpga_read(sdp_msg_t *msg)
     ssp1_slow();
 
     for (uint32_t i = 0; i < len / 4; i++) {
-	fpga_word(addr, link, buf, FPGA_READ);
-	addr += 4;
-	buf += 1;
+        fpga_word(addr, link, buf, FPGA_READ);
+        addr += 4;
+        buf += 1;
     }
 
     return len;
@@ -218,8 +218,8 @@ uint32_t cmd_fpga_write(sdp_msg_t *msg)
     uint32_t link = msg->arg3;
 
     if (len > SDP_BUF_SIZE || link > NUM_FPGAS - 1) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint32_t addr = msg->arg1;
@@ -228,9 +228,9 @@ uint32_t cmd_fpga_write(sdp_msg_t *msg)
     ssp1_slow();
 
     for (uint32_t i = 0; i < len / 4; i++) {
-	fpga_word(addr, link, buf, FPGA_WRITE);
-	addr += 4;
-	buf += 1;
+        fpga_word(addr, link, buf, FPGA_WRITE);
+        addr += 4;
+        buf += 1;
     }
 
     return 0;
@@ -246,22 +246,22 @@ static uint32_t cmd_sf(sdp_msg_t *msg)
     uint32_t op = msg->arg3;
 
     if ((op < 2 && len > SDP_BUF_SIZE) || op > 2) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint32_t r;
 
     ssp0_pins(1);
     if (op == 0) {
-	sf_read(addr, len, (uint8_t *) &msg->arg1);
-	r = len;
+        sf_read(addr, len, (uint8_t *) &msg->arg1);
+        r = len;
     } else if (op == 1) {
-	sf_write(addr, len, msg->data);
-	r = 0;
+        sf_write(addr, len, msg->data);
+        r = 0;
     } else {
-	msg->arg1 = sf_crc32(addr, len);
-	r = 4;
+        msg->arg1 = sf_crc32(addr, len);
+        r = 4;
     }
     ssp0_pins(0);
 
@@ -279,32 +279,32 @@ static uint32_t cmd_ee(sdp_msg_t *msg)
     uint32_t op = msg->arg3;
 
     if (len > SDP_BUF_SIZE || op > 1 || ! bp_ctrl) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     if (op == 0) {
-	if (read_ee(addr, len, &msg->arg1)) {
-	    return len;
-	}
-	msg->cmd_rc = RC_TIMEOUT;
+        if (read_ee(addr, len, &msg->arg1)) {
+            return len;
+        }
+        msg->cmd_rc = RC_TIMEOUT;
     } else {
-	uint8_t *buf = msg->data;
+        uint8_t *buf = msg->data;
 
-	if (!read_ee(addr, 0, NULL)) {
-	    msg->cmd_rc = RC_TIMEOUT;
-	    return 0;
-	}
+        if (!read_ee(addr, 0, NULL)) {
+            msg->cmd_rc = RC_TIMEOUT;
+            return 0;
+        }
 
-	while (len > 0) {
-	    uint32_t count = (len > 16) ? 16 : len;
+        while (len > 0) {
+            uint32_t count = (len > 16) ? 16 : len;
 
-	    write_ee(addr, count, buf);
+            write_ee(addr, count, buf);
 
-	    addr += 16;
-	    buf += 16;
-	    len -= 16;
-	}
+            addr += 16;
+            buf += 16;
+            len -= 16;
+        }
     }
 
     return 0;
@@ -317,7 +317,7 @@ static uint32_t cmd_ee(sdp_msg_t *msg)
 void proc_led(uint32_t arg, uint32_t mask)
 {
     if (mask & (1 << board_ID)) {
-	led_set(arg);
+        led_set(arg);
     }
 }
 
@@ -327,7 +327,7 @@ static uint32_t cmd_led(sdp_msg_t *msg)
     uint32_t mask = msg->arg2 & ~(1 << board_ID);
 
     if (mask) {
-	can_proc_cmd(31, PROC_LED, msg->arg1, mask);
+        can_proc_cmd(31, PROC_LED, msg->arg1, mask);
     }
     proc_led(msg->arg1, msg->arg2);
 
@@ -343,10 +343,10 @@ void proc_reset(uint32_t arg, uint32_t mask)
     uint32_t delay = (arg >> 16) * board_ID;
 
     if (mask & (1 << board_ID)) {
-	if (delay) {
-	    delay_ms(delay);
-	}
-	reset_spin(reset);
+        if (delay) {
+            delay_ms(delay);
+        }
+        reset_spin(reset);
     }
 }
 
@@ -354,13 +354,13 @@ void proc_reset(uint32_t arg, uint32_t mask)
 static uint32_t cmd_reset(sdp_msg_t *msg)
 {
     if ((msg->arg1 & 0xfb) > 2) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint32_t mask = msg->arg2 & ~(1 << board_ID);
     if (mask) {
-	can_proc_cmd(31, PROC_RESET, msg->arg1, mask);
+        can_proc_cmd(31, PROC_RESET, msg->arg1, mask);
     }
     proc_reset(msg->arg1, msg->arg2);
 
@@ -380,17 +380,17 @@ void proc_power(uint32_t arg, uint32_t mask)
     uint32_t delay = (arg >> 16) * board_ID;
 
     if (mask & (1 << board_ID)) {
-	if (delay) {
-	    delay_ms(delay);
-	}
-	if (on) {
-	    set_power(POWER_ON);	// Sets POR
-	    delay_ms(25);
-	    sf_scan();			// Boot FPGAs
-	    reset_spin(0);		// Clear POR
-	} else {
-	    set_power(POWER_OFF);
-	}
+        if (delay) {
+            delay_ms(delay);
+        }
+        if (on) {
+            set_power(POWER_ON);        // Sets POR
+            delay_ms(25);
+            sf_scan();                  // Boot FPGAs
+            reset_spin(0);              // Clear POR
+        } else {
+            set_power(POWER_OFF);
+        }
     }
 }
 
@@ -398,14 +398,14 @@ void proc_power(uint32_t arg, uint32_t mask)
 static uint32_t cmd_power(sdp_msg_t *msg)
 {
     if ((msg->arg1 & 255) > 1) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint32_t mask = msg->arg2 & ~(1 << board_ID);
 
     if (mask) {
-	can_proc_cmd(31, PROC_POWER, msg->arg1, mask);
+        can_proc_cmd(31, PROC_POWER, msg->arg1, mask);
     }
     proc_power(msg->arg1, msg->arg2);
 
@@ -421,7 +421,7 @@ static uint32_t cmd_ver(sdp_msg_t *msg)
     uint32_t cv = (uint32_t) cortex_vec / 0x10000;
 
     msg->arg1 = (cv << 24) + (ee_data.frame_ID << 16) +
-	    (can_ID << 8) + board_ID;
+            (can_ID << 8) + board_ID;
     msg->arg2 = 0xffff0000 + SDP_BUF_SIZE;
     msg->arg3 = cortex_vec->build_date;
 
@@ -440,9 +440,9 @@ static uint32_t cmd_ver(sdp_msg_t *msg)
 // Return various useful bits of information about the BMP
 
 // arg1 = 0 returns
-//	    0   - hw_ver
-//	    1-4 - LPC1768 serial number
-//	    5   - flash buffer address
+//          0   - hw_ver
+//          1-4 - LPC1768 serial number
+//          5   - flash buffer address
 //          6   - board_stat address (this board)
 //          7   - Cortex boot vector address
 // arg1 = 1 returns EE data buffer
@@ -458,39 +458,39 @@ static uint32_t cmd_bmp_info(sdp_msg_t *msg)
 
     switch (msg->arg1) {
     case 0:
-	buf[0] = 58;
-	lpc_iap(buf, buf);
-	buf[0] = hw_ver;
-	buf[5] = (uint32_t) flash_buf;
-	buf[6] = (uint32_t) &board_stat[can_ID];
-	buf[7] = (uint32_t) cortex_vec;
-	return 32;
+        buf[0] = 58;
+        lpc_iap(buf, buf);
+        buf[0] = hw_ver;
+        buf[5] = (uint32_t) flash_buf;
+        buf[6] = (uint32_t) &board_stat[can_ID];
+        buf[7] = (uint32_t) cortex_vec;
+        return 32;
 
     case 1:
-	memcpy(buf, &ee_data, sizeof(ee_data_t));
-	return sizeof(ee_data_t);
+        memcpy(buf, &ee_data, sizeof(ee_data_t));
+        return sizeof(ee_data_t);
 
     case 2:
-	memcpy(buf, can_status, sizeof(can_status));
-	return sizeof(can_status);
+        memcpy(buf, can_status, sizeof(can_status));
+        return sizeof(can_status);
 
     case 3:
-	memcpy(buf, &board_stat[can_ID], sizeof(board_stat_t));
-	return sizeof(board_stat_t);
+        memcpy(buf, &board_stat[can_ID], sizeof(board_stat_t));
+        return sizeof(board_stat_t);
 
     case 4:
-	memcpy(buf, &bmp_ip, sizeof(ip_data_t));
-	buf += sizeof(ip_data_t) / sizeof(uint32_t);
-	memcpy(buf, &spin_ip, sizeof(ip_data_t));
-	return 2 * sizeof(ip_data_t);
+        memcpy(buf, &bmp_ip, sizeof(ip_data_t));
+        buf += sizeof(ip_data_t) / sizeof(uint32_t);
+        memcpy(buf, &spin_ip, sizeof(ip_data_t));
+        return 2 * sizeof(ip_data_t);
 
     case 5:
-	memcpy(buf, uni_vec, 32);
-	return 32;
+        memcpy(buf, uni_vec, 32);
+        return 32;
 
     default:
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 }
 
@@ -505,8 +505,8 @@ static uint32_t cmd_fill(sdp_msg_t *msg)
     int32_t n = msg->arg3;
 
     while (n > 0) {
-	*to++ = data;
-	n -= 4;
+        *to++ = data;
+        n -= 4;
     }
 
     return 0;
@@ -518,38 +518,38 @@ static uint32_t cmd_fill(sdp_msg_t *msg)
 
 static uint32_t cmd_read(sdp_msg_t *msg)
 {
-    uint32_t addr = msg->arg1;	// Address
-    uint32_t len = msg->arg2;	// Length
-    uint32_t type = msg->arg3;	// Type
+    uint32_t addr = msg->arg1;  // Address
+    uint32_t len = msg->arg2;   // Length
+    uint32_t type = msg->arg3;  // Type
 
     if (len > SDP_BUF_SIZE || type > TYPE_WORD) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint8_t *buffer = (uint8_t *) &msg->arg1;
 
     if (type == TYPE_BYTE) {
-	uint8_t *mem = (uint8_t *) addr;
-	uint8_t *buf = (uint8_t *) buffer;
+        uint8_t *mem = (uint8_t *) addr;
+        uint8_t *buf = (uint8_t *) buffer;
 
-	for (uint32_t i = 0; i < len; i++) {
-	    buf[i] = mem[i];
-	}
+        for (uint32_t i = 0; i < len; i++) {
+            buf[i] = mem[i];
+        }
     } else if (type == TYPE_HALF) {
-	uint16_t *mem = (uint16_t *) addr;
-	uint16_t *buf = (uint16_t *) buffer;
+        uint16_t *mem = (uint16_t *) addr;
+        uint16_t *buf = (uint16_t *) buffer;
 
-	for (uint32_t i = 0; i < len / 2; i++) {
-	    buf[i] = mem[i];
-	}
+        for (uint32_t i = 0; i < len / 2; i++) {
+            buf[i] = mem[i];
+        }
     } else {
-	uint32_t *mem = (uint32_t *) addr;
-	uint32_t *buf = (uint32_t *) buffer;
+        uint32_t *mem = (uint32_t *) addr;
+        uint32_t *buf = (uint32_t *) buffer;
 
-	for (uint32_t i = 0; i < len / 4; i++) {
-	    buf[i] = mem[i];
-	}
+        for (uint32_t i = 0; i < len / 4; i++) {
+            buf[i] = mem[i];
+        }
     }
 
     return len;
@@ -560,38 +560,38 @@ static uint32_t cmd_read(sdp_msg_t *msg)
 
 static uint32_t cmd_write(sdp_msg_t *msg)
 {
-    uint32_t addr = msg->arg1;	// Address
-    uint32_t len = msg->arg2;	// Length
-    uint32_t type = msg->arg3;	// Type
+    uint32_t addr = msg->arg1;  // Address
+    uint32_t len = msg->arg2;   // Length
+    uint32_t type = msg->arg3;  // Type
 
     if (len > SDP_BUF_SIZE || type > TYPE_WORD) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint8_t *buffer = msg->data;
 
     if (type == TYPE_BYTE) {
-	uint8_t *mem = (uint8_t *) addr;
-	uint8_t *buf = (uint8_t *) buffer;
+        uint8_t *mem = (uint8_t *) addr;
+        uint8_t *buf = (uint8_t *) buffer;
 
-	for (uint32_t i = 0; i < len; i++) {
-	    mem[i] = buf[i];
-	}
+        for (uint32_t i = 0; i < len; i++) {
+            mem[i] = buf[i];
+        }
     } else if (type == TYPE_HALF) {
-	uint16_t *mem = (uint16_t *) addr;
-	uint16_t *buf = (uint16_t *) buffer;
+        uint16_t *mem = (uint16_t *) addr;
+        uint16_t *buf = (uint16_t *) buffer;
 
-	for (uint32_t i = 0; i < len / 2; i++) {
-	    mem[i] = buf[i];
-	}
+        for (uint32_t i = 0; i < len / 2; i++) {
+            mem[i] = buf[i];
+        }
     } else {
-	uint32_t *mem = (uint32_t *) addr;
-	uint32_t *buf = (uint32_t *) buffer;
+        uint32_t *mem = (uint32_t *) addr;
+        uint32_t *buf = (uint32_t *) buffer;
 
-	for (uint32_t i = 0; i < len / 4; i++) {
-	    mem[i] = buf[i];
-	}
+        for (uint32_t i = 0; i < len / 4; i++) {
+            mem[i] = buf[i];
+        }
     }
 
     return 0;
@@ -610,54 +610,54 @@ static uint32_t cmd_iptag(sdp_msg_t *msg)
     uint32_t tag = msg->arg1 & 255;
 
     if (op > IPTAG_MAX || tag >= TAG_TABLE_SIZE) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     if (op == IPTAG_NEW || op == IPTAG_SET) {
-	if (op == IPTAG_NEW) {
-	    tag = iptag_new();
-	}
-	if (tag != TAG_NONE) {
-	    iptag_t *tt = tag_table + tag;
-	    uint32_t timeout = (msg->arg2 >> 16) & 15;
+        if (op == IPTAG_NEW) {
+            tag = iptag_new();
+        }
+        if (tag != TAG_NONE) {
+            iptag_t *tt = tag_table + tag;
+            uint32_t timeout = (msg->arg2 >> 16) & 15;
 
-	    if (timeout != 0) {
-		timeout = 1 << (timeout - 1);
-	    }
-	    tt->timeout = timeout;
+            if (timeout != 0) {
+                timeout = 1 << (timeout - 1);
+            }
+            tt->timeout = timeout;
 
-	    tt->port = msg->arg2 & 0xffff;
+            tt->port = msg->arg2 & 0xffff;
 
-	    uint8_t *ip_addr = (uint8_t *) &msg->arg3;
-	    copy_ip(ip_addr, tt->ip);
+            uint8_t *ip_addr = (uint8_t *) &msg->arg3;
+            copy_ip(ip_addr, tt->ip);
 
-	    tt->flags = IPTAG_ARP | timeout; // waiting for ARP
-	    arp_lookup(tt);
-	}
+            tt->flags = IPTAG_ARP | timeout; // waiting for ARP
+            arp_lookup(tt);
+        }
 
-	msg->arg1 = tag;
-	return 4;
+        msg->arg1 = tag;
+        return 4;
     } else if (op == IPTAG_GET) {
-	iptag_t *tt = tag_table + tag;
-	uint32_t size = msg->arg2 * sizeof(iptag_t);
+        iptag_t *tt = tag_table + tag;
+        uint32_t size = msg->arg2 * sizeof(iptag_t);
 
-	if (size > SDP_BUF_SIZE) {
-	    msg->cmd_rc = RC_ARG;
-	    return 0;
-	}
+        if (size > SDP_BUF_SIZE) {
+            msg->cmd_rc = RC_ARG;
+            return 0;
+        }
 
-	memcpy(&msg->arg1, tt, size);
-	return size;
+        memcpy(&msg->arg1, tt, size);
+        return size;
     } else if (op == IPTAG_TTO) {
-	msg->arg1 = (TAG_FIXED_SIZE << 24) + (TAG_POOL_SIZE << 16) + tag_tto;
+        msg->arg1 = (TAG_FIXED_SIZE << 24) + (TAG_POOL_SIZE << 16) + tag_tto;
 
-	if (msg->arg2 < 16) {
-	    tag_tto = msg->arg2;
-	}
-	return 4;
-    } else {				// IPTAG_CLR
-	tag_table[tag].flags = 0;
+        if (msg->arg2 < 16) {
+            tag_tto = msg->arg2;
+        }
+        return 4;
+    } else {                            // IPTAG_CLR
+        tag_table[tag].flags = 0;
     }
 
     return 0;
@@ -676,22 +676,22 @@ static uint32_t cmd_i2c(sdp_msg_t *msg)
     uint32_t count = msg->arg3;
 
     if (count > SDP_BUF_SIZE || !bp_ctrl) {
-	msg->cmd_rc = RC_ARG;
-	return 0;
+        msg->cmd_rc = RC_ARG;
+        return 0;
     }
 
     uint32_t ctrl = msg->arg1;
     uint32_t addr = msg->arg2;
 
-    if (ctrl > 256) {		// Poll
-	msg->arg1 = i2c_poll (LPC_I2C0, ctrl & 255);
-	return 4;
-    } else if (ctrl & 1) {	// Read
-	i2c_receive(LPC_I2C0, ctrl, addr, count, (void *) &msg->arg1);
-	return count;
-    } else {			// Write
-	i2c_send(LPC_I2C0, ctrl, addr, count, msg->data);
-	return 0;
+    if (ctrl > 256) {           // Poll
+        msg->arg1 = i2c_poll (LPC_I2C0, ctrl & 255);
+        return 4;
+    } else if (ctrl & 1) {      // Read
+        i2c_receive(LPC_I2C0, ctrl, addr, count, (void *) &msg->arg1);
+        return count;
+    } else {                    // Write
+        i2c_send(LPC_I2C0, ctrl, addr, count, msg->data);
+        return 0;
     }
 }
 
@@ -705,79 +705,79 @@ uint32_t debug(sdp_msg_t *msg)
     uint32_t len = msg->length;
 
     if (len < 24) {
-	msg->cmd_rc = RC_LEN;
-	return 0;
+        msg->cmd_rc = RC_LEN;
+        return 0;
     }
 
     uint32_t t = msg->cmd_rc;
     msg->cmd_rc = RC_OK;
 
 //    io_printf(IO_DBG, "-- BMP debug %u %x %x %x (%u)\n",
-//	    t, msg->arg1, msg->arg2, msg->arg3, msg->length);
+//          t, msg->arg1, msg->arg2, msg->arg3, msg->length);
 
     switch (t) {
     case CMD_VER:
-	return cmd_ver(msg);
+        return cmd_ver(msg);
 
     case CMD_READ:
-	return cmd_read(msg);
+        return cmd_read(msg);
 
     case CMD_WRITE:
-	return cmd_write(msg);
+        return cmd_write(msg);
 
     case CMD_FILL:
-	return cmd_fill(msg);
+        return cmd_fill(msg);
 
     case CMD_LED:
-	return cmd_led(msg);
+        return cmd_led(msg);
 
     case CMD_FLASH_ERASE:
-	return cmd_flash_erase(msg);
+        return cmd_flash_erase(msg);
 
     case CMD_FLASH_WRITE:
-	return cmd_flash_write(msg);
+        return cmd_flash_write(msg);
 
     case CMD_FLASH_COPY:
-	boot_vec->flash_copy(msg->arg1, msg->arg2, msg->arg3, 0);
-	return 0;
+        boot_vec->flash_copy(msg->arg1, msg->arg2, msg->arg3, 0);
+        return 0;
 
     case CMD_FPGA_READ:
-	return cmd_fpga_read(msg);
+        return cmd_fpga_read(msg);
 
     case CMD_FPGA_WRITE:
-	return cmd_fpga_write(msg);
+        return cmd_fpga_write(msg);
 
     case CMD_XILINX:
-	return cmd_xilinx(msg);
+        return cmd_xilinx(msg);
 
     case CMD_RESET:
-	return cmd_reset(msg);
+        return cmd_reset(msg);
 
     case CMD_POWER:
-	return cmd_power(msg);
+        return cmd_power(msg);
 
     case CMD_IPTAG:
-	return cmd_iptag(msg);
+        return cmd_iptag(msg);
 
     case CMD_BMP_SF:
-	return cmd_sf(msg);
+        return cmd_sf(msg);
 
     case CMD_BMP_EE:
-	return cmd_ee(msg);
+        return cmd_ee(msg);
 
     case CMD_BMP_INFO:
-	return cmd_bmp_info(msg);
+        return cmd_bmp_info(msg);
 
     case 61:
-	return cmd_i2c(msg);
+        return cmd_i2c(msg);
 
     case 62:
-	configure_pwm(msg->arg1, msg->arg2);
-	return 0;
+        configure_pwm(msg->arg1, msg->arg2);
+        return 0;
 
     default:
-	msg->cmd_rc = RC_CMD;
-	return 0;
+        msg->cmd_rc = RC_CMD;
+        return 0;
     }
 }
 

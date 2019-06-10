@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// scamp-boot.c	    BootROM support for SC&MP
+// scamp-boot.c     BootROM support for SC&MP
 //
 // Copyright (C)    The University of Manchester - 2009-2012
 //
@@ -22,18 +22,18 @@
 #define BOOT_BUF (DTCM_BASE + 0x8000)
 
 // BLOCK_COUNT * BYTE_COUNT must be < 32kB
-#define BLOCK_COUNT	28	// From 1-256
-#define WORD_COUNT	256	// From 1-256
-#define BYTE_COUNT	(WORD_COUNT * sizeof(uint))
+#define BLOCK_COUNT     28      // From 1-256
+#define WORD_COUNT      256     // From 1-256
+#define BYTE_COUNT      (WORD_COUNT * sizeof(uint))
 
 
-#define FF_START_PHASE_1		0x01000003
-#define FF_BLOCK_START_PHASE_1		0x02000003
-#define FF_BLOCK_DATA_PHASE_1		0x03000003
-#define FF_BLOCK_END_PHASE_1		0x04000003
-#define FF_CONTROL_PHASE_1		0x05000103
+#define FF_START_PHASE_1                0x01000003
+#define FF_BLOCK_START_PHASE_1          0x02000003
+#define FF_BLOCK_DATA_PHASE_1           0x03000003
+#define FF_BLOCK_END_PHASE_1            0x04000003
+#define FF_CONTROL_PHASE_1              0x05000103
 
-#define FF_TARGET_MONITOR		0x0
+#define FF_TARGET_MONITOR               0x0
 
 
 const uint crc_table[] = {
@@ -88,7 +88,7 @@ uint crc32(uchar *buf, uint len)
     uint crc = 0xffffffff;
 
     while (len--) {
-	crc = crc_table[(crc ^ (*buf++)) & 0xff] ^ (crc >> 8);
+        crc = crc_table[(crc ^ (*buf++)) & 0xff] ^ (crc >> 8);
     }
     return crc ^ 0xffffffff;
 }
@@ -99,16 +99,16 @@ void nn_tx(uint key, uint data)
     key |= chksum_64(key, data);
 
     for (uint link = 0; link < NUM_LINKS; link++) {
-	while ((cc[CC_TCR] & BIT_31) == 0) {
-	    continue;
+        while ((cc[CC_TCR] & BIT_31) == 0) {
+            continue;
         }
 
-	cc[CC_TCR] = 0x00820000 | link << 18;
-	cc[CC_TXDATA] = data;
-	cc[CC_TXKEY] = key;
+        cc[CC_TCR] = 0x00820000 | link << 18;
+        cc[CC_TXDATA] = data;
+        cc[CC_TXKEY] = key;
     }
 
-    sark_delay_us(sv->boot_delay);	// ST - 05jul12 - allow time to propagate...
+    sark_delay_us(sv->boot_delay);      // ST - 05jul12 - allow time to propagate...
 }
 
 
@@ -128,22 +128,22 @@ void boot_nn(uint hw_ver)
     nn_tx(key, data);
 
     for (uint j = 0; j < BLOCK_COUNT; j++) {
-	key = FF_BLOCK_START_PHASE_1 | (j << 16) | ((WORD_COUNT - 1) << 8);
-	data = j * BYTE_COUNT;
+        key = FF_BLOCK_START_PHASE_1 | (j << 16) | ((WORD_COUNT - 1) << 8);
+        data = j * BYTE_COUNT;
 
-	nn_tx(key, data);
+        nn_tx(key, data);
 
-	for (uint k = 0; k < WORD_COUNT; k++) {
-	    key = FF_BLOCK_DATA_PHASE_1 | (j << 16) | (k << 0x8);
-	    data = image[j * WORD_COUNT + k];
+        for (uint k = 0; k < WORD_COUNT; k++) {
+            key = FF_BLOCK_DATA_PHASE_1 | (j << 16) | (k << 0x8);
+            data = image[j * WORD_COUNT + k];
 
-	    nn_tx(key, data);
-	}
+            nn_tx(key, data);
+        }
 
-	key = FF_BLOCK_END_PHASE_1 | (j << 16);
-	data = crc32((uchar *) (image + j * WORD_COUNT), BYTE_COUNT);
+        key = FF_BLOCK_END_PHASE_1 | (j << 16);
+        data = crc32((uchar *) (image + j * WORD_COUNT), BYTE_COUNT);
 
-	nn_tx(key, data);
+        nn_tx(key, data);
     }
 
     key = FF_CONTROL_PHASE_1;

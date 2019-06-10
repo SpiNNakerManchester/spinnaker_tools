@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// bmp_eth.c	    Ethernet hardware interface code for BMP LPC1768
+// bmp_eth.c        Ethernet hardware interface code for BMP LPC1768
 //
 // Copyright (C)    The University of Manchester - 2012-2015
 //
@@ -21,23 +21,23 @@
 
 
 typedef struct {
-    uint32_t Packet;	// Receive Packet Descriptor
-    uint32_t Ctrl;	// Receive Control Descriptor
+    uint32_t Packet;    // Receive Packet Descriptor
+    uint32_t Ctrl;      // Receive Control Descriptor
 } rx_desc_t;
 
 
 typedef struct {
-    uint32_t Info;	// Receive Information Status
-    uint32_t HashCRC;	// Receive Hash CRC Status
+    uint32_t Info;      // Receive Information Status
+    uint32_t HashCRC;   // Receive Hash CRC Status
 } rx_stat_t;
 
 typedef struct {
-    uint32_t Packet;	// Transmit Packet Descriptor
-    uint32_t Ctrl;	// Transmit Control Descriptor
+    uint32_t Packet;    // Transmit Packet Descriptor
+    uint32_t Ctrl;      // Transmit Control Descriptor
 } tx_desc_t;
 
 typedef struct {
-    uint32_t Info;	// Transmit Information Status
+    uint32_t Info;      // Transmit Information Status
 } tx_stat_t;
 
 
@@ -67,7 +67,7 @@ void eth_update_tx(void)
     uint32_t idx = LPC_EMAC->TxProduceIndex + 1;
 
     if (idx == ETH_TX_BUFS) {
-	idx = 0;
+        idx = 0;
     }
     LPC_EMAC->TxProduceIndex = idx;
 }
@@ -77,7 +77,7 @@ void eth_rx_discard(void)
     uint32_t idx = LPC_EMAC->RxConsumeIndex + 1;
 
     if (idx == ETH_RX_BUFS) {
-	idx = 0;
+        idx = 0;
     }
     LPC_EMAC->RxConsumeIndex = idx;
 }
@@ -117,11 +117,11 @@ static void rx_desc_init(void)
 {
     // Initialise receive descriptors
     for (uint32_t i = 0; i < ETH_RX_BUFS; i++) {
-	rx_desc[i].Packet  = (uint32_t) &rx_buf[i];
-	rx_desc[i].Ctrl    = EMAC_RCTRL_INT | (EMAC_ETH_MAX_FLEN - 1);
+        rx_desc[i].Packet  = (uint32_t) &rx_buf[i];
+        rx_desc[i].Ctrl    = EMAC_RCTRL_INT | (EMAC_ETH_MAX_FLEN - 1);
 
-	rx_stat[i].Info    = 0;
-	rx_stat[i].HashCRC = 0;
+        rx_stat[i].Info    = 0;
+        rx_stat[i].HashCRC = 0;
     }
 
     // Set EMAC Receive Descriptor Registers.
@@ -137,9 +137,9 @@ static void tx_desc_init(void)
 {
     // Initialise transmit descriptors
     for (uint32_t i = 0; i < ETH_TX_BUFS; i++) {
-	tx_desc[i].Packet = (uint32_t) &tx_buf[i];
-	tx_desc[i].Ctrl   = 0;
-	tx_stat[i].Info   = 0;
+        tx_desc[i].Packet = (uint32_t) &tx_buf[i];
+        tx_desc[i].Ctrl   = 0;
+        tx_stat[i].Info   = 0;
     }
 
     // Set EMAC Transmit Descriptor Registers
@@ -156,10 +156,10 @@ void configure_eth(uint8_t *mac_addr)
 {
     // Reset all EMAC internal modules
     LPC_EMAC->MAC1 = EMAC_MAC1_RES_TX | EMAC_MAC1_RES_MCS_TX
-	    | EMAC_MAC1_RES_RX | EMAC_MAC1_RES_MCS_RX | EMAC_MAC1_SIM_RES
-	    | EMAC_MAC1_SOFT_RES;
+            | EMAC_MAC1_RES_RX | EMAC_MAC1_RES_MCS_RX | EMAC_MAC1_SIM_RES
+            | EMAC_MAC1_SOFT_RES;
     LPC_EMAC->Command = EMAC_CR_REG_RES | EMAC_CR_TX_RES | EMAC_CR_RX_RES
-	    | EMAC_CR_PASS_RUNT_FRM;
+            | EMAC_CR_PASS_RUNT_FRM;
 
     delay_us(5);
 
@@ -188,7 +188,7 @@ void configure_eth(uint8_t *mac_addr)
     LPC_EMAC->SUPP = 0;
     */
 
-    LPC_EMAC->SUPP = EMAC_SUPP_SPEED;	//!! Bodge - assume 100 MHz for now
+    LPC_EMAC->SUPP = EMAC_SUPP_SPEED;   //!! Bodge - assume 100 MHz for now
 
     // Set EMAC address
     LPC_EMAC->SA0 = (mac_addr[5] << 8) | mac_addr[4];
@@ -201,7 +201,7 @@ void configure_eth(uint8_t *mac_addr)
 
     // Set Receive Filter register: enable broadcast and multicast
     LPC_EMAC->RxFilterCtrl = EMAC_RFC_MCAST_EN | EMAC_RFC_BCAST_EN
-	    | EMAC_RFC_PERFECT_EN;
+            | EMAC_RFC_PERFECT_EN;
 
     // Enable Rx Done and Tx Done interrupt for EMAC
     //!!  LPC_EMAC->IntEnable = EMAC_INT_RX_DONE | EMAC_INT_TX_DONE;

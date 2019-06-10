@@ -4,6 +4,28 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.2.4 - Bug fixing
+
+Bug fix:
+
+* SCAMP: During P2P table setup, the hop count table is only updated
+  when a lower hop count is received. This avoids potential loops in
+  P2P routes that can appear when P2P table setup packets are dropped.
+
+#-------------------------------------------------------------------------------
+
+
+Version 3.2.3 - Bug fixing
+
+Bug fix:
+
+* SCAMP: the state of the inter-chip links is checked before P2P table
+  setup to avoid using a broken link as part of a P2P route. Note that
+  links can be working in one direction but broken in the reverse one.
+
+#-------------------------------------------------------------------------------
+
+
 Version 3.2.2 - Refactoring
 
 Refactoring:

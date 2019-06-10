@@ -1,4 +1,4 @@
-SpiNNaker Low-Level Software Tools - Release 3.2.2
+SpiNNaker Low-Level Software Tools - Release 3.2.4
 ==================================================
 
 Installation and Setup

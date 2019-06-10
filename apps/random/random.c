@@ -16,7 +16,7 @@
 
 void queue_proc(uint colour, uint time)
 {
-    char *s = (colour) ? "white" : "black";	// Make a colour string
+    char *s = (colour) ? "white" : "black";     // Make a colour string
 
     io_printf(IO_STD, "#%s;#fill;#red;%d\n", s, time); // And print it
 }
@@ -32,13 +32,13 @@ void queue_proc(uint colour, uint time)
 
 void timer_proc(uint colour, uint b)
 {
-    uint rand = sark_rand() & 255;		// Get next random period
+    uint rand = sark_rand() & 255;              // Get next random period
 
-    colour = !colour;				// Flip the colour
+    colour = !colour;                           // Flip the colour
 
     event_queue_proc(queue_proc, colour, rand, PRIO_0); // Queue printing
 
-    io_printf(IO_BUF, "Timer next %d\n", rand);	// Do buffered printing
+    io_printf(IO_BUF, "Timer next %d\n", rand); // Do buffered printing
 
     // Reschedule ourselves again
 
@@ -60,16 +60,16 @@ void timer_proc(uint colour, uint b)
 
 void c_main(void)
 {
-    uint core = sark_core_id();				// Get core ID
-    io_printf(IO_BUF, "Started core %d\n", core);	// and print it
+    uint core = sark_core_id();                         // Get core ID
+    io_printf(IO_BUF, "Started core %d\n", core);       // and print it
 
     sark_srand((sark_chip_id() << 8) + core * sv->time_ms); // Init randgen
 
-    event_register_timer(SLOT_0);		// Set up the timer event mechanism
+    event_register_timer(SLOT_0);               // Set up the timer event mechanism
 
     event_queue_proc(timer_proc, 0, 0, PRIO_0); // Queue the first timer call
 
-    uint rc = event_start(0, 0, SYNC_NOWAIT);	// Start event handling
+    uint rc = event_start(0, 0, SYNC_NOWAIT);   // Start event handling
 
     io_printf(IO_BUF, "Terminated rc %d\n", rc);// Printed if event_stop used...
 }

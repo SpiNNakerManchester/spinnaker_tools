@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// spinn_phy.c	    Spinnaker support routines for SMC PHY chip
+// spinn_phy.c      Spinnaker support routines for SMC PHY chip
 //
 // Copyright (C)    The University of Manchester - 2009, 2010
 //
@@ -26,19 +26,19 @@ static void phy_shift_out(uint data, uint len)
     uint c = er[ETH_PHY_CTRL];
 
     while (len--) {
-	if (data & 0x80000000) {
-	    c |= PHY_CTRL_DOUT;
-	} else {
-	    c &= ~PHY_CTRL_DOUT;
-	}
+        if (data & 0x80000000) {
+            c |= PHY_CTRL_DOUT;
+        } else {
+            c &= ~PHY_CTRL_DOUT;
+        }
 
-	er[ETH_PHY_CTRL] = c;
-	sark_delay_us(1);
-	er[ETH_PHY_CTRL] = c | PHY_CTRL_CLK;
-	sark_delay_us(1);
-	er[ETH_PHY_CTRL] = c;
+        er[ETH_PHY_CTRL] = c;
+        sark_delay_us(1);
+        er[ETH_PHY_CTRL] = c | PHY_CTRL_CLK;
+        sark_delay_us(1);
+        er[ETH_PHY_CTRL] = c;
 
-	data = data << 1;
+        data = data << 1;
     }
 }
 
@@ -49,14 +49,14 @@ static uint phy_shift_in(uint len)
     uint r = 0;
 
     while (len--) {
-	sark_delay_us(1);
-	r = r << 1;
-	if (er[ETH_PHY_CTRL] & PHY_CTRL_DIN) {
-	    r |= 1;
-	}
-	er[ETH_PHY_CTRL] = c | PHY_CTRL_CLK;
-	sark_delay_us(1);
-	er[ETH_PHY_CTRL] = c;
+        sark_delay_us(1);
+        r = r << 1;
+        if (er[ETH_PHY_CTRL] & PHY_CTRL_DIN) {
+            r |= 1;
+        }
+        er[ETH_PHY_CTRL] = c | PHY_CTRL_CLK;
+        sark_delay_us(1);
+        er[ETH_PHY_CTRL] = c;
     }
 
     return r;
