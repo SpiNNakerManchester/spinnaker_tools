@@ -943,6 +943,8 @@ uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
         return cmd_rtr(msg);
     case CMD_INFO:
         return cmd_info(msg);
+    case CMD_WAIT:
+        return cmd_wait(msg);
     default:
         msg->cmd_rc = RC_CMD;
         return 0;

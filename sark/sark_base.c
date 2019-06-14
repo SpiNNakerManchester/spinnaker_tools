@@ -31,7 +31,7 @@ void __attribute__((weak)) schedule_sysmode(uchar event_id,
 sark_data_t sark;
 uint wait_states;
 
-void sark_wait_send(void);
+void sark_wait_send(uint state);
 INT_HANDLER sark_int_han(void);
 INT_HANDLER sark_fiq_han(void);
 

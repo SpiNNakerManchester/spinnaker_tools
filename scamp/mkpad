@@ -10,7 +10,7 @@ my ($file, $size) = @ARGV;
 my $file_size = -s $file;
 my $buf;
 
-die "file too big\n" if $file_size > $size;
+die "file $file too big at $file_size of $size bytes\n" if $file_size > $size;
 
 open my $fh, "<", $file or die "Can't open $file\n";
 binmode($fh);
