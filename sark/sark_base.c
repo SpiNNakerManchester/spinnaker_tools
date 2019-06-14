@@ -566,7 +566,9 @@ void sark_wait_send(uint state)
 
     sark_lock_free(cpsr, LOCK_MBOX);
 
-    while (sark.vcpu->mbox_mp_cmd != SHM_IDLE);
+    while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
+        // Do Nothing
+    }
 }
 
 
