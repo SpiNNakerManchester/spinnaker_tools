@@ -160,6 +160,7 @@
 #define P2P_DATA                0
 #define P2P_CTRL                1
 #define P2P_LEVEL               2
+#define P2P_WAIT                3
 
 // Distinguish data/control packets in SDP/P2P
 
@@ -276,7 +277,7 @@ typedef struct {        // 64 bytes
     ushort sent;        // 4: Number of requests sent out in this region
     ushort rcvd;        // 6: Number of responses received
     ushort parent;      // 8: P2P address of the chip which sent the last request
-    ushort __PAD1;      // 10
+    ushort tag;         // 10: Tag for a response to use
     uint result;        // 12: Result accumulated within this region
     ushort addr[16];    // 16: A working chip p2p for each subregion, if valid
     uchar  valid[16];   // 48: Is at least one chip in each sub-region known to be alive?
@@ -329,6 +330,7 @@ extern void signal_app(uint data);
 extern void boot_ap(void);
 extern void clock_ap(uint virt_mask, uint enable);
 extern void reset_ap(uint virt_mask);
+extern uint send_wait(uint data);
 
 // scamp-p2p.c
 

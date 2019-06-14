@@ -436,7 +436,6 @@ extern void return_msg(sdp_msg_t *msg, uint rc);
 #define APP_RET         0
 #define APP_STAT        1
 #define APP_SIG         2
-#define APP_3           3
 
 void p2p_send_reg(uint ctrl, uint addr, uint data)
 {
@@ -611,7 +610,6 @@ void p2p_region(uint data, uint srce)
     } else if (cmd == APP_SIG) {
         signal_app(data);
     }
-    // else     // APP_3
 
     uint d = (mode << 20) + (3 << 26) + result;
     p2p_send_reg(APP_RET << 22, srce, d);
@@ -661,6 +659,135 @@ uint cmd_sig(sdp_msg_t *msg)
     }
 
     return 0;
+}
+
+struct wait_level_t {
+    ushort sent;        // Number of requests sent out in this region
+    ushort rcvd;        // Number of responses received
+    ushort parent;      // P2P address of the chip which sent the last request
+    ushort tag;         // Tag to use for the final response
+    uint virt_mask;     // Mask of CPUs signalled at this level (if any)
+    uint wait_states;   // The states being waited for
+    uint response;      // An OR of the states received
+    sdp_msg_t *msg;     // A message to be used to send the final response
+} wait_levels[4];
+
+#define WAIT_SEND 0
+#define WAIT_RESP 1
+extern void swap_sdp_hdr(sdp_msg_t *msg);
+
+void send_wait_response(uint next_level, uint my_level) {
+    uint addr_top = (next_level << 30) | (WAIT_RESP << 29);
+    uint addr = wait_levels[my_level].parent | (P2P_WAIT << 16);
+    uint data = wait_levels[my_level].response;
+    (void) pkt_tx(PKT_P2P_PL, data, addr);
+}
+
+void local_wait_done(uint cpu_id, uint state) {
+    // Verify we are still looking for this state
+    if (wait_levels[0].wait_states & (1 << state)) {
+        wait_levels[0].virt_mask &= ~(1 << cpu_id);
+        wait_levels[0].response |= (1 << state);
+        // If all the cores are done, report back
+        if (wait_levels[0].virt_mask == 0) {
+            // next level is 3, sending response
+            send_wait_response(3, 0);
+        }
+    }
+}
+
+void proc_send_wait(uint level, uint mask, uint data)
+{
+    uint addr_top = (((level + 1) & 3) << 30) | (WAIT_SEND << 29);
+
+    wait_levels[level].sent = 0;
+    wait_levels[level].rcvd = 0;
+
+    for (uint i = 0; i < 16; i++) {
+        if (mask & (1 << i)) {
+            uint valid = levels[level].valid[i];
+
+            if (valid) {
+                uint addr = levels[level].addr[i] | (P2P_WAIT << 16) | addr_top;
+
+                wait_levels[level].sent++;
+                (void) pkt_tx(PKT_P2P_PL, data, addr);
+            }
+        }
+    }
+}
+
+void p2p_wait(uint data, uint key, uint srce) {
+    uint cmd = (key >> 29) & 0x1;
+    uint level = (key >> 30) & 0x3;
+    if (cmd == WAIT_SEND) {
+        wait_levels[level].wait_states = data >> 16;
+        // Note: Level will wrap eventually, so 0 is stopping condition
+        if (level != 0) {
+            wait_levels[level].parent = srce;
+            proc_send_wait(level, 0xFFFFFFFF, data);
+            return;
+        }
+        // Level == 0
+        wait_levels[level].virt_mask = send_wait(data);
+    } else if (cmd == WAIT_RESP) {
+        // Make sure we are still looking for the states reported
+        if ((wait_levels[level].wait_states & data) == data) {
+            wait_levels[level].rcvd++;
+            wait_levels[level].response |= data;
+            // If all sent messages have been returned, send upwards
+            if (wait_levels[level].sent == wait_levels[level].rcvd) {
+                // If there is no message, send to parent level,
+                // otherwise send the response message
+                sdp_msg_t *msg = wait_levels[level].msg;
+                if (msg == NULL) {
+                    send_wait_response(level - 1, level);
+                } else {
+                    wait_levels[level].msg = NULL;
+                    swap_sdp_hdr(msg);
+                    msg->cmd_rc = RC_OK;
+                    msg->tag = wait_levels[level].tag;
+                    msg->arg1 = wait_levels[level].response;
+                    msg->length = sizeof(cmd_hdr_t);
+                    msg_queue_insert(msg, 0);
+                }
+            }
+        }
+    }
+}
+
+uint cmd_wait(sdp_msg_t *msg) {
+    uint level = msg->arg1 & 0x3;
+    uint tag = (msg->arg1 >> 8) & 0xFF;
+    uint app_id = (msg->arg1 >> 16) & 0xFF;
+    uint app_mask = (msg->arg1 >> 24) & 0xFF;
+    uint wait_states = msg->arg2;
+    uint mask = msg->arg3;
+
+    if (mask == 0) {
+        msg->cmd_rc = RC_ARG;
+        return 0;
+    }
+
+    // If there is already a message ready for the response, free it
+    if (wait_levels[level].msg != NULL) {
+        sark_msg_free(wait_levels[level].msg);
+    }
+    wait_levels[level].msg = msg;
+
+    uint data = ((wait_states & 0xFFFF) << 16) | ((app_mask & 0xFF) << 8)
+                | ((app_id & 0xFF) << 0);
+    proc_send_wait(level, mask, data);
+    // check that packets were actually sent (i.e., chips are listening)
+    if (wait_levels[level].sent != 0) {
+        wait_levels[level].tag = tag;
+        // Return an invalid code, so we can keep the message and return it
+        // later
+        return 0xFFFF0000;
+    } else {
+        msg->cmd_rc = RC_ROUTE;
+        return 0;
+    }
 }
 
 

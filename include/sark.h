@@ -357,7 +357,8 @@ enum shm_cmd_e {
     SHM_MSG,            //!< Passing SDP message
     SHM_NOP,            //!< Does nothing...
     SHM_SIGNAL,         //!< Signal application
-    SHM_CMD             //!< Command to MP
+    SHM_CMD,            //!< Command to MP
+    SHM_WAIT            //!< Response to WAIT
 };
 
 typedef enum shm_cmd_e shm_cmd; //!< Typedef for enum shm_cmd_e
@@ -385,7 +386,7 @@ enum signal_e {
     SIG_USR1,           //!< Send user signal 1
 
     SIG_USR2,           //!< Send user signal 2
-    SIG_USR3,           //!< Send user signal 3
+    SIG_USR3            //!< Send user signal 3
 };
 
 typedef enum signal_e signal;   //!< Typedef for enum signal_e
@@ -430,6 +431,7 @@ typedef enum signal_e signal;   //!< Typedef for enum signal_e
 #define CMD_ALLOC       28  //!< Memory allocation
 #define CMD_RTR         29  //!< Router control
 #define CMD_INFO        31  //!< Get chip/core info
+#define CMD_WAIT        32  //!< Wait for state
 
 // 48-63 reserved for BMP
 

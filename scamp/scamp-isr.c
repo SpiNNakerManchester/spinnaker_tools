@@ -24,6 +24,7 @@ extern pkt_queue_t tx_pkt_queue;
 extern void p2p_region(uint data, uint key);
 extern void p2p_rcv_data(uint data, uint key);
 extern void p2p_rcv_ctrl(uint data, uint key);
+extern void p2p_wait(uint data, uint key, uint srce);
 extern void nn_rcv_pkt(uint link, uint data, uint key);
 extern void peek_ack_pkt(uint link, uint data, uint key);
 extern void poke_ack_pkt(uint link, uint data, uint key);
@@ -180,14 +181,16 @@ INT_HANDLER pkt_p2p_int()
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
     uint p2p_type = (key >> 16) & 3;
-    key &= 0xffff;
+    uint srce = key & 0xffff;
 
     if (p2p_type == P2P_LEVEL) {
-        p2p_region(data, key);
+        p2p_region(data, srce);
     } else if (p2p_type == P2P_DATA) {
-        p2p_rcv_data(data, key);
+        p2p_rcv_data(data, srce);
     } else if (p2p_type == P2P_CTRL) {
-        p2p_rcv_ctrl(data, key);
+        p2p_rcv_ctrl(data, srce);
+    } else if (p2p_type == P2P_WAIT) {
+        p2p_wait(data, key, srce);
     }
 
     vic[VIC_VADDR] = (uint) vic;
@@ -242,6 +245,7 @@ INT_HANDLER ms_timer_int()
 
 
 uint next_box;
+extern void local_wait_done(uint cpu_id, uint state);
 
 INT_HANDLER ap_int()
 {
@@ -277,7 +281,11 @@ INT_HANDLER ap_int()
             // mailbox as IDLE to cause sender timeout
             sw_error(SW_OPT);
         }
-
+    } else if (cmd == SHM_WAIT) {
+        vcpu->mbox_mp_cmd = SHM_IDLE;
+        uint state = (uint) shm_msg;
+        uint cpu_id = next_box;
+        local_wait_done(cpu_id, state);
     } else {    //## Hook for other commands...
         vcpu->mbox_mp_cmd = SHM_IDLE;
         sw_error(SW_OPT);
