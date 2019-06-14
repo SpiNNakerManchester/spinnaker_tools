@@ -740,9 +740,9 @@ void p2p_wait(uint data, uint key, uint srce) {
                 // If there is no message, send to parent level,
                 // otherwise send the response message
                 sdp_msg_t *msg = wait_levels[level].msg;
-                if (msg == NULL) {
+                if (msg == NULL && level > 0) {
                     send_wait_response(level - 1, level);
-                } else {
+                } else if (level > 0) {
                     wait_levels[level].msg = NULL;
                     swap_sdp_hdr(msg);
                     msg->cmd_rc = RC_OK;
@@ -750,6 +750,10 @@ void p2p_wait(uint data, uint key, uint srce) {
                     msg->arg1 = wait_levels[level].response;
                     msg->length = sizeof(cmd_hdr_t);
                     msg_queue_insert(msg, 0);
+                } else {
+                    // If we have reached level 0 and not got a message,
+                    // something has gone wrong...
+                    sw_error(SW_OPT);
                 }
             }
         }
@@ -773,7 +777,13 @@ uint cmd_wait(sdp_msg_t *msg) {
     if (wait_levels[level].msg != NULL) {
         sark_msg_free(wait_levels[level].msg);
     }
-    wait_levels[level].msg = msg;
+
+    // Try and get a new message to use in the response
+    sdp_msg_t *new_msg = sark_msg_get();
+    if (new_msg == NULL) {
+        msg->cmd_rc = RC_BUF;
+        return 0;
+    }
 
     uint data = ((wait_states & 0xFFFF) << 16) | ((app_mask & 0xFF) << 8)
                 | ((app_id & 0xFF) << 0);
@@ -781,13 +791,15 @@ uint cmd_wait(sdp_msg_t *msg) {
     // check that packets were actually sent (i.e., chips are listening)
     if (wait_levels[level].sent != 0) {
         wait_levels[level].tag = tag;
-        // Return an invalid code, so we can keep the message and return it
-        // later
-        return 0xFFFF0000;
-    } else {
-        msg->cmd_rc = RC_ROUTE;
+        wait_levels[level].msg = new_msg;
+        msg->cmd_rc = RC_OK;
         return 0;
     }
+
+    // No one is listening, so give up
+    sark_msg_free(new_msg);
+    msg->cmd_rc = RC_ROUTE;
+    return 0;
 }
 
 

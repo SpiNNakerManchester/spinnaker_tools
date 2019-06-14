@@ -22,7 +22,7 @@
 #define BOOT_BUF (DTCM_BASE + 0x8000)
 
 // BLOCK_COUNT * BYTE_COUNT must be < 32kB
-#define BLOCK_COUNT     28      // From 1-256
+#define BLOCK_COUNT     32      // From 1-256
 #define WORD_COUNT      256     // From 1-256
 #define BYTE_COUNT      (WORD_COUNT * sizeof(uint))
 

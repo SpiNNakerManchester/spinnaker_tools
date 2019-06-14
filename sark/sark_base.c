@@ -29,9 +29,9 @@ void __attribute__((weak)) schedule_sysmode(uchar event_id,
 #define SARK_ID_STR             "SARK/SpiNNaker"
 
 sark_data_t sark;
-uint wait_states;
+// uint wait_states;
 
-void sark_wait_send(uint state);
+// void sark_wait_send(uint state);
 INT_HANDLER sark_int_han(void);
 INT_HANDLER sark_fiq_han(void);
 
@@ -107,11 +107,11 @@ uint sark_str_len(char *string)
 void sark_cpu_state(cpu_state state)
 {
     sark.vcpu->cpu_state = state;
-    if (wait_states & (1 << state)) {
-        // Reset to as not to send again
-        wait_states = 0;
-        sark_wait_send(state);
-    }
+//    if (wait_states & (1 << state)) {
+//        // Reset to as not to send again
+//        wait_states = 0;
+//        sark_wait_send(state);
+//    }
 }
 
 //------------------------------------------------------------------------------
@@ -475,7 +475,7 @@ uint __attribute__((weak)) sark_init(uint *stack)
     event_alloc(sark_vec->num_events);
     timer_cancel_init();
 #endif
-    wait_states = 0;
+    // wait_states = 0;
 
     // Finally return target mode
 
@@ -549,27 +549,27 @@ uint sark_msg_send(sdp_msg_t *msg, uint timeout)
     return 1;
 }
 
-void sark_wait_send(uint state)
-{
-    sark.vcpu->mbox_mp_cmd = SHM_WAIT;
-    sark.vcpu->mbox_mp_msg = (void *) state;
-
-    uint cpsr = sark_lock_get(LOCK_MBOX);
-
-    uint t = sv->mbox_flags;
-
-    sv->mbox_flags = t | (1 << sark.virt_cpu);
-
-    if (t == 0) {
-        sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
-    }
-
-    sark_lock_free(cpsr, LOCK_MBOX);
-
-    while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-        // Do Nothing
-    }
-}
+//void sark_wait_send(uint state)
+//{
+//    sark.vcpu->mbox_mp_cmd = SHM_WAIT;
+//    sark.vcpu->mbox_mp_msg = (void *) state;
+//
+//    uint cpsr = sark_lock_get(LOCK_MBOX);
+//
+//    uint t = sv->mbox_flags;
+//
+//    sv->mbox_flags = t | (1 << sark.virt_cpu);
+//
+//    if (t == 0) {
+//        sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
+//    }
+//
+//    sark_lock_free(cpsr, LOCK_MBOX);
+//
+//    while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
+//        // Do Nothing
+//    }
+//}
 
 
 //------------------------------------------------------------------------------
@@ -794,13 +794,13 @@ void sark_int(void *pc)
     }
 #endif
 
-    if (cmd == SHM_WAIT) {
-        wait_states = data;
-        // Reset the state to the current state in case it is already in
-        // one of the requested states
-        sark_cpu_state(sark.vcpu->cpu_state);
-        return;
-    }
+//    if (cmd == SHM_WAIT) {
+//        wait_states = data;
+//        // Reset the state to the current state in case it is already in
+//        // one of the requested states
+//        sark_cpu_state(sark.vcpu->cpu_state);
+//        return;
+//    }
 
     if (cmd == SHM_MSG) {
         sdp_msg_t *shm_msg = (sdp_msg_t *) data;
