@@ -1001,7 +1001,7 @@ typedef struct sv {
 
     uint led0;                  //!< 30 LED definition words (for up
     uint led1;                  //!< 34 to 15 LEDs)
-    uint __PAD2;                //!< 38
+    int clock_drift;            //!< 38 drift of clock from boot chip clock
     uint random;                //!< 3c Random number seed
 
     uchar root_chip;            //!< 40 Set if we are the root chip
