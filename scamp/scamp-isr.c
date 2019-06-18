@@ -139,7 +139,6 @@ static int samples[N_ITEMS];
 static int sum = 0;
 static uint n_samples = 0;
 static uint sample_pos;
-static int last_average;
 
 INT_HANDLER pkt_mc_int()
 {
@@ -168,8 +167,7 @@ INT_HANDLER pkt_mc_int()
                     sum = (sum - samples[sample_pos]) + drift;
                     samples[sample_pos] = drift;
                     sample_pos = (sample_pos + 1) % N_ITEMS;
-                    uint average_drift = sum / N_ITEMS;
-                    sv->clock_drift = average_drift;
+                    sv->clock_drift = sum / N_ITEMS;
                 }
             }
         }
