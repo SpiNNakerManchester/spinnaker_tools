@@ -150,18 +150,27 @@ INT_HANDLER pkt_mc_int()
     if (key == 0xffff5555) {
         signal_app(data);
     } else if (key == 0xffff5554) {
+        // Timer synchronisation
         uint ticks = tc[T1_COUNT];
         if (n_samples == 0) {
+            // If there are no samples, take one now, but don't do anything else
             last_ticks = ticks;
             n_samples += 1;
         } else {
+            // Note, we store ticks even if out of range; this should help when
+            // things are moving but going to converge again on a different
+            // value.  This might mean that we ignore more than one value if
+            // there is a lot of jitter, but this is OK.
             int diff = ticks - last_ticks;
+            last_ticks = ticks;
             if (diff <= MAX_DIFF && diff >= -MAX_DIFF) {
-                last_ticks = ticks;
                 if (n_samples == 1) {
+                    // If there is only one sample, we can take a difference,
+                    // but we can't work out the drift yet
                     last_diff = diff;
                     n_samples += 1;
                 } else {
+                    // Enough samples now, so do the difference and averaging
                     int drift = diff - last_diff;
                     last_diff = diff;
                     sum = (sum - samples[sample_pos]) + drift;
@@ -237,7 +246,7 @@ INT_HANDLER ms_timer_int()
         uint unix_time = sv->unix_time + 1;
         sv->unix_time = unix_time;
 
-        if ((unix_time % 2) == 0) {
+        if ((unix_time % 2) == 0 && netinit_phase == NETINIT_PHASE_DONE) {
             // If this is the boot chip, send a multicast message to keep time
             if (sv->p2p_root == sv->p2p_addr) {
                 pkt_tx(PKT_MC_PL, 0, 0xffff5554);
