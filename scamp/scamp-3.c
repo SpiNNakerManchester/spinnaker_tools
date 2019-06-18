@@ -1136,7 +1136,7 @@ void compute_st(void)
         }
     }
 
-    rtr_mc_set(0, 0xffff5555, 0xffffffff, route);
+    rtr_mc_set(0, 0xffff5554, 0xfffffffe, route);
 }
 
 

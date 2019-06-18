@@ -131,7 +131,15 @@ __asm void eth_rx_int(void)
 
 
 //------------------------------------------------------------------------------
-
+#define N_ITEMS 8
+#define MAX_DIFF 1000
+static uint last_ticks = 0;
+static int last_diff = 0;
+static int samples[N_ITEMS];
+static int sum = 0;
+static uint n_samples = 0;
+static uint sample_pos;
+static int last_average;
 
 INT_HANDLER pkt_mc_int()
 {
@@ -142,6 +150,29 @@ INT_HANDLER pkt_mc_int()
 
     if (key == 0xffff5555) {
         signal_app(data);
+    } else if (key == 0xffff5554) {
+        uint ticks = tc[T1_COUNT];
+        if (n_samples == 0) {
+            last_ticks = ticks;
+            n_samples += 1;
+        } else {
+            int diff = ticks - last_ticks;
+            if (diff <= MAX_DIFF && diff >= -MAX_DIFF) {
+                last_ticks = ticks;
+                if (n_samples == 1) {
+                    last_diff = diff;
+                    n_samples += 1;
+                } else {
+                    int drift = diff - last_diff;
+                    last_diff = diff;
+                    sum = (sum - samples[sample_pos]) + drift;
+                    samples[sample_pos] = drift;
+                    sample_pos = (sample_pos + 1) % N_ITEMS;
+                    uint average_drift = sum / N_ITEMS;
+                    sv->clock_drift = average_drift;
+                }
+            }
+        }
     }
 
 #if MC_SLOT != SLOT_FIQ
@@ -200,12 +231,20 @@ INT_HANDLER pkt_p2p_int()
 INT_HANDLER ms_timer_int()
 {
     tc[T1_INT_CLR] = (uint) tc;         // Clear interrupt
-
+    
     sv->clock_ms++;
     uint ms = sv->time_ms + 1;
     if (ms == 1000) {
         ms = 0;
-        sv->unix_time++;
+        uint unix_time = sv->unix_time + 1;
+        sv->unix_time = unix_time;
+
+        if ((unix_time % 2) == 0) {
+            // If this is the boot chip, send a multicast message to keep time
+            if (sv->p2p_root == sv->p2p_addr) {
+                pkt_tx(PKT_MC_PL, 0, 0xffff5554);
+            }
+        }
 
         if (!event_queue_proc(proc_1hz, 0, 0, PRIO_2)) { // !!const
             sw_error(SW_OPT);
