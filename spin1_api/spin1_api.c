@@ -14,7 +14,7 @@ static volatile uint run;               // controls simulation start/exit
 static volatile uint paused;            // indicates when paused
 static volatile uint resume_sync;       // controls re-synchronisation
 uint ticks;                             // number of elapsed timer periods
-static uint timer_tick;                 // timer tick period
+uint timer_tick;                        // timer tick period
 static uint timer_phase;                // additional phase on starting the timer
 
 // default fiq handler -- restored after simulation
@@ -258,8 +258,8 @@ void configure_timer1(uint time, uint phase)
     // do not enable yet!
     tc[T1_CONTROL] = 0;
     tc[T1_INT_CLR] = 1;
-    tc[T1_LOAD] = sv->cpu_clk * (time + phase);
-    tc[T1_BG_LOAD] = sv->cpu_clk * time;
+    tc[T1_LOAD] = (sv->cpu_clk * (time + phase)) + sv->clock_drift;
+    tc[T1_BG_LOAD] = (sv->cpu_clk * time) + sv->clock_drift;
 }
 /*
 *******/

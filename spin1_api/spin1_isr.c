@@ -11,6 +11,7 @@ extern uint user_arg0;
 extern uint user_arg1;
 
 extern uint ticks;
+extern uint timer_tick;
 
 extern dma_queue_t dma_queue;
 extern tx_packet_queue_t tx_packet_queue;
@@ -442,6 +443,11 @@ INT_HANDLER timer1_isr()
 
     // Increment simulation "time"
     ticks++;
+
+    // Every now and again, update the rate to adjust for drift changes
+    if ((ticks % 2048) == 0) {
+        tc[T1_BG_LOAD] = (sv->cpu_clk * timer_tick) + sv->clock_drift;
+    }
 
     // If application callback registered schedule it
     if (callback[TIMER_TICK].cback != NULL) {
