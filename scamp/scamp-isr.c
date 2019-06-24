@@ -131,14 +131,15 @@ __asm void eth_rx_int(void)
 
 
 //------------------------------------------------------------------------------
-#define N_ITEMS 8
-#define MAX_DIFF 1000
-static uint last_ticks = 0;
-static int last_diff = 0;
+#define N_ITEMS 16
+#define MAX_DIFF 30000
+static int last_ticks = 0;
 static int samples[N_ITEMS];
 static int sum = 0;
 static uint n_samples = 0;
 static uint sample_pos;
+static int last_beacon = 0;
+static uint time_to_next_sync = 2000000;
 
 INT_HANDLER pkt_mc_int()
 {
@@ -149,34 +150,36 @@ INT_HANDLER pkt_mc_int()
 
     if (key == 0xffff5555) {
         signal_app(data);
-    } else if (key == 0xffff5554) {
+    } else if (key == 0xffff5554 && netinit_phase == NETINIT_PHASE_DONE) {
         // Timer synchronisation
-        uint ticks = tc[T1_COUNT];
+        int ticks = tc[T1_COUNT];
         if (n_samples == 0) {
             // If there are no samples, take one now, but don't do anything else
             last_ticks = ticks;
+            last_beacon = data;
             n_samples += 1;
         } else {
             // Note, we store ticks even if out of range; this should help when
             // things are moving but going to converge again on a different
             // value.  This might mean that we ignore more than one value if
             // there is a lot of jitter, but this is OK.
-            int diff = ticks - last_ticks;
+            int diff = last_ticks - ticks;
+            int n_beacons = data - last_beacon;
             last_ticks = ticks;
-            if (diff <= MAX_DIFF && diff >= -MAX_DIFF) {
-                if (n_samples == 1) {
-                    // If there is only one sample, we can take a difference,
-                    // but we can't work out the drift yet
-                    last_diff = diff;
-                    n_samples += 1;
-                } else {
-                    // Enough samples now, so do the difference and averaging
-                    int drift = diff - last_diff;
-                    last_diff = diff;
-                    sum = (sum - samples[sample_pos]) + drift;
-                    samples[sample_pos] = drift;
-                    sample_pos = (sample_pos + 1) % N_ITEMS;
+            last_beacon = data;
+            if ((diff <= MAX_DIFF) && (diff >= -MAX_DIFF)) {
+                // Enough samples now, so do the difference
+                int scaled_diff = (diff * (1 << DRIFT_FP_BITS))
+                        / (n_beacons * TIME_BETWEEN_SYNC_US);
+                sum = (sum - samples[sample_pos]) + scaled_diff;
+                samples[sample_pos] = scaled_diff;
+                sample_pos = (sample_pos + 1) % N_ITEMS;
+                n_samples += 1;
+                // Just use the actual value until there are enough to average
+                if (n_samples == N_ITEMS) {
                     sv->clock_drift = sum / N_ITEMS;
+                } else {
+                    sv->clock_drift = scaled_diff;
                 }
             }
         }
@@ -234,24 +237,30 @@ INT_HANDLER pkt_p2p_int()
 
 //------------------------------------------------------------------------------
 
+static uint n_beacons_sent = 0;
 
 INT_HANDLER ms_timer_int()
 {
     tc[T1_INT_CLR] = (uint) tc;         // Clear interrupt
     
+    // Send the sync signal if appropriate
+    if ((sv->p2p_root == sv->p2p_addr)
+            && (netinit_phase == NETINIT_PHASE_DONE)) {
+        if (time_to_next_sync == 0) {
+            pkt_tx(PKT_MC_PL, n_beacons_sent, 0xffff5554);
+            n_beacons_sent += 1;
+            time_to_next_sync = TIME_BETWEEN_SYNC_US;
+        }
+        time_to_next_sync -= 1000;
+    }
+
     sv->clock_ms++;
     uint ms = sv->time_ms + 1;
+    uint unix_time = sv->unix_time;
     if (ms == 1000) {
         ms = 0;
-        uint unix_time = sv->unix_time + 1;
+        unix_time += 1;
         sv->unix_time = unix_time;
-
-        if ((unix_time % 2) == 0 && netinit_phase == NETINIT_PHASE_DONE) {
-            // If this is the boot chip, send a multicast message to keep time
-            if (sv->p2p_root == sv->p2p_addr) {
-                pkt_tx(PKT_MC_PL, 0, 0xffff5554);
-            }
-        }
 
         if (!event_queue_proc(proc_1hz, 0, 0, PRIO_2)) { // !!const
             sw_error(SW_OPT);

@@ -46,6 +46,14 @@
 
 #define DEAD_WORD       0xdeaddead  //!< Stack fill value
 
+//! Clock drift fixed-point number definition in terms of the number of
+//! fractional bits and the mask to get the fractional bits
+#define DRIFT_FP_BITS 20
+#define DRIFT_INT_MASK (((1 << (32 - DRIFT_FP_BITS)) - 1) << DRIFT_FP_BITS)
+#define DRIFT_FRAC_MASK ((1 << DRIFT_FP_BITS) - 1)
+#define DRIFT_ONE (1 << DRIFT_FP_BITS)
+#define TIME_BETWEEN_SYNC_US 2000000 // !< The time between sync signals in us
+
 //------------------------------------------------------------------------------
 
 /*!
@@ -1001,7 +1009,8 @@ typedef struct sv {
 
     uint led0;                  //!< 30 LED definition words (for up
     uint led1;                  //!< 34 to 15 LEDs)
-    int clock_drift;            //!< 38 drift of clock from boot chip clock
+    int clock_drift;            //!< 38 drift of clock from boot chip clock in ticks / us
+                                //      NOTE: This is a fixed point number!!!
     uint random;                //!< 3c Random number seed
 
     uchar root_chip;            //!< 40 Set if we are the root chip
