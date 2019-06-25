@@ -460,7 +460,6 @@ INT_HANDLER timer1_isr()
             drift_sign = -1;
         }
         time_to_next_drift_update += TIME_BETWEEN_SYNC_US;
-        drift_accum = 0;
     }
 
     // Each timer tick we add on the integer number of clock cycles accumulated
