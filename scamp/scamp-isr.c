@@ -134,8 +134,9 @@ __asm void eth_rx_int(void)
 // Maximum difference between timers over 2 seconds in clock ticks; experiments
 // have shown maximum difference is about 1ms over 160 seconds which is
 // 6.25us over 1 second, which is 2500 clock ticks at 200Mhz.  This is
-// multiplied by 2 as drift could be in either direction.
-#define MAX_DIFF 5000
+// multiplied by 2 as drift could be in either direction.  Further experiments
+// show that slightly higher values are encountered, so 10000 is used.
+#define MAX_DIFF 10000
 
 // Number of samples to keep to get an average
 #define N_ITEMS 16
