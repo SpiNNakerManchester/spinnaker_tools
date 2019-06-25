@@ -20,7 +20,6 @@ int drift;                              // drift in clock cycles per timer tick
 int drift_sign;                         // sign of the drift
 int drift_accum;                        // accumulation of drifts
 int time_to_next_drift_update;          // timer ticks until drift needs to be updated
-int total_drift_added;
 static uint timer_phase;                // additional phase on starting the timer
 
 // default fiq handler -- restored after simulation
@@ -230,14 +229,6 @@ void configure_dma_controller()
     dma[DMA_SCTL] = 3; // clear and enable counters
 #endif // API_DEBUG == TRUE
 }
-static inline uint to_uint(int value) {
-    union {
-        uint ui;
-        int i;
-    } val;
-    val.i = value;
-    return val.ui;
-}
 /*
 *******/
 
@@ -269,22 +260,23 @@ static inline uint to_uint(int value) {
 */
 void configure_timer1(uint time, uint phase)
 {
-    // Work out the drift per timer tick and start accumulating
-    vcpu_t *vcpu = (vcpu_t*) SV_VCPU;
+    // Work out the drift per timer tick
     drift = time * sv->clock_drift;
+
+    // Keep the drift positive as the maths is then easier
     drift_sign = 1;
     if (drift < 0) {
         drift = -drift;
         drift_sign = -1;
     }
-    drift_accum = drift;
+
     // Each timer tick we add on the integer number of clock cycles accumulated
     // and subtract this from the accumulator.
-    int drift_int = drift_int = drift_accum & DRIFT_INT_MASK;
+    drift_accum = drift;
+    int drift_int = drift_accum & DRIFT_INT_MASK;
     drift_accum -= drift_int;
     drift_int = (drift_int >> DRIFT_FP_BITS) * drift_sign;
     time_to_next_drift_update = TIME_BETWEEN_SYNC_US;
-    total_drift_added = drift_int;
 
     // do not enable yet!
     timer_tick_clocks = sv->cpu_clk * time;

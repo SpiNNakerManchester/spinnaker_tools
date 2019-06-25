@@ -131,15 +131,25 @@ __asm void eth_rx_int(void)
 
 
 //------------------------------------------------------------------------------
+// Maximum difference between timers over 2 seconds in clock ticks; experiments
+// have shown maximum difference is about 1ms over 160 seconds which is
+// 6.25us over 1 second, which is 2500 clock ticks at 200Mhz.  This is
+// multiplied by 2 as drift could be in either direction.
+#define MAX_DIFF 5000
+
+// Number of samples to keep to get an average
 #define N_ITEMS 16
-#define MAX_DIFF 30000
-static int last_ticks = 0;
 static int samples[N_ITEMS];
+// Sum to make moving average easy
 static int sum = 0;
+// Ticks recorded last time
+static int last_ticks = 0;
+// Number of samples recorded
 static uint n_samples = 0;
+// Position of next sample
 static uint sample_pos;
+// Beacon id recorded last time to detect missed packets
 static int last_beacon = 0;
-static uint time_to_next_sync = 2000000;
 
 INT_HANDLER pkt_mc_int()
 {
@@ -151,7 +161,8 @@ INT_HANDLER pkt_mc_int()
     if (key == 0xffff5555) {
         signal_app(data);
     } else if (key == 0xffff5554 && netinit_phase == NETINIT_PHASE_DONE) {
-        // Timer synchronisation
+        // Timer synchronisation - only do once netinit phase is complete to
+        // avoid clashing with other network traffic.
         int ticks = tc[T1_COUNT];
         if (n_samples == 0) {
             // If there are no samples, take one now, but don't do anything else
@@ -159,14 +170,18 @@ INT_HANDLER pkt_mc_int()
             last_beacon = data;
             n_samples += 1;
         } else {
+            // Note maximum difference over 2 seconds is quite big but
+            // once divided into per-us value, it will be small again.
+            // We need a 64-bit int to represent the value before division
+            // but this will fit in a 32-bit value once divided.
+            long long int diff = last_ticks - ticks;
+            int n_beacons = data - last_beacon;
+            last_ticks = ticks;
+            last_beacon = data;
             // Note, we store ticks even if out of range; this should help when
             // things are moving but going to converge again on a different
             // value.  This might mean that we ignore more than one value if
             // there is a lot of jitter, but this is OK.
-            int diff = last_ticks - ticks;
-            int n_beacons = data - last_beacon;
-            last_ticks = ticks;
-            last_beacon = data;
             if ((diff <= MAX_DIFF) && (diff >= -MAX_DIFF)) {
                 // Enough samples now, so do the difference
                 int scaled_diff = (diff * (1 << DRIFT_FP_BITS))
@@ -175,7 +190,9 @@ INT_HANDLER pkt_mc_int()
                 samples[sample_pos] = scaled_diff;
                 sample_pos = (sample_pos + 1) % N_ITEMS;
                 n_samples += 1;
-                // Just use the actual value until there are enough to average
+                // Just use the actual value until there are enough to average;
+                // using the average early on tends to lead to odd values, so
+                // this seems to work better in experiments
                 if (n_samples == N_ITEMS) {
                     sv->clock_drift = sum / N_ITEMS;
                 } else {
@@ -238,6 +255,7 @@ INT_HANDLER pkt_p2p_int()
 //------------------------------------------------------------------------------
 
 static uint n_beacons_sent = 0;
+static uint time_to_next_sync = TIME_BETWEEN_SYNC_US;
 
 INT_HANDLER ms_timer_int()
 {
@@ -251,6 +269,7 @@ INT_HANDLER ms_timer_int()
             n_beacons_sent += 1;
             time_to_next_sync = TIME_BETWEEN_SYNC_US;
         }
+        // Take of 1000us per timer tick, assuming the timer is in ms
         time_to_next_sync -= 1000;
     }
 
