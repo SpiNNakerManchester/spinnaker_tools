@@ -48,7 +48,7 @@
 
 //! Clock drift fixed-point number definition in terms of the number of
 //! fractional bits and the mask to get the fractional bits
-#define DRIFT_FP_BITS 20
+#define DRIFT_FP_BITS 17
 #define DRIFT_INT_MASK (((1 << (32 - DRIFT_FP_BITS)) - 1) << DRIFT_FP_BITS)
 #define DRIFT_FRAC_MASK ((1 << DRIFT_FP_BITS) - 1)
 #define DRIFT_ONE (1 << DRIFT_FP_BITS)

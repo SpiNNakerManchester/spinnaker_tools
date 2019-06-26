@@ -148,7 +148,7 @@ static int last_ticks = 0;
 // Number of samples recorded
 static uint n_samples = 0;
 // Position of next sample
-static uint sample_pos;
+static uint sample_pos = 0;
 // Beacon id recorded last time to detect missed packets
 static int last_beacon = 0;
 
@@ -175,7 +175,7 @@ INT_HANDLER pkt_mc_int()
             // once divided into per-us value, it will be small again.
             // We need a 64-bit int to represent the value before division
             // but this will fit in a 32-bit value once divided.
-            long long int diff = last_ticks - ticks;
+            int diff = last_ticks - ticks;
             int n_beacons = data - last_beacon;
             last_ticks = ticks;
             last_beacon = data;
@@ -183,9 +183,9 @@ INT_HANDLER pkt_mc_int()
             // things are moving but going to converge again on a different
             // value.  This might mean that we ignore more than one value if
             // there is a lot of jitter, but this is OK.
-            if ((diff <= MAX_DIFF) && (diff >= -MAX_DIFF)) {
+            if ((diff <= MAX_DIFF) && (diff >= -MAX_DIFF) && (n_beacons > 0)) {
                 // Enough samples now, so do the difference
-                int scaled_diff = (diff * (1 << DRIFT_FP_BITS))
+                int scaled_diff = (diff << DRIFT_FP_BITS)
                         / (n_beacons * TIME_BETWEEN_SYNC_US);
                 sum = (sum - samples[sample_pos]) + scaled_diff;
                 samples[sample_pos] = scaled_diff;
@@ -194,7 +194,7 @@ INT_HANDLER pkt_mc_int()
                 // Just use the actual value until there are enough to average;
                 // using the average early on tends to lead to odd values, so
                 // this seems to work better in experiments
-                if (n_samples == N_ITEMS) {
+                if (n_samples >= N_ITEMS) {
                     sv->clock_drift = sum / N_ITEMS;
                 } else {
                     sv->clock_drift = scaled_diff;

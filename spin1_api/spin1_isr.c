@@ -452,7 +452,6 @@ INT_HANDLER timer1_isr()
     // Update drift if needed
     time_to_next_drift_update -= timer_tick;
     if (time_to_next_drift_update <= 0) {
-        vcpu_t *vcpu = (vcpu_t*) SV_VCPU;
         drift = timer_tick * sv->clock_drift;
         drift_sign = 1;
         if (drift < 0) {
