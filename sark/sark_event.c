@@ -411,9 +411,9 @@ static inline event_t *take_one_event_from_queue(proc_queue_t *queue) {
     event_t* e = queue->proc_head;  // Get head of queue
     if (e != NULL) {
 	queue->proc_head = e->next; // Remove from queue
+	e->next = NULL;             // Value here is irrelevant to caller
     }
     cpu_int_restore(cpsr);
-    e->next = NULL;                 // Value here is irrelevant to caller
     return e;
 }
 
