@@ -342,13 +342,13 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
             tag = msg->tag = transient_tag(ip_hdr->srce, rx_pkt+6, udp_srce, tag_tto);
         }
 
-        eth_discard();
-
         if ((flags & SDPF_REPLY) == 0 ||
                 (tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0)) {
             arp_add(rx_pkt+6, ip_hdr->srce);
+            eth_discard();
             msg_queue_insert(msg, srce_ip);
         } else {
+            eth_discard();
             sark_msg_free(msg);
         }
     } else {                            // Reverse IPTag...
