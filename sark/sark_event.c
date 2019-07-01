@@ -299,14 +299,11 @@ void event_stop(uint rc)
 
 // Adds an event to a list of events which can (all) be executed
 // at some later time. Later events are queued at the tail of the queue.
+// This is the core of the implementation of event_queue and event_queue_proc
 
-uint event_queue(event_t *e, event_priority priority)
+static void enqueue_event(event_t *e, event_priority priority)
 {
-    if (priority > PRIO_MAX) {
-        return 0;
-    }
-
-    proc_queue_t *queue = event.proc_queue + priority;
+    proc_queue_t *queue = &event.proc_queue[priority];
 
     uint cpsr = cpu_int_disable();
 
@@ -318,7 +315,18 @@ uint event_queue(event_t *e, event_priority priority)
     }
 
     cpu_int_restore(cpsr);
+}
 
+// Adds an event to a list of events which can (all) be executed
+// at some later time. Later events are queued at the tail of the queue.
+
+uint event_queue(event_t *e, event_priority priority)
+{
+    if (priority > PRIO_MAX) {
+        return 0;
+    }
+
+    enqueue_event(e, priority);
     return 1;
 }
 
@@ -330,12 +338,16 @@ uint event_queue(event_t *e, event_priority priority)
 uint event_queue_proc(event_proc proc, uint arg1, uint arg2,
                       event_priority priority)
 {
+    if (priority > PRIO_MAX) {
+        return 0;
+    }
     event_t *e = event_new(proc, arg1, arg2);
     if (e == NULL) {
         return 0;
     }
 
-    return event_queue(e, priority);
+    enqueue_event(e, priority);
+    return 1;
 }
 
 
@@ -344,20 +356,36 @@ uint event_queue_proc(event_proc proc, uint arg1, uint arg2,
 // Execute a list of events (in the order in which they were added
 // to the list). Events are returned to the free queue after execution.
 
+static void event_free(event_t *e)
+{
+    // free event if not reused
+    if (e->reuse == 0) {
+        uint cpsr = cpu_int_disable();
+
+        e->next = event.free;   // Return to free queue
+        event.free = e;
+        event.count--;
+
+        cpu_int_restore(cpsr);
+    }
+}
+
+static inline event_t *get_queue_contents(proc_queue_t *queue)
+{
+    uint cpsr = cpu_int_disable();
+    event_t* e = queue->proc_head;  // Get list of events and
+    queue->proc_head = NULL;        // update list head
+    cpu_int_restore(cpsr);
+    return e;
+}
+
 void event_run(uint restart)
 {
     uint priority = PRIO_0;
 
     while (priority <= PRIO_MAX && event.state == EVENT_RUN) {
-        proc_queue_t *queue = event.proc_queue + priority;
-
-        uint cpsr = cpu_int_disable();
-
-        event_t* e = queue->proc_head;  // Get list of events and
-        queue->proc_head = NULL;        // update list head
-
-        cpu_int_restore(cpsr);
-
+        proc_queue_t *queue = &event.proc_queue[priority];
+        event_t* e = get_queue_contents(queue);  // Get list of events
         event_t *x = e;                 // Non-NULL if any events run
 
         while (e != NULL) {
@@ -365,20 +393,8 @@ void event_run(uint restart)
 
             // mark event as inactive - do it here in case 'proc' reuses it
             e->ID = 0;
-
             e->proc(e->arg1, e->arg2);  // No need to check for NULL here
-
-            // free event if not reused
-            if (e->reuse == 0) {
-                uint cpsr = cpu_int_disable();
-
-                e->next = event.free;   // Return to free queue
-                event.free = e;
-                event.count--;
-
-                cpu_int_restore(cpsr);
-            }
-
+            event_free(e);
             e = next;
         }
 
@@ -390,43 +406,35 @@ void event_run(uint restart)
     }
 }
 
+static inline event_t *take_one_event_from_queue(proc_queue_t *queue) {
+    uint cpsr = cpu_int_disable();  // Interrupts off to manipulate queue
+    event_t* e = queue->proc_head;  // Get head of queue
+    if (e != NULL) {
+	queue->proc_head = e->next; // Remove from queue
+	e->next = NULL;             // Value here is irrelevant to caller
+    }
+    cpu_int_restore(cpsr);
+    return e;
+}
 
 void event_run2(uint restart)
 {
     event_priority priority = PRIO_0;
 
     while (priority <= PRIO_MAX && event.state == EVENT_RUN) {
-        proc_queue_t *queue = event.proc_queue + priority;
+        proc_queue_t *queue = &event.proc_queue[priority];
 
-        uint cpsr = cpu_int_disable();  // Interrupts off to manipulate queue
-
-        event_t* e = queue->proc_head;  // Get head of queue
+        event_t* e = take_one_event_from_queue(queue);  // Get head of queue
 
         if (e == NULL) {                // If no item on queue...
-            cpu_int_restore(cpsr);
             priority++;
             continue;
         }
 
-        queue->proc_head = e->next;     // Remove from queue
-
-        cpu_int_restore(cpsr);          // Interrupts on again
-
         // mark event as inactive - do it here in case 'proc' reuses it
         e->ID = 0;
-
         e->proc(e->arg1, e->arg2);      // Execute the "proc"
-
-        // free event if not reused
-        if (e->reuse == 0) {
-            cpsr = cpu_int_disable();   // Return to free queue
-
-            e->next = event.free;
-            event.free = e;
-            event.count--;
-
-            cpu_int_restore(cpsr);
-        }
+        event_free(e);
 
         if (restart) {                  // Back to priority 0 if anything
             priority = PRIO_0;          // executed
