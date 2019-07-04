@@ -825,7 +825,8 @@ uint nn_cmd_p2pb(uint id, uint data, uint link)
 
     uint table_hops = hop_table[addr] & 0xffff;
 
-    if (addr != p2p_addr &&
+    if ((netinit_phase == NETINIT_PHASE_P2P_TABLE) &&
+        (addr != p2p_addr) &&
         (hops < table_hops) &&
         (link_en & (1 << link))) {
 

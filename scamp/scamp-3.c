@@ -1066,6 +1066,39 @@ void init_link_en(void)
     sv->link_en = link_en;
 }
 
+// disable links that have been disabled by neighbours
+void disable_unidirectional_links(void)
+{
+    uint timeout = sv->peek_time;
+    uint remote_link_en;
+    uint remote_addr = (uint) &(sv->link_en) & 0xfffffffc;  // word aligned
+    uint remote_offs = (uint) &(sv->link_en) & 0x00000003;  // byte offset
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        if (link_en & (1 << link)) {
+            uint rc = link_read_word(remote_addr, link,
+                    &remote_link_en, timeout);
+            remote_link_en = remote_link_en >> (remote_offs * 8);
+
+            // check opposite link in neighbour
+            uint rl = link + 3;
+            if (rl >= NUM_LINKS)
+            {
+                rl -= NUM_LINKS;
+            }
+
+            // disable link if its opposite was disabled
+            // by the corresponding neighbouring chip
+            if ((rc != RC_OK) ||
+                ((remote_link_en & (1 << rl)) == 0)
+               ){
+              link_en &= ~(1 << link);
+            }
+        }
+    }
+
+    sv->link_en = link_en;
+}
+
 // Start the higher-level network initialisation process. Must be called only
 // once, before the nearest neighbour interrupt handler is enabled.
 void netinit_start(void)
@@ -1270,6 +1303,7 @@ void proc_100hz(uint a1, uint a2)
 
                 level_config();
                 compute_st();
+                disable_unidirectional_links();
                 sv->p2p_up = p2p_up = 1;
 
                 if (srom.flags & SRF_ETH) {
