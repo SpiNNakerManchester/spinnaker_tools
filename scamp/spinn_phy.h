@@ -9,7 +9,7 @@
 //
 //------------------------------------------------------------------------------
 
-#/*
+/*
  * Copyright (c) 2009-2019 The University of Manchester
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-ifndef SPINN_PHY_H
+#ifndef SPINN_PHY_H
 #define SPINN_PHY_H
 
 // PHY registers
