@@ -2,9 +2,12 @@
 **/*.sct
 **/*.log
 **/*.conf
+**/*.fig
+**/*.eps
 
 **/build/**
 
+**/release.txt
 **/bmp/bmp_date
 **/bmp/core_*
 **/bmp/lpc*
