@@ -2,7 +2,7 @@
 # Makefile for BMP firmware
 #
 
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2012-2019 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

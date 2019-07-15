@@ -56,4 +56,3 @@ script:
   - support/run-vera.sh include -P max-line-length=200 -P max-file-length=3000
   # Copyright check
   - support/rat.sh run
-  
