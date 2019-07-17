@@ -1018,7 +1018,7 @@ typedef struct sv {
     uchar boot_delay;           //!< 42 Delay between boot NN pkts (us)
     uchar soft_wdog;            //!< 43 Soft watchdog control
 
-    uint __PAD3;                //!< 44
+    uint sync_alignment;        //!< 44 delay for sync0/1 alignment (us)
 
     heap_t *sysram_heap;        //!< 48 Heap in SysRAM
     heap_t *sdram_heap;         //!< 4c Heap in SDRAM
