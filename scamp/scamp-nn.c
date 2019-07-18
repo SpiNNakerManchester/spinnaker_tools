@@ -9,8 +9,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include <stdlib.h>
-
 #include "spinnaker.h"
 #include "sark.h"
 #include "scamp.h"
@@ -519,6 +517,13 @@ void p2pb_nn_send(uint arg1, uint arg2)
         }
     }
 }
+
+#ifndef abs
+static inline int abs(int i)
+{      /* compute absolute value of int argument */
+    return (i < 0 ? -i : i);
+}
+#endif
 
 // Update our current best guess of our coordinates based on a packet from a
 // neighbour
