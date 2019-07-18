@@ -1,0 +1,1 @@
+#error NO NOT USE stdio.h in spinnaker
