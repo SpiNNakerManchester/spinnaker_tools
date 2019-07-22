@@ -1087,6 +1087,75 @@ uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
 /*
 *******/
 
+/****f* spin1_api.c/spin1_dma_flush
+*
+* SUMMARY
+*  This function:
+*    purges any queued DMA_COMPLETE callbacks in the callback queues,
+*    flushes the software DMA queue,
+*    flushes the hardware queue in the DMA controller,
+*    aborts any ongoing transfer in the DMA controller and
+*    clears any pending DMA_COMPLETE interrupts in the DMA controller
+*
+* SYNOPSIS
+*  void spin1_dma_flush(void);
+*
+ SOURCE
+*/
+void spin1_dma_flush(void)
+{
+    // purge any queued DMA_COMPLETE callbacks in the callback queues,
+    if (callback[DMA_TRANSFER_DONE].priority > 0) {
+        task_queue_t *tq = &task_queue[callback[DMA_TRANSFER_DONE].priority-1];
+
+        // check only if the queue is not empty
+        uint cpsr = spin1_int_disable();
+        if (tq->end != tq->start) {
+            callback_t cb = callback[DMA_TRANSFER_DONE].cback;
+            uint mtp = tq->start;
+            uint end = tq->end;
+
+            // find first queued DMA_COMPLETE callback
+            while ((mtp != end) && (tq->queue[mtp].cback != cb)) {
+                mtp = (mtp + 1) % TASK_QUEUE_SIZE;
+            }
+
+            // if found, remove it and move up the rest of the queue
+            if (mtp != end) {
+                uint mfp = (mtp + 1) % TASK_QUEUE_SIZE;
+                while (mfp != end) {
+                    // jump over other queued DMA_COMPLETE callbacks
+                    if (tq->queue[mfp].cback != cb) {
+                        tq->queue[mtp].cback = tq->queue[mfp].cback;
+                        tq->queue[mtp].arg0  = tq->queue[mfp].arg0;
+                        tq->queue[mtp].arg1  = tq->queue[mfp].arg1;
+                        mtp = (mtp + 1) % TASK_QUEUE_SIZE;
+                    }
+                    mfp = (mfp + 1) % TASK_QUEUE_SIZE;
+                }
+
+                // update queue end pointer
+                tq->end = mtp;
+            }
+        }
+        spin1_mode_restore(cpsr);
+    }
+
+    // flush the software DMA transfer queue,
+    uint cpsr = spin1_int_disable();
+    dma_queue.start = 0;
+    dma_queue.end   = 0;
+    spin1_mode_restore(cpsr);
+
+    // abort any ongoing transfer in the DMA controller,
+    // flush the hardware queue in the DMA controller,
+    // and clear any pending DMA_COMPLETE interrupts in the DMA controller
+    dma[DMA_CTRL] = 0x1f;
+    dma[DMA_CTRL] = 0x0d;
+}
+/*
+*******/
+
 
 /****f* spin1_api.c/spin1_memcpy
 *
