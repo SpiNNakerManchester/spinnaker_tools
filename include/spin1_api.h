@@ -411,7 +411,7 @@ uint  spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route);
 *
 * SOURCE
 */
-static inline __attribute__((alloc_size(1), malloc, assume_aligned(4))) void*
+static inline SARK_IS_A_MALLOC(1) void*
 spin1_malloc(uint bytes) {
     return sark_alloc(bytes, 1);
 }

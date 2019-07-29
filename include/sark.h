@@ -54,12 +54,22 @@ Defines and typedefs to rationalise ARM/GNU interrupt handlers
 
 #ifdef __GNUC__
 
-# define INT_HANDLER void __attribute__ ((interrupt ("IRQ")))
+# define INT_HANDLER \
+    void __attribute__ ((interrupt ("IRQ")))
+# define SARK_IS_A_MALLOC(size_arg) \
+    __attribute__ ((malloc, alloc_size(size_arg), assume_aligned(4)))
+# define SARK_IS_A_CALLOC(size_arg1, size_arg2) \
+    __attribute__ ((malloc, alloc_size(size_arg1, size_arg2), assume_aligned(4)))
 typedef void (*int_handler) (void); //!< Interrupt handler
 
 #else // ARM
 
-# define INT_HANDLER __irq void
+# define INT_HANDLER \
+    __irq void
+# define SARK_IS_A_MALLOC(size_arg) \
+    __attribute__ ((malloc))
+# define SARK_IS_A_CALLOC(size_arg1, size_arg2) \
+    __attribute__ ((malloc))
 typedef __irq void (*int_handler) (void);   //!< Interrupt handler
 
 #endif
@@ -1841,7 +1851,7 @@ less all of the static variables used by the application.
 \return pointer to block or NULL
 */
 
-__attribute__((malloc, alloc_size(1, 2), assume_aligned(4))) void *
+SARK_IS_A_CALLOC(1, 2) void *
 sark_alloc(uint count, uint size);
 
 /*!
@@ -1882,7 +1892,7 @@ up by a stop signal.
 \return pointer to allocated block or NULL on failure
 */
 
-__attribute__((malloc, alloc_size(2), assume_aligned(4))) void *
+SARK_IS_A_MALLOC(2) void *
 sark_xalloc(heap_t *heap, uint size, uint tag, uint flag);
 
 /*!
