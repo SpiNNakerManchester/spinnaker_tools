@@ -1,3 +1,17 @@
+% Copyright (c) 2009-2019 The University of Manchester
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 \def\FullTitle{\textsl{ybug} - System Control Tool for SpiNNaker}
 \def\ShortTitle{ybug 2.0.0}
@@ -82,7 +96,7 @@ Some commands not directly related to SpiNNaker are as follows
 arguments and purpose. If a valid command name is given as an argument,
 just that command is listed.
 
-\item 
+\item
 \texttt{<command> ?} - performs the same function as \texttt{help <command>}
 
 \item
@@ -241,7 +255,7 @@ type are loaded into SpiNNaker to start an application running.
 \begin{itemize}
 
 \item
-\texttt{app\_load <file.F> <region> <cores> <app\_id.D> [wait]} - 
+\texttt{app\_load <file.F> <region> <cores> <app\_id.D> [wait]} -
 loads an application onto the specified set of cores on the chips in
 the specified region. The application is contained in the file which
 should be in APLX format.
@@ -297,7 +311,7 @@ resources that it claimed during execution will be freed. A range of
 AppIDs may be given subject to certain restrictions. The number of
 AppIDs in the range must be a power of 2 and the lower AppID must
 be a multiple of that power of 2. Examples of valid ranges are
-\texttt{16-23}, \texttt{64-95}, \texttt{80-81}. 
+\texttt{16-23}, \texttt{64-95}, \texttt{80-81}.
 
 \item
 \texttt{app\_sig <region> <app\_id.D>[-<app\_id.D>] <signal>
@@ -604,7 +618,7 @@ in \texttt{expert} mode.
 \begin{itemize}
 
 \item
-\texttt{srom\_ip [<ip\_addr.P> [<gw\_addr.P> [<net\_mask.P>]]]} - 
+\texttt{srom\_ip [<ip\_addr.P> [<gw\_addr.P> [<net\_mask.P>]]]} -
 displays and/or sets IP addresses in the SROM. Without an argument
 this command displays the current IP and MAC addresses. With one
 argument it sets the IP address of the system. With a second argument
