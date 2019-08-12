@@ -138,7 +138,7 @@ void crc32_buf(void *buf, uint32_t len)
 
 uint8_t buf[4096];
 
-int main()
+int main(void)
 {
     uint32_t crc = 0xffffffff;
     uint32_t count = 0;

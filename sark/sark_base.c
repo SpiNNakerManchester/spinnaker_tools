@@ -352,7 +352,7 @@ void sark_block_free(mem_block_t *root, void *blk)
 // Get a free SDP message from the shared SysRAM pool. Returns pointer
 // to message on success, NULL on failure.
 
-sdp_msg_t* sark_shmsg_get()
+sdp_msg_t* sark_shmsg_get(void)
 {
     uint cpsr = sark_lock_get(LOCK_MSG);
 

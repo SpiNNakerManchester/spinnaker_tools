@@ -89,7 +89,7 @@ uint *sdram_buffer;
 *
 * SOURCE
 */
-void app_init()
+void app_init(void)
 {
     /* ------------------------------------------------------------------- */
     /* initialise routing entries                                          */
@@ -156,7 +156,7 @@ void app_init()
 *
 * SOURCE
 */
-void app_done()
+void app_done(void)
 {
     // report simulation time
     io_printf(IO_BUF, "[core %d] simulation lasted %d ticks\n", coreID,
@@ -377,7 +377,7 @@ void check_memcopy(uint tid, uint ttag)
 *
 * SOURCE
 */
-void c_main()
+void c_main(void)
 {
     // Get core and chip IDs
 

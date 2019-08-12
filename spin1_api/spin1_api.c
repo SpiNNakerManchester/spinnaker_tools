@@ -100,7 +100,8 @@ user_event_queue_t user_event_queue;
 // -----------------------
 //! The queue of scheduled tasks.
 static task_queue_t task_queue[NUM_PRIORITIES-1];  // priority <= 0 is non-queueable
-//! The registered callbacks for each event type.
+//! \brief The registered callbacks for each event type.
+//! \warning SARK knows about this variable!
 cback_t callback[NUM_EVENTS];
 
 
@@ -884,7 +885,7 @@ uint spin1_start(sync_bool sync)
     return start(sync, 0);
 }
 
-uint spin1_start_paused()
+uint spin1_start_paused(void)
 {
     return start(SYNC_NOWAIT, 1);
 }
