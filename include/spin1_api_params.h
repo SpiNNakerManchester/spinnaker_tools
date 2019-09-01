@@ -131,15 +131,14 @@
 // VIC priorities
 // -----------------------
 #define SARK_PRIORITY          0
-#define TIMER1_PRIORITY        2
-//#define DMA_DONE_PRIORITY      2
-#define DMA_DONE_PRIORITY      3
-#define RX_READY_PRIORITY      4
-#define FR_READY_PRIORITY      5
-#define CC_TMT_PRIORITY        6
-#define SOFT_INT_PRIORITY      7
+#define TIMER1_PRIORITY        1
+#define DMA_DONE_PRIORITY      2
+#define RX_READY_PRIORITY      3
+#define FR_READY_PRIORITY      4
+#define CC_TMT_PRIORITY        5
+#define SOFT_INT_PRIORITY      6
 #if USE_WRITE_BUFFER == TRUE
-  #define DMA_ERR_PRIORITY     8
+  #define DMA_ERR_PRIORITY     7
 #endif
 
 // ------------------------------------------------------------------------
