@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2019 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,22 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-DIRS = sark spin1_api
-INSTALL_EXTRA_DIRS = make include tools
+INSTALL ?= install
+INSTALL_TARGET = $(SPINN_DIRS)/make
+INSTALL_FILES = spinnaker_tools.mk
 
-GNU = 1
+default:
+	@echo There is no default build rule in this directory
 
-all: $(DIRS)
-	@for d in $(DIRS); do $(MAKE) -C $$d GNU=$(GNU) || exit $$?; done
-
-clean: $(DIRS)
-	@for d in $(DIRS); do $(MAKE) -C $$d GNU=$(GNU) clean || exit $$?; done
-
-install: $(DIRS) $(INSTALL_EXTRA_DIRS)
-	@test "x$$SPINN_DIRS" = "x" && { \
-		echo "Please set the SPINN_DIRS environment variable to where you want to install to"; \
-		exit 1; \
-	}
-	@for d in $(DIRS) $(INSTALL_EXTRA_DIRS); do \
-		$(MAKE) -C $$d GNU=$(GNU) install || exit $$?; \
-	done
+install:
+	$(MKDIR) $(INSTALL_TARGET)
+	$(INSTALL) -c -m644 $(INSTALL_FILES) $(INSTALL_TARGET)

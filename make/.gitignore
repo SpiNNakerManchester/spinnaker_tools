@@ -3,3 +3,4 @@
 !app.make
 !Makefile.common
 !spinnaker_tools.mk
+!Makefile

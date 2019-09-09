@@ -24,6 +24,7 @@ include ../make/spinnaker_tools.mk
 
 SARKOPT := $(OSPACE)
 CFLAGS += -DSARK_API $(SARKOPT)
+INSTALL ?= install
 
 #-------------------------------------------------------------------------------
 ifeq ($(GNU),1)
@@ -109,5 +110,9 @@ $(BUILD_DIR)/sark_div0.o: sark_div0.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_D
 
 clean:
 	$(RM) $(SARKLIB) $(SARKOBJ) $(SARK_ASM_OBJ)
+
+install: $(SARKLIB)
+	$(MKDIR) $(SPINN_DIRS)/libs
+	$(INSTALL) -c -m644 $< $(SPINN_DIRS)/libs
 
 .PHONY: clean
