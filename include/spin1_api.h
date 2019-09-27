@@ -238,6 +238,35 @@ spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout) {
 // ------------------------------------------------------------------------
 //  interrupt control functions
 // ------------------------------------------------------------------------
+
+#ifndef SPIN1_INLINE
+#ifdef __GNUC__
+#define SPIN1_INLINE static __inline __attribute__((always_inline))
+#else
+#define SPIN1_INLINE static __forceinline
+#endif
+#endif
+
+SPIN1_INLINE void spin1_store_barrier(void)
+{
+#ifdef __GNUC__
+    // GCC only really has one kind of barrier, and this is how to do it
+    asm volatile("" : : : "cc", "memory");
+#else
+    __force_stores();
+#endif
+}
+
+SPIN1_INLINE void spin1_memory_barrier(void)
+{
+#ifdef __GNUC__
+    // GCC only really has one kind of barrier, and this is how to do it
+    asm volatile("" : : : "cc", "memory");
+#else
+    __memory_changed();
+#endif
+}
+
 /****f* spin1_api.h/spin1_irq_disable
 *
 * SUMMARY
@@ -253,12 +282,14 @@ spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout) {
 * SOURCE
 */
 #ifdef THUMB
+// Implemented in sark_alib.s; needs to be in ARM mode, not THUMB
 extern uint spin1_irq_disable(void);
-#elif defined(__GNUC__)
-__inline __attribute__((always_inline)) uint spin1_irq_disable(void)
+#else
+SPIN1_INLINE uint spin1_irq_disable(void)
 {
     uint old_val, new_val;
 
+#ifdef __GNUC__
     asm volatile (
     "mrs	%[old_val], cpsr \n\
      orr	%[new_val], %[old_val], #0x80 \n\
@@ -266,18 +297,13 @@ __inline __attribute__((always_inline)) uint spin1_irq_disable(void)
      : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
      :
      : );
-
-    return old_val;
-}
 #else
-__forceinline uint spin1_irq_disable(void)
-{
-    uint old_val, new_val;
-
     __asm { mrs old_val, cpsr }
     __asm { orr new_val, old_val, 0x80 }
     __asm { msr cpsr_c, new_val }
+#endif
 
+    spin1_memory_barrier();
     return old_val;
 }
 #endif
@@ -297,12 +323,14 @@ __forceinline uint spin1_irq_disable(void)
 * SOURCE
 */
 #ifdef THUMB
+// Implemented in sark_alib.s; needs to be in ARM mode, not THUMB
 extern uint spin1_fiq_disable(void);
-#elif defined(__GNUC__)
-__inline __attribute__((always_inline)) uint spin1_fiq_disable(void)
+#else
+SPIN1_INLINE uint spin1_fiq_disable(void)
 {
     uint old_val, new_val;
 
+#ifdef __GNUC__
     asm volatile (
     "mrs	%[old_val], cpsr \n\
      orr	%[new_val], %[old_val], #0x40 \n\
@@ -310,18 +338,13 @@ __inline __attribute__((always_inline)) uint spin1_fiq_disable(void)
      : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
      :
      : );
-
-    return old_val;
-}
 #else
-__forceinline uint spin1_fiq_disable(void)
-{
-    uint old_val, new_val;
-
     __asm { mrs old_val, cpsr }
     __asm { orr new_val, old_val, 0x40 }
     __asm { msr cpsr_c, new_val }
+#endif
 
+    spin1_memory_barrier();
     return old_val;
 }
 #endif
@@ -341,12 +364,14 @@ __forceinline uint spin1_fiq_disable(void)
 * SOURCE
 */
 #ifdef THUMB
+// Implemented in sark_alib.s; needs to be in ARM mode, not THUMB
 extern uint spin1_int_disable(void);
-#elif defined(__GNUC__)
-__inline __attribute__((always_inline)) uint spin1_int_disable(void)
+#else
+SPIN1_INLINE uint spin1_int_disable(void)
 {
     uint old_val, new_val;
 
+#ifdef __GNUC__
     asm volatile (
     "mrs	%[old_val], cpsr \n\
      orr	%[new_val], %[old_val], #0xc0 \n\
@@ -354,18 +379,13 @@ __inline __attribute__((always_inline)) uint spin1_int_disable(void)
      : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
      :
      : );
-
-    return old_val;
-}
 #else
-__forceinline uint spin1_int_disable(void)
-{
-    uint old_val, new_val;
-
     __asm { mrs old_val, cpsr }
     __asm { orr new_val, old_val, 0xc0 }
     __asm { msr cpsr_c, new_val }
+#endif
 
+    spin1_memory_barrier();
     return old_val;
 }
 #endif
@@ -385,20 +405,64 @@ __forceinline uint spin1_int_disable(void)
 * SOURCE
 */
 #ifdef THUMB
+// Implemented in sark_alib.s; needs to be in ARM mode, not THUMB
 extern void spin1_mode_restore(uint cpsr);
-#elif defined(__GNUC__)
-__inline __attribute__((always_inline)) void spin1_mode_restore(uint cpsr)
+#else
+SPIN1_INLINE void spin1_mode_restore(uint cpsr)
 {
+    spin1_store_barrier();
+
+#ifdef __GNUC__
     asm volatile (
     "msr	cpsr_c, %[cpsr]"
     :
     : [cpsr] "r" (cpsr)
     :);
-}
 #else
-__forceinline void spin1_mode_restore(uint sr)
-{
     __asm { msr cpsr_c, sr }
+#endif
+}
+#endif
+
+/****f* spin1_api.c/spin1_irq_enable
+*
+* SUMMARY
+*  This function clears the I bit in the CPSR in order to enable IRQ
+*  interrupts to the processor.
+*
+* SYNOPSIS
+*  uint spin1_irq_enable()
+*
+* OUTPUTS
+*  state of the CPSR before the interrupt enable
+*
+* SOURCE
+*/
+#ifdef THUMB
+// Implemented in sark_alib.s; needs to be in ARM mode, not THUMB
+extern uint spin1_irq_enable(void);
+#else
+SPIN1_INLINE uint spin1_irq_enable(void)
+{
+    uint old_val, new_val;
+
+    spin1_store_barrier();
+
+#if defined(__GNUC__)
+    asm volatile (
+    "mrs        %[old_val], cpsr \n\
+     bic        %[new_val], %[old_val], #0x80 \n\
+     msr        cpsr_c, %[new_val] \n"
+     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
+     :
+     : );
+#else
+    __asm { mrs old_val, cpsr }
+    __asm { bic new_val, old_val, 0x80 }
+    __asm { msr cpsr_c, new_val }
+#endif
+
+    return old_val;
 }
 #endif
 // ------------------------------------------------------------------------
