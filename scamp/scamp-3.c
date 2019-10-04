@@ -528,9 +528,6 @@ void eth_send_msg(uint tag, sdp_msg_t *msg)
 uint shm_ping(uint dest)
 {
     vcpu_t *vcpu = sv_vcpu + dest;
-    vcpu->mbox_ap_cmd = SHM_NOP;
-    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
-
     volatile uchar flag = 0;
     event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
     if (e == NULL) {
@@ -538,6 +535,8 @@ uint shm_ping(uint dest)
         return 1;
     }
 
+    vcpu->mbox_ap_cmd = SHM_NOP;
+    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
     uint id = e->ID;
     timer_schedule(e, 1000); // !! const??
 
@@ -558,9 +557,17 @@ uint shm_ping(uint dest)
 uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
 {
     vcpu_t *vcpu = sv_vcpu + dest;
+    volatile uchar flag = 0;
+    event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
+    if (e == NULL) {
+        sw_error(SW_OPT);
+        return RC_BUF;          // !! not the right RC
+    }
+    uint id = e->ID;
 
     sdp_msg_t *shm_msg = sark_shmsg_get();
     if (shm_msg == NULL) {
+	timer_cancel(e, id);
         return RC_BUF;
     }
 
@@ -571,15 +578,6 @@ uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
 
     sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
 
-    volatile uchar flag = 0;
-    event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
-    if (e == NULL) {
-        sw_error(SW_OPT);
-        sark_shmsg_free(shm_msg);
-        return RC_BUF;          // !! not the right RC
-    }
-
-    uint id = e->ID;
     timer_schedule(e, 1000);    // !! const??
 
     while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
