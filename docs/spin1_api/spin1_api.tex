@@ -58,7 +58,7 @@
 \end{figure}
 }
 
-\setcounter{secnumdepth}{-1} 
+\setcounter{secnumdepth}{-1}
 
 % --------------------------------------------------------------------------
 
@@ -730,7 +730,7 @@ The dispatcher provides a number of services to the application programmer:
 		\rowcolor[gray]{.75}
 		\textbf{function} & arguments & description \\%
 		\hline
-		\textbf{uint spin1\_dma\_flush} & void & no arguments \\%
+		\textbf{void spin1\_dma\_flush} & void & no arguments \\%
 		\hline
 		\hline
 		\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
@@ -1296,9 +1296,9 @@ void process_spike(uint key, uint payload)
 
 void schedule_spike()
 {
-	. . . 
+	. . .
 	bin_spike(key, delay, weight);
-	. . . 
+	. . .
 }
 
 /* --------------------------------------------------------------------- */
@@ -1306,7 +1306,7 @@ void schedule_spike()
 /* --------------------------------------------------------------------- */
 void c_main()
 {
-	// initialise variables and timer tick 
+	// initialise variables and timer tick
 	. . .
 	spin1_set_timer_tick(1000); // timer tick period in microseconds
 	. . .
