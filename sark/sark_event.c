@@ -373,7 +373,7 @@ uint event_queue_proc(event_proc proc, uint arg1, uint arg2,
 // Execute a list of events (in the order in which they were added
 // to the list). Events are returned to the free queue after execution.
 
-static void event_free(event_t *e)
+void event_free(event_t *e)
 {
     // free event if not reused
     if (e->reuse == 0) {

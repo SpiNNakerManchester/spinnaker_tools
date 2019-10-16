@@ -563,11 +563,10 @@ uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
         sw_error(SW_OPT);
         return RC_BUF;          // !! not the right RC
     }
-    uint id = e->ID;
 
     sdp_msg_t *shm_msg = sark_shmsg_get();
     if (shm_msg == NULL) {
-	timer_cancel(e, id);
+	event_free(e);
         return RC_BUF;
     }
 
@@ -578,6 +577,7 @@ uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
 
     sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
 
+    uint id = e->ID;
     timer_schedule(e, 1000);    // !! const??
 
     while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {

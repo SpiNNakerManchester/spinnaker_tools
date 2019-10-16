@@ -2287,6 +2287,15 @@ existing free queue. Returns 1 on success, 0 on failure.
 uint event_alloc (uint events);
 
 /*!
+Free a previously allocated event. The event MUST NOT have been scheduled.
+
+\param e the event to free
+*/
+
+__attribute__((nonnull))
+void event_free(event_t *e);
+
+/*!
 Allocate a new event from the free queue and intialise "proc", "arg1"
 and "arg2" fields. The "ID", "next" and "time" fields are also set.
 
