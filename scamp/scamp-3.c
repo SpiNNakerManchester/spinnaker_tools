@@ -566,7 +566,7 @@ uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
 
     sdp_msg_t *shm_msg = sark_shmsg_get();
     if (shm_msg == NULL) {
-	event_free(e);
+        event_free(e);
         return RC_BUF;
     }
 

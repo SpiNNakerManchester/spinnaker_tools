@@ -370,8 +370,8 @@ uint event_queue_proc(event_proc proc, uint arg1, uint arg2,
 
 //------------------------------------------------------------------------------
 
-// Execute a list of events (in the order in which they were added
-// to the list). Events are returned to the free queue after execution.
+// free an event that is no longer in use.
+// The freed event MUST NOT have been scheduled.
 
 void event_free(event_t *e)
 {
@@ -395,6 +395,12 @@ static inline event_t *get_queue_contents(proc_queue_t *queue)
     cpu_int_restore(cpsr);
     return e;
 }
+
+
+//------------------------------------------------------------------------------
+
+// Execute a list of events (in the order in which they were added
+// to the list). Events are returned to the free queue after execution.
 
 void event_run(uint restart)
 {
