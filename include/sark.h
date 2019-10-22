@@ -9,6 +9,23 @@
 //
 //------------------------------------------------------------------------------
 
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /*! Doxygen \file */
 
 #ifndef __SARK_H__
@@ -54,12 +71,22 @@ Defines and typedefs to rationalise ARM/GNU interrupt handlers
 
 #ifdef __GNUC__
 
-# define INT_HANDLER void __attribute__ ((interrupt ("IRQ")))
+# define INT_HANDLER \
+    void __attribute__ ((interrupt ("IRQ")))
+# define SARK_IS_A_MALLOC(size_arg) \
+    __attribute__ ((malloc, alloc_size(size_arg), assume_aligned(4)))
+# define SARK_IS_A_CALLOC(size_arg1, size_arg2) \
+    __attribute__ ((malloc, alloc_size(size_arg1, size_arg2), assume_aligned(4)))
 typedef void (*int_handler) (void); //!< Interrupt handler
 
 #else // ARM
 
-# define INT_HANDLER __irq void
+# define INT_HANDLER \
+    __irq void
+# define SARK_IS_A_MALLOC(size_arg) \
+    __attribute__ ((malloc))
+# define SARK_IS_A_CALLOC(size_arg1, size_arg2) \
+    __attribute__ ((malloc))
 typedef __irq void (*int_handler) (void);   //!< Interrupt handler
 
 #endif
@@ -1228,7 +1255,8 @@ This means that the core will respond to interrupts but the function
 never returns.
 */
 
-void cpu_sleep (void) __attribute__((noreturn));
+__attribute__((noreturn)) void
+cpu_sleep(void);
 
 /*!
 Puts the core into sleep mode and disable all interrupts in the VIC.
@@ -1237,7 +1265,8 @@ when a fatal error has occurred. Application code will probably want
 to call rt_error on a fatal error.
 */
 
-void cpu_shutdown (void) __attribute__((noreturn));
+__attribute__((noreturn)) void
+cpu_shutdown(void);
 
 /*!
 Called to signal a fatal error. The error code argument is placed in a
@@ -1250,7 +1279,8 @@ dumped.
 \param ... further (integer) arguments
 */
 
-void rt_error (uint code, ...);
+__attribute__((noreturn)) void
+rt_error(uint code, ...);
 
 /*!
 Copy "n" bytes of memory from "src" to "dest". The memory is copied
@@ -1262,7 +1292,8 @@ Not intended for use where source and destination blocks overlap.
 \param n number of bytes to copy
 */
 
-void sark_mem_cpy (void *dest, const void *src, uint n);
+__attribute__((nonnull)) void
+sark_mem_cpy(void *dest, const void *src, uint n);
 
 /*!
 Copies a NULL terminated string from "src" to "dest". The string is
@@ -1273,7 +1304,8 @@ Not intended for use where source and destination strings overlap.
 \param src source string address
 */
 
-void sark_str_cpy (char *dest, const char *src);
+__attribute__((nonnull)) void
+sark_str_cpy(char *dest, const char *src);
 
 /*!
 Counts the number of characters in a zero terminated string. The
@@ -1283,7 +1315,8 @@ terminator is not included in the count.
 \return number of characters
 */
 
-uint sark_str_len (char *string);
+__attribute__((nonnull)) uint
+sark_str_len (char *string);
 
 /*!
 Sets the CPU state field in the VCPU block for this core
@@ -1301,7 +1334,7 @@ long messages as it uses "sark_word_cpy"
 \param from pointer to source buffer
 */
 
-void sark_msg_cpy (sdp_msg_t *to, sdp_msg_t *from);
+__attribute__((nonnull)) void sark_msg_cpy(sdp_msg_t *to, sdp_msg_t *from);
 
 /*!
 A fast copy for memory buffers. The byte count "n" will be rounded up
@@ -1316,7 +1349,8 @@ overlap.
 \param n number of bytes to copy (routine rounds up to multiple of 4)
 */
 
-void sark_word_cpy (void *dest, const void *src, uint n);
+__attribute__((nonnull)) void
+sark_word_cpy(void *dest, const void *src, uint n);
 
 /*!
 A fast memory setter for a block of memory. The byte count "n" must be
@@ -1328,7 +1362,8 @@ aligned. The inner loop fills 4 words at a time for efficiency.
 \param n number of bytes to fill (must be multiple of 4)
 */
 
-void sark_word_set (void *dest, uint data, uint n);
+__attribute__((nonnull)) void
+sark_word_set(void *dest, uint data, uint n);
 
 /*!
 Acquires one of the 32 built-in hardware locks provided by the chip.
@@ -1366,7 +1401,7 @@ overflow from 255.
 \return post-increment value of semaphore
 */
 
-uint sark_sema_raise (uchar *sema);
+__attribute__((nonnull)) uint sark_sema_raise(uchar *sema);
 
 /*!
 Lower (decrement) an 8-bit semaphore variable which is accessed via a
@@ -1378,7 +1413,7 @@ Returns the pre-decrement value.
 \return pre-decrement value of semaphore
 */
 
-uint sark_sema_lower (uchar *sema);
+__attribute__((nonnull)) uint sark_sema_lower(uchar *sema);
 
 /*!
 Raise a semaphore associated with the AppID running on this core. The
@@ -1607,7 +1642,8 @@ there are no shared memory SDP buffers available.
 \return 1 if successful, 0 for failure
 */
 
-uint sark_msg_send (sdp_msg_t *msg, uint timeout);
+__attribute__((nonnull)) uint
+sark_msg_send(sdp_msg_t *msg, uint timeout);
 
 /*!
 Perform a busy-wait for the given number of microseconds. The core
@@ -1763,7 +1799,8 @@ for a relatively short time (1-5us ??)
 \param msg pointer to the message
 */
 
-void sark_shmsg_free (sdp_msg_t *msg);
+__attribute__((nonnull)) void
+sark_shmsg_free(sdp_msg_t *msg);
 
 /*!
 Calls the constructors for any C++ objects created at global scope.
@@ -1806,7 +1843,8 @@ to char array
 \param ... arguments to be formatted
 */
 
-void io_printf (char *stream, char *format, ...);
+__attribute__((nonnull(2))) void
+io_printf(char *stream, char *format, ...);
 
 /*!
 Routine to put a character to an output stream. Different behaviour
@@ -1843,7 +1881,8 @@ less all of the static variables used by the application.
 \return pointer to block or NULL
 */
 
-void *sark_alloc (uint count, uint size);
+SARK_IS_A_CALLOC(1, 2) void *
+sark_alloc(uint count, uint size);
 
 /*!
 Frees a block of memory which was previously allocated by sark_alloc
@@ -1852,7 +1891,8 @@ Frees a block of memory which was previously allocated by sark_alloc
 \param ptr pointer to memory block
 */
 
-void sark_free (void *ptr);
+__attribute__((nonnull)) void
+sark_free(void *ptr);
 
 /*!
 Allocate a memory block from the specified heap. The block will be
@@ -1882,7 +1922,8 @@ up by a stop signal.
 \return pointer to allocated block or NULL on failure
 */
 
-void *sark_xalloc (heap_t *heap, uint size, uint tag, uint flag);
+SARK_IS_A_MALLOC(2) void *
+sark_xalloc(heap_t *heap, uint size, uint tag, uint flag);
 
 /*!
 Free a memory block in the specified heap. If the lock bit in the flag
@@ -1897,7 +1938,8 @@ is set to NULL.
 \param flags bit 0 set if the heap should be locked during free
 */
 
-void sark_xfree (heap_t *heap, void *ptr, uint flag);
+__attribute__((nonnull(2))) void
+sark_xfree(heap_t *heap, void *ptr, uint flag);
 
 /*!
 Free all allocated blocks in the specified heap which are tagged with
@@ -2029,8 +2071,8 @@ SLOT_FIQ in which case the FIQ interrupt is set up.
 \param handler pointer to the handler code
 */
 
-void sark_vic_set (vic_slot slot, uint interrupt, uint enable,
-        int_handler handler);
+__attribute__((nonnull)) void
+sark_vic_set(vic_slot slot, uint interrupt, uint enable, int_handler handler);
 
 /*!
 Initialises the hardware (GPIO port) which drives the LEDs attached to
@@ -2086,7 +2128,6 @@ some low entries to be left unchanged.
 void rtr_mc_init (uint start);
 
 /*!
-
 Load router MC table from a table in memory. Within the table, which
 is an array of "rtr_entry_t". the "next" field holds the entry number
 to be loaded. If the count parameter is zero, the count is taken from
@@ -2102,7 +2143,8 @@ copy if non-zero. Otherwise it will be taken from SARK.
 \return 1 if successful, 0 on failure (count or entry out of range)
 */
 
-uint rtr_mc_load (rtr_entry_t *e, uint count, uint offset, uint app_id);
+__attribute__((nonnull)) uint
+rtr_mc_load(rtr_entry_t *e, uint count, uint offset, uint app_id);
 
 /*!
 Sets a given entry in the router MC table. The supplied route is based
@@ -2132,7 +2174,7 @@ is maintained by the system.
 \return 1 on success, 0 on failure (entry out of range)
 */
 
-uint rtr_mc_get (uint entry, rtr_entry_t *r);
+__attribute__((nonnull)) uint rtr_mc_get(uint entry, rtr_entry_t *r);
 
 /*!
 Sets the fixed-route register in the router. Only the lower 24 bits
@@ -2191,7 +2233,8 @@ the counters are enabled. (Unlikely to be used by application code).
 \param table pointer to table of 16 initialisation words
 */
 
-void rtr_diag_init (const uint *table);
+__attribute__((nonnull)) void
+rtr_diag_init(const uint *table);
 
 /*!
 Performs a full initialisation of the router. Calls rtr_mc_init and
@@ -2253,7 +2296,8 @@ and "arg2" fields. The "ID", "next" and "time" fields are also set.
 \return pointer to event if successful, NULL otherwise
 */
 
-event_t* event_new (event_proc proc, uint arg1, uint arg2);
+__attribute__((nonnull)) event_t *
+event_new(event_proc proc, uint arg1, uint arg2);
 
 /*
 // Configure a (reusable) event that has already been allocated.
@@ -2388,7 +2432,8 @@ etc.
 \return zero on failure (invalid priority), 1 otherwise
 */
 
-uint event_queue (event_t *e, event_priority priority);
+__attribute__((nonnull)) uint
+event_queue(event_t *e, event_priority priority);
 
 /*!
 Creates a new event and places it on an event queue for execution at a
@@ -2404,8 +2449,8 @@ queue.
 event), 1 otherwise
 */
 
-uint event_queue_proc (event_proc proc, uint arg1, uint arg2,
-            event_priority priority);
+__attribute__((nonnull)) uint
+event_queue_proc (event_proc proc, uint arg1, uint arg2, event_priority priority);
 
 /*!
 
@@ -2434,7 +2479,8 @@ once.
 \param slot the VIC slot to use (or SLOT_FIQ for FIQs)
 */
 
-void event_register_int (event_proc proc, event_type event, vic_slot slot);
+__attribute__((nonnull)) void
+event_register_int(event_proc proc, event_type event, vic_slot slot);
 
 /*!
 Register an event_proc to be placed on an event queue when a
@@ -2450,8 +2496,9 @@ used.
 \param priority the priority of the event queue to use
 */
 
-void event_register_queue (event_proc proc, event_type event, vic_slot slot,
-            event_priority priority);
+__attribute__((nonnull)) void
+event_register_queue(event_proc proc, event_type event, vic_slot slot,
+	event_priority priority);
 
 /*!
 Register an event_proc to be called when event processing is paused.
@@ -2462,7 +2509,8 @@ its first argument and the value of "arg2" as its second argument.
 \param arg2 the second argument to be supplied to the event_proc
 */
 
-void event_register_pause (event_proc proc, uint arg2);
+__attribute__((nonnull)) void
+event_register_pause(event_proc proc, uint arg2);
 
 /*!
 Enable or disable an event. Enabling restores its interrupt handler to
@@ -2532,7 +2580,8 @@ e->time == 0
 \param time delay in microseconds (non-zero)
 */
 
-void timer_schedule (event_t *e, uint time);
+__attribute__((nonnull)) void
+timer_schedule(event_t *e, uint time);
 
 /*!
 Allocates an event, initialises it with the supplied parameters and
@@ -2546,7 +2595,8 @@ second timer has been set up by a call to timer_register.
 \return zero if allocation of new event failed, one otherwise
 */
 
-uint timer_schedule_proc (event_proc proc, uint arg1, uint arg2, uint time);
+__attribute__((nonnull)) uint
+timer_schedule_proc(event_proc proc, uint arg1, uint arg2, uint time);
 
 /*!
 Cancel a timer event that was previously scheduled. The ID that was
@@ -2565,7 +2615,7 @@ to terminate on the timer interrupt.
 \param ID ID of event to cancel
 */
 
-void timer_cancel (event_t *e, uint ID);
+__attribute__((nonnull)) void timer_cancel(event_t *e, uint ID);
 
 /*!
 Initialise a statically allocated event to be used in place

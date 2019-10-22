@@ -9,6 +9,23 @@
 ;; Email            temples@cs.man.ac.uk
 ;;
 ;;------------------------------------------------------------------------------
+;;
+;; Copyright (c) 2017-2019 The University of Manchester
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;;
+;;------------------------------------------------------------------------------
 
 		get	spinnaker.s
 		get	sark.s
@@ -25,7 +42,7 @@ aplx_start	mov	sp, #DTCM_TOP		; Set up stack
 		blx	proc_aplx		; Go to loader
 
 ; When booting via bootROM, APLX table ends up in DTCM 128 bytes above
-; start of image		
+; start of image
 
 aplx_args	dcd	DTCM_BASE + 0x8080	; Address of APLX table
 		dcd	0			; Arg passed in r0 (app_id)
@@ -76,8 +93,8 @@ aplx_rcopy	add	r2, r4			; Copy relative
 		sub	r2, #APLX_ENTRY_SIZE	; Reduce by table entry size
 
 aplx_copy	ldm	r2!, {r0, r5-r7}	; Copy absolute
-		stm	r1!, {r0, r5-r7}	; r1 -> to   
-		ldm	r2!, {r0, r5-r7}	; r2 -> from 
+		stm	r1!, {r0, r5-r7}	; r1 -> to
+		ldm	r2!, {r0, r5-r7}	; r2 -> from
 		stm	r1!, {r0, r5-r7}	; r3 = length
 		sub	r3, #32
 		bhi	aplx_copy

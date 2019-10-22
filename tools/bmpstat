@@ -2,7 +2,7 @@
 
 ##------------------------------------------------------------------------------
 ##
-## 
+##
 ##
 ## Copyright (C)    The University of Manchester - 2013
 ##
@@ -10,6 +10,21 @@
 ## Email            temples@cs.man.ac.uk
 ##
 ##------------------------------------------------------------------------------
+
+# Copyright (c) 2013-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package Status;
 
@@ -268,8 +283,8 @@ sub main_window
 			     -anchor => "w", -font => "Helvetica 14 bold");
     $label2 = $frame->Label (-fg => "blue",
 			     -anchor => "e", -font => "Helvetica 14 bold");
- 
- 
+
+
     $board_but->pack (-side => "left");
     $mode_but->pack  (-side => "left");
 
@@ -356,7 +371,7 @@ sub display
 
 	$g_temp->bar (0, $t_south / 256) unless $t_south == 0x8000;
 	$g_temp->bar (1, $t_north / 256) unless $t_north == 0x8000;
-	
+
 	$g_text->bar (0, $sense_0 / 256) unless $sense_0 == 0x8000;
 	$g_text->bar (1, $sense_1 / 256) unless $sense_1 == 0x8000;
 

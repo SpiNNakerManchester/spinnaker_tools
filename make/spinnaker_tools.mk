@@ -1,3 +1,18 @@
+# Copyright (c) 2017-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # Common includes for making SpiNNaker binaries
 
 # Set to 1 for GNU tools, 0 for ARM
@@ -139,6 +154,7 @@ $(BUILD_DIR)%.bin: $(BUILD_DIR)%.elf
 ifeq ($(GNU),1)
 	$(OC) -O binary -j RO_DATA -j EX_DATA $< $(BUILD_DIR)RO_DATA.bin
 	$(OC) -O binary -j RW_DATA $< $(BUILD_DIR)RW_DATA.bin
+	ls -l $(BUILD_DIR)RO_DATA.bin
 	$(SPINN_TOOLS_DIR)/mkbin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin > $@
 	$(RM) $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin
 else

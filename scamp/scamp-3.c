@@ -9,6 +9,23 @@
 //
 //------------------------------------------------------------------------------
 
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 
 //------------------------------------------------------------------------------
 // TODO
@@ -1066,6 +1083,39 @@ void init_link_en(void)
     sv->link_en = link_en;
 }
 
+// disable links that have been disabled by neighbours
+void disable_unidirectional_links(void)
+{
+    uint timeout = sv->peek_time;
+    uint remote_link_en;
+    uint remote_addr = (uint) &(sv->link_en) & 0xfffffffc;  // word aligned
+    uint remote_offs = (uint) &(sv->link_en) & 0x00000003;  // byte offset
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        if (link_en & (1 << link)) {
+            uint rc = link_read_word(remote_addr, link,
+                    &remote_link_en, timeout);
+            remote_link_en = remote_link_en >> (remote_offs * 8);
+
+            // check opposite link in neighbour
+            uint rl = link + 3;
+            if (rl >= NUM_LINKS)
+            {
+                rl -= NUM_LINKS;
+            }
+
+            // disable link if its opposite was disabled
+            // by the corresponding neighbouring chip
+            if ((rc != RC_OK) ||
+                ((remote_link_en & (1 << rl)) == 0)
+               ){
+              link_en &= ~(1 << link);
+            }
+        }
+    }
+
+    sv->link_en = link_en;
+}
+
 // Start the higher-level network initialisation process. Must be called only
 // once, before the nearest neighbour interrupt handler is enabled.
 void netinit_start(void)
@@ -1270,6 +1320,7 @@ void proc_100hz(uint a1, uint a2)
 
                 level_config();
                 compute_st();
+                disable_unidirectional_links();
                 sv->p2p_up = p2p_up = 1;
 
                 if (srom.flags & SRF_ETH) {
