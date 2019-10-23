@@ -554,44 +554,25 @@ uint shm_ping(uint dest)
     return 1;
 }
 
-
-uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
+// Send message AP
+void shm_send_msg(uint dest, sdp_msg_t *msg)
 {
     vcpu_t *vcpu = sv_vcpu + dest;
-    volatile uchar flag = 0;
-    event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
-    if (e == NULL) {
-        sw_error(SW_OPT);
-        return RC_BUF;          // !! not the right RC
+    if (vcpu->mbox_ap_msg != SHM_IDLE) {
+        return_msg(msg, RC_BUF);
+        return;
     }
 
     sdp_msg_t *shm_msg = sark_shmsg_get();
     if (shm_msg == NULL) {
-        event_free(e);
-        return RC_BUF;
+        return_msg(msg, RC_BUF);
+        return;
     }
 
     sark_msg_cpy(shm_msg, msg);
 
     vcpu->mbox_ap_msg = shm_msg;
     vcpu->mbox_ap_cmd = SHM_MSG;
-
-    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
-
-    uint id = e->ID;
-    timer_schedule(e, 1000);    // !! const??
-
-    while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
-        continue;
-    }
-
-    if (flag != 0) {
-        sark_shmsg_free(shm_msg);
-        return RC_TIMEOUT;
-    }
-
-    timer_cancel(e, id);
-    return RC_OK;
 }
 
 
@@ -683,12 +664,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
     }
 
     if (dest_cpu != sark.virt_cpu) {    // !! virt_cpu always zero
-        uint rc = shm_send_msg(dest_cpu, msg);
-        if (rc == RC_OK) {
-            sark_msg_free(msg);
-        } else {
-            return_msg(msg, rc);
-        }
+        shm_send_msg(dest_cpu, msg);
         return;
     }
 
