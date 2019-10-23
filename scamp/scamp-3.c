@@ -125,9 +125,9 @@ volatile enum netinit_phase_e netinit_phase;
 // The Ethernet initialisation process phase currently in progress
 volatile enum ethinit_phase_e ethinit_phase;
 
-// Number of 10ms ticks ellapsed since the last P2PC_NEW arrived
+// Number of 10ms ticks elapsed since the last P2PC_NEW arrived
 volatile uint ticks_since_last_p2pc_new;
-// Number of 10ms ticks ellapsed since the last P2PC_DIMS arrived
+// Number of 10ms ticks elapsed since the last P2PC_DIMS arrived
 volatile uint ticks_since_last_p2pc_dims;
 
 // During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address. Note
@@ -146,7 +146,7 @@ volatile int p2p_max_y;
 
 // A bitmap giving the coordinates of all P2P coordinates which have been seen
 // mentioned in a P2PC_NEW message. A 2D array of bits whose *bit* indexes are
-// ((bx<<9) | by) where bx and by are x + 256 and y + 256 respectively.
+// ((b_x<<9) | b_y) where b_x and by are x + 256 and y + 256 respectively.
 uchar *p2p_addr_table = NULL;
 
 
@@ -177,7 +177,7 @@ volatile uchar load = 0;
 #define PWM_BITS 4
 
 // The actual, displayed load value (fixed point). This value tracks the 'load'
-// value above, transitioning smoothly towards it over time.
+// value above, which transitions smoothly towards it over time.
 volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 
 //------------------------------------------------------------------------------
@@ -251,7 +251,7 @@ void proc_route_msg(uint arg1, uint arg2);
 void msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
 {
     if (event_queue_proc(proc_route_msg, (uint) msg, srce_ip, PRIO_0) == 0) {
-        // if no event is queued free SDP msg buffer
+        // if no event is queued free SDP message buffer
         sark_msg_free(msg);
     }
 }
@@ -298,7 +298,7 @@ uint pkt_tx(uint tcr, uint data, uint key)
 
 static void timer1_init(uint count)
 {
-    tc[T1_CONTROL] = 0x000000e2;        // En, Per, IntEn, Pre=1, 32bit, Wrap
+    tc[T1_CONTROL] = 0x000000e2;        // Enable, Per, IntEn, Pre=1, 32bit, Wrap
     tc[T1_LOAD] = count;                // Reload value
 }
 
@@ -355,7 +355,8 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
 
         copy_ip(ip_hdr->srce, (uchar *) &srce_ip);
 
-        if ((tag == TAG_NONE) && (flags & SDPF_REPLY)) { // transient tag & reply req
+        if ((tag == TAG_NONE) && (flags & SDPF_REPLY)) {
+            // transient tag & reply requested
             tag = msg->tag = transient_tag(ip_hdr->srce, rx_pkt+6, udp_srce, tag_tto);
         }
 
@@ -496,7 +497,7 @@ void eth_send_msg(uint tag, sdp_msg_t *msg)
     udp_hdr->checksum = 0;              // Zero checksum
 
     uint t;
-    t = ipsum(hdr + IP_HDR_OFFSET + 12, 8, 0);  // Sum IP hdr addresses
+    t = ipsum(hdr + IP_HDR_OFFSET + 12, 8, 0);  // Sum IP header addresses
     t += len + pad + UDP_HDR_SIZE;              // add in UDP data length
     t += PROT_UDP;                              // and UDP protocol number
     t = ipsum((uchar *) udp_hdr, 8 + pad, t);   // and UDP header and pad
@@ -762,7 +763,7 @@ void assign_virt_cpu(uint phys_cpu)
 // * All application cores are rebooted (so that the new virtual core map takes
 //   effect)
 // * If the core to be disabled includes the monitor then the monitor is
-//   disabled without being remapped rendering the chip non-communicative.
+//   disabled without being re-mapped rendering the chip non-communicative.
 
 void remap_phys_cores(uint phys_cores)
 {
@@ -852,7 +853,7 @@ void sv_init(void)
         get_board_info();
     }
 
-    if (sv->hw_ver == 0 && srom.flags & SRF_PRESENT) {  // Set hardware version
+    if (sv->hw_ver == 0 && (srom.flags & SRF_PRESENT)) {  // Set hardware version
         sv->hw_ver = (srom.flags >> 4) & 15;
     }
 
@@ -876,7 +877,6 @@ void sv_init(void)
             sv->num_buf * sizeof(sdp_msg_t), 0, 0);
 
     sv->shm_root.free = (mem_link_t *) sv->shm_buf;
-    //sv->shm_root.count = sv->shm_root.max = 0;        //## Not needed now...
 
     sark_block_init(sv->shm_buf, sv->num_buf, sizeof(sdp_msg_t));
 
@@ -896,7 +896,7 @@ void sdram_init(void)
     uint sdram_size = ram_size(sdram);          // SDRAM size (bytes)
     uint sys_size = (uint) sv->sdram_bufs;      // System size (bytes)
 
-    // Fill in sv->sdram... vars
+    // Fill in sv->sdram... variables
 
     // System buffers at base of SDRAM
     sv->sdram_bufs = (uint *) SDRAM_BASE;
@@ -929,7 +929,7 @@ void sdram_init(void)
     sv->rtr_copy = sark_xalloc(sv->sys_heap,
             (MC_TABLE_SIZE + 1) * sizeof(rtr_entry_t), 0, 0);
 
-    // Alloc ID table
+    // Allocation ID table
 
     sv->alloc_tag = sark_xalloc(sv->sys_heap, 65536 * 4, 0, 0);
     sark_word_set(sv->alloc_tag, 0, 65536 * 4);
@@ -1136,7 +1136,7 @@ void netinit_start(void)
     p2p_min_y = 0;
     p2p_max_y = 0;
 
-    // Allocate and clear the P2P addr bitmap
+    // Allocate and clear the P2P address bitmap
     p2p_addr_table = sark_xalloc(sv->sys_heap, P2P_ADDR_TABLE_BYTES, 0, 0);
     sark_word_set(p2p_addr_table, 0, P2P_ADDR_TABLE_BYTES);
 
@@ -1243,10 +1243,10 @@ void proc_100hz(uint a1, uint a2)
             // Initialise link_en to avoid broken inter-chip links
             init_link_en();
 
-            // Reseed uniquely for each chip
+            // Re-seed uniquely for each chip
             sark_srand(p2p_addr);
 
-            // Set our P2P addr in the comms controller
+            // Set our P2P address in the comms controller
             cc[CC_SAR] = 0x07000000 + p2p_addr;
 
             // Work out the local Ethernet connected chip coordinates
@@ -1258,7 +1258,7 @@ void proc_100hz(uint a1, uint a2)
         break;
 
     case NETINIT_PHASE_BIFF:
-        // The board information floodfill is allowed three 100Hz ticks. In
+        // The board information flood-fill is allowed three 100Hz ticks. In
         // the first tick, the board information is actually broadcast. In
         // the second tick, nothing happens and in the third the state
         // advances to the P2P table generation phase.
@@ -1515,8 +1515,8 @@ void eth_setup()
         }
 
         if (srom.flags & SRF_PHY_INIT) {        // (Re-)initialise PHY
-            phy_write(PHY_AUTO_ADV, 0x01e1);    // Allow 100/10 meg
-            phy_write(PHY_CONTROL, 0x1200);     // Enable & restart auto-neg
+            phy_write(PHY_AUTO_ADV, 0x01e1);    // Allow 100/10 Mb/s
+            phy_write(PHY_CONTROL, 0x1200);     // Enable & restart auto-negotiation
         }
 
         while (srom.flags & SRF_PHY_WAIT) {     // Wait (without timeout)
@@ -1703,7 +1703,7 @@ void c_main(void)
         desc_init();                    // Initialise TX and RX descriptors
         queue_init();                   // Initialise various queues
         nn_init();                      // Initialise NN package
-        netinit_start();                // Initialise late-stage boot process datastructures
+        netinit_start();                // Initialise late-stage boot process data structures
         vic_setup();                    // Set VIC, interrupts on
 
         if (sv->boot_delay) {
@@ -1739,10 +1739,10 @@ void c_main(void)
         // (re-)construct the level/region information (not in shared memory)
         level_config();
 
-        // Reseed uniquely for each chip
+        // Re-seed uniquely for each chip
         sark_srand(p2p_addr);
 
-        // Set our P2P addr in the comms controller
+        // Set our P2P address in the comms controller
         cc[CC_SAR] = 0x07000000 + p2p_addr;
 
         // Initialise, as DONE, late-stage boot process variables
