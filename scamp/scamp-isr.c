@@ -257,6 +257,14 @@ INT_HANDLER ms_timer_int()
 
 //------------------------------------------------------------------------------
 
+static inline void clear_flag(uint box) {
+    uint cpsr = sark_lock_get(LOCK_MBOX);
+    sv->mbox_flags &= ~(1 << box);
+    if (sv->mbox_flags == 0) {
+        sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);
+    }
+    sark_lock_free(cpsr, LOCK_MBOX);
+}
 
 uint next_box;
 
@@ -270,36 +278,25 @@ INT_HANDLER ap_int()
     } while ((sv->mbox_flags & (1 << next_box)) == 0);
 
     vcpu_t *vcpu = sv_vcpu + next_box;
-    sdp_msg_t *shm_msg = vcpu->mbox_mp_msg;
     uint cmd = vcpu->mbox_mp_cmd;
-
-    uint cpsr = sark_lock_get(LOCK_MBOX);
-    sv->mbox_flags &= ~(1 << next_box);
-    if (sv->mbox_flags == 0) {
-        sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);
-    }
-    sark_lock_free(cpsr, LOCK_MBOX);
 
     if (cmd == SHM_MSG) {
 
         sdp_msg_t *msg = sark_msg_get();
 
         if (msg != NULL) {
-            sark_msg_cpy(msg, shm_msg);
+            sark_msg_cpy(msg, vcpu->mbox_mp_msg);
+            clear_flag(next_box);
             vcpu->mbox_mp_cmd = SHM_IDLE;
             msg_queue_insert(msg, 0);
-            sark_shmsg_free(shm_msg);
         } else {
-            // failed to get buffer - do *not* flag
-            // mailbox as IDLE to cause sender timeout
+            // failed to get buffer
             sw_error(SW_OPT);
         }
 
     } else {    //## Hook for other commands...
-        vcpu->mbox_mp_cmd = SHM_IDLE;
         sw_error(SW_OPT);
     }
-
     vic[VIC_VADDR] = (uint) vic;
 }
 

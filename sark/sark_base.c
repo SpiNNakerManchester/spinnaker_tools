@@ -338,50 +338,6 @@ void sark_block_free(mem_block_t *root, void *blk)
     cpu_int_restore(cpsr);
 }
 
-
-// Get a free SDP message from the shared SysRAM pool. Returns pointer
-// to message on success, NULL on failure.
-
-sdp_msg_t* sark_shmsg_get()
-{
-    uint cpsr = sark_lock_get(LOCK_MSG);
-
-    mem_block_t *root = &sv->shm_root;
-    mem_link_t *blk = root->free;
-
-    if (blk != NULL) {
-        root->free = blk->next;
-
-        root->count++;
-        if (root->count > root->max) {
-            root->max = root->count;
-        }
-    }
-
-    sark_lock_free(cpsr, LOCK_MSG);
-
-    return (sdp_msg_t *) blk;
-}
-
-
-// Return an SDP message buffer to the shared SysRAM pool
-
-void sark_shmsg_free(sdp_msg_t *msg)
-{
-    uint cpsr = sark_lock_get(LOCK_MSG);
-
-    mem_block_t *root = &sv->shm_root;
-    mem_link_t *m = (mem_link_t *) msg;
-
-    m->next = root->free;
-    root->free = m;
-
-    root->count--;
-
-    sark_lock_free(cpsr, LOCK_MSG);
-}
-
-
 #ifdef __GNUC__
 typedef void (*constructor_t)(void);
 extern constructor_t __init_array_start;
@@ -453,7 +409,16 @@ uint __attribute__((weak)) sark_init(uint *stack)
         sark.sdram_buf = (void *)
                 (sv->sdram_bufs + sv->sysbuf_size * sark.virt_cpu);
 
-        sark_word_set(sark.vcpu, 0, sizeof(vcpu_t) - 4 * sizeof(uint));
+        // Wipe the VCPU, but keep the messages and user bits
+        sdp_msg_t *ap_msg = sark.vcpu->mbox_ap_msg;
+        sdp_msg_t *mp_msg = sark.vcpu->mbox_mp_msg;
+        uint user[4];
+        sark_mem_cpy(&user[0], &sark.vcpu->user0, sizeof(user));
+        sark_word_set(sark.vcpu, 0, sizeof(vcpu_t));
+        sark.vcpu->mbox_ap_msg = ap_msg;
+        sark.vcpu->mbox_mp_msg = mp_msg;
+        sark_mem_cpy(&sark.vcpu->user0, &user[0], sizeof(user));
+
         sark.vcpu->cpu_state = CPU_STATE_WAIT;
         sark.vcpu->phys_cpu = sark.phys_cpu;
 
@@ -512,48 +477,20 @@ void __attribute__((weak)) sark_post_main(void)
 
 uint sark_msg_send(sdp_msg_t *msg, uint timeout)
 {
-    sdp_msg_t *shm_msg = sark_shmsg_get();
-
-    if (shm_msg == NULL) {
+    if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
         return 0;
     }
 
-    sark_msg_cpy(shm_msg, msg);
-
-    sark.vcpu->mbox_mp_msg = shm_msg;
+    sark_msg_cpy(sark.vcpu->mbox_mp_msg, msg);
     sark.vcpu->mbox_mp_cmd = SHM_MSG;
 
     uint cpsr = sark_lock_get(LOCK_MBOX);
-
     uint t = sv->mbox_flags;
-
     sv->mbox_flags = t | (1 << sark.virt_cpu);
-
     if (t == 0) {
         sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
     }
-
     sark_lock_free(cpsr, LOCK_MBOX);
-
-    // Timeout using bottom 32 bits of clock_ms!
-
-    volatile uint *ms = (uint *) &sv->clock_ms;
-    uint start = *ms;
-
-    while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-        if (*ms - start > timeout) {
-            break;
-        }
-    }
-
-    if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-        // message sending failed - free mailbox,
-        // flag it as IDLE and return error code
-        sark.vcpu->mbox_mp_cmd = SHM_IDLE;
-        sark_shmsg_free(shm_msg);
-        return 0;
-    }
-
     sark.msg_sent++;
     return 1;
 }
@@ -736,16 +673,16 @@ void sark_int(void *pc)
         return;
     }
 
-    uint data = (uint) sark.vcpu->mbox_ap_msg;          // and data word
-
     if (cmd == SHM_NOP) {                               // Send back PC if NOP
-        sark.vcpu->mbox_ap_msg = pc;
+        sark.vcpu->lr = (uint) pc;
+        sark.vcpu->mbox_ap_cmd = SHM_IDLE;              // go back to idle
+        return;
     }
-
-    sark.vcpu->mbox_ap_cmd = SHM_IDLE;                  // and go back to idle
 
 #ifdef SARK_EVENT
     if (cmd == SHM_SIGNAL) {
+        uint data = sark.vcpu->signal;
+        sark.vcpu->mbox_ap_cmd = SHM_IDLE;              // go back to idle
         switch (data) {
         case SIG_PAUSE:
             event_pause(1);
@@ -782,12 +719,11 @@ void sark_int(void *pc)
 #endif
 
     if (cmd == SHM_MSG) {
-        sdp_msg_t *shm_msg = (sdp_msg_t *) data;
         sdp_msg_t *msg = sark_msg_get();
 
         if (msg != NULL) {
-            sark_msg_cpy(msg, shm_msg);
-            sark_shmsg_free(shm_msg);
+            sark_msg_cpy(msg, sark.vcpu->mbox_ap_msg);
+            sark.vcpu->mbox_ap_cmd = SHM_IDLE;  // go back to idle
 
             sark.msg_rcvd++;
 
@@ -823,7 +759,7 @@ void sark_int(void *pc)
                 }
             }
         } else {
-            sark_shmsg_free(shm_msg);
+            sark.vcpu->mbox_ap_cmd = SHM_IDLE;  // go back to idle
         }
     }
 }

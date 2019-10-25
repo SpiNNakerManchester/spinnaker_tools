@@ -180,6 +180,8 @@ volatile uchar load = 0;
 // value above, which transitions smoothly towards it over time.
 volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 
+static sdp_msg_t *shared_messages = NULL;
+
 //------------------------------------------------------------------------------
 
 
@@ -529,6 +531,9 @@ void eth_send_msg(uint tag, sdp_msg_t *msg)
 uint shm_ping(uint dest)
 {
     vcpu_t *vcpu = sv_vcpu + dest;
+    if (vcpu->mbox_ap_cmd != SHM_IDLE) {
+        return 1;
+    }
     volatile uchar flag = 0;
     event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
     if (e == NULL) {
@@ -550,29 +555,22 @@ uint shm_ping(uint dest)
     }
 
     timer_cancel(e, id);
-    vcpu->lr = (uint) vcpu->mbox_ap_msg;
     return 1;
 }
 
 // Send message AP
+void return_msg(sdp_msg_t *msg, uint rc);
 void shm_send_msg(uint dest, sdp_msg_t *msg)
 {
     vcpu_t *vcpu = sv_vcpu + dest;
-    if (vcpu->mbox_ap_msg != SHM_IDLE) {
+    if (vcpu->mbox_ap_cmd != SHM_IDLE) {
         return_msg(msg, RC_BUF);
         return;
     }
-
-    sdp_msg_t *shm_msg = sark_shmsg_get();
-    if (shm_msg == NULL) {
-        return_msg(msg, RC_BUF);
-        return;
-    }
-
-    sark_msg_cpy(shm_msg, msg);
-
-    vcpu->mbox_ap_msg = shm_msg;
+    sark_msg_cpy(vcpu->mbox_ap_msg, msg);
+    sark_msg_free(msg);
     vcpu->mbox_ap_cmd = SHM_MSG;
+    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
 }
 
 
@@ -732,6 +730,28 @@ void assign_virt_cpu(uint phys_cpu)
     sark_word_cpy(v2p_map, sv->v2p_map, MAX_CPUS);
 }
 
+
+//------------------------------------------------------------------------------
+
+
+// Setup shared message buffers
+static void shm_init(void) {
+    if (shared_messages == NULL) {
+        shared_messages = sark_xalloc(sv->sysram_heap,
+                (NUM_CPUS - 1) * 2 * sizeof(sdp_msg_t), 0, 0);
+    }
+    for (uint i = 1; i < NUM_CPUS; i++) {
+        sv_vcpu[i].mbox_ap_cmd = SHM_IDLE;
+        sv_vcpu[i].mbox_ap_msg = &shared_messages[(i - 1) * 2];
+        sv_vcpu[i].mbox_mp_cmd = SHM_IDLE;
+        sv_vcpu[i].mbox_mp_msg = &shared_messages[((i - 1) * 2) + 1];
+    }
+
+    if (sv->boot_delay == 0 && sv->rom_cpus == 0) {
+        sv->root_chip = 1;
+    }
+}
+
 //------------------------------------------------------------------------------
 
 // Disables a specified core and recomputes the virtual core map accordingly.
@@ -755,6 +775,8 @@ void remap_phys_cores(uint phys_cores)
 
     sark_word_set(sv_vcpu + num_cpus, 0,
                   (NUM_CPUS - num_cpus) * sizeof(vcpu_t));
+
+    shm_init();
 }
 
 //------------------------------------------------------------------------------
@@ -847,20 +869,7 @@ void sv_init(void)
     sv_vcpu[0].time = sv->unix_time;
     sv_vcpu[0].phys_cpu = sark.phys_cpu;
     sark_str_cpy(sv_vcpu[0].app_name, build_name);
-
-    // Set up SHM buffers
-    sv->shm_buf = sark_xalloc(sv->sysram_heap,
-            sv->num_buf * sizeof(sdp_msg_t), 0, 0);
-
-    sv->shm_root.free = (mem_link_t *) sv->shm_buf;
-
-    sark_block_init(sv->shm_buf, sv->num_buf, sizeof(sdp_msg_t));
-
-    if (sv->boot_delay == 0 && sv->rom_cpus == 0) {
-        sv->root_chip = 1;
-    }
 }
-
 
 void sdram_init(void)
 {
@@ -1292,6 +1301,8 @@ void proc_100hz(uint a1, uint a2)
                     netinit_phase = NETINIT_PHASE_DONE;
                 }
 
+                // Initialise Shared Messages
+                shm_init();
                 level_config();
                 compute_st();
                 disable_unidirectional_links();

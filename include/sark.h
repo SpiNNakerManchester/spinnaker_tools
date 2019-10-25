@@ -746,8 +746,8 @@ typedef struct vcpu {           // 128 bytes
     uchar phys_cpu;             //!< 45 - Physical CPU
     uchar cpu_state;            //!< 46 - CPU state
     uchar app_id;               //!< 47 - Application ID
-    void *mbox_ap_msg;          //!< 48 - mbox msg MP->AP
-    void *mbox_mp_msg;          //!< 52 - mbox msg AP->MP
+    sdp_msg_t *mbox_ap_msg;     //!< 48 - mbox msg MP->AP
+    sdp_msg_t *mbox_mp_msg;     //!< 52 - mbox msg AP->MP
     volatile uchar mbox_ap_cmd; //!< 56 - mbox command MP->AP
     volatile uchar mbox_mp_cmd; //!< 57 - mbox command AP->MP
     ushort sw_count;            //!< 58 - SW error count (saturating)
@@ -757,7 +757,8 @@ typedef struct vcpu {           // 128 bytes
     char app_name[16];          //!< 72 - Application name
     void *iobuf;                //!< 88 - IO buffer in SDRAM (or 0)
     uint sw_ver;                //!< 92 - SW version
-    uint __PAD[4];              //!< 96 - (spare)
+    uint __PAD[3];              //!< 96 - (spare)
+    uint signal;                //!< 108 - signal data
     uint user0;                 //!< 112 - User word 0
     uint user1;                 //!< 116 - User word 1
     uint user2;                 //!< 120 - User word 2
@@ -1776,31 +1777,6 @@ The block should have been allocated from the same pool previously!
 */
 
 void sark_block_free (mem_block_t *root, void *blk);
-
-/*!
-Get a free SDP message from the shared SysRAM pool. Returns pointer to
-message on success, NULL on failure. Because several cores may attempt
-to access a shared memory message concurrently, a hardware lock is used
-to ensure exclusive access. Interrupts are turned off while this
-occurs but this should be for a relatively short time (1-5us ??)
-
-\return pointer to a shared memory SDP message or NULL if none available
-*/
-
-sdp_msg_t *sark_shmsg_get (void);
-
-/*!
-Return a shared memory SDP message to the shared SysRAM pool.  Because
-several cores may attempt to access a shared memory message
-concurrently, a hardware lock is used to ensure exclusive
-access. Interrupts are turned off while this occurs but this should be
-for a relatively short time (1-5us ??)
-
-\param msg pointer to the message
-*/
-
-__attribute__((nonnull)) void
-sark_shmsg_free(sdp_msg_t *msg);
 
 /*!
 Calls the constructors for any C++ objects created at global scope.
