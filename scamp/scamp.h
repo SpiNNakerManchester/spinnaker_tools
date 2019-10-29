@@ -251,6 +251,18 @@ enum alloc_cmd_e {
     ALLOC_MAX=HEAP_TAG_PTR      //!< Maximum command
 };
 
+enum big_data_cmd_e {
+    BIG_DATA_INIT,  //!< Initialise Big Data transfer
+    BIG_DATA_FREE,  //!< Disable Big Data transfer
+    BIG_DATA_INFO   //!< Current status of Big Data transfer
+};
+
+#define BIG_DATA_FLAG_USE_SENDER 0x80000000
+#define BIG_DATA_FLAG_MASK       0xF0000000
+#define BIG_DATA_CORE_MASK       0x0000001F
+#define BIG_DATA_PORT_MASK       0x00FFFF00
+#define BIG_DATA_PORT_SHIFT      8
+
 //------------------------------------------------------------------------------
 
 typedef struct {                // IPTAG entry (32 bytes)
@@ -408,5 +420,10 @@ extern uchar *p2p_addr_table;
 //------------------------------------------------------------------------------
 
 extern void putz(uint v);
+
+extern uint big_data_init(uint core, ushort port, uchar ip_address[4], uint use_sender);
+extern void big_data_free(void);
+extern void big_data_out_send(void);
+extern void big_data_info(uchar *ip_address, uint *port, uint *n_sent, uint *n_received);
 
 #endif

@@ -783,6 +783,39 @@ uint cmd_remap(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+uint cmd_big_data(sdp_msg_t *msg) {
+    uint op = msg->arg1;
+    if (op == BIG_DATA_INIT) {
+        uint flags = msg->arg2 & BIG_DATA_FLAG_MASK;
+        uint core = msg->arg2 & BIG_DATA_CORE_MASK;
+        uint port = (msg->arg2 >> BIG_DATA_PORT_SHIFT) & BIG_DATA_PORT_MASK;
+        uint use_sender = flags & BIG_DATA_FLAG_USE_SENDER;
+        uchar *ip_address = (uchar *) msg->arg3;
+        if (big_data_init(core, port, ip_address, use_sender)) {
+            msg->cmd_rc = RC_OK;
+        } else {
+            msg->cmd_rc = RC_BUF;
+        }
+        return 0;
+    }
+
+    if (op == BIG_DATA_FREE) {
+        big_data_free();
+        msg->cmd_rc = RC_OK;
+        return 0;
+    }
+
+    if (op == BIG_DATA_INFO) {
+        msg->cmd_rc = RC_OK;
+        big_data_info((uchar *) &msg->data, &msg->arg1, &msg->arg2, &msg->arg3);
+        return 16;
+    }
+
+    msg->cmd_rc = RC_ARG;
+    return 0;
+}
+
+//------------------------------------------------------------------------------
 
 uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
 {
@@ -819,6 +852,8 @@ uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
         return cmd_iptag(msg, srce_ip);
     case CMD_NNP:
         return cmd_nnp(msg);
+    case CMD_BIG_DATA:
+        return cmd_big_data(msg);
     case CMD_AS:
         return cmd_as(msg);
     case CMD_AR:

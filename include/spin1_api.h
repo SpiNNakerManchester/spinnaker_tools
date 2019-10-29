@@ -50,7 +50,7 @@
 // event definitions
 // ------------------------------------------------------------------------
 // event-related parameters
-#define NUM_EVENTS            8
+#define NUM_EVENTS            9
 #define MC_PACKET_RECEIVED    0
 #define DMA_TRANSFER_DONE     1
 #define TIMER_TICK            2
@@ -59,6 +59,7 @@
 #define MCPL_PACKET_RECEIVED  5
 #define FR_PACKET_RECEIVED    6
 #define FRPL_PACKET_RECEIVED  7
+#define BIG_DATA_RX           8
 
 // ------------------------------------------------------------------------
 // DMA transfer parameters

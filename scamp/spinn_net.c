@@ -38,6 +38,8 @@
 
 extern srom_data_t srom;
 extern iptag_t tag_table[];
+extern uchar big_data_out_mac[6];
+uchar big_data_arp_lookup_ip[4];
 
 
 const uchar bc_mac[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -235,36 +237,46 @@ void send_arp_pkt(uchar *buf, const uchar *dest, const uchar *tha,
     eth_transmit(buf, 42, ETYPE_ARP, dest);
 }
 
-
-void arp_lookup(iptag_t *iptag)
-{
+static uint do_arp_lookup(uchar ip_address[4], uchar (*mac_address)[6],
+        uchar (*target_ip)[4]) {
 
     for (uint i = 0; i < MAX_ARP_ENTRIES; i++) {
-        if (cmp_ip(iptag->ip, arp_entries[i].ip)) {
-            copy_mac(arp_entries[i].mac, iptag->mac);
-            uint f = iptag->flags;
-            f &= ~IPFLAG_ARP;
-            iptag->flags = f | IPFLAG_VALID;
-            return;
+        if (cmp_ip(ip_address, arp_entries[i].ip)) {
+            copy_mac(arp_entries[i].mac, *mac_address);
+            return 1;
         }
     }
 
     uchar buf[42];
 
-    uchar *ip_addr = iptag->ip;
     uint *my_ip = (uint *) srom.ip_addr;
-    uint *ip = (uint *) ip_addr;
+    uint *ip = (uint *) ip_address;
     uint *mask = (uint *) srom.net_mask;
 
-    uchar *target_ip = ip_addr;
-
     if ((*my_ip & *mask) != (*ip & *mask)) {
-        target_ip = srom.gw_addr;
+        copy_ip(srom.gw_addr, *target_ip);
+    } else {
+        copy_ip(ip_address, *target_ip);
     }
 
-    copy_ip(target_ip, iptag->mac); // !! Bodge - target IP in MAC field!
+    send_arp_pkt(buf, bc_mac, zero_mac, *target_ip, ARP_REQ);
+    return 0;
+}
 
-    send_arp_pkt(buf, bc_mac, zero_mac, target_ip, ARP_REQ);
+void arp_lookup(iptag_t *iptag)
+{
+    uchar target_ip[4];
+    if (do_arp_lookup(iptag->ip, &iptag->mac, &target_ip)) {
+        uint f = iptag->flags;
+        f &= ~IPFLAG_ARP;
+        iptag->flags = f | IPFLAG_VALID;
+    } else {
+        copy_ip(target_ip, iptag->mac); // !! Bodge - target IP in MAC field!
+    }
+}
+
+void arp_lookup_big_data(uchar big_data_ip[4]) {
+    do_arp_lookup(big_data_ip, &big_data_out_mac, &big_data_arp_lookup_ip);
 }
 
 
@@ -285,8 +297,12 @@ void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size)
         send_arp_pkt(buf, buf+6, arp->sha, arp->spa, ARP_REPLY);
     } else if (op == ARP_REPLY) {       // Reply & TPA matches
         arp_add(arp->sha, arp->spa);
-        iptag_t *tt = tag_table;
 
+        if (cmp_ip(arp->spa, big_data_arp_lookup_ip)) {
+            copy_mac(arp->sha, big_data_out_mac);
+        }
+
+        iptag_t *tt = tag_table;
         for (uint i = 0; i < tag_table_size; i++) {
             uint f = tt->flags;
             if ((f & IPFLAG_ARP) && cmp_ip(arp->spa, tt->mac)) { // !! Bodge

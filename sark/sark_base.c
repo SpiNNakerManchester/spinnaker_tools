@@ -473,6 +473,16 @@ void __attribute__((weak)) sark_post_main(void)
 //------------------------------------------------------------------------------
 
 
+static void set_msg_flag() {
+    uint cpsr = sark_lock_get(LOCK_MBOX);
+    uint t = sv->mbox_flags;
+    sv->mbox_flags = t | (1 << sark.virt_cpu);
+    if (t == 0) {
+        sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
+    }
+    sark_lock_free(cpsr, LOCK_MBOX);
+}
+
 // Send a SDP msg to the Monitor Processor
 
 uint sark_msg_send(sdp_msg_t *msg, uint timeout)
@@ -483,15 +493,24 @@ uint sark_msg_send(sdp_msg_t *msg, uint timeout)
 
     sark_msg_cpy(sark.vcpu->mbox_mp_msg, msg);
     sark.vcpu->mbox_mp_cmd = SHM_MSG;
-
-    uint cpsr = sark_lock_get(LOCK_MBOX);
-    uint t = sv->mbox_flags;
-    sv->mbox_flags = t | (1 << sark.virt_cpu);
-    if (t == 0) {
-        sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
-    }
-    sark_lock_free(cpsr, LOCK_MBOX);
+    set_msg_flag();
     sark.msg_sent++;
+    return 1;
+}
+
+uint sark_send_big_data(udp_hdr_t *msg) {
+    if (sark.vcpu->big_data_out == NULL) {
+        return 0;
+    }
+    if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
+        return 0;
+    }
+    if (msg->length > BIG_DATA_MAX_SIZE) {
+        return 0;
+    }
+    sark_word_cpy(sark.vcpu->big_data_out, msg, msg->length);
+    sark.vcpu->mbox_mp_cmd = SHM_BIG_DATA;
+    set_msg_flag();
     return 1;
 }
 
@@ -677,6 +696,37 @@ void sark_int(void *pc)
         sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
         sark.vcpu->lr = (uint) pc;
         sark.vcpu->mbox_ap_cmd = SHM_IDLE;              // go back to idle
+        return;
+    }
+
+    if (cmd == SHM_BIG_DATA) {
+#ifdef SARK_API
+        if (callback[BIG_DATA_RX].cback != NULL) {
+            udp_hdr_t *udp_hdr = sark.vcpu->big_data_in;
+            uint len = udp_hdr->length;
+            if (len > BIG_DATA_MAX_SIZE) {
+                sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
+                sark.vcpu->mbox_ap_cmd = SHM_IDLE;
+                return;
+            }
+            void *local_msg = sark_xalloc(sark.heap, len, 0, 0);
+            if (local_msg != NULL) {
+                sark_word_cpy(local_msg, udp_hdr, len);
+                sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
+                sark.vcpu->mbox_ap_cmd = SHM_IDLE;
+                uint cpsr = cpu_int_disable();
+                schedule_sysmode(BIG_DATA_RX, (uint) local_msg, 0);
+                cpu_int_restore(cpsr);
+            }
+        } else {
+            sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
+            sark.vcpu->mbox_ap_cmd = SHM_IDLE;
+        }
+#else
+        sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
+        sark.vcpu->mbox_ap_cmd = SHM_IDLE;
+#endif // SARK_API
+
         return;
     }
 

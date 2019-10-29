@@ -384,7 +384,8 @@ enum shm_cmd_e {
     SHM_MSG,            //!< Passing SDP message
     SHM_NOP,            //!< Does nothing...
     SHM_SIGNAL,         //!< Signal application
-    SHM_CMD             //!< Command to MP
+    SHM_CMD,            //!< Command to MP
+    SHM_BIG_DATA        //!< Passing of "big data" UDP message
 };
 
 typedef enum shm_cmd_e shm_cmd; //!< Typedef for enum shm_cmd_e
@@ -445,7 +446,7 @@ typedef enum signal_e signal;   //!< Typedef for enum signal_e
 #define CMD_AR          19  //!< Application core reset
 
 #define CMD_NNP         20  //!< Send broadcast NN packet
-
+#define CMD_BIG_DATA    21  //!< Setup / clear "big data"
 #define CMD_SIG         22  //!< Send signal to apps
 #define CMD_FFD         23  //!< Send flood-fill data
 
@@ -456,6 +457,7 @@ typedef enum signal_e signal;   //!< Typedef for enum signal_e
 
 #define CMD_ALLOC       28  //!< Memory allocation
 #define CMD_RTR         29  //!< Router control
+
 #define CMD_INFO        31  //!< Get chip/core info
 
 // 48-63 reserved for BMP
@@ -573,6 +575,8 @@ typedef struct app_data {
 #define PORT_ETH        255     //!< Special to indicate Ethernet
 
 #define SDP_BUF_SIZE    256     //!< SDP data buffer capacity
+
+#define BIG_DATA_MAX_SIZE 1472  //!< Biggest UDP packet size
 
 /*!
 SDP message definition
@@ -757,7 +761,9 @@ typedef struct vcpu {           // 128 bytes
     char app_name[16];          //!< 72 - Application name
     void *iobuf;                //!< 88 - IO buffer in SDRAM (or 0)
     uint sw_ver;                //!< 92 - SW version
-    uint __PAD[3];              //!< 96 - (spare)
+    uint __PAD;                 //!< 96 - (spare)
+    void *big_data_in;          //!< 100 - big data in pointer (or NULL)
+    void *big_data_out;         //!< 104 - big data out pointer (or NULL)
     uint signal;                //!< 108 - signal data
     uint user0;                 //!< 112 - User word 0
     uint user1;                 //!< 116 - User word 1
@@ -832,6 +838,19 @@ typedef struct pkt {
     uint data;                  //!< Data (payload) field
     uint key;                   //!< Key (non-payload!) field
 } pkt_t;
+
+
+/*!
+Struct holding a UDP packet
+ */
+
+typedef struct {
+    ushort srce;
+    ushort dest;
+    ushort length;
+    ushort checksum;
+} udp_hdr_t;
+
 
 /*!
 Struct holding data for "sark_event" and "sark_timer". This
@@ -1029,7 +1048,7 @@ typedef struct sv {
 
     uint led0;                  //!< 30 LED definition words (for up
     uint led1;                  //!< 34 to 15 LEDs)
-    uint __PAD2;                //!< 38
+    uint big_data_port;         //!< 38 Port to use to receive big data
     uint random;                //!< 3c Random number seed
 
     uchar root_chip;            //!< 40 Set if we are the root chip
@@ -1645,6 +1664,17 @@ there are no shared memory SDP buffers available.
 
 __attribute__((nonnull)) uint
 sark_msg_send(sdp_msg_t *msg, uint timeout);
+
+/*!
+Send a "Big Data" message.  The message is sent to the monitor processor
+using a shared memory buffer and then sent to the Ethernet from there; this
+will only work on an Ethernet chip, and only when the chip has been configured
+in advance to indicate that this core is the one that can send Big Data.
+
+\param msg pointer to a UDP message header, which is followed by data
+ */
+__attribute__((nonnull)) uint
+sark_send_big_data(udp_hdr_t *msg);
 
 /*!
 Perform a busy-wait for the given number of microseconds. The core

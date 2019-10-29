@@ -279,8 +279,11 @@ INT_HANDLER ap_int()
 
     vcpu_t *vcpu = sv_vcpu + next_box;
     uint cmd = vcpu->mbox_mp_cmd;
-
-    if (cmd == SHM_MSG) {
+    if (cmd == SHM_BIG_DATA) {
+        big_data_out_send();
+        clear_flag(next_box);
+        vcpu->mbox_mp_cmd = SHM_IDLE;
+    } else if (cmd == SHM_MSG) {
 
         sdp_msg_t *msg = sark_msg_get();
 
@@ -293,7 +296,6 @@ INT_HANDLER ap_int()
             // failed to get buffer
             sw_error(SW_OPT);
         }
-
     } else {    //## Hook for other commands...
         sw_error(SW_OPT);
     }

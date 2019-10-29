@@ -180,7 +180,30 @@ volatile uchar load = 0;
 // value above, which transitions smoothly towards it over time.
 volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 
+//------------------------------------------------------------------------------
+
+// The shared message buffers that have been allocated
 static sdp_msg_t *shared_messages = NULL;
+
+// Core that is sent "big data", or 0 if currently disabled
+static uint big_data_in_core = 0;
+
+static vcpu_t *big_data_vcpu = NULL;
+
+// Big data buffers; only assigned if needed
+static void *big_data_in = NULL;
+static void *big_data_out = NULL;
+
+// Big data output IP address and port
+uchar big_data_out_ip[4];
+static ushort big_data_out_port;
+uchar big_data_out_mac[6];
+static uint big_data_use_sender;
+
+// Big data statistics
+static uint big_data_in_count;
+static uint big_data_out_count;
+
 
 //------------------------------------------------------------------------------
 
@@ -314,6 +337,7 @@ __inline void eth_discard()
     er[ETH_RX_CMD] = (uint) er;
 }
 
+void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr);
 
 void udp_pkt(uchar *rx_pkt, uint rx_len)
 {
@@ -371,6 +395,10 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
             eth_discard();
             sark_msg_free(msg);
         }
+    } else if (udp_dest == sv->big_data_port) {  // Big Data In
+        mac_hdr_t *mac_hdr = (mac_hdr_t *) rx_pkt;
+        arp_add(mac_hdr->srce, ip_hdr->srce);
+        big_data_in_recv(ip_hdr, udp_hdr);
     } else {                            // Reverse IPTag...
         len -= 8;                       //const UDP_HDR
 
@@ -1517,6 +1545,133 @@ void eth_setup()
             event_run(1);
         }
     }
+}
+
+uint big_data_init(uint core, ushort port, uchar ip_address[4], uint use_sender) {
+
+    // If there is already a core assigned to big data, this is an error
+    if (big_data_in_core != 0) {
+        return 0;
+    }
+
+    // Check parameters
+    if (core > num_cpus || core == 0) {
+        return 0;
+    }
+
+    // Set up the data structures
+    if (big_data_in == NULL) {
+        big_data_in = sark_xalloc(sv->sysram_heap, BIG_DATA_MAX_SIZE, 0, 0);
+        if (big_data_in == NULL) {
+            return 0;
+        }
+    }
+    if (big_data_out == NULL) {
+        big_data_out = sark_xalloc(sv->sysram_heap, BIG_DATA_MAX_SIZE, 0, 0);
+        if (big_data_out == NULL) {
+            return 0;
+        }
+    }
+    arp_lookup_big_data(ip_address);
+
+    // Assign to the correct core
+    big_data_vcpu = &sv_vcpu[core];
+    big_data_vcpu->big_data_in = big_data_in;
+    big_data_vcpu->big_data_out = big_data_out;
+    big_data_in_core = core;
+    copy_ip(ip_address, big_data_out_ip);
+    big_data_out_port = port;
+    big_data_use_sender = use_sender;
+    big_data_in_count = 0;
+    big_data_out_count = 0;
+    return 1;
+}
+
+void big_data_free(void) {
+    if (big_data_in_core == 0 || big_data_in_core > num_cpus) {
+        return;
+    }
+    big_data_vcpu->big_data_in = NULL;
+    big_data_vcpu->big_data_out = NULL;
+    big_data_out_port = 0;
+    big_data_in_core = 0;
+}
+
+void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr) {
+    // Not set up - throw away
+    if (big_data_in_core == 0) {
+        eth_discard();
+    }
+
+    // Too big - throw away
+    uint len = ntohs(udp_hdr->length);
+    if (len > BIG_DATA_MAX_SIZE) {
+        eth_discard();
+    }
+
+    // Buffer in use - throw away
+    if (big_data_vcpu->mbox_ap_cmd != SHM_IDLE) {
+        eth_discard();
+    }
+
+    // Copy header data if needed
+    if (big_data_use_sender) {
+        big_data_out_port = ntohs(udp_hdr->srce);
+        copy_ip(ip_hdr->srce, big_data_out_ip);
+        arp_lookup_big_data(big_data_out_ip);
+    }
+
+    // Fill the buffer with data and signal
+    udp_hdr->length = len;
+    big_data_in_count++;
+    memcpy(big_data_in, udp_hdr, len);
+    eth_discard();
+    big_data_vcpu->mbox_ap_cmd = SHM_BIG_DATA;
+    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[big_data_in_core]);
+}
+
+void big_data_out_send(void) {
+
+    // Ignore if not set up
+    if (big_data_out_port == 0) {
+        return;
+    }
+
+    udp_hdr_t *pkt_udp_hdr = big_data_vcpu->big_data_out;
+    void *data = &pkt_udp_hdr[1];
+
+    // Ignore if length too big
+    uint len = pkt_udp_hdr->length;
+    if (pkt_udp_hdr->length > BIG_DATA_MAX_SIZE) {
+        return;
+    }
+
+    struct {
+        mac_hdr_t mac_hdr;
+        ip_hdr_t ip_hdr;
+        udp_hdr_t udp_hdr;
+    } hdr;
+    hdr.udp_hdr.srce = htons(sv->big_data_port);
+    hdr.udp_hdr.dest = htons(big_data_out_port);
+    hdr.udp_hdr.length = htons(len);
+    // Zero checksum; valid, and unused for speed
+    hdr.udp_hdr.checksum = 0;
+
+    copy_ip_hdr(big_data_out_ip, PROT_UDP, &hdr.ip_hdr, len + sizeof(ip_hdr_t));
+
+    copy_mac(big_data_out_mac, hdr.mac_hdr.dest);
+    copy_mac(srom.mac_addr, hdr.mac_hdr.srce);
+    hdr.mac_hdr.type = htons(ETYPE_IP);
+
+    eth_transmit2((uchar *) &hdr, data, sizeof(hdr), len);
+    big_data_out_count++;
+}
+
+void big_data_info(uchar *ip_address, uint *port, uint *n_sent, uint *n_received) {
+    copy_ip(big_data_out_ip, ip_address);
+    *port = big_data_out_port;
+    *n_sent = big_data_out_count;
+    *n_received = big_data_in_count;
 }
 
 
