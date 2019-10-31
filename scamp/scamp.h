@@ -425,6 +425,6 @@ extern void putz(uint v);
 extern uint big_data_init(uint core, ushort port, uchar ip_address[4], uint use_sender);
 extern void big_data_free(void);
 extern void big_data_out_send(void);
-extern void big_data_info(uchar *ip_address, uint *port, uint *n_sent, uint *n_received);
+extern void big_data_info(uchar *ip_address, uint *port, uint *n_sent, uint *n_received, uint *n_throw_not_idle);
 
 #endif

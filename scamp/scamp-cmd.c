@@ -807,8 +807,9 @@ uint cmd_big_data(sdp_msg_t *msg) {
 
     if (op == BIG_DATA_INFO) {
         msg->cmd_rc = RC_OK;
-        big_data_info((uchar *) &msg->data, &msg->arg1, &msg->arg2, &msg->arg3);
-        return 16;
+        big_data_info((uchar *) &msg->data[4], &msg->arg1, &msg->arg2, &msg->arg3,
+                (uint *) &msg->data[0]);
+        return 20;
     }
 
     msg->cmd_rc = RC_ARG;

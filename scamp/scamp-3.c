@@ -203,6 +203,7 @@ static uint big_data_use_sender;
 // Big data statistics
 static uint big_data_in_count;
 static uint big_data_out_count;
+static uint big_data_discard_not_idle;
 
 
 //------------------------------------------------------------------------------
@@ -1565,17 +1566,21 @@ uint big_data_init(uint core, ushort port, uchar ip_address[4], uint use_sender)
         if (big_data_in == NULL) {
             return 0;
         }
+        // Ensure unbuffered
+        big_data_in = ((uchar *) big_data_in) + 0x10000000;
     }
     if (big_data_out == NULL) {
         big_data_out = sark_xalloc(sv->sysram_heap, BIG_DATA_MAX_SIZE, 0, 0);
         if (big_data_out == NULL) {
             return 0;
         }
+        // Ensure unbuffered
+        big_data_out = ((uchar *) big_data_out) + 0x10000000;
     }
     arp_lookup_big_data(ip_address);
 
     // Assign to the correct core
-    big_data_vcpu = &sv_vcpu[core];
+    big_data_vcpu = (vcpu_t *) (((uchar *) &sv_vcpu[core]) + 0x10000000);
     big_data_vcpu->big_data_in = big_data_in;
     big_data_vcpu->big_data_out = big_data_out;
     big_data_in_core = core;
@@ -1584,6 +1589,8 @@ uint big_data_init(uint core, ushort port, uchar ip_address[4], uint use_sender)
     big_data_use_sender = use_sender;
     big_data_in_count = 0;
     big_data_out_count = 0;
+    big_data_discard_not_idle = 0;
+
     return 1;
 }
 
@@ -1601,17 +1608,27 @@ void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr) {
     // Not set up - throw away
     if (big_data_in_core == 0) {
         eth_discard();
+        return;
     }
 
     // Too big - throw away
     uint len = ntohs(udp_hdr->length);
     if (len > BIG_DATA_MAX_SIZE) {
         eth_discard();
+        return;
+    }
+
+    // Too small - throw away
+    if (len < sizeof(udp_hdr_t)) {
+        eth_discard();
+        return;
     }
 
     // Buffer in use - throw away
     if (big_data_vcpu->mbox_ap_cmd != SHM_IDLE) {
+        big_data_discard_not_idle++;
         eth_discard();
+        return;
     }
 
     // Copy header data if needed
@@ -1621,13 +1638,19 @@ void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr) {
         arp_lookup_big_data(big_data_out_ip);
     }
 
-    // Fill the buffer with data and signal
-    udp_hdr->length = len;
-    big_data_in_count++;
+    // Fill the buffer with data
     memcpy(big_data_in, udp_hdr, len);
+
+    // Free Ethernet
     eth_discard();
+
+    // Update the length field to be expected endian
+    ((udp_hdr_t *) big_data_in)->length = len;
+
+    // Signal core of packet
     big_data_vcpu->mbox_ap_cmd = SHM_BIG_DATA;
     sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[big_data_in_core]);
+    big_data_in_count++;
 }
 
 void big_data_out_send(void) {
@@ -1642,7 +1665,12 @@ void big_data_out_send(void) {
 
     // Ignore if length too big
     uint len = pkt_udp_hdr->length;
-    if (pkt_udp_hdr->length > BIG_DATA_MAX_SIZE) {
+    if (len > BIG_DATA_MAX_SIZE) {
+        return;
+    }
+
+    // Ignore if length too small
+    if (len < sizeof(udp_hdr_t)) {
         return;
     }
 
@@ -1667,11 +1695,13 @@ void big_data_out_send(void) {
     big_data_out_count++;
 }
 
-void big_data_info(uchar *ip_address, uint *port, uint *n_sent, uint *n_received) {
+void big_data_info(uchar *ip_address, uint *port, uint *n_sent, uint *n_received,
+        uint *n_throw_not_idle) {
     copy_ip(big_data_out_ip, ip_address);
     *port = big_data_out_port;
     *n_sent = big_data_out_count;
     *n_received = big_data_in_count;
+    *n_throw_not_idle = big_data_discard_not_idle;
 }
 
 

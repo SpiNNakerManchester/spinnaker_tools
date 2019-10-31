@@ -412,11 +412,15 @@ uint __attribute__((weak)) sark_init(uint *stack)
         // Wipe the VCPU, but keep the messages and user bits
         sdp_msg_t *ap_msg = sark.vcpu->mbox_ap_msg;
         sdp_msg_t *mp_msg = sark.vcpu->mbox_mp_msg;
+        void *big_data_in = sark.vcpu->big_data_in;
+        void *big_data_out = sark.vcpu->big_data_out;
         uint user[4];
         sark_mem_cpy(&user[0], &sark.vcpu->user0, sizeof(user));
         sark_word_set(sark.vcpu, 0, sizeof(vcpu_t));
         sark.vcpu->mbox_ap_msg = ap_msg;
         sark.vcpu->mbox_mp_msg = mp_msg;
+        sark.vcpu->big_data_in = big_data_in;
+        sark.vcpu->big_data_out = big_data_out;
         sark_mem_cpy(&sark.vcpu->user0, &user[0], sizeof(user));
 
         sark.vcpu->cpu_state = CPU_STATE_WAIT;
@@ -701,16 +705,17 @@ void sark_int(void *pc)
     if (cmd == SHM_BIG_DATA) {
 #ifdef SARK_API
         if (callback[BIG_DATA_RX].cback != NULL) {
-            udp_hdr_t *udp_hdr = sark.vcpu->big_data_in;
+            vcpu_t *vcpu = (vcpu_t *) (((uchar *) sark.vcpu) + 0x10000000);
+            udp_hdr_t *udp_hdr = vcpu->big_data_in;
             uint len = udp_hdr->length;
             if (len > BIG_DATA_MAX_SIZE) {
-                sark.vcpu->mbox_ap_cmd = SHM_IDLE;
+                vcpu->mbox_ap_cmd = SHM_IDLE;
                 return;
             }
             void *local_msg = sark_xalloc(sark.heap, len, 0, 0);
             if (local_msg != NULL) {
                 sark_word_cpy(local_msg, udp_hdr, len);
-                sark.vcpu->mbox_ap_cmd = SHM_IDLE;
+                vcpu->mbox_ap_cmd = SHM_IDLE;
                 uint cpsr = cpu_int_disable();
                 schedule_sysmode(BIG_DATA_RX, (uint) local_msg, 0);
                 cpu_int_restore(cpsr);
