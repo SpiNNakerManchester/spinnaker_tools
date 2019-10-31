@@ -686,14 +686,13 @@ void sark_int(void *pc)
 {
 
     uint cmd = sark.vcpu->mbox_ap_cmd;                  // Get command code
+    sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);    // Ack the interrupt
 
     if (cmd == SHM_IDLE) {
-        sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
         return;
     }
 
     if (cmd == SHM_NOP) {                               // Send back PC if NOP
-        sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
         sark.vcpu->lr = (uint) pc;
         sark.vcpu->mbox_ap_cmd = SHM_IDLE;              // go back to idle
         return;
@@ -705,25 +704,21 @@ void sark_int(void *pc)
             udp_hdr_t *udp_hdr = sark.vcpu->big_data_in;
             uint len = udp_hdr->length;
             if (len > BIG_DATA_MAX_SIZE) {
-                sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
                 sark.vcpu->mbox_ap_cmd = SHM_IDLE;
                 return;
             }
             void *local_msg = sark_xalloc(sark.heap, len, 0, 0);
             if (local_msg != NULL) {
                 sark_word_cpy(local_msg, udp_hdr, len);
-                sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
                 sark.vcpu->mbox_ap_cmd = SHM_IDLE;
                 uint cpsr = cpu_int_disable();
                 schedule_sysmode(BIG_DATA_RX, (uint) local_msg, 0);
                 cpu_int_restore(cpsr);
             }
         } else {
-            sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
             sark.vcpu->mbox_ap_cmd = SHM_IDLE;
         }
 #else
-        sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
         sark.vcpu->mbox_ap_cmd = SHM_IDLE;
 #endif // SARK_API
 
@@ -732,7 +727,6 @@ void sark_int(void *pc)
 
 #ifdef SARK_EVENT
     if (cmd == SHM_SIGNAL) {
-        sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
         uint data = sark.vcpu->signal;
         sark.vcpu->mbox_ap_cmd = SHM_IDLE;              // go back to idle
         switch (data) {
@@ -774,7 +768,6 @@ void sark_int(void *pc)
         sdp_msg_t *msg = sark_msg_get();
 
         if (msg != NULL) {
-            sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu); // Ack the interrupt
             sark_msg_cpy(msg, sark.vcpu->mbox_ap_msg);
             sark.vcpu->mbox_ap_cmd = SHM_IDLE;  // go back to idle
 

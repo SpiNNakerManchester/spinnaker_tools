@@ -266,7 +266,14 @@ static inline void clear_flag(uint box) {
     sark_lock_free(cpsr, LOCK_MBOX);
 }
 
-uint next_box;
+static inline void process_msg(sdp_msg_t *msg, vcpu_t *vcpu) {
+    sark_msg_cpy(msg, vcpu->mbox_mp_msg);
+    vcpu->mbox_mp_cmd = SHM_IDLE;
+    msg_queue_insert(msg, 0);
+}
+
+static uint next_box;
+static uint saved_boxes = 0;
 
 INT_HANDLER ap_int()
 {
@@ -277,29 +284,54 @@ INT_HANDLER ap_int()
         }
     } while ((sv->mbox_flags & (1 << next_box)) == 0);
 
+    clear_flag(next_box);
+
     vcpu_t *vcpu = sv_vcpu + next_box;
     uint cmd = vcpu->mbox_mp_cmd;
     if (cmd == SHM_BIG_DATA) {
         big_data_out_send();
-        clear_flag(next_box);
         vcpu->mbox_mp_cmd = SHM_IDLE;
     } else if (cmd == SHM_MSG) {
-
         sdp_msg_t *msg = sark_msg_get();
 
         if (msg != NULL) {
-            sark_msg_cpy(msg, vcpu->mbox_mp_msg);
-            clear_flag(next_box);
-            vcpu->mbox_mp_cmd = SHM_IDLE;
-            msg_queue_insert(msg, 0);
+            process_msg(msg, vcpu);
         } else {
             // failed to get buffer
             sw_error(SW_OPT);
+            saved_boxes += 1;
         }
     } else {    //## Hook for other commands...
         sw_error(SW_OPT);
     }
     vic[VIC_VADDR] = (uint) vic;
+}
+
+uint check_box = 0;
+
+static inline uint check_shm_boxes(sdp_msg_t *msg) {
+    if (!saved_boxes) {
+        return 0;
+    }
+    for (uint i = 0; i < num_cpus; i++) {
+        check_box += 1;
+        if (check_box >= num_cpus) {
+            check_box = 0;
+        }
+        vcpu_t *vcpu = sv_vcpu + check_box;
+        if (vcpu->mbox_mp_cmd == SHM_MSG) {
+            process_msg(msg, vcpu);
+            saved_boxes -= 1;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void scamp_msg_free(sdp_msg_t *msg) {
+    if (!check_shm_boxes(msg)) {
+        sark_msg_free(msg);
+    }
 }
 
 

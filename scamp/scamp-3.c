@@ -277,7 +277,7 @@ void msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
 {
     if (event_queue_proc(proc_route_msg, (uint) msg, srce_ip, PRIO_0) == 0) {
         // if no event is queued free SDP message buffer
-        sark_msg_free(msg);
+        scamp_msg_free(msg);
     }
 }
 
@@ -393,7 +393,7 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
             msg_queue_insert(msg, srce_ip);
         } else {
             eth_discard();
-            sark_msg_free(msg);
+            scamp_msg_free(msg);
         }
     } else if (udp_dest == sv->big_data_port) {  // Big Data In
         mac_hdr_t *mac_hdr = (mac_hdr_t *) rx_pkt;
@@ -596,7 +596,7 @@ void shm_send_msg(uint dest, sdp_msg_t *msg)
         return;
     }
     sark_msg_cpy(vcpu->mbox_ap_msg, msg);
-    sark_msg_free(msg);
+    scamp_msg_free(msg);
     vcpu->mbox_ap_cmd = SHM_MSG;
     sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
 }
@@ -670,7 +670,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
         uint rc = p2p_send_msg(msg->dest_addr, msg);
         if (rc == RC_OK) {
-            sark_msg_free(msg);
+            scamp_msg_free(msg);
         } else {
             return_msg(msg, rc);
         }
@@ -679,7 +679,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
     if (msg->dest_port == PORT_ETH) {
         eth_send_msg(msg->tag, msg);
-        sark_msg_free(msg);
+        scamp_msg_free(msg);
         return;
     }
 
@@ -1663,7 +1663,7 @@ void big_data_out_send(void) {
     copy_mac(srom.mac_addr, hdr.mac_hdr.srce);
     hdr.mac_hdr.type = htons(ETYPE_IP);
 
-    eth_transmit2((uchar *) &hdr, data, sizeof(hdr), len);
+    eth_transmit2((uchar *) &hdr, data, sizeof(hdr), len - sizeof(udp_hdr_t));
     big_data_out_count++;
 }
 
