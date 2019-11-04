@@ -477,7 +477,7 @@ void __attribute__((weak)) sark_post_main(void)
 //------------------------------------------------------------------------------
 
 
-static void set_msg_flag() {
+static void set_msg_flag(void) {
     uint cpsr = sark_lock_get(LOCK_MBOX);
     uint t = sv->mbox_flags;
     sv->mbox_flags = t | (1 << sark.virt_cpu);
