@@ -33,16 +33,6 @@
 
 //------------------------------------------------------------------------------
 
-// This currently sends an image of 28kB at most.
-// Images up to 32kB are possible.
-
-#define BOOT_BUF (DTCM_BASE + 0x8000)
-
-// BLOCK_COUNT * BYTE_COUNT must be < 32kB
-#define BLOCK_COUNT     31      // From 1-256
-#define WORD_COUNT      256     // From 1-256
-#define BYTE_COUNT      (WORD_COUNT * sizeof(uint))
-
 
 #define FF_START_PHASE_1                0x01000003
 #define FF_BLOCK_START_PHASE_1          0x02000003
@@ -140,25 +130,25 @@ void boot_nn(uint hw_ver)
     boot_sv->root_chip = 0;
 
     uint key = FF_START_PHASE_1;
-    uint data = (FF_TARGET_MONITOR << 24) | ((BLOCK_COUNT - 1) << 16);
+    uint data = (FF_TARGET_MONITOR << 24) | ((BOOT_BLOCK_COUNT - 1) << 16);
 
     nn_tx(key, data);
 
-    for (uint j = 0; j < BLOCK_COUNT; j++) {
-        key = FF_BLOCK_START_PHASE_1 | (j << 16) | ((WORD_COUNT - 1) << 8);
-        data = j * BYTE_COUNT;
+    for (uint j = 0; j < BOOT_BLOCK_COUNT; j++) {
+        key = FF_BLOCK_START_PHASE_1 | (j << 16) | ((BOOT_BLOCK_WORD_COUNT - 1) << 8);
+        data = j * BOOT_BLOCK_BYTE_COUNT;
 
         nn_tx(key, data);
 
-        for (uint k = 0; k < WORD_COUNT; k++) {
+        for (uint k = 0; k < BOOT_BLOCK_WORD_COUNT; k++) {
             key = FF_BLOCK_DATA_PHASE_1 | (j << 16) | (k << 0x8);
-            data = image[j * WORD_COUNT + k];
+            data = image[j * BOOT_BLOCK_WORD_COUNT + k];
 
             nn_tx(key, data);
         }
 
         key = FF_BLOCK_END_PHASE_1 | (j << 16);
-        data = crc32((uchar *) (image + j * WORD_COUNT), BYTE_COUNT);
+        data = crc32((uchar *) (image + j * BOOT_BLOCK_WORD_COUNT), BOOT_BLOCK_BYTE_COUNT);
 
         nn_tx(key, data);
     }

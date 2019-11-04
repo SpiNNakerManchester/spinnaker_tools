@@ -31,6 +31,20 @@
 
 //------------------------------------------------------------------------------
 
+// Boot constants
+
+// This currently sends an image of 31kB at most.
+// Images up to 32kB are possible, but require some more complex changes!
+#define BOOT_BUF (DTCM_BASE + 0x8000)
+
+// BLOCK_COUNT * BYTE_COUNT must be < 32kB
+#define BOOT_BLOCK_COUNT           31      // From 1-256
+#define BOOT_BLOCK_WORD_COUNT      256     // From 1-256
+#define BOOT_BLOCK_BYTE_COUNT      (BOOT_BLOCK_WORD_COUNT * sizeof(uint))
+#define BOOT_TOTAL_BYTE_COUNT      (BOOT_BLOCK_BYTE_COUNT * BOOT_BLOCK_COUNT)
+
+//------------------------------------------------------------------------------
+
 // Misc constants
 
 #define MAX_CPUS                20                      // Legacy const!

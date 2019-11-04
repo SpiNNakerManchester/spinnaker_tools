@@ -338,9 +338,9 @@ __inline void eth_discard()
     er[ETH_RX_CMD] = (uint) er;
 }
 
-void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr);
+static void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr);
 
-void udp_pkt(uchar *rx_pkt, uint rx_len)
+static void udp_pkt(uchar *rx_pkt, uint rx_len)
 {
     ip_hdr_t *ip_hdr = (ip_hdr_t *) (rx_pkt + IP_HDR_OFFSET);
 
@@ -489,7 +489,7 @@ void eth_receive()
 //------------------------------------------------------------------------------
 
 
-void eth_send_msg(uint tag, sdp_msg_t *msg)
+static void eth_send_msg(uint tag, sdp_msg_t *msg)
 {
     iptag_t *iptag = tag_table + tag;
 
@@ -557,7 +557,7 @@ void eth_send_msg(uint tag, sdp_msg_t *msg)
 //------------------------------------------------------------------------------
 
 
-uint shm_ping(uint dest)
+static uint shm_ping(uint dest)
 {
     vcpu_t *vcpu = sv_vcpu + dest;
     if (vcpu->mbox_ap_cmd != SHM_IDLE) {
@@ -587,12 +587,43 @@ uint shm_ping(uint dest)
     return 1;
 }
 
+static uint wait_for_mbox_idle(vcpu_t *vcpu) {
+
+    // If IDLE return True now
+    if (vcpu->mbox_ap_cmd == SHM_IDLE) {
+        return 1;
+    }
+
+    // Try to wait for IDLE
+    volatile uchar flag = 0;
+    event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
+
+    // If no event, return False now
+    if (e == NULL) {
+        return 0;
+    }
+
+    // Wait for IDLE
+    timer_schedule(e, 1000);
+    while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
+        continue;
+    }
+
+    // If IDLE, return True now
+    if (vcpu->mbox_ap_cmd == SHM_IDLE) {
+        return 1;
+    }
+
+    // Not IDLE
+    return 0;
+}
+
 // Send message AP
 void return_msg(sdp_msg_t *msg, uint rc);
 void shm_send_msg(uint dest, sdp_msg_t *msg)
 {
     vcpu_t *vcpu = sv_vcpu + dest;
-    if (vcpu->mbox_ap_cmd != SHM_IDLE) {
+    if (!wait_for_mbox_idle(vcpu)) {
         return_msg(msg, RC_BUF);
         return;
     }
@@ -1604,7 +1635,7 @@ void big_data_free(void) {
     big_data_in_core = 0;
 }
 
-void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr) {
+static void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr) {
     // Not set up - throw away
     if (big_data_in_core == 0) {
         eth_discard();
@@ -1791,8 +1822,8 @@ void chk_bl_del(void)
         if (bl_cores & (1 << sark.phys_cpu)) {
             // start boot image DMA to SDRAM for delegate,
             dma[DMA_ADRS] = (uint) SDRAM_BASE;
-            dma[DMA_ADRT] = (uint) DTCM_BASE + 0x00008000;
-            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | 0x7100;
+            dma[DMA_ADRT] = (uint) BOOT_BUF;
+            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | BOOT_TOTAL_BYTE_COUNT;
 
             // take blacklisted cores out of the application pool
             sc[SC_CLR_OK] = bl_cores;

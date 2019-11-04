@@ -492,7 +492,20 @@ static void set_msg_flag() {
 uint sark_msg_send(sdp_msg_t *msg, uint timeout)
 {
     if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-        return 0;
+
+        // If not IDLE wait for timeout
+        volatile uint *ms = (uint *) &sv->clock_ms;
+        uint start = *ms;
+        while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
+            if (*ms - start > timeout) {
+                break;
+            }
+        }
+
+        // If still not IDLE, return failure
+        if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
+            return 0;
+        }
     }
 
     sark_msg_cpy(sark.vcpu->mbox_mp_msg, msg);
