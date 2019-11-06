@@ -75,7 +75,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "sark.h"
 #include "scamp.h"
 
@@ -85,9 +84,7 @@
 
 #include <string.h>
 
-
 //------------------------------------------------------------------------------
-
 
 // VARS
 
@@ -149,7 +146,6 @@ volatile int p2p_max_y;
 // ((b_x<<9) | b_y) where b_x and by are x + 256 and y + 256 respectively.
 uchar *p2p_addr_table = NULL;
 
-
 //------------------------------------------------------------------------------
 
 // LED control status variables/definitions
@@ -204,7 +200,6 @@ static uint big_data_use_sender;
 static uint big_data_in_count;
 static uint big_data_out_count;
 static uint big_data_discard_not_idle;
-
 
 //------------------------------------------------------------------------------
 
