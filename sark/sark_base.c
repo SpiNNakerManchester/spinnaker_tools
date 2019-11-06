@@ -508,6 +508,10 @@ uint sark_msg_send(sdp_msg_t *msg, uint timeout)
         }
     }
 
+    // Can't send message if too big
+    if (msg->length > SDP_MAX_LENGTH) {
+        return 0;
+    }
     sark_msg_cpy(sark.vcpu->mbox_mp_msg, msg);
     sark.vcpu->mbox_mp_cmd = SHM_MSG;
     set_msg_flag();
@@ -783,6 +787,10 @@ void sark_int(void *pc)
 #endif
 
     if (cmd == SHM_MSG) {
+        if (sark.vcpu->mbox_ap_msg->length > SDP_MAX_LENGTH) {
+            sark.vcpu->mbox_ap_cmd = SHM_IDLE;  // go back to idle
+            return;
+        }
         sdp_msg_t *msg = sark_msg_get();
 
         if (msg != NULL) {

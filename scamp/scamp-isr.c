@@ -292,6 +292,12 @@ INT_HANDLER ap_int()
         big_data_out_send();
         vcpu->mbox_mp_cmd = SHM_IDLE;
     } else if (cmd == SHM_MSG) {
+
+        // Ignore messages that are too big as they come in
+        if (vcpu->mbox_ap_msg->length > SDP_MAX_LENGTH) {
+            sw_error(SW_OPT);
+            vcpu->mbox_mp_cmd = SHM_IDLE;
+        }
         sdp_msg_t *msg = sark_msg_get();
 
         if (msg != NULL) {

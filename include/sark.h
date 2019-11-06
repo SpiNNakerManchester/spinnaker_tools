@@ -576,6 +576,8 @@ typedef struct app_data {
 
 #define SDP_BUF_SIZE    256     //!< SDP data buffer capacity
 
+#define SDP_MAX_LENGTH  (SDP_BUF_SIZE + 24) //! Biggest SDP "length" value
+
 #define BIG_DATA_MAX_SIZE 1472  //!< Biggest UDP packet size
 
 /*!

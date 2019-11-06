@@ -48,6 +48,9 @@
 #define RX_OPEN 1
 #define RX_CLOSE_REQ 2
 
+// Maximum sequence number given a 288-byte space to write in to
+#define MAX_SEQ 96
+
 
 typedef struct rx_desc {
     uchar state;
@@ -102,6 +105,12 @@ typedef struct tx_desc {
 //------------------------------------------------------------------------------
 
 tx_desc_t tx_desc;
+
+enum tx_desc_states {
+    TX_DESC_IDLE,
+    TX_DESC_BUSY
+};
+uint tx_desc_state;
 
 rx_desc_t rx_desc_table[P2P_NUM_STR];
 
@@ -337,6 +346,11 @@ void p2p_open_timeout(uint a, uint b)
 
 uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 {
+    if (tx_desc_state != TX_DESC_IDLE) {
+        return RC_BUF;
+    }
+    tx_desc_state = TX_DESC_BUSY;
+
     uchar *buf = (uchar *) &msg->length;        // Point to len/sum
     uint len = msg->length;                     // 'Real' length
 
@@ -399,6 +413,7 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 #endif
 
         if (desc->tcount == 0) {
+            tx_desc_state = TX_DESC_IDLE;
             return desc->rc;
         }
 
@@ -406,6 +421,7 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
     }
 
     if (desc->rc != RC_OK) {
+        tx_desc_state = TX_DESC_IDLE;
         return desc->rc;
     }
 
@@ -462,6 +478,7 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
         }
     }
 
+    tx_desc_state = TX_DESC_IDLE;
     return desc->rc;
 }
 
@@ -547,7 +564,7 @@ void p2p_open_req(uint data, uint addr)
     uint tid = ctrl & 31;
     uint seq_len = 1 << (ctrl >> 5);
 
-    if (len > (SDP_BUF_SIZE + 8 + 16) || seq_len > 16) { //const
+    if (len > SDP_MAX_LENGTH || seq_len > 16) { //const
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_REJECT);
 #ifdef STATS
         p2p_stats[P2P_REJECTS]++;
@@ -718,6 +735,11 @@ void p2p_rcv_data(uint data, uint addr)
     if (desc->state == RX_OPEN && desc->srce == addr
             && desc->phase == phase) {
         uint seq = (data >> 24) & (desc->seq_len - 1); //##
+
+        // Ignore invalid sequence
+        if (seq > MAX_SEQ) {
+            return;
+        }
         uchar *ptr = desc->base + (3 * seq);
 
         ptr[0] = data;

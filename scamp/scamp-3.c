@@ -276,6 +276,14 @@ void proc_route_msg(uint arg1, uint arg2);
 
 void msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
 {
+
+    // Disallow out-size messages
+    if (msg->length > SDP_MAX_LENGTH) {
+        sw_error(SW_OPT);
+        scamp_msg_free(msg);
+        return;
+    }
+
     if (event_queue_proc(proc_route_msg, (uint) msg, srce_ip, PRIO_0) == 0) {
         // if no event is queued free SDP message buffer
         scamp_msg_free(msg);
@@ -358,7 +366,7 @@ static void udp_pkt(uchar *rx_pkt, uint rx_len)
     if (udp_dest == srom.udp_port) {
         len -= 10;                      //const UDP_HDR + UDP_PAD
 
-        if (len > 24 + SDP_BUF_SIZE) {  // SDP=8, CMD=16
+        if (len > SDP_MAX_LENGTH) {  // SDP=8, CMD=16
             eth_discard();
             return;
         }
@@ -502,6 +510,9 @@ static void eth_send_msg(uint tag, sdp_msg_t *msg)
     udp_hdr_t *udp_hdr = (udp_hdr_t *) (hdr + UDP_HDR_OFFSET);
 
     uint len = msg->length;
+    if (len > SDP_MAX_LENGTH) {
+        return;
+    }
     uchar *buf;
     uint pad;
 
@@ -622,6 +633,10 @@ static uint wait_for_mbox_idle(vcpu_t *vcpu) {
 void return_msg(sdp_msg_t *msg, uint rc);
 void shm_send_msg(uint dest, sdp_msg_t *msg)
 {
+    if (msg->length > SDP_MAX_LENGTH) {
+        return_msg(msg, RC_LEN);
+        return;
+    }
     vcpu_t *vcpu = sv_vcpu + dest;
     if (!wait_for_mbox_idle(vcpu)) {
         return_msg(msg, RC_BUF);
