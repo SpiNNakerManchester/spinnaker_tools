@@ -313,7 +313,7 @@ INT_HANDLER ap_int()
     vic[VIC_VADDR] = (uint) vic;
 }
 
-uint check_box = 0;
+static uint check_box = 0;
 
 static inline uint check_shm_boxes(sdp_msg_t *msg) {
     if (!saved_boxes) {

@@ -334,6 +334,51 @@ static void timer1_init(uint count)
 
 //------------------------------------------------------------------------------
 
+typedef struct {
+    mac_hdr_t mac_hdr;
+    ip_hdr_t ip_hdr;
+    udp_hdr_t udp_hdr;
+    ushort pad;
+    sdp_hdr_t sdp_hdr;
+    ushort cmd_rc;
+    ushort sequence;
+} scp_simple_pkt;
+
+
+static void eth_return_msg(ip_hdr_t *src_ip_hdr, uint rc)
+{
+
+    scp_simple_pkt pkt;
+    scp_simple_pkt *src_pkt = (scp_simple_pkt *) src_ip_hdr;
+
+    pkt.sdp_hdr.dest_addr = src_pkt->sdp_hdr.srce_addr;
+    pkt.sdp_hdr.srce_addr = sv->p2p_addr;
+    pkt.sdp_hdr.dest_port = src_pkt->sdp_hdr.srce_port;
+    pkt.sdp_hdr.srce_port = 0;
+    pkt.sdp_hdr.flags = 0;
+    pkt.sdp_hdr.tag = 0;
+
+    pkt.cmd_rc = rc;
+    pkt.sequence = src_pkt->sequence;
+
+    // Respond to source
+    pkt.udp_hdr.dest = src_pkt->udp_hdr.srce;
+    pkt.udp_hdr.srce = srom.udp_port;
+    pkt.udp_hdr.checksum = 0;
+    pkt.udp_hdr.length = sizeof(udp_hdr_t) + sizeof(ushort) + sizeof(sdp_hdr_t)
+            + sizeof(cmd_hdr_t);
+
+    copy_ip_hdr(src_ip_hdr->srce, PROT_UDP, &pkt.ip_hdr,
+            pkt.udp_hdr.length + sizeof(ip_hdr_t));
+
+    copy_mac(src_ip_hdr->srce, pkt.mac_hdr.dest);
+    copy_mac(srom.mac_addr, pkt.mac_hdr.srce);
+    pkt.mac_hdr.type = htons(ETYPE_IP);
+
+    eth_transmit2((uchar *) &pkt, NULL, sizeof(pkt), 0);
+
+    sark_delay_us(5);           //## !! Trouble with back-to-back packets??
+}
 
 __inline void eth_discard()
 {
@@ -371,6 +416,7 @@ static void udp_pkt(uchar *rx_pkt, uint rx_len)
         if (msg == NULL) {              // !! fix this - reply somehow?
             sw_error(SW_OPT);
             eth_discard();
+            eth_return_msg(ip_hdr, RC_BUF);
             return;
         }
 
