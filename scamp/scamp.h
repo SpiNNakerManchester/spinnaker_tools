@@ -43,6 +43,9 @@
 #define BOOT_BLOCK_BYTE_COUNT      (BOOT_BLOCK_WORD_COUNT * sizeof(uint))
 #define BOOT_TOTAL_BYTE_COUNT      (BOOT_BLOCK_BYTE_COUNT * BOOT_BLOCK_COUNT)
 
+// Unsure why this needs to be bigger, but it does...
+#define BOOT_COPY_BYTE_COUNT       (BOOT_TOTAL_BYTE_COUNT + 256)
+
 //------------------------------------------------------------------------------
 
 // Misc constants

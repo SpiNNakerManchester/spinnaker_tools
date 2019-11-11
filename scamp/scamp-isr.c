@@ -273,7 +273,6 @@ static inline void process_msg(sdp_msg_t *msg, vcpu_t *vcpu) {
 }
 
 static uint next_box;
-static uint saved_boxes = 0;
 
 INT_HANDLER ap_int()
 {
@@ -305,39 +304,17 @@ INT_HANDLER ap_int()
         } else {
             // failed to get buffer
             sw_error(SW_OPT);
-            saved_boxes += 1;
+            vcpu->mbox_mp_cmd = SHM_IDLE;
         }
     } else {    //## Hook for other commands...
         sw_error(SW_OPT);
+        vcpu->mbox_mp_cmd = SHM_IDLE;
     }
     vic[VIC_VADDR] = (uint) vic;
 }
 
-static uint check_box = 0;
-
-static inline uint check_shm_boxes(sdp_msg_t *msg) {
-    if (!saved_boxes) {
-        return 0;
-    }
-    for (uint i = 0; i < num_cpus; i++) {
-        check_box += 1;
-        if (check_box >= num_cpus) {
-            check_box = 0;
-        }
-        vcpu_t *vcpu = sv_vcpu + check_box;
-        if (vcpu->mbox_mp_cmd == SHM_MSG) {
-            process_msg(msg, vcpu);
-            saved_boxes -= 1;
-            return 1;
-        }
-    }
-    return 0;
-}
-
 void scamp_msg_free(sdp_msg_t *msg) {
-    if (!check_shm_boxes(msg)) {
-        sark_msg_free(msg);
-    }
+    sark_msg_free(msg);
 }
 
 

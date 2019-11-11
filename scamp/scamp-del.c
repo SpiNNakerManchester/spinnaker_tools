@@ -41,11 +41,11 @@ void img_cp_exe (void) {
     // start boot image DMA to top-half of DTCM,
     dma[DMA_ADRS] = (uint) SDRAM_BASE;
     dma[DMA_ADRT] = (uint) BOOT_BUF;
-    dma[DMA_DESC] = 1 << 24 | 4 << 21 | 0 << 19 | BOOT_TOTAL_BYTE_COUNT;
+    dma[DMA_DESC] = 1 << 24 | 4 << 21 | 0 << 19 | BOOT_COPY_BYTE_COUNT;
 
     // start boot image DMA to ITCM,
     dma[DMA_ADRT] = (uint) ITCM_BASE;
-    dma[DMA_DESC] = 1 << 24 | 4 << 21 | 0 << 19 | BOOT_TOTAL_BYTE_COUNT;
+    dma[DMA_DESC] = 1 << 24 | 4 << 21 | 0 << 19 | BOOT_COPY_BYTE_COUNT;
 
     // wait for DTCM DMA to complete,
     while (!(dma[DMA_STAT] & (1 << 10))) {

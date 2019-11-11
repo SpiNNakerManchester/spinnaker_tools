@@ -404,10 +404,16 @@ static void udp_pkt(uchar *rx_pkt, uint rx_len)
     int len = ntohs(udp_hdr->length);
 
     if (udp_dest == srom.udp_port) {
+        if (len < 10) {
+            eth_discard();
+            eth_return_msg(ip_hdr, RC_LEN);
+            return;
+        }
         len -= 10;                      //const UDP_HDR + UDP_PAD
 
         if (len > SDP_MAX_LENGTH) {  // SDP=8, CMD=16
             eth_discard();
+            eth_return_msg(ip_hdr, RC_LEN);
             return;
         }
 
@@ -444,6 +450,7 @@ static void udp_pkt(uchar *rx_pkt, uint rx_len)
         } else {
             eth_discard();
             scamp_msg_free(msg);
+            eth_return_msg(ip_hdr, RC_BUF);
         }
     } else if (udp_dest == sv->big_data_port) {  // Big Data In
         mac_hdr_t *mac_hdr = (mac_hdr_t *) rx_pkt;
@@ -1879,7 +1886,7 @@ void chk_bl_del(void)
             // start boot image DMA to SDRAM for delegate,
             dma[DMA_ADRS] = (uint) SDRAM_BASE;
             dma[DMA_ADRT] = (uint) BOOT_BUF;
-            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | BOOT_TOTAL_BYTE_COUNT;
+            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | BOOT_COPY_BYTE_COUNT;
 
             // take blacklisted cores out of the application pool
             sc[SC_CLR_OK] = bl_cores;
