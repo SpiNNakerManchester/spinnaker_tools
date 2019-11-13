@@ -419,7 +419,7 @@ SPIN1_INLINE void spin1_mode_restore(uint cpsr)
     : [cpsr] "r" (cpsr)
     :);
 #else
-    __asm { msr cpsr_c, sr }
+    __asm { msr cpsr_c, cpsr }
 #endif
 }
 #endif
