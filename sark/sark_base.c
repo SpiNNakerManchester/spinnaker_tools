@@ -272,6 +272,7 @@ sdp_msg_t *sark_msg_get(void)
             root->max = root->count;
         }
     }
+    io_printf(IO_BUF, "a:c=%u\n", root->count);
 
     cpu_int_restore(cpsr);
 
@@ -293,6 +294,7 @@ void sark_msg_free(sdp_msg_t *msg)
     root->free = m;
 
     root->count--;
+    io_printf(IO_BUF, "f:c=%u\n", root->count);
 
     cpu_int_restore(cpsr);
 }
@@ -401,6 +403,7 @@ uint __attribute__((weak)) sark_init(uint *stack)
     sark.msg_root.free = (mem_link_t *) msg_bufs;
     sark_block_init(msg_bufs, sark_vec->num_msgs, sizeof(sdp_msg_t));
 
+
     // Initialise the "vcpu" fields for this virtual CPU. This is only
     // done if we are not the Monitor processor
 
@@ -455,6 +458,7 @@ uint __attribute__((weak)) sark_init(uint *stack)
     timer_cancel_init();
 #endif
 
+    io_printf(IO_BUF, "i:c=%u\n", sark_vec->num_msgs);
     // Finally return target mode
 
     return MODE_SYS;
@@ -830,6 +834,8 @@ void sark_int(void *pc)
 #endif // SARK_EVENT
                 }
             }
+        } else {
+            sark.vcpu->mbox_ap_cmd = SHM_IDLE;  // go back to idle
         }
     }
 }

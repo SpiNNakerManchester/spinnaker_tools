@@ -338,35 +338,39 @@ typedef struct {
     mac_hdr_t mac_hdr;
     ip_hdr_t ip_hdr;
     udp_hdr_t udp_hdr;
+} full_udp_pkt;
+
+typedef struct {
     ushort pad;
     sdp_hdr_t sdp_hdr;
     ushort cmd_rc;
     ushort sequence;
-} scp_simple_pkt;
+} scp_pkt;
 
 
 static void eth_return_msg(ip_hdr_t *src_ip_hdr, uint rc)
 {
 
-    scp_simple_pkt pkt;
-    scp_simple_pkt *src_pkt = (scp_simple_pkt *) src_ip_hdr;
+    full_udp_pkt pkt;
+    scp_pkt scp;
+    full_udp_pkt *src_pkt = (full_udp_pkt *) src_ip_hdr;
+    scp_pkt *src_scp = (scp_pkt *) &src_pkt[1];
 
-    pkt.sdp_hdr.dest_addr = src_pkt->sdp_hdr.srce_addr;
-    pkt.sdp_hdr.srce_addr = sv->p2p_addr;
-    pkt.sdp_hdr.dest_port = src_pkt->sdp_hdr.srce_port;
-    pkt.sdp_hdr.srce_port = 0;
-    pkt.sdp_hdr.flags = 0;
-    pkt.sdp_hdr.tag = 0;
+    scp.sdp_hdr.dest_addr = src_scp->sdp_hdr.srce_addr;
+    scp.sdp_hdr.srce_addr = sv->p2p_addr;
+    scp.sdp_hdr.dest_port = src_scp->sdp_hdr.srce_port;
+    scp.sdp_hdr.srce_port = 0;
+    scp.sdp_hdr.flags = 0;
+    scp.sdp_hdr.tag = 0;
 
-    pkt.cmd_rc = rc;
-    pkt.sequence = src_pkt->sequence;
+    scp.cmd_rc = rc;
+    scp.sequence = src_scp->sequence;
 
     // Respond to source
     pkt.udp_hdr.dest = src_pkt->udp_hdr.srce;
     pkt.udp_hdr.srce = srom.udp_port;
     pkt.udp_hdr.checksum = 0;
-    pkt.udp_hdr.length = sizeof(udp_hdr_t) + sizeof(ushort) + sizeof(sdp_hdr_t)
-            + sizeof(cmd_hdr_t);
+    pkt.udp_hdr.length = sizeof(udp_hdr_t) + sizeof(scp_pkt);
 
     copy_ip_hdr(src_ip_hdr->srce, PROT_UDP, &pkt.ip_hdr,
             pkt.udp_hdr.length + sizeof(ip_hdr_t));
@@ -375,7 +379,7 @@ static void eth_return_msg(ip_hdr_t *src_ip_hdr, uint rc)
     copy_mac(srom.mac_addr, pkt.mac_hdr.srce);
     pkt.mac_hdr.type = htons(ETYPE_IP);
 
-    eth_transmit2((uchar *) &pkt, NULL, sizeof(pkt), 0);
+    eth_transmit2((uchar *) &pkt, (uchar *) &scp, sizeof(full_udp_pkt), sizeof(scp_pkt));
 
     sark_delay_us(5);           //## !! Trouble with back-to-back packets??
 }
