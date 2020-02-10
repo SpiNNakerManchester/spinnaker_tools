@@ -302,9 +302,11 @@ INT_HANDLER ap_int()
         if (msg != NULL) {
             process_msg(msg, vcpu);
         } else {
-            // failed to get buffer
-            sw_error(SW_OPT);
-            vcpu->mbox_mp_cmd = SHM_IDLE;
+            // failed to get buffer - re-enable the box
+            // (but not the interrupt yet)
+            uint cpsr = sark_lock_get(LOCK_MBOX);
+            sv->mbox_flags = sv->mbox_flags | (1 << sark.virt_cpu);
+            sark_lock_free(cpsr, LOCK_MBOX);
         }
     } else {    //## Hook for other commands...
         sw_error(SW_OPT);
@@ -315,6 +317,11 @@ INT_HANDLER ap_int()
 
 void scamp_msg_free(sdp_msg_t *msg) {
     sark_msg_free(msg);
+    uint cpsr = sark_lock_get(LOCK_MBOX);
+    if (sv->mbox_flags != 0) {
+        sc[SC_SET_IRQ] = SC_CODE + (1 << sark.phys_cpu);
+    }
+    sark_lock_free(cpsr, LOCK_MBOX);
 }
 
 
