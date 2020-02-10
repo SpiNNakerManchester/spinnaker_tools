@@ -294,6 +294,11 @@ void sark_msg_free(sdp_msg_t *msg)
 
     root->count--;
 
+    // If there is a shared message waiting, get it now
+    if (sark.vcpu->mbox_ap_cmd == SHM_MSG) {
+        sc[SC_SET_IRQ] = SC_CODE + (1 << sark.phys_cpu);
+    }
+
     cpu_int_restore(cpsr);
 }
 
@@ -830,9 +835,10 @@ void sark_int(void *pc)
 #endif // SARK_EVENT
                 }
             }
-        } else {
-            sark.vcpu->mbox_ap_cmd = SHM_IDLE;  // go back to idle
         }
+
+        // If no message available, do nothing yet; pick this up later by
+        // re-enabling the interrupt when a packet is free.
     }
 }
 
