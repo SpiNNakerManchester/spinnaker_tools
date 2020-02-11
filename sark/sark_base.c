@@ -694,7 +694,6 @@ static void swap_hdr(sdp_msg_t *msg)
 void sark_wait(void)
 {
     while (sark_vec->app_flags & (1 << APP_FLAG_WAIT)) {
-        io_printf(IO_BUF, "Waiting...\n");
         cpu_wfi();
     }
 }
@@ -757,7 +756,6 @@ void sark_int(void *pc)
     if (cmd == SHM_SIGNAL) {
         uint data = sark.vcpu->signal;
         sark.vcpu->mbox_ap_cmd = SHM_IDLE;              // go back to idle
-        io_printf(IO_BUF, "SIGNAL %d\n", data);
         switch (data) {
         case SIG_PAUSE:
             event_pause(1);
