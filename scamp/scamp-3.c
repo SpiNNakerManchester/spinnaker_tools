@@ -269,20 +269,23 @@ void proc_byte_set(uint a1, uint a2)
 void proc_route_msg(uint arg1, uint arg2);
 
 
-void msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
+uint msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
 {
 
     // Disallow out-size messages
     if (msg->length > SDP_MAX_LENGTH) {
         sw_error(SW_OPT);
         scamp_msg_free(msg);
-        return;
+        return 0;
     }
 
     if (event_queue_proc(proc_route_msg, (uint) msg, srce_ip, PRIO_0) == 0) {
         // if no event is queued free SDP message buffer
         scamp_msg_free(msg);
+        return 0;
     }
+
+    return 1;
 }
 
 
@@ -450,7 +453,9 @@ static void udp_pkt(uchar *rx_pkt, uint rx_len)
                 (tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0)) {
             arp_add(rx_pkt+6, ip_hdr->srce);
             eth_discard();
-            msg_queue_insert(msg, srce_ip);
+            if (!msg_queue_insert(msg, srce_ip)) {
+                eth_return_msg(ip_hdr, RC_BUF);
+            }
         } else {
             eth_discard();
             scamp_msg_free(msg);

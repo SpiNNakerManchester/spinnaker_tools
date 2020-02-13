@@ -49,8 +49,6 @@ extern void proc_1khz(uint a1, uint a2);
 extern void proc_100hz(uint a1, uint a2);
 extern void proc_1hz(uint a1, uint a2);
 
-extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
-
 //------------------------------------------------------------------------------
 
 extern uchar v2p_map[MAX_CPUS];
@@ -266,10 +264,10 @@ static inline void clear_flag(uint box) {
     sark_lock_free(cpsr, LOCK_MBOX);
 }
 
-static inline void process_msg(sdp_msg_t *msg, vcpu_t *vcpu) {
+static inline uint process_msg(sdp_msg_t *msg, vcpu_t *vcpu) {
     sark_msg_cpy(msg, vcpu->mbox_mp_msg);
     vcpu->mbox_mp_cmd = SHM_IDLE;
-    msg_queue_insert(msg, 0);
+    return msg_queue_insert(msg, 0);
 }
 
 static uint next_box;
@@ -299,9 +297,12 @@ INT_HANDLER ap_int()
         }
         sdp_msg_t *msg = sark_msg_get();
 
+        uint result = 0;
         if (msg != NULL) {
-            process_msg(msg, vcpu);
-        } else {
+            result = process_msg(msg, vcpu);
+        }
+
+        if (!result) {
             // failed to get buffer - re-enable the box
             // (but not the interrupt yet)
             uint cpsr = sark_lock_get(LOCK_MBOX);

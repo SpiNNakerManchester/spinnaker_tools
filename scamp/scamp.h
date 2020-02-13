@@ -332,7 +332,7 @@ typedef struct {        // 64 bytes
 
 extern uint pkt_tx(uint tcr, uint data, uint key);
 extern void proc_byte_set(uint a1, uint a2);
-extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
+extern uint msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 extern void scamp_msg_free(sdp_msg_t *msg);
 
 // scamp-nn.c
