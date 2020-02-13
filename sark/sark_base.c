@@ -509,20 +509,17 @@ uint sark_msg_send(sdp_msg_t *msg, uint timeout)
 
         // If still not IDLE, return failure
         if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-            io_printf(IO_BUF, "Not idle\n");
             return 0;
         }
     }
 
     // Can't send message if too big
     if (msg->length > SDP_MAX_LENGTH) {
-        io_printf(IO_BUF, "too big\n");
         return 0;
     }
     sark_msg_cpy(sark.vcpu->mbox_mp_msg, msg);
     sark.vcpu->mbox_mp_cmd = SHM_MSG;
     set_msg_flag();
-    io_printf(IO_BUF, "sent\n");
     sark.msg_sent++;
     return 1;
 }
