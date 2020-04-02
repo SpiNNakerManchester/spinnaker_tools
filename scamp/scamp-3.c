@@ -557,39 +557,48 @@ uint shm_ping(uint dest)
 uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
 {
     vcpu_t *vcpu = sv_vcpu + dest;
-    volatile uchar flag = 0;
-    event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
-    if (e == NULL) {
-        sw_error(SW_OPT);
-        return RC_BUF;          // !! not the right RC
+
+    // Wait for the box to be idle
+    if (vcpu->mbox_ap_cmd != SHM_IDLE) {
+        volatile uchar flag = 0;
+
+        // If we can't get an event, fail
+        event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
+        if (e == NULL) {
+            sw_error(SW_OPT);
+            return RC_BUF;          // !! not the right RC
+        }
+
+        // Set up a timer to wait
+        uint id = e->ID;
+        timer_schedule(e, 1000);    // !! const??
+
+        // Wait for the box to be idle, or a timeout
+        while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
+            continue;
+        }
+
+        // Return error if timed out
+        if (flag != 0) {
+            return RC_TIMEOUT;
+        }
+
+        // Cancel the timer if not timed out
+        timer_cancel(e, id);
     }
 
+    // Get a message to do the sending
     sdp_msg_t *shm_msg = sark_shmsg_get();
     if (shm_msg == NULL) {
-        event_free(e);
         return RC_BUF;
     }
 
+    // Send the message
     sark_msg_cpy(shm_msg, msg);
-
     vcpu->mbox_ap_msg = shm_msg;
     vcpu->mbox_ap_cmd = SHM_MSG;
-
     sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
 
-    uint id = e->ID;
-    timer_schedule(e, 1000);    // !! const??
-
-    while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
-        continue;
-    }
-
-    if (flag != 0) {
-        sark_shmsg_free(shm_msg);
-        return RC_TIMEOUT;
-    }
-
-    timer_cancel(e, id);
     return RC_OK;
 }
 
