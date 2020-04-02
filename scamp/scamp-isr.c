@@ -259,7 +259,6 @@ INT_HANDLER ms_timer_int()
 
 
 uint next_box;
-uint mbox_retry_flags;
 
 INT_HANDLER ap_int()
 {
@@ -292,9 +291,8 @@ INT_HANDLER ap_int()
             sark_shmsg_free(shm_msg);
         } else {
             // failed to get buffer - do *not* flag
-            // mailbox as IDLE but attempt to retry later
+            // mailbox as IDLE to cause sender timeout
             sw_error(SW_OPT);
-            mbox_retry_flags |= (1 << next_box);
         }
 
     } else {    //## Hook for other commands...
@@ -303,42 +301,6 @@ INT_HANDLER ap_int()
     }
 
     vic[VIC_VADDR] = (uint) vic;
-}
-
-uint next_retry_box;
-
-void scamp_msg_free(sdp_msg_t *msg) {
-
-    // If there are no boxes to retry, just free the message
-    if (!mbox_retry_flags) {
-        sark_msg_free(msg);
-        return;
-    }
-
-    // Disable interrupts as this will access things the mailbox code accesses
-    uint cpsr = cpu_int_disable();
-
-    // Find the next box to retry
-    do {
-        next_retry_box++;
-        if (next_retry_box >= num_cpus) {
-            next_retry_box = 0;
-        }
-    } while ((mbox_retry_flags & (1 << next_retry_box)) == 0);
-
-    // Mark this box as retried
-    mbox_retry_flags &= ~(1 << next_box);
-
-    // Send the message using the now free SDP message
-    vcpu_t *vcpu = sv_vcpu + next_box;
-    sdp_msg_t *shm_msg = vcpu->mbox_mp_msg;
-    sark_msg_cpy(msg, shm_msg);
-    vcpu->mbox_mp_cmd = SHM_IDLE;
-    msg_queue_insert(msg, 0);
-    sark_shmsg_free(shm_msg);
-
-    // We can now restore interrupts as done
-    cpu_int_restore(cpsr);
 }
 
 

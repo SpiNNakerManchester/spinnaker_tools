@@ -482,7 +482,7 @@ void p2p_data_timeout(uint rxd, uint a2)
 #endif
 
         if (desc->tcount == 0) {
-            scamp_msg_free(desc->msg);
+            sark_msg_free(desc->msg);
             desc->state = RX_IDLE;
             return;
         }
@@ -660,7 +660,7 @@ void p2p_close_timeout(uint rxd, uint rid)
 #endif
 
     if (desc->tcount == 0) {
-        scamp_msg_free(desc->msg);
+        sark_msg_free(desc->msg);
         desc->state = RX_IDLE;
         return;
     }
