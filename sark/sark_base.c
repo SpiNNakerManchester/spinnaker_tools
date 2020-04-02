@@ -513,25 +513,13 @@ void __attribute__((weak)) sark_post_main(void)
 uint sark_msg_send(sdp_msg_t *msg, uint timeout)
 {
 
-    // If the box isn't IDLE...
-    if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-        // Ping the box to make sure our message gets looked at
-        uint cpsr = sark_lock_get(LOCK_MBOX);
-        uint t = sv->mbox_flags;
-        sv->mbox_flags = t | (1 << sark.virt_cpu);
-        if (t == 0) {
-            sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
-        }
-        sark_lock_free(cpsr, LOCK_MBOX);
-
-        // Wait for the box to be idle
-        // Timeout using bottom 32 bits of clock_ms!
-        volatile uint *ms = (uint *) &sv->clock_ms;
-        uint start = *ms;
-        while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-            if (*ms - start > timeout) {
-                break;
-            }
+    // Wait for the box to be idle if it isn't already
+    // Timeout using bottom 32 bits of clock_ms!
+    volatile uint *ms = (uint *) &sv->clock_ms;
+    uint start = *ms;
+    while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
+        if (*ms - start > timeout) {
+            break;
         }
     }
 
