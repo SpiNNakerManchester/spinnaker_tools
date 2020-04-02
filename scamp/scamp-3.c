@@ -252,7 +252,7 @@ void msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
 {
     if (event_queue_proc(proc_route_msg, (uint) msg, srce_ip, PRIO_0) == 0) {
         // if no event is queued free SDP msg buffer
-        sark_msg_free(msg);
+        scamp_msg_free(msg);
     }
 }
 
@@ -366,7 +366,7 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
             msg_queue_insert(msg, srce_ip);
         } else {
             eth_discard();
-            sark_msg_free(msg);
+            scamp_msg_free(msg);
         }
     } else {                            // Reverse IPTag...
         len -= 8;                       //const UDP_HDR
@@ -631,7 +631,7 @@ void return_msg(sdp_msg_t *msg, uint rc) // Zero "rc" skips updating cmd_hdr
 
         msg_queue_insert(msg, 0);
     } else {
-        sark_msg_free(msg);
+        scamp_msg_free(msg);
     }
 }
 
@@ -671,7 +671,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
         uint rc = p2p_send_msg(msg->dest_addr, msg);
         if (rc == RC_OK) {
-            sark_msg_free(msg);
+            scamp_msg_free(msg);
         } else {
             return_msg(msg, rc);
         }
@@ -680,7 +680,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
     if (msg->dest_port == PORT_ETH) {
         eth_send_msg(msg->tag, msg);
-        sark_msg_free(msg);
+        scamp_msg_free(msg);
         return;
     }
 
@@ -693,7 +693,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
     if (dest_cpu != sark.virt_cpu) {    // !! virt_cpu always zero
         uint rc = shm_send_msg(dest_cpu, msg);
         if (rc == RC_OK) {
-            sark_msg_free(msg);
+            scamp_msg_free(msg);
         } else {
             return_msg(msg, rc);
         }
