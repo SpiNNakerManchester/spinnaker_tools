@@ -286,12 +286,13 @@ INT_HANDLER ap_int()
 
         if (msg != NULL) {
             sark_msg_cpy(msg, shm_msg);
+            sark_shmsg_free(shm_msg);
             vcpu->mbox_mp_cmd = SHM_IDLE;
             msg_queue_insert(msg, 0);
-            sark_shmsg_free(shm_msg);
         } else {
             // If we didn't get a message, we are just going to have to throw
             // this one away...
+            sark_shmsg_free(shm_msg);
             vcpu->mbox_mp_cmd = SHM_IDLE;
             sw_error(SW_OPT);
         }
