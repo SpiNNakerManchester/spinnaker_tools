@@ -384,7 +384,8 @@ enum shm_cmd_e {
     SHM_MSG,            //!< Passing SDP message
     SHM_NOP,            //!< Does nothing...
     SHM_SIGNAL,         //!< Signal application
-    SHM_CMD             //!< Command to MP
+    SHM_CMD,            //!< Command to MP
+    SHM_BIG_DATA        //!< Passing of "big data" UDP message
 };
 
 typedef enum shm_cmd_e shm_cmd; //!< Typedef for enum shm_cmd_e
@@ -445,7 +446,7 @@ typedef enum signal_e signal;   //!< Typedef for enum signal_e
 #define CMD_AR          19  //!< Application core reset
 
 #define CMD_NNP         20  //!< Send broadcast NN packet
-
+#define CMD_BIG_DATA    21  //!< Setup / clear "big data"
 #define CMD_SIG         22  //!< Send signal to apps
 #define CMD_FFD         23  //!< Send flood-fill data
 
@@ -456,6 +457,7 @@ typedef enum signal_e signal;   //!< Typedef for enum signal_e
 
 #define CMD_ALLOC       28  //!< Memory allocation
 #define CMD_RTR         29  //!< Router control
+
 #define CMD_INFO        31  //!< Get chip/core info
 
 // 48-63 reserved for BMP
@@ -573,6 +575,10 @@ typedef struct app_data {
 #define PORT_ETH        255     //!< Special to indicate Ethernet
 
 #define SDP_BUF_SIZE    256     //!< SDP data buffer capacity
+
+#define SDP_MAX_LENGTH  (SDP_BUF_SIZE + 24) //! Biggest SDP "length" value
+
+#define BIG_DATA_MAX_SIZE 1472  //!< Biggest UDP packet size
 
 /*!
 SDP message definition
@@ -746,8 +752,8 @@ typedef struct vcpu {           // 128 bytes
     uchar phys_cpu;             //!< 45 - Physical CPU
     uchar cpu_state;            //!< 46 - CPU state
     uchar app_id;               //!< 47 - Application ID
-    void *mbox_ap_msg;          //!< 48 - mbox msg MP->AP
-    void *mbox_mp_msg;          //!< 52 - mbox msg AP->MP
+    sdp_msg_t *mbox_ap_msg;     //!< 48 - mbox msg MP->AP
+    sdp_msg_t *mbox_mp_msg;     //!< 52 - mbox msg AP->MP
     volatile uchar mbox_ap_cmd; //!< 56 - mbox command MP->AP
     volatile uchar mbox_mp_cmd; //!< 57 - mbox command AP->MP
     ushort sw_count;            //!< 58 - SW error count (saturating)
@@ -757,7 +763,10 @@ typedef struct vcpu {           // 128 bytes
     char app_name[16];          //!< 72 - Application name
     void *iobuf;                //!< 88 - IO buffer in SDRAM (or 0)
     uint sw_ver;                //!< 92 - SW version
-    uint __PAD[4];              //!< 96 - (spare)
+    uint __PAD;                 //!< 96 - (spare)
+    void *big_data_in;          //!< 100 - big data in pointer (or NULL)
+    void *big_data_out;         //!< 104 - big data out pointer (or NULL)
+    uint signal;                //!< 108 - signal data
     uint user0;                 //!< 112 - User word 0
     uint user1;                 //!< 116 - User word 1
     uint user2;                 //!< 120 - User word 2
@@ -831,6 +840,19 @@ typedef struct pkt {
     uint data;                  //!< Data (payload) field
     uint key;                   //!< Key (non-payload!) field
 } pkt_t;
+
+
+/*!
+Struct holding a UDP packet
+ */
+
+typedef struct {
+    ushort srce;
+    ushort dest;
+    ushort length;
+    ushort checksum;
+} udp_hdr_t;
+
 
 /*!
 Struct holding data for "sark_event" and "sark_timer". This
@@ -1028,7 +1050,7 @@ typedef struct sv {
 
     uint led0;                  //!< 30 LED definition words (for up
     uint led1;                  //!< 34 to 15 LEDs)
-    uint __PAD2;                //!< 38
+    uint big_data_port;         //!< 38 Port to use to receive big data
     uint random;                //!< 3c Random number seed
 
     uchar root_chip;            //!< 40 Set if we are the root chip
@@ -1646,6 +1668,17 @@ __attribute__((nonnull)) uint
 sark_msg_send(sdp_msg_t *msg, uint timeout);
 
 /*!
+Send a "Big Data" message.  The message is sent to the monitor processor
+using a shared memory buffer and then sent to the Ethernet from there; this
+will only work on an Ethernet chip, and only when the chip has been configured
+in advance to indicate that this core is the one that can send Big Data.
+
+\param msg pointer to a UDP message header, which is followed by data
+ */
+__attribute__((nonnull)) uint
+sark_send_big_data(udp_hdr_t *msg);
+
+/*!
 Perform a busy-wait for the given number of microseconds. The core
 will continue to service interrupts while the delay takes place but
 this is otherwise a wasteful way to delay for long periods of time.
@@ -1776,31 +1809,6 @@ The block should have been allocated from the same pool previously!
 */
 
 void sark_block_free (mem_block_t *root, void *blk);
-
-/*!
-Get a free SDP message from the shared SysRAM pool. Returns pointer to
-message on success, NULL on failure. Because several cores may attempt
-to access a shared memory message concurrently, a hardware lock is used
-to ensure exclusive access. Interrupts are turned off while this
-occurs but this should be for a relatively short time (1-5us ??)
-
-\return pointer to a shared memory SDP message or NULL if none available
-*/
-
-sdp_msg_t *sark_shmsg_get (void);
-
-/*!
-Return a shared memory SDP message to the shared SysRAM pool.  Because
-several cores may attempt to access a shared memory message
-concurrently, a hardware lock is used to ensure exclusive
-access. Interrupts are turned off while this occurs but this should be
-for a relatively short time (1-5us ??)
-
-\param msg pointer to the message
-*/
-
-__attribute__((nonnull)) void
-sark_shmsg_free(sdp_msg_t *msg);
 
 /*!
 Calls the constructors for any C++ objects created at global scope.

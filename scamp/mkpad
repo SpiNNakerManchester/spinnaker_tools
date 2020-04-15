@@ -25,7 +25,7 @@ my ($file, $size) = @ARGV;
 my $file_size = -s $file;
 my $buf;
 
-die "file too big\n" if $file_size > $size;
+die "file of $file_size bytes too big for $size\n" if $file_size > $size;
 
 open my $fh, "<", $file or die "Can't open $file\n";
 binmode($fh);

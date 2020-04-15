@@ -88,7 +88,7 @@ void signal_sark(uint cmd, uint data, uint virt_mask, uint phys_mask)
         if (virt_mask & (1 << cpu)) {
             vcpu_t *vcpu = sv_vcpu + cpu;
             vcpu->mbox_ap_cmd = cmd;
-            vcpu->mbox_ap_msg = (void *) data;
+            vcpu->signal = data;
         }
     }
 

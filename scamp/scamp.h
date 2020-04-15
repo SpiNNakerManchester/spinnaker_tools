@@ -31,6 +31,23 @@
 
 //------------------------------------------------------------------------------
 
+// Boot constants
+
+// This currently sends an image of 31kB at most.
+// Images up to 32kB are possible, but require some more complex changes!
+#define BOOT_BUF (DTCM_BASE + 0x8000)
+
+// BLOCK_COUNT * BYTE_COUNT must be < 32kB
+#define BOOT_BLOCK_COUNT           31      // From 1-256
+#define BOOT_BLOCK_WORD_COUNT      256     // From 1-256
+#define BOOT_BLOCK_BYTE_COUNT      (BOOT_BLOCK_WORD_COUNT * sizeof(uint))
+#define BOOT_TOTAL_BYTE_COUNT      (BOOT_BLOCK_BYTE_COUNT * BOOT_BLOCK_COUNT)
+
+// Unsure why this needs to be bigger, but it does...
+#define BOOT_COPY_BYTE_COUNT       (BOOT_TOTAL_BYTE_COUNT + 256)
+
+//------------------------------------------------------------------------------
+
 // Misc constants
 
 #define MAX_CPUS                20                      // Legacy const!
@@ -251,6 +268,18 @@ enum alloc_cmd_e {
     ALLOC_MAX=HEAP_TAG_PTR      //!< Maximum command
 };
 
+enum big_data_cmd_e {
+    BIG_DATA_INIT,  //!< Initialise Big Data transfer
+    BIG_DATA_FREE,  //!< Disable Big Data transfer
+    BIG_DATA_INFO   //!< Current status of Big Data transfer
+};
+
+#define BIG_DATA_FLAG_USE_SENDER 0x80000000
+#define BIG_DATA_FLAG_MASK       0xF0000000
+#define BIG_DATA_CORE_MASK       0x0000001F
+#define BIG_DATA_PORT_MASK       0x00FFFF00
+#define BIG_DATA_PORT_SHIFT      8
+
 //------------------------------------------------------------------------------
 
 typedef struct {                // IPTAG entry (32 bytes)
@@ -303,7 +332,8 @@ typedef struct {        // 64 bytes
 
 extern uint pkt_tx(uint tcr, uint data, uint key);
 extern void proc_byte_set(uint a1, uint a2);
-extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
+extern uint msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
+extern void scamp_msg_free(sdp_msg_t *msg);
 
 // scamp-nn.c
 
@@ -408,5 +438,11 @@ extern uchar *p2p_addr_table;
 //------------------------------------------------------------------------------
 
 extern void putz(uint v);
+
+extern uint big_data_init(uint core, ushort port, uchar ip_address[4], uint use_sender);
+extern void big_data_free(void);
+extern void big_data_out_send(void);
+extern void big_data_info(uchar *ip_address, uint *port, uint *n_sent,
+        uint *n_received, uint *n_throw_not_idle);
 
 #endif

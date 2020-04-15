@@ -49,8 +49,6 @@ extern void proc_1khz(uint a1, uint a2);
 extern void proc_100hz(uint a1, uint a2);
 extern void proc_1hz(uint a1, uint a2);
 
-extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
-
 //------------------------------------------------------------------------------
 
 extern uchar v2p_map[MAX_CPUS];
@@ -257,8 +255,22 @@ INT_HANDLER ms_timer_int()
 
 //------------------------------------------------------------------------------
 
+static inline void clear_flag(uint box) {
+    uint cpsr = sark_lock_get(LOCK_MBOX);
+    sv->mbox_flags &= ~(1 << box);
+    if (sv->mbox_flags == 0) {
+        sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);
+    }
+    sark_lock_free(cpsr, LOCK_MBOX);
+}
 
-uint next_box;
+static inline uint process_msg(sdp_msg_t *msg, vcpu_t *vcpu) {
+    sark_msg_cpy(msg, vcpu->mbox_mp_msg);
+    vcpu->mbox_mp_cmd = SHM_IDLE;
+    return msg_queue_insert(msg, 0);
+}
+
+static uint next_box;
 
 INT_HANDLER ap_int()
 {
@@ -269,38 +281,48 @@ INT_HANDLER ap_int()
         }
     } while ((sv->mbox_flags & (1 << next_box)) == 0);
 
+    clear_flag(next_box);
+
     vcpu_t *vcpu = sv_vcpu + next_box;
-    sdp_msg_t *shm_msg = vcpu->mbox_mp_msg;
     uint cmd = vcpu->mbox_mp_cmd;
+    if (cmd == SHM_BIG_DATA) {
+        big_data_out_send();
+        vcpu->mbox_mp_cmd = SHM_IDLE;
+    } else if (cmd == SHM_MSG) {
 
-    uint cpsr = sark_lock_get(LOCK_MBOX);
-    sv->mbox_flags &= ~(1 << next_box);
-    if (sv->mbox_flags == 0) {
-        sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);
-    }
-    sark_lock_free(cpsr, LOCK_MBOX);
-
-    if (cmd == SHM_MSG) {
-
+        // Ignore messages that are too big as they come in
+        if (vcpu->mbox_ap_msg->length > SDP_MAX_LENGTH) {
+            sw_error(SW_OPT);
+            vcpu->mbox_mp_cmd = SHM_IDLE;
+        }
         sdp_msg_t *msg = sark_msg_get();
 
+        uint result = 0;
         if (msg != NULL) {
-            sark_msg_cpy(msg, shm_msg);
-            vcpu->mbox_mp_cmd = SHM_IDLE;
-            msg_queue_insert(msg, 0);
-            sark_shmsg_free(shm_msg);
-        } else {
-            // failed to get buffer - do *not* flag
-            // mailbox as IDLE to cause sender timeout
-            sw_error(SW_OPT);
+            result = process_msg(msg, vcpu);
         }
 
+        if (!result) {
+            // failed to get buffer - re-enable the box
+            // (but not the interrupt yet)
+            uint cpsr = sark_lock_get(LOCK_MBOX);
+            sv->mbox_flags = sv->mbox_flags | (1 << sark.virt_cpu);
+            sark_lock_free(cpsr, LOCK_MBOX);
+        }
     } else {    //## Hook for other commands...
-        vcpu->mbox_mp_cmd = SHM_IDLE;
         sw_error(SW_OPT);
+        vcpu->mbox_mp_cmd = SHM_IDLE;
     }
-
     vic[VIC_VADDR] = (uint) vic;
+}
+
+void scamp_msg_free(sdp_msg_t *msg) {
+    sark_msg_free(msg);
+    uint cpsr = sark_lock_get(LOCK_MBOX);
+    if (sv->mbox_flags != 0) {
+        sc[SC_SET_IRQ] = SC_CODE + (1 << sark.phys_cpu);
+    }
+    sark_lock_free(cpsr, LOCK_MBOX);
 }
 
 

@@ -75,7 +75,6 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "sark.h"
 #include "scamp.h"
 
@@ -85,9 +84,7 @@
 
 #include <string.h>
 
-
 //------------------------------------------------------------------------------
-
 
 // VARS
 
@@ -125,9 +122,9 @@ volatile enum netinit_phase_e netinit_phase;
 // The Ethernet initialisation process phase currently in progress
 volatile enum ethinit_phase_e ethinit_phase;
 
-// Number of 10ms ticks ellapsed since the last P2PC_NEW arrived
+// Number of 10ms ticks elapsed since the last P2PC_NEW arrived
 volatile uint ticks_since_last_p2pc_new;
-// Number of 10ms ticks ellapsed since the last P2PC_DIMS arrived
+// Number of 10ms ticks elapsed since the last P2PC_DIMS arrived
 volatile uint ticks_since_last_p2pc_dims;
 
 // During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address. Note
@@ -146,9 +143,8 @@ volatile int p2p_max_y;
 
 // A bitmap giving the coordinates of all P2P coordinates which have been seen
 // mentioned in a P2PC_NEW message. A 2D array of bits whose *bit* indexes are
-// ((bx<<9) | by) where bx and by are x + 256 and y + 256 respectively.
+// ((b_x<<9) | b_y) where b_x and by are x + 256 and y + 256 respectively.
 uchar *p2p_addr_table = NULL;
-
 
 //------------------------------------------------------------------------------
 
@@ -177,8 +173,33 @@ volatile uchar load = 0;
 #define PWM_BITS 4
 
 // The actual, displayed load value (fixed point). This value tracks the 'load'
-// value above, transitioning smoothly towards it over time.
+// value above, which transitions smoothly towards it over time.
 volatile uint disp_load = 0 << LOAD_FRAC_BITS;
+
+//------------------------------------------------------------------------------
+
+// The shared message buffers that have been allocated
+static sdp_msg_t *shared_messages = NULL;
+
+// Core that is sent "big data", or 0 if currently disabled
+static uint big_data_in_core = 0;
+
+static vcpu_t *big_data_vcpu = NULL;
+
+// Big data buffers; only assigned if needed
+static void *big_data_in = NULL;
+static void *big_data_out = NULL;
+
+// Big data output IP address and port
+uchar big_data_out_ip[4];
+static ushort big_data_out_port;
+uchar big_data_out_mac[6];
+static uint big_data_use_sender;
+
+// Big data statistics
+static uint big_data_in_count;
+static uint big_data_out_count;
+static uint big_data_discard_not_idle;
 
 //------------------------------------------------------------------------------
 
@@ -248,12 +269,23 @@ void proc_byte_set(uint a1, uint a2)
 void proc_route_msg(uint arg1, uint arg2);
 
 
-void msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
+uint msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
 {
-    if (event_queue_proc(proc_route_msg, (uint) msg, srce_ip, PRIO_0) == 0) {
-        // if no event is queued free SDP msg buffer
-        sark_msg_free(msg);
+
+    // Disallow out-size messages
+    if (msg->length > SDP_MAX_LENGTH) {
+        sw_error(SW_OPT);
+        scamp_msg_free(msg);
+        return 0;
     }
+
+    if (event_queue_proc(proc_route_msg, (uint) msg, srce_ip, PRIO_0) == 0) {
+        // if no event is queued free SDP message buffer
+        scamp_msg_free(msg);
+        return 0;
+    }
+
+    return 1;
 }
 
 
@@ -298,13 +330,62 @@ uint pkt_tx(uint tcr, uint data, uint key)
 
 static void timer1_init(uint count)
 {
-    tc[T1_CONTROL] = 0x000000e2;        // En, Per, IntEn, Pre=1, 32bit, Wrap
+    tc[T1_CONTROL] = 0x000000e2;        // Enable, Per, IntEn, Pre=1, 32bit, Wrap
     tc[T1_LOAD] = count;                // Reload value
 }
 
 
 //------------------------------------------------------------------------------
 
+typedef struct {
+    mac_hdr_t mac_hdr;
+    ip_hdr_t ip_hdr;
+    udp_hdr_t udp_hdr;
+} full_udp_pkt;
+
+typedef struct {
+    ushort pad;
+    sdp_hdr_t sdp_hdr;
+    ushort cmd_rc;
+    ushort sequence;
+} scp_pkt;
+
+
+static void eth_return_msg(ip_hdr_t *src_ip_hdr, uint rc)
+{
+
+    full_udp_pkt pkt;
+    scp_pkt scp;
+    full_udp_pkt *src_pkt = (full_udp_pkt *) src_ip_hdr;
+    scp_pkt *src_scp = (scp_pkt *) &src_pkt[1];
+
+    scp.sdp_hdr.dest_addr = src_scp->sdp_hdr.srce_addr;
+    scp.sdp_hdr.srce_addr = sv->p2p_addr;
+    scp.sdp_hdr.dest_port = src_scp->sdp_hdr.srce_port;
+    scp.sdp_hdr.srce_port = 0;
+    scp.sdp_hdr.flags = 0;
+    scp.sdp_hdr.tag = 0;
+
+    scp.cmd_rc = rc;
+    scp.sequence = src_scp->sequence;
+
+    // Respond to source
+    pkt.udp_hdr.dest = src_pkt->udp_hdr.srce;
+    pkt.udp_hdr.srce = srom.udp_port;
+    pkt.udp_hdr.checksum = 0;
+    pkt.udp_hdr.length = sizeof(udp_hdr_t) + sizeof(scp_pkt);
+
+    copy_ip_hdr(src_ip_hdr->srce, PROT_UDP, &pkt.ip_hdr,
+            pkt.udp_hdr.length + sizeof(ip_hdr_t));
+
+    copy_mac(src_ip_hdr->srce, pkt.mac_hdr.dest);
+    copy_mac(srom.mac_addr, pkt.mac_hdr.srce);
+    pkt.mac_hdr.type = htons(ETYPE_IP);
+
+    eth_transmit2((uchar *) &pkt, (uchar *) &scp, sizeof(full_udp_pkt), sizeof(scp_pkt));
+
+    sark_delay_us(5);           //## !! Trouble with back-to-back packets??
+}
 
 __inline void eth_discard()
 {
@@ -312,8 +393,9 @@ __inline void eth_discard()
     er[ETH_RX_CMD] = (uint) er;
 }
 
+static void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr);
 
-void udp_pkt(uchar *rx_pkt, uint rx_len)
+static void udp_pkt(uchar *rx_pkt, uint rx_len)
 {
     ip_hdr_t *ip_hdr = (ip_hdr_t *) (rx_pkt + IP_HDR_OFFSET);
 
@@ -329,10 +411,16 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
     int len = ntohs(udp_hdr->length);
 
     if (udp_dest == srom.udp_port) {
+        if (len < 10) {
+            eth_discard();
+            eth_return_msg(ip_hdr, RC_LEN);
+            return;
+        }
         len -= 10;                      //const UDP_HDR + UDP_PAD
 
-        if (len > 24 + SDP_BUF_SIZE) {  // SDP=8, CMD=16
+        if (len > SDP_MAX_LENGTH) {  // SDP=8, CMD=16
             eth_discard();
+            eth_return_msg(ip_hdr, RC_LEN);
             return;
         }
 
@@ -341,6 +429,7 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
         if (msg == NULL) {              // !! fix this - reply somehow?
             sw_error(SW_OPT);
             eth_discard();
+            eth_return_msg(ip_hdr, RC_BUF);
             return;
         }
 
@@ -355,7 +444,8 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
 
         copy_ip(ip_hdr->srce, (uchar *) &srce_ip);
 
-        if ((tag == TAG_NONE) && (flags & SDPF_REPLY)) { // transient tag & reply req
+        if ((tag == TAG_NONE) && (flags & SDPF_REPLY)) {
+            // transient tag & reply requested
             tag = msg->tag = transient_tag(ip_hdr->srce, rx_pkt+6, udp_srce, tag_tto);
         }
 
@@ -363,11 +453,18 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
                 (tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0)) {
             arp_add(rx_pkt+6, ip_hdr->srce);
             eth_discard();
-            msg_queue_insert(msg, srce_ip);
+            if (!msg_queue_insert(msg, srce_ip)) {
+                eth_return_msg(ip_hdr, RC_BUF);
+            }
         } else {
             eth_discard();
-            sark_msg_free(msg);
+            scamp_msg_free(msg);
+            eth_return_msg(ip_hdr, RC_BUF);
         }
+    } else if (udp_dest == sv->big_data_port) {  // Big Data In
+        mac_hdr_t *mac_hdr = (mac_hdr_t *) rx_pkt;
+        arp_add(mac_hdr->srce, ip_hdr->srce);
+        big_data_in_recv(ip_hdr, udp_hdr);
     } else {                            // Reverse IPTag...
         len -= 8;                       //const UDP_HDR
 
@@ -457,7 +554,7 @@ void eth_receive()
 //------------------------------------------------------------------------------
 
 
-void eth_send_msg(uint tag, sdp_msg_t *msg)
+static void eth_send_msg(uint tag, sdp_msg_t *msg)
 {
     iptag_t *iptag = tag_table + tag;
 
@@ -470,6 +567,9 @@ void eth_send_msg(uint tag, sdp_msg_t *msg)
     udp_hdr_t *udp_hdr = (udp_hdr_t *) (hdr + UDP_HDR_OFFSET);
 
     uint len = msg->length;
+    if (len > SDP_MAX_LENGTH) {
+        return;
+    }
     uchar *buf;
     uint pad;
 
@@ -496,7 +596,7 @@ void eth_send_msg(uint tag, sdp_msg_t *msg)
     udp_hdr->checksum = 0;              // Zero checksum
 
     uint t;
-    t = ipsum(hdr + IP_HDR_OFFSET + 12, 8, 0);  // Sum IP hdr addresses
+    t = ipsum(hdr + IP_HDR_OFFSET + 12, 8, 0);  // Sum IP header addresses
     t += len + pad + UDP_HDR_SIZE;              // add in UDP data length
     t += PROT_UDP;                              // and UDP protocol number
     t = ipsum((uchar *) udp_hdr, 8 + pad, t);   // and UDP header and pad
@@ -525,9 +625,12 @@ void eth_send_msg(uint tag, sdp_msg_t *msg)
 //------------------------------------------------------------------------------
 
 
-uint shm_ping(uint dest)
+static uint shm_ping(uint dest)
 {
     vcpu_t *vcpu = sv_vcpu + dest;
+    if (vcpu->mbox_ap_cmd != SHM_IDLE) {
+        return 1;
+    }
     volatile uchar flag = 0;
     event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
     if (e == NULL) {
@@ -549,48 +652,57 @@ uint shm_ping(uint dest)
     }
 
     timer_cancel(e, id);
-    vcpu->lr = (uint) vcpu->mbox_ap_msg;
     return 1;
 }
 
+static uint wait_for_mbox_idle(vcpu_t *vcpu) {
 
-uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
-{
-    vcpu_t *vcpu = sv_vcpu + dest;
+    // If IDLE return True now
+    if (vcpu->mbox_ap_cmd == SHM_IDLE) {
+        return 1;
+    }
+
+    // Try to wait for IDLE
     volatile uchar flag = 0;
     event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
+
+    // If no event, return False now
     if (e == NULL) {
-        sw_error(SW_OPT);
-        return RC_BUF;          // !! not the right RC
+        return 0;
     }
 
-    sdp_msg_t *shm_msg = sark_shmsg_get();
-    if (shm_msg == NULL) {
-        event_free(e);
-        return RC_BUF;
-    }
-
-    sark_msg_cpy(shm_msg, msg);
-
-    vcpu->mbox_ap_msg = shm_msg;
-    vcpu->mbox_ap_cmd = SHM_MSG;
-
-    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
-
-    uint id = e->ID;
-    timer_schedule(e, 1000);    // !! const??
-
+    // Wait for IDLE
+    timer_schedule(e, 1000);
     while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
         continue;
     }
 
-    if (flag != 0) {
-        sark_shmsg_free(shm_msg);
-        return RC_TIMEOUT;
+    // If IDLE, return True now
+    if (vcpu->mbox_ap_cmd == SHM_IDLE) {
+        return 1;
     }
 
-    timer_cancel(e, id);
-    return RC_OK;
+    // Not IDLE
+    return 0;
+}
+
+// Send message AP
+void return_msg(sdp_msg_t *msg, uint rc);
+void shm_send_msg(uint dest, sdp_msg_t *msg)
+{
+    if (msg->length > SDP_MAX_LENGTH) {
+        return_msg(msg, RC_LEN);
+        return;
+    }
+    vcpu_t *vcpu = sv_vcpu + dest;
+    if (!wait_for_mbox_idle(vcpu)) {
+        return_msg(msg, RC_BUF);
+        return;
+    }
+    sark_msg_cpy(vcpu->mbox_ap_msg, msg);
+    scamp_msg_free(msg);
+    vcpu->mbox_ap_cmd = SHM_MSG;
+    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
 }
 
 
@@ -662,7 +774,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
         uint rc = p2p_send_msg(msg->dest_addr, msg);
         if (rc == RC_OK) {
-            sark_msg_free(msg);
+            scamp_msg_free(msg);
         } else {
             return_msg(msg, rc);
         }
@@ -671,7 +783,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
     if (msg->dest_port == PORT_ETH) {
         eth_send_msg(msg->tag, msg);
-        sark_msg_free(msg);
+        scamp_msg_free(msg);
         return;
     }
 
@@ -682,12 +794,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
     }
 
     if (dest_cpu != sark.virt_cpu) {    // !! virt_cpu always zero
-        uint rc = shm_send_msg(dest_cpu, msg);
-        if (rc == RC_OK) {
-            sark_msg_free(msg);
-        } else {
-            return_msg(msg, rc);
-        }
+        shm_send_msg(dest_cpu, msg);
         return;
     }
 
@@ -755,6 +862,28 @@ void assign_virt_cpu(uint phys_cpu)
     sark_word_cpy(v2p_map, sv->v2p_map, MAX_CPUS);
 }
 
+
+//------------------------------------------------------------------------------
+
+
+// Setup shared message buffers
+static void shm_init(void) {
+    if (shared_messages == NULL) {
+        shared_messages = sark_xalloc(sv->sysram_heap,
+                (NUM_CPUS - 1) * 2 * sizeof(sdp_msg_t), 0, 0);
+    }
+    for (uint i = 1; i < NUM_CPUS; i++) {
+        sv_vcpu[i].mbox_ap_cmd = SHM_IDLE;
+        sv_vcpu[i].mbox_ap_msg = &shared_messages[(i - 1) * 2];
+        sv_vcpu[i].mbox_mp_cmd = SHM_IDLE;
+        sv_vcpu[i].mbox_mp_msg = &shared_messages[((i - 1) * 2) + 1];
+    }
+
+    if (sv->boot_delay == 0 && sv->rom_cpus == 0) {
+        sv->root_chip = 1;
+    }
+}
+
 //------------------------------------------------------------------------------
 
 // Disables a specified core and recomputes the virtual core map accordingly.
@@ -762,7 +891,7 @@ void assign_virt_cpu(uint phys_cpu)
 // * All application cores are rebooted (so that the new virtual core map takes
 //   effect)
 // * If the core to be disabled includes the monitor then the monitor is
-//   disabled without being remapped rendering the chip non-communicative.
+//   disabled without being re-mapped rendering the chip non-communicative.
 
 void remap_phys_cores(uint phys_cores)
 {
@@ -778,6 +907,8 @@ void remap_phys_cores(uint phys_cores)
 
     sark_word_set(sv_vcpu + num_cpus, 0,
                   (NUM_CPUS - num_cpus) * sizeof(vcpu_t));
+
+    shm_init();
 }
 
 //------------------------------------------------------------------------------
@@ -852,7 +983,7 @@ void sv_init(void)
         get_board_info();
     }
 
-    if (sv->hw_ver == 0 && srom.flags & SRF_PRESENT) {  // Set hardware version
+    if (sv->hw_ver == 0 && (srom.flags & SRF_PRESENT)) {  // Set hardware version
         sv->hw_ver = (srom.flags >> 4) & 15;
     }
 
@@ -870,21 +1001,7 @@ void sv_init(void)
     sv_vcpu[0].time = sv->unix_time;
     sv_vcpu[0].phys_cpu = sark.phys_cpu;
     sark_str_cpy(sv_vcpu[0].app_name, build_name);
-
-    // Set up SHM buffers
-    sv->shm_buf = sark_xalloc(sv->sysram_heap,
-            sv->num_buf * sizeof(sdp_msg_t), 0, 0);
-
-    sv->shm_root.free = (mem_link_t *) sv->shm_buf;
-    //sv->shm_root.count = sv->shm_root.max = 0;        //## Not needed now...
-
-    sark_block_init(sv->shm_buf, sv->num_buf, sizeof(sdp_msg_t));
-
-    if (sv->boot_delay == 0 && sv->rom_cpus == 0) {
-        sv->root_chip = 1;
-    }
 }
-
 
 void sdram_init(void)
 {
@@ -896,7 +1013,7 @@ void sdram_init(void)
     uint sdram_size = ram_size(sdram);          // SDRAM size (bytes)
     uint sys_size = (uint) sv->sdram_bufs;      // System size (bytes)
 
-    // Fill in sv->sdram... vars
+    // Fill in sv->sdram... variables
 
     // System buffers at base of SDRAM
     sv->sdram_bufs = (uint *) SDRAM_BASE;
@@ -929,7 +1046,7 @@ void sdram_init(void)
     sv->rtr_copy = sark_xalloc(sv->sys_heap,
             (MC_TABLE_SIZE + 1) * sizeof(rtr_entry_t), 0, 0);
 
-    // Alloc ID table
+    // Allocation ID table
 
     sv->alloc_tag = sark_xalloc(sv->sys_heap, 65536 * 4, 0, 0);
     sark_word_set(sv->alloc_tag, 0, 65536 * 4);
@@ -1136,7 +1253,7 @@ void netinit_start(void)
     p2p_min_y = 0;
     p2p_max_y = 0;
 
-    // Allocate and clear the P2P addr bitmap
+    // Allocate and clear the P2P address bitmap
     p2p_addr_table = sark_xalloc(sv->sys_heap, P2P_ADDR_TABLE_BYTES, 0, 0);
     sark_word_set(p2p_addr_table, 0, P2P_ADDR_TABLE_BYTES);
 
@@ -1243,10 +1360,10 @@ void proc_100hz(uint a1, uint a2)
             // Initialise link_en to avoid broken inter-chip links
             init_link_en();
 
-            // Reseed uniquely for each chip
+            // Re-seed uniquely for each chip
             sark_srand(p2p_addr);
 
-            // Set our P2P addr in the comms controller
+            // Set our P2P address in the comms controller
             cc[CC_SAR] = 0x07000000 + p2p_addr;
 
             // Work out the local Ethernet connected chip coordinates
@@ -1258,7 +1375,7 @@ void proc_100hz(uint a1, uint a2)
         break;
 
     case NETINIT_PHASE_BIFF:
-        // The board information floodfill is allowed three 100Hz ticks. In
+        // The board information flood-fill is allowed three 100Hz ticks. In
         // the first tick, the board information is actually broadcast. In
         // the second tick, nothing happens and in the third the state
         // advances to the P2P table generation phase.
@@ -1316,6 +1433,8 @@ void proc_100hz(uint a1, uint a2)
                     netinit_phase = NETINIT_PHASE_DONE;
                 }
 
+                // Initialise Shared Messages
+                shm_init();
                 level_config();
                 compute_st();
                 disable_unidirectional_links();
@@ -1515,8 +1634,8 @@ void eth_setup()
         }
 
         if (srom.flags & SRF_PHY_INIT) {        // (Re-)initialise PHY
-            phy_write(PHY_AUTO_ADV, 0x01e1);    // Allow 100/10 meg
-            phy_write(PHY_CONTROL, 0x1200);     // Enable & restart auto-neg
+            phy_write(PHY_AUTO_ADV, 0x01e1);    // Allow 100/10 Mb/s
+            phy_write(PHY_CONTROL, 0x1200);     // Enable & restart auto-negotiation
         }
 
         while (srom.flags & SRF_PHY_WAIT) {     // Wait (without timeout)
@@ -1530,6 +1649,162 @@ void eth_setup()
             event_run(1);
         }
     }
+}
+
+uint big_data_init(uint core, ushort port, uchar ip_address[4], uint use_sender) {
+
+    // If there is already a core assigned to big data, this is an error
+    if (big_data_in_core != 0) {
+        return 0;
+    }
+
+    // Check parameters
+    if (core > num_cpus || core == 0) {
+        return 0;
+    }
+
+    // Set up the data structures
+    if (big_data_in == NULL) {
+        big_data_in = sark_xalloc(sv->sysram_heap, BIG_DATA_MAX_SIZE, 0, 0);
+        if (big_data_in == NULL) {
+            return 0;
+        }
+        // Ensure unbuffered
+        big_data_in = ((uchar *) big_data_in) + 0x10000000;
+    }
+    if (big_data_out == NULL) {
+        big_data_out = sark_xalloc(sv->sysram_heap, BIG_DATA_MAX_SIZE, 0, 0);
+        if (big_data_out == NULL) {
+            return 0;
+        }
+        // Ensure unbuffered
+        big_data_out = ((uchar *) big_data_out) + 0x10000000;
+    }
+    arp_lookup_big_data(ip_address);
+
+    // Assign to the correct core
+    big_data_vcpu = (vcpu_t *) (((uchar *) &sv_vcpu[core]) + 0x10000000);
+    big_data_vcpu->big_data_in = big_data_in;
+    big_data_vcpu->big_data_out = big_data_out;
+    big_data_in_core = core;
+    copy_ip(ip_address, big_data_out_ip);
+    big_data_out_port = port;
+    big_data_use_sender = use_sender;
+    big_data_in_count = 0;
+    big_data_out_count = 0;
+    big_data_discard_not_idle = 0;
+
+    return 1;
+}
+
+void big_data_free(void) {
+    if (big_data_in_core == 0 || big_data_in_core > num_cpus) {
+        return;
+    }
+    big_data_vcpu->big_data_in = NULL;
+    big_data_vcpu->big_data_out = NULL;
+    big_data_out_port = 0;
+    big_data_in_core = 0;
+}
+
+static void big_data_in_recv(ip_hdr_t *ip_hdr, udp_hdr_t *udp_hdr) {
+    // Not set up - throw away
+    if (big_data_in_core == 0) {
+        eth_discard();
+        return;
+    }
+
+    // Too big - throw away
+    uint len = ntohs(udp_hdr->length);
+    if (len > BIG_DATA_MAX_SIZE) {
+        eth_discard();
+        return;
+    }
+
+    // Too small - throw away
+    if (len < sizeof(udp_hdr_t)) {
+        eth_discard();
+        return;
+    }
+
+    // Buffer in use - throw away
+    if (big_data_vcpu->mbox_ap_cmd != SHM_IDLE) {
+        big_data_discard_not_idle++;
+        eth_discard();
+        return;
+    }
+
+    // Copy header data if needed
+    if (big_data_use_sender) {
+        big_data_out_port = ntohs(udp_hdr->srce);
+        copy_ip(ip_hdr->srce, big_data_out_ip);
+        arp_lookup_big_data(big_data_out_ip);
+    }
+
+    // Fill the buffer with data
+    memcpy(big_data_in, udp_hdr, len);
+
+    // Free Ethernet
+    eth_discard();
+
+    // Update the length field to be expected endian
+    ((udp_hdr_t *) big_data_in)->length = len;
+
+    // Signal core of packet
+    big_data_vcpu->mbox_ap_cmd = SHM_BIG_DATA;
+    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[big_data_in_core]);
+    big_data_in_count++;
+}
+
+void big_data_out_send(void) {
+
+    // Ignore if not set up
+    if (big_data_out_port == 0) {
+        return;
+    }
+
+    udp_hdr_t *pkt_udp_hdr = big_data_vcpu->big_data_out;
+    void *data = &pkt_udp_hdr[1];
+
+    // Ignore if length too big
+    uint len = pkt_udp_hdr->length;
+    if (len > BIG_DATA_MAX_SIZE) {
+        return;
+    }
+
+    // Ignore if length too small
+    if (len < sizeof(udp_hdr_t)) {
+        return;
+    }
+
+    struct {
+        mac_hdr_t mac_hdr;
+        ip_hdr_t ip_hdr;
+        udp_hdr_t udp_hdr;
+    } hdr;
+    hdr.udp_hdr.srce = htons(sv->big_data_port);
+    hdr.udp_hdr.dest = htons(big_data_out_port);
+    hdr.udp_hdr.length = htons(len);
+    // Zero checksum; valid, and unused for speed
+    hdr.udp_hdr.checksum = 0;
+
+    copy_ip_hdr(big_data_out_ip, PROT_UDP, &hdr.ip_hdr, len + sizeof(ip_hdr_t));
+
+    copy_mac(big_data_out_mac, hdr.mac_hdr.dest);
+    copy_mac(srom.mac_addr, hdr.mac_hdr.srce);
+    hdr.mac_hdr.type = htons(ETYPE_IP);
+
+    eth_transmit2((uchar *) &hdr, data, sizeof(hdr), len - sizeof(udp_hdr_t));
+    big_data_out_count++;
+}
+
+void big_data_info(uchar *ip_address, uint *port, uint *n_sent, uint *n_received,
+        uint *n_throw_not_idle) {
+    copy_ip(big_data_out_ip, ip_address);
+    *port = big_data_out_port;
+    *n_sent = big_data_out_count;
+    *n_received = big_data_in_count;
+    *n_throw_not_idle = big_data_discard_not_idle;
 }
 
 
@@ -1619,8 +1894,8 @@ void chk_bl_del(void)
         if (bl_cores & (1 << sark.phys_cpu)) {
             // start boot image DMA to SDRAM for delegate,
             dma[DMA_ADRS] = (uint) SDRAM_BASE;
-            dma[DMA_ADRT] = (uint) DTCM_BASE + 0x00008000;
-            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | 0x7100;
+            dma[DMA_ADRT] = (uint) BOOT_BUF;
+            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | BOOT_COPY_BYTE_COUNT;
 
             // take blacklisted cores out of the application pool
             sc[SC_CLR_OK] = bl_cores;
@@ -1703,7 +1978,7 @@ void c_main(void)
         desc_init();                    // Initialise TX and RX descriptors
         queue_init();                   // Initialise various queues
         nn_init();                      // Initialise NN package
-        netinit_start();                // Initialise late-stage boot process datastructures
+        netinit_start();                // Initialise late-stage boot process data structures
         vic_setup();                    // Set VIC, interrupts on
 
         if (sv->boot_delay) {
@@ -1739,10 +2014,10 @@ void c_main(void)
         // (re-)construct the level/region information (not in shared memory)
         level_config();
 
-        // Reseed uniquely for each chip
+        // Re-seed uniquely for each chip
         sark_srand(p2p_addr);
 
-        // Set our P2P addr in the comms controller
+        // Set our P2P address in the comms controller
         cc[CC_SAR] = 0x07000000 + p2p_addr;
 
         // Initialise, as DONE, late-stage boot process variables

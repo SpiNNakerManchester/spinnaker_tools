@@ -67,14 +67,6 @@ typedef struct {
 
 
 typedef struct {
-    ushort srce;
-    ushort dest;
-    ushort length;
-    ushort checksum;
-} udp_hdr_t;
-
-
-typedef struct {
     uchar type;
     uchar code;
     ushort checksum;
@@ -122,6 +114,7 @@ void eth_transmit2(uchar *hdr, uchar *buf, uint hdr_len, uint buf_len);
 void send_arp_pkt(uchar *buf, const uchar *dest,
                   const uchar *tha, const uchar *tpa, uint type);
 void arp_lookup(iptag_t *iptag);
+void arp_lookup_big_data(uchar ip_address[4]);
 void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size);
 void arp_add(uchar *mac, uchar *ip);
 
