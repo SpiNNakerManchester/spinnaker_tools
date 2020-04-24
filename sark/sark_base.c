@@ -512,47 +512,41 @@ void __attribute__((weak)) sark_post_main(void)
 
 uint sark_msg_send(sdp_msg_t *msg, uint timeout)
 {
-    sdp_msg_t *shm_msg = sark_shmsg_get();
 
-    if (shm_msg == NULL) {
-        return 0;
-    }
-
-    sark_msg_cpy(shm_msg, msg);
-
-    sark.vcpu->mbox_mp_msg = shm_msg;
-    sark.vcpu->mbox_mp_cmd = SHM_MSG;
-
-    uint cpsr = sark_lock_get(LOCK_MBOX);
-
-    uint t = sv->mbox_flags;
-
-    sv->mbox_flags = t | (1 << sark.virt_cpu);
-
-    if (t == 0) {
-        sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
-    }
-
-    sark_lock_free(cpsr, LOCK_MBOX);
-
+    // Wait for the box to be idle if it isn't already
     // Timeout using bottom 32 bits of clock_ms!
-
     volatile uint *ms = (uint *) &sv->clock_ms;
     uint start = *ms;
-
     while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
         if (*ms - start > timeout) {
             break;
         }
     }
 
+    // If the mailbox is still not free, exit
     if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-        // message sending failed - free mailbox,
-        // flag it as IDLE and return error code
-        sark.vcpu->mbox_mp_cmd = SHM_IDLE;
-        sark_shmsg_free(shm_msg);
         return 0;
     }
+
+    // Get a message to send
+    sdp_msg_t *shm_msg = sark_shmsg_get();
+    if (shm_msg == NULL) {
+        return 0;
+    }
+
+    // Send the message
+    sark_msg_cpy(shm_msg, msg);
+    sark.vcpu->mbox_mp_msg = shm_msg;
+    sark.vcpu->mbox_mp_cmd = SHM_MSG;
+
+    // Signal SCAMP that the message is ready to be read
+    uint cpsr = sark_lock_get(LOCK_MBOX);
+    uint t = sv->mbox_flags;
+    sv->mbox_flags = t | (1 << sark.virt_cpu);
+    if (t == 0) {
+        sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
+    }
+    sark_lock_free(cpsr, LOCK_MBOX);
 
     sark.msg_sent++;
     return 1;
