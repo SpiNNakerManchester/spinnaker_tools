@@ -4,7 +4,13 @@
 #
 #-------------------------------------------------------------------------------
 
-Version 3.2.6 - Bug fixing
+Version 3.3.0 - Bug fixing and new feature
+
+New Feature:
+
+* Spin1 API: new function spin1_dma_flush clears hardware and software
+  DMA queues and aborts any ongoing DMA transfers.
+
 
 Bug fixes:
 
