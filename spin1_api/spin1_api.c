@@ -1020,11 +1020,11 @@ uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
 *
 * SUMMARY
 *  This function:
-*    purges any queued DMA_COMPLETE callbacks in the callback queues,
-*    flushes the software DMA queue,
 *    flushes the hardware queue in the DMA controller,
-*    aborts any ongoing transfer in the DMA controller and
-*    clears any pending DMA_COMPLETE interrupts in the DMA controller
+*    aborts any ongoing transfer in the DMA controller,
+*    clears any pending DMA_COMPLETE interrupts in the DMA controller and
+*    purges any queued DMA_COMPLETE callbacks in the callback queues.
+*    flushes the software DMA queue,
 *
 * SYNOPSIS
 *  void spin1_dma_flush(void);
@@ -1033,7 +1033,13 @@ uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
 */
 void spin1_dma_flush(void)
 {
-    // purge any queued DMA_COMPLETE callbacks in the callback queues,
+    // flush the hardware queue in the DMA controller,
+    // abort any ongoing transfer in the DMA controller,
+    // and clear any pending DMA_COMPLETE interrupts in the DMA controller
+    dma[DMA_CTRL] = 0x1f;
+    dma[DMA_CTRL] = 0x0d;
+
+    // purge any queued DMA_COMPLETE callbacks in the callback queues
     if (callback[DMA_TRANSFER_DONE].priority > 0) {
         task_queue_t *tq = &task_queue[callback[DMA_TRANSFER_DONE].priority-1];
 
@@ -1070,17 +1076,11 @@ void spin1_dma_flush(void)
         spin1_mode_restore(cpsr);
     }
 
-    // flush the software DMA transfer queue,
+    // and flush the software DMA transfer queue
     uint cpsr = spin1_int_disable();
     dma_queue.start = 0;
     dma_queue.end   = 0;
     spin1_mode_restore(cpsr);
-
-    // abort any ongoing transfer in the DMA controller,
-    // flush the hardware queue in the DMA controller,
-    // and clear any pending DMA_COMPLETE interrupts in the DMA controller
-    dma[DMA_CTRL] = 0x1f;
-    dma[DMA_CTRL] = 0x0d;
 }
 /*
 *******/
