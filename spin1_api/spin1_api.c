@@ -1171,6 +1171,7 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
 
     /* clear sticky TX full bit and check TX state */
     cc[CC_TCR] = TX_TCR_MCDEFAULT;
+    (void) cc[CC_TCR];  // needed to avoid a RAW hazard accessing CC_TCR
 
     if (cc[CC_TCR] & TX_FULL_MASK) {
         if ((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE
