@@ -141,6 +141,7 @@ uint spin1_trigger_user_event(uint arg0, uint arg1);
 __attribute__((nonnull)) uint
 spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
         uint direction, uint length);
+void spin1_dma_flush(void);
 __attribute__((nonnull)) void
 spin1_memcpy(void *dst, void const *src, uint len);
 // ------------------------------------------------------------------------
