@@ -294,7 +294,7 @@ INT_HANDLER cc_tx_empty_isr()
         }
 
         cc[CC_TXKEY]  = key;
-	(void) cc[CC_TCR];  // needed to avoid a RAW hazard accessing CC_TCR
+        (void) cc[CC_TCR];  // needed to avoid a RAW hazard accessing CC_TCR
     }
 
     // If queue empty turn off tx_empty interrupt
