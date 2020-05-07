@@ -1601,7 +1601,7 @@ INCLUDE_FILE_PATTERNS  =
 
 PREDEFINED             = __arm__ __GNUC__ __ARM_ARCH_5TE__ __ARM_FEATURE_DSP
 PREDEFINED += DOXYGEN NONNULL= NONNULL2= INT_HANDLER=void NORETURN=
-PREDEFINED += SARK_IS_A_MALLOC(a)= THUMB
+PREDEFINED += SARK_IS_A_MALLOC(a)= THUMB BUF_WRITE
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

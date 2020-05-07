@@ -64,133 +64,215 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 
 //------------------------------------------------------------------------------
 
-// Memory definitions
+//! \name Memory Layout
+//! \brief Memory definitions
+//! \{
 
+//! Base address of Instruction Tightly Coupled Memory
 #define ITCM_BASE           0x00000000
+//! Size of Instruction Tightly Coupled Memory (32 kB)
 #define ITCM_SIZE           0x00008000  // 32 KB
+//! Top address of Instruction Tightly Coupled Memory
 #define ITCM_TOP            (ITCM_BASE + ITCM_SIZE)
 
+//! Base address of Data Tightly Coupled Memory
 #define DTCM_BASE           0x00400000
+//! Size of Data Tightly Coupled Memory (64 kB)
 #define DTCM_SIZE           0x00010000  // 64 KB
+//! Top address of Data Tightly Coupled Memory
 #define DTCM_TOP            (DTCM_BASE + DTCM_SIZE)
 
+//! Base address of SDRAM: writes unbuffered
 #define SDRAM_BASE_UNBUF    0x70000000
+//! Base address of SDRAM: writes buffered
 #define SDRAM_BASE_BUF      0x60000000
 
+//! Base address of SDRAM
 #ifdef BUF_WRITE
 #define SDRAM_BASE          SDRAM_BASE_BUF
 #else
 #define SDRAM_BASE          SDRAM_BASE_UNBUF
 #endif
 
+//! Size of SDRAM (128 MB)
 #define SDRAM_SIZE          (128 * 1024 * 1024) // 128 MB
+//! Top address of SDRAM
 #define SDRAM_TOP           (SDRAM_BASE + SDRAM_SIZE)
 
+//! Base address of System RAM: writes unbuffered
 #define SYSRAM_BASE_UNBUF   0xf5000000
+//! Base address of System RAM: writes buffered
 #define SYSRAM_BASE_BUF     0xe5000000
 
+//! Base address of System RAM
 #ifdef BUF_WRITE
 #define SYSRAM_BASE         SYSRAM_BASE_BUF
 #else
 #define SYSRAM_BASE         SYSRAM_BASE_UNBUF
 #endif
 
+//! Size of System RAM (32 kB)
 #define SYSRAM_SIZE         0x00008000  // 32 KB
+//! Top address of System RAM
 #define SYSRAM_TOP          (SYSRAM_BASE + SYSRAM_SIZE)
 
+//! Base address of ROM
 #define ROM_BASE            0xf6000000
+//! Size of ROM (32 kB)
 #define ROM_SIZE            0x00008000  // 32 KB
+//! Top address of ROM
 #define ROM_TOP             (ROM_BASE + ROM_SIZE)
+//! \}
 
 //------------------------------------------------------------------------------
 
-// Comms controller definitions
+//! \name Communications Controller
+//! \brief Communications controller definitions
+//! \{
 
+//! Communications controller base address: writes unbuffered
 #define CC_BASE_UNBUF   0x10000000  // Unbuffered
+//! Communications controller base address: writes buffered
 #define CC_BASE_BUF     0x20000000  // Buffered
 
+//! Communications controller base address
 #ifdef BUF_WRITE
 #define CC_BASE         CC_BASE_BUF
 #else
 #define CC_BASE         CC_BASE_UNBUF
 #endif
 
+//! Comms controller r0: Transmit control register offset
 #define CC_TCR          INT_AT(0x00)
+//! Comms controller r1: Transmit data register offset
 #define CC_TXDATA       INT_AT(0x04)
+//! Comms controller r2: Transmit key register offset
 #define CC_TXKEY        INT_AT(0x08)
+//! Comms controller r3: Receive status register offset
 #define CC_RSR          INT_AT(0x0c)
+//! Comms controller r4: Receive data register offset
 #define CC_RXDATA       INT_AT(0x10)
+//! Comms controller r5: Receive key register offset
 #define CC_RXKEY        INT_AT(0x14)
+//! Comms controller r6: Source address register offset
 #define CC_SAR          INT_AT(0x18)
+//! Comms controller r7: Test register offset
 #define CC_TEST         INT_AT(0x1c)
+//! \}
 
 //------------------------------------------------------------------------------
 
-// Timer definitions
+//! \name Timer Controller
+//! \brief Timer controller definitions
+//! \{
 
+//! Timer controller base address: writes unbuffered
 #define TIMER_BASE_UNBUF    0x11000000
+//! Timer controller base address: writes buffered
 #define TIMER_BASE_BUF      0x21000000
 
+//! Timer controller base address
 #ifdef BUF_WRITE
 #define TIMER_BASE      TIMER_BASE_BUF
 #else
 #define TIMER_BASE      TIMER_BASE_UNBUF
 #endif
 
-#define TIMER_OFFSET    0x20        // Offset of second timer
+#define TIMER_OFFSET    0x20        //!< Offset of second timer
 
+//! Timer 1 base address
 #define TIMER1_BASE     (TIMER_BASE)
+//! Timer 2 base address
 #define TIMER2_BASE     (TIMER_BASE + TIMER_OFFSET)
 
+//! Timer register r0: Load value register offset
 #define TC_LOAD         INT_AT(0x00)
+//! Timer register r1: Current count register offset
 #define TC_COUNT        INT_AT(0x04)
+//! Timer register r2: Control register offset
 #define TC_CONTROL      INT_AT(0x08)
+//! Timer register r3: Interrupt clear register offset
 #define TC_INT_CLR      INT_AT(0x0c)
+//! Timer register r4: Raw interrupt status register offset
 #define TC_RAW_INT      INT_AT(0x10)
+//! Timer register r5: Masked interrupt status register offset
 #define TC_MASK_INT     INT_AT(0x14)
+//! Timer register r6: Background load value register offset
 #define TC_BG_LOAD      INT_AT(0x18)
 
+//! `== TC_LOAD`
 #define T1_LOAD         INT_AT(0x00)
+//! `== TC_COUNT`
 #define T1_COUNT        INT_AT(0x04)
+//! `== TC_CONTROL`
 #define T1_CONTROL      INT_AT(0x08)
+//! `== TC_INT_CLR`
 #define T1_INT_CLR      INT_AT(0x0c)
+//! `== TC_RAW_INT`
 #define T1_RAW_INT      INT_AT(0x10)
+//! `== TC_MASK_IN`
 #define T1_MASK_INT     INT_AT(0x14)
+//! `== TC_BG_LOAD`
 #define T1_BG_LOAD      INT_AT(0x18)
 
+//! `== TC_LOAD + TIMER_OFFSET`
 #define T2_LOAD         INT_AT(0x20)
+//! `== TC_COUNT + TIMER_OFFSET`
 #define T2_COUNT        INT_AT(0x24)
+//! `== TC_CONTROL + TIMER_OFFSET`
 #define T2_CONTROL      INT_AT(0x28)
+//! `== TC_INT_CLR + TIMER_OFFSET`
 #define T2_INT_CLR      INT_AT(0x2c)
+//! `== TC_RAW_INT + TIMER_OFFSET`
 #define T2_RAW_INT      INT_AT(0x30)
+//! `== TC_MASK_INT + TIMER_OFFSET`
 #define T2_MASK_INT     INT_AT(0x34)
+//! `== TC_BG_LOAD + TIMER_OFFSET`
 #define T2_BG_LOAD      INT_AT(0x38)
+//! \}
 
 //------------------------------------------------------------------------------
 
-// VIC definitions
+//! \name VIC
+//! \brief Vectored interrupt controller (VIC) definitions
+//! \{
 
+//! Vectored interrupt controller base address: writes unbuffered
 #define VIC_BASE_UNBUF  0x1f000000
+//! Vectored interrupt controller base address: writes buffered
 #define VIC_BASE_BUF    0x2f000000
 
+//! Vectored interrupt controller base address
 #ifdef BUF_WRITE
 #define VIC_BASE        VIC_BASE_BUF
 #else
 #define VIC_BASE        VIC_BASE_UNBUF
 #endif
 
+//! VIC: IRQ status register offset
 #define VIC_IRQST       INT_AT(0x00)
+//! VIC: FIQ status register offset
 #define VIC_FIQST       INT_AT(0x04)
+//! VIC: Raw interrupt status register offset
 #define VIC_RAW         INT_AT(0x08)
+//! VIC: Interrupt type select register offset
 #define VIC_SELECT      INT_AT(0x0c)
+//! VIC: Interrupt enable register offset
 #define VIC_ENABLE      INT_AT(0x10)
+//! VIC: Interrupt disable register offset
 #define VIC_DISABLE     INT_AT(0x14)
+//! VIC: Soft interrupt register offset
 #define VIC_SOFT_SET    INT_AT(0x18)
+//! VIC: Soft interrupt clear register offset
 #define VIC_SOFT_CLR    INT_AT(0x1c)
+//! VIC: Protected-mode register offset
 #define VIC_PROTECT     INT_AT(0x20)
+//! VIC: Current vector address register offset
 #define VIC_VADDR       INT_AT(0x30)
+//! VIC: Default vector address register offset
 #define VIC_DEFADDR     INT_AT(0x34)
 
+//! VIC: Vector address register base
 #define VIC_ADDR        INT_AT(0x100)
 
 #define VIC_ADDR0       INT_AT(0x100)
@@ -210,6 +292,7 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 #define VIC_ADDR14      INT_AT(0x138)
 #define VIC_ADDR15      INT_AT(0x13c)
 
+//! VIC: Vector control register base
 #define VIC_CNTL        INT_AT(0x200)
 
 #define VIC_CNTL0       INT_AT(0x200)
@@ -229,61 +312,80 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 #define VIC_CNTL14      INT_AT(0x238)
 #define VIC_CNTL15      INT_AT(0x23c)
 
-#define WDOG_INT        0
-#define SOFTWARE_INT    1
-#define COMM_RX_INT     2
-#define COMM_TX_INT     3
-#define TIMER1_INT      4
-#define TIMER2_INT      5
-#define CC_RDY_INT      6
-#define CC_RPE_INT      7
-#define CC_RFE_INT      8
-#define CC_TFL_INT      9
-#define CC_TOV_INT      10
-#define CC_TMT_INT      11
-#define DMA_DONE_INT    12
-#define DMA_ERR_INT     13
-#define DMA_TO_INT      14
-#define RTR_DIAG_INT    15
-#define RTR_DUMP_INT    16
-#define RTR_ERR_INT     17
-#define CPU_INT         18
-#define ETH_TX_INT      19
-#define ETH_RX_INT      20
-#define ETH_PHY_INT     21
-#define SLOW_CLK_INT    22
-#define CC_TNF_INT      23
-#define CC_MC_INT       24
-#define CC_P2P_INT      25
-#define CC_NN_INT       26
-#define CC_FR_INT       27
-#define INT0_INT        28  // Pin INT[0]
-#define INT1_INT        29  // Pin INT[1]
-#define GPIO8_INT       30  // Pin GPIO[8]
-#define GPIO9_INT       31  // Pin GPIO[9]
+//! Interrupt numbers for SpiNNaker
+enum spinnaker_interupt_numbers_e {
+    WDOG_INT = 0,       //!< Watchdog timer interrupt
+    SOFTWARE_INT = 1,   //!< Used only for local software interrupt generation
+    COMM_RX_INT = 2,    //!< Debug communications receiver interrupt
+    COMM_TX_INT = 3,    //!< Debug communications transmitter interrupt
+    TIMER1_INT = 4,     //!< Local counter/timer interrupt 1
+    TIMER2_INT = 5,     //!< Local counter/timer interrupt 2
+    CC_RDY_INT = 6,     //!< Local comms controller packet received
+    CC_RPE_INT = 7,     //!< Local comms controller received packet parity error
+    CC_RFE_INT = 8,     //!< Local comms controller received packet framing error
+    CC_TFL_INT = 9,     //!< Local comms controller transmit buffer full
+    CC_TOV_INT = 10,    //!< Local comms controller transmit buffer overflow
+    CC_TMT_INT = 11,    //!< Local comms controller transmit buffer empty
+    DMA_DONE_INT = 12,  //!< Local DMA controller transfer complete
+    DMA_ERR_INT = 13,   //!< Local DMA controller error
+    DMA_TO_INT = 14,    //!< Local DMA controller transfer timed out
+    RTR_DIAG_INT = 15,  //!< Router diagnostic counter event has occurred
+    RTR_DUMP_INT = 16,  //!< Router packet dumped - indicates failed delivery
+    RTR_ERR_INT = 17,   //!< Router error - packet parity, framing, or time stamp error
+    CPU_INT = 18,       //!< System Controller interrupt bit set for this processor
+    ETH_TX_INT = 19,    //!< Ethernet transmit frame interrupt
+    ETH_RX_INT = 20,    //!< Ethernet receive frame interrupt
+    ETH_PHY_INT = 21,   //!< Ethernet PHY/external interrupt
+    SLOW_CLK_INT = 22,  //!< System-wide slow (nominally 32 KHz) timer interrupt
+    CC_TNF_INT = 23,    //!< Local comms controller can accept new Tx packet
+    CC_MC_INT = 24,     //!< Local comms controller multicast packet received
+    CC_P2P_INT = 25,    //!< Local comms controller point-to-point packet received
+    CC_NN_INT = 26,     //!< Local comms controller nearest neighbour packet receive
+    CC_FR_INT = 27,     //!< Local comms controller fixed route packet received
+    INT0_INT = 28,      //!< External interrupt request: Pin INT[0]
+    INT1_INT = 29,      //!< External interrupt request: Pin INT[1]
+    GPIO8_INT = 30,     //!< Signal on Pin GPIO[8]
+    GPIO9_INT = 31,     //!< Signal on Pin GPIO[9]
+};
+//! \}
 
 //------------------------------------------------------------------------------
 
-// DMA controller definitions
+//! \name DMA Controller
+//! \brief DMA controller definitions
+//! \{
 
+//! DMA controller base address: writes unbuffered
 #define DMA_BASE_UNBUF  0x30000000
+//! DMA controller base address: writes buffered
 #define DMA_BASE_BUF    0x40000000
 
+//! DMA controller base address
 #ifdef BUF_WRITE
 #define DMA_BASE        DMA_BASE_BUF
 #else
 #define DMA_BASE        DMA_BASE_UNBUF
 #endif
 
+//! DMA controller: system address register offset
 #define DMA_ADRS        INT_AT(0x04)
+//! DMA controller: TCM address register offset
 #define DMA_ADRT        INT_AT(0x08)
+//! DMA controller: transfer description register offset
 #define DMA_DESC        INT_AT(0x0c)
+//! DMA controller: control register offset
 #define DMA_CTRL        INT_AT(0x10)
+//! DMA controller: status register offset
 #define DMA_STAT        INT_AT(0x14)
+//! DMA controller: global control register offset
 #define DMA_GCTL        INT_AT(0x18)
+//! DMA controller: calculated CRC register offset
 #define DMA_CRCC        INT_AT(0x1c)
+//! DMA controller: received CRC register offset
 #define DMA_CRCR        INT_AT(0x20)
+//! DMA controller: timeout value register offset
 #define DMA_TMTV        INT_AT(0x24)
+//! DMA controller: statistics counters control register offset
 #define DMA_SCTL        INT_AT(0x28)
 
 #define DMA_STAT0       INT_AT(0x40)
@@ -295,19 +397,29 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 #define DMA_STAT6       INT_AT(0x58)
 #define DMA_STAT7       INT_AT(0x5c)
 
+//! DMA controller: current system address register offset
 #define DMA_AD2S        INT_AT(0x104)
+//! DMA controller: current TCM address register offset
 #define DMA_AD2T        INT_AT(0x108)
+//! DMA controller: current descriptor register offset
 #define DMA_DES2        INT_AT(0x10c)
 
+//! DMA controller: CRC polynomial base address
 #define DMA_CRCT        INT_AT(0x180)
+//! \}
 
 //------------------------------------------------------------------------------
 
-// PL340 definitions
+//! \name Memory Controler
+//! \brief PL340 definitions
+//! \{
 
+//! Memory controller base address: writes unbuffered
 #define PL340_BASE_UNBUF    0xf0000000
+//! Memory controller base address: writes buffered
 #define PL340_BASE_BUF      0xe0000000
 
+//! Memory controller base address
 #ifdef BUF_WRITE
 #define PL340_BASE      PL340_BASE_BUF
 #else
@@ -363,14 +475,20 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 #define DLL_STATUS      INT_AT(0x300)
 #define DLL_CONFIG0     INT_AT(0x304)
 #define DLL_CONFIG1     INT_AT(0x308)
+//! \}
 
 //------------------------------------------------------------------------------
 
-// Router definitions
+//! \name Router Controller
+//! \brief Router definitions
+//! \{
 
+//! Router base address: writes unbuffered
 #define RTR_BASE_UNBUF  0xf1000000
+//! Router base address: writes buffered
 #define RTR_BASE_BUF    0xe1000000
 
+//! Router base address
 #ifdef BUF_WRITE
 #define RTR_BASE        RTR_BASE_BUF
 #else
@@ -460,20 +578,27 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 #define RTR_P2P_TOP         (RTR_P2P_BASE + P2P_TABLE_SIZE * 4)
 
 #define MC_CAM_WIDTH        32
+//! \}
 
 //------------------------------------------------------------------------------
 
-// System controller definitions
+//! \name System Controller
+//! \brief System controller definitions
+//! \{
 
+//! System controller base address: writes unbuffered
 #define SYSCTL_BASE_UNBUF   0xf2000000
+//! System controller base address: writes buffered
 #define SYSCTL_BASE_BUF     0xe2000000
 
+//! System controller base address
 #ifdef BUF_WRITE
 #define SYSCTL_BASE     SYSCTL_BASE_BUF
 #else
 #define SYSCTL_BASE     SYSCTL_BASE_UNBUF
 #endif
 
+//! Magic code for System Controller
 #define SC_CODE         0x5ec00000
 
 #define CHIP_ID_CODE    0x59111012
@@ -532,14 +657,20 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 #define RST_USER        2
 #define RST_SW          3
 #define RST_WDI         4
+//! \}
 
 //------------------------------------------------------------------------------
 
-// Watchdog timer definitions
+//! \name Watchdog Controller
+//! \brief Watchdog timer definitions
+//! \{
 
+//! Watchdog timer base address: writes unbuffered
 #define WDOG_BASE_UNBUF     0xf3000000
+//! Watchdog timer base address: writes buffered
 #define WDOG_BASE_BUF       0xe3000000
 
+//! Watchdog timer base address
 #ifdef BUF_WRITE
 #define WDOG_BASE       WDOG_BASE_BUF
 #else
@@ -558,29 +689,43 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 
 #define WD_INT_B        1
 #define WD_RST_B        2
+//! \}
 
 //------------------------------------------------------------------------------
 
-// Ethernet definitions
+//! \name Ethernet Controller
+//! Ethernet controller definitions
+//! \{
 
+//! Ethernet controller base address: writes unbuffered
 #define ETH_BASE_UNBUF      0xf4000000
+//! Ethernet controller base address: writes buffered
 #define ETH_BASE_BUF        0xe4000000
 
+//! Ethernet controller base address
 #ifdef BUF_WRITE
 #define ETH_BASE        ETH_BASE_BUF
 #else
 #define ETH_BASE        ETH_BASE_UNBUF
 #endif
 
+//! Ethernet transmit buffer: base address
 #define ETH_TX_BASE     (ETH_BASE + 0x0000)
+//! Ethernet transmit buffer: size
 #define ETH_TX_SIZE     0x0600
+//! Ethernet transmit buffer: top address
 #define ETH_TX_TOP      (ETH_TX_BASE + ETH_TX_SIZE)
 
+//! Ethernet receive buffer: base address
 #define ETH_RX_BASE     (ETH_BASE + 0x4000)
+//! Ethernet receive buffer: size
 #define ETH_RX_SIZE     0x0c00
+//! Ethernet receive buffer: top address
 #define ETH_RX_TOP      (ETH_RX_BASE + ETH_RX_SIZE)
 
+//! Ethernet receive descriptors: base address
 #define ETH_RX_DESC_RAM (ETH_BASE + 0x8000)
+//! Ethernet controller registers: base address
 #define ETH_REGS        (ETH_BASE + 0xc000)
 
 #define ETH_CONTROL     INT_AT(0x00)
@@ -605,10 +750,13 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 #define PHY_CTRL_DOUT       4
 #define PHY_CTRL_OE         8
 #define PHY_CTRL_CLK        16
+//! \}
 
 //------------------------------------------------------------------------------
 
-// Handy constants that point to hardware
+//! \name Memory Map
+//! \brief Handy constants that point to hardware
+//! \{
 
 //! Communications controller
 static volatile uint * const cc  = (uint *) CC_BASE;
@@ -657,7 +805,9 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 
 //------------------------------------------------------------------------------
 
-// Spinnaker packet definitions
+//! \name SpiNNaker Packets
+//! \brief SpiNNaker packet definitions
+//! \{
 
 #define PKT_MC          0x00000000  //!< Bits in control byte
 #define PKT_P2P         0x00400000
@@ -671,10 +821,13 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 #define PKT_P2P_PL      (PKT_P2P + PKT_PL)
 #define PKT_NN_PL       (PKT_NN + PKT_PL)
 #define PKT_FR_PL       (PKT_FR + PKT_PL)
+//! \}
 
 //------------------------------------------------------------------------------
 
-// Clock & PLL definitions
+//! \name PLL Definitions
+//! \brief Clock & PLL definitions
+//! \{
 
 #define CLK_XTAL_MHZ    10          //!< Crystal frequency (MHz)
 
@@ -686,10 +839,13 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 #define PLL_LOCK_TIME   80          // Microseconds
 
 #define PLL_CLK_SEL     0x809488a5  //!< CPU/2, SYS/3, RTR/3, MEM/1
+//! \}
 
 //------------------------------------------------------------------------------
 
-// Bits in GPIO[31:0]
+//! \name GPIO
+//! \brief Bits in GPIO[31:0]
+//! \{
 
 // Serial ROM
 
@@ -720,10 +876,13 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 // LEDs
 
 #define LED_0           0x00000001  //!< LED on bit 0
+//! \}
 
 //------------------------------------------------------------------------------
 
-// ARM CPSR bits
+//! \name CPSR Misc
+//! \brief ARM CPSR bits
+//! \{
 
 #define MODE_USER       0x10
 #define MODE_FIQ        0x11
@@ -738,6 +897,7 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 #define IMASK_IRQ       0x80
 #define IMASK_FIQ       0x40
 #define IMASK_ALL       0xc0
+//! \}
 
 //------------------------------------------------------------------------------
 
