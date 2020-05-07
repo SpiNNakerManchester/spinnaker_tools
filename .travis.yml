@@ -25,6 +25,12 @@ addons:
       - freeglut3-dev
       - openjdk-8-jre-headless
       - ant
+      - doxygen
+jobs:
+  include:
+    - name: Build
+      env:
+        - DEPLOY_DIR=$PWD/html
 
 install:
   - export SPINN_DIRS=$PWD
@@ -56,3 +62,22 @@ script:
   - support/run-vera.sh include -P max-line-length=200 -P max-file-length=3000
   # Copyright check
   - support/rat.sh run
+  # Documentation build
+  - doxygen
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  keep_history: true
+  # Inject magic environment variable from Travis Job Configuration page
+  token: $GITHUB_TOKEN
+  local_dir: $DEPLOY_DIR
+  on:
+    # Only enable deployment of any branch if we actually have supplied a token
+    # Which branches to deploy is then controlled through Travis config page
+    # We also limit deployment to the named branches; others are not to be 
+    # deployed by policy anyway.
+    branch:
+      - doxygen
+      - master
+    condition: -n "$GITHUB_TOKEN"
