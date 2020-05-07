@@ -132,7 +132,7 @@ uint spin1_int_enable(void);
 *
 * SOURCE
 */
-void configure_communications_controller()
+static void configure_communications_controller(void)
 {
     // initialize transmitter control to send MC packets
     cc[CC_TCR] = 0x00000000;
@@ -155,7 +155,7 @@ void configure_communications_controller()
 *
 * SOURCE
 */
-void configure_dma_controller()
+static void configure_dma_controller(void)
 {
     dma[DMA_CTRL] = 0x3f; // Abort pending and active transfers
     dma[DMA_CTRL] = 0x0d; // clear possible transfer done and restart
@@ -203,7 +203,7 @@ void configure_dma_controller()
 *
 * SOURCE
 */
-void configure_timer1(uint time, uint phase)
+static void configure_timer1(uint time, uint phase)
 {
     // do not enable yet!
     tc[T1_CONTROL] = 0;
@@ -236,7 +236,7 @@ void configure_timer1(uint time, uint phase)
 *
 * SOURCE
 */
-void configure_vic(uint enable_timer)
+static void configure_vic(uint enable_timer)
 {
     uint fiq_select = 0;
     uint int_select = ((1 << TIMER1_INT)   |
@@ -342,7 +342,7 @@ void spin1_pause()
 }
 
 
-void resume()
+static void resume()
 {
     if (resume_sync == 1) {
         resume_sync = 0;
@@ -370,7 +370,7 @@ void spin1_resume(sync_bool sync)
 }
 
 
-uint resume_wait()
+static uint resume_wait(void)
 {
     uint bit = 1 << sark.virt_cpu;
 
@@ -416,7 +416,7 @@ uint resume_wait()
 *
 * SOURCE
 */
-void dispatch()
+static void dispatch()
 {
     uint i;
     uint cpsr;
@@ -603,7 +603,7 @@ void spin1_callback_off(uint event_id)
 *
 * SOURCE
 */
-void deschedule(uint event_id)
+static void deschedule(uint event_id)
 {
     uint cpsr = spin1_irq_disable();
 
@@ -710,7 +710,7 @@ void spin1_set_timer_tick_and_phase(uint time, uint phase)
 *
 * SOURCE
 */
-void clean_up()
+static void clean_up(void)
 {
     uint cpsr = spin1_int_disable();
 
@@ -748,7 +748,7 @@ void clean_up()
 *
 * SOURCE
 */
-void report_debug()
+static void report_debug(void)
 {
 #if API_DEBUG == TRUE
     if (leadAp) {       // Only the leader appl. core reports router data
@@ -791,7 +791,7 @@ void report_debug()
 *
 * SOURCE
 */
-void report_warns()
+static void report_warns(void)
 {
 #if API_WARN == TRUE        // report warnings
     if (diagnostics.warnings & TASK_QUEUE_FULL) {
@@ -839,7 +839,7 @@ void spin1_rte(rte_code code)
     sv->led_period = 8;
 }
 
-uint start(sync_bool sync, uint start_paused)
+static uint start(sync_bool sync, uint start_paused)
 {
     paused = start_paused;
     if (paused) {
@@ -1063,7 +1063,9 @@ void spin1_memcpy(void *dst, void const *src, uint len)
 *
 * SOURCE
 */
-void spin1_flush_rx_packet_queue()
+//! \details
+//!     Works by calling deschedule() for each queue.
+void spin1_flush_rx_packet_queue(void)
 {
     deschedule(MC_PACKET_RECEIVED);
     deschedule(MCPL_PACKET_RECEIVED);
@@ -1085,7 +1087,10 @@ void spin1_flush_rx_packet_queue()
 *
 * SOURCE
 */
-void spin1_flush_tx_packet_queue()
+//! \details
+//!     Works by adjusting the queue pointers to make it appear empty to the
+//!     consumer
+void spin1_flush_tx_packet_queue(void)
 {
     uint cpsr = spin1_irq_disable();
 
@@ -1359,7 +1364,7 @@ uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 *
 * SOURCE
 */
-void schedule_sysmode(uchar event_id, uint arg0, uint arg1)
+static void schedule_sysmode(uchar event_id, uint arg0, uint arg1)
 {
     if (callback[event_id].priority <= 0) {
         callback[event_id].cback(arg0, arg1);

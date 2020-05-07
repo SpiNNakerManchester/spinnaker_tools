@@ -29,7 +29,9 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
+//! SpiNNaker Low Level Tools Version: string
 #define SLLT_VER_STR    "3.2.5"
+//! SpiNNaker Low Level Tools Version: BCD
 #define SLLT_VER_NUM    0x030205
 
 #endif

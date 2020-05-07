@@ -66,6 +66,7 @@
 Defines and typedefs to rationalise ARM/GNU interrupt handlers
 */
 
+#ifndef DOXYGEN
 #ifdef __GNUC__
 
 # define INT_HANDLER \
@@ -86,7 +87,16 @@ typedef void (*int_handler) (void); //!< Interrupt handler
     __attribute__ ((malloc))
 typedef __irq void (*int_handler) (void);   //!< Interrupt handler
 
+#else
+typedef void (*int_handler) (void); //!< Interrupt handler
 #endif
+
+#ifndef NONNULL
+#define NONNULL __attribute__((nonnull))
+#define NONNULL2 __attribute__((nonnull(2)))
+#define NORETURN __attribute__((noreturn))
+#endif
+#endif // !DOXYGEN
 
 //------------------------------------------------------------------------------
 
@@ -614,7 +624,8 @@ typedef struct sdp_msg {        // SDP message - 292 bytes
 
 // Legacy definitions...
 
-typedef struct sdp_hdr {        // SDP header
+//! SDP header: legacy
+typedef struct sdp_hdr {
     uchar flags;
     uchar tag;
     uchar dest_port;
@@ -623,7 +634,8 @@ typedef struct sdp_hdr {        // SDP header
     ushort srce_addr;
 } sdp_hdr_t;
 
-typedef struct cmd_hdr {        // Command header
+//! Command header: legacy
+typedef struct cmd_hdr {
     ushort cmd_rc;
     ushort flags;
     uint arg1;
@@ -966,7 +978,7 @@ SYSRAM_BASE +-------------------------------+   f5000000
 
 #define SV_VCPU         SYS_USER_TOP                     //!< e5007000
 #define SV_SPARE        (SV_VCPU + NUM_CPUS * VCPU_SIZE) //!< e5007900
-#define SPARE_SIZE      (SV_RANDOM - SV_SPARE)           //!<
+#define SPARE_SIZE      (SV_RANDOM - SV_SPARE)           //!< spare space size
 
 #define SROM_FLAG_BASE  (SV_SROM)                        //!< e5007fe0
 #define STATUS_MAP_BASE (SV_UBASE)                       //!< e5007f80
@@ -1095,15 +1107,18 @@ typedef struct sv {
 
 static sv_t*   const sv         = (sv_t *)   SV_SV;
 
-// "sv_vcpu" points to base of array of "vcpu_t"
+//! "sv_vcpu" points to base of array of "vcpu_t"
 
 static vcpu_t* const sv_vcpu    = (vcpu_t *) SV_VCPU;
 
+//! SROM
 static uint*   const sv_srom    = (uint *)   SV_SROM;
+//! RANDOM
 static uint*   const sv_random  = (uint *)   SV_RANDOM;
+//! VECTORS
 static uint*   const sv_vectors = (uint *)   SV_VECTORS;
 
-// !!
+//! Board information
 static uint*   const sv_board_info = (uint *)   SV_SPARE;
 
 
@@ -1252,31 +1267,31 @@ This means that the core will respond to interrupts but the function
 never returns.
 */
 
-__attribute__((noreturn)) void
+NORETURN void
 cpu_sleep(void);
 
 /*!
 Puts the core into sleep mode and disable all interrupts in the VIC.
 This means that the core sleeps and cannot be woken up. Usually used
 when a fatal error has occurred. Application code will probably want
-to call rt_error on a fatal error.
+to call rt_error() on a fatal error.
 */
 
-__attribute__((noreturn)) void
+NORETURN void
 cpu_shutdown(void);
 
 /*!
 Called to signal a fatal error. The error code argument is placed in a
 known place in the VCPU block for this core as is a dump of r0-r7, lr,
 sp and cpsr. Optional arguments will end up in the register dump as
-r1, r2, etc.  Calls cpu_shutdown when all relevant state has been
+r1, r2, etc.  Calls cpu_shutdown() when all relevant state has been
 dumped.
 
-\param code an error code (usually from enum rte_code_e)
+\param[in] code: an error code (usually from enum rte_code_e)
 \param ... further (integer) arguments
 */
 
-__attribute__((noreturn)) void
+NORETURN void
 rt_error(uint code, ...);
 
 /*!
@@ -1284,12 +1299,12 @@ Copy "n" bytes of memory from "src" to "dest". The memory is copied
 byte by byte and so will be inefficient for large values of "n".
 Not intended for use where source and destination blocks overlap.
 
-\param dest destination buffer address
-\param src source buffer address
-\param n number of bytes to copy
+\param dest: destination buffer address
+\param src: source buffer address
+\param n: number of bytes to copy
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 sark_mem_cpy(void *dest, const void *src, uint n);
 
 /*!
@@ -1301,7 +1316,7 @@ Not intended for use where source and destination strings overlap.
 \param src source string address
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 sark_str_cpy(char *dest, const char *src);
 
 /*!
@@ -1312,7 +1327,7 @@ terminator is not included in the count.
 \return number of characters
 */
 
-__attribute__((nonnull)) uint
+NONNULL uint
 sark_str_len (char *string);
 
 /*!
@@ -1327,11 +1342,11 @@ void sark_cpu_state (cpu_state state);
 Copies an SDP message from one buffer to another. Quite efficient for
 long messages as it uses "sark_word_cpy"
 
-\param to pointer to destination buffer
-\param from pointer to source buffer
+\param to: pointer to destination buffer
+\param from: pointer to source buffer
 */
 
-__attribute__((nonnull)) void sark_msg_cpy(sdp_msg_t *to, sdp_msg_t *from);
+NONNULL void sark_msg_cpy(sdp_msg_t *to, sdp_msg_t *from);
 
 /*!
 A fast copy for memory buffers. The byte count "n" will be rounded up
@@ -1341,12 +1356,12 @@ a time for efficiency. The "src" and "dest" pointers must be word
 aligned. Not intended for use where source and destination blocks
 overlap.
 
-\param dest destination buffer address
-\param src source buffer address
-\param n number of bytes to copy (routine rounds up to multiple of 4)
+\param[out] dest: destination buffer address
+\param[in] src: source buffer address
+\param[in] n: number of bytes to copy (routine rounds up to multiple of 4)
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 sark_word_cpy(void *dest, const void *src, uint n);
 
 /*!
@@ -1354,12 +1369,12 @@ A fast memory setter for a block of memory. The byte count "n" must be
 a multiple of the word size and the destination pointer must be word
 aligned. The inner loop fills 4 words at a time for efficiency.
 
-\param dest destination buffer address
-\param data word to be used for filling
-\param n number of bytes to fill (must be multiple of 4)
+\param[out] dest: destination buffer address
+\param[in] data: word to be used for filling
+\param[in] n: number of bytes to fill (must be multiple of 4)
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 sark_word_set(void *dest, uint data, uint n);
 
 /*!
@@ -1398,7 +1413,7 @@ overflow from 255.
 \return post-increment value of semaphore
 */
 
-__attribute__((nonnull)) uint sark_sema_raise(uchar *sema);
+NONNULL uint sark_sema_raise(uchar *sema);
 
 /*!
 Lower (decrement) an 8-bit semaphore variable which is accessed via a
@@ -1410,7 +1425,7 @@ Returns the pre-decrement value.
 \return pre-decrement value of semaphore
 */
 
-__attribute__((nonnull)) uint sark_sema_lower(uchar *sema);
+NONNULL uint sark_sema_lower(uchar *sema);
 
 /*!
 Raise a semaphore associated with the AppID running on this core. The
@@ -1634,12 +1649,12 @@ normally. A timeout of 10ms is probably appropriate in most
 circumstances. The call can fail either because of a timeout or if
 there are no shared memory SDP buffers available.
 
-\param msg pointer to an SDP message buffer
-\param timeout time in ms before sending is abandoned
+\param msg: pointer to an SDP message buffer
+\param timeout: time in ms before sending is abandoned
 \return 1 if successful, 0 for failure
 */
 
-__attribute__((nonnull)) uint
+NONNULL uint
 sark_msg_send(sdp_msg_t *msg, uint timeout);
 
 /*!
@@ -1698,9 +1713,10 @@ starting at msg->arg1. If half or word alignment is specified, the
 address and count must be 2 or 4 byte aligned. (Unlikely to be
 called by application code).
 
-\param msg->arg1 first address to be read (suitably aligned)
-\param msg->arg2 number of bytes to read (suitably aligned)
-\param msg->arg3 mode of reading (TYPE_BYTE, TYPE_HALF or TYPE_WORD)
+\param msg: The message
+ * `msg->arg1`: first address to be read (suitably aligned)
+ * `msg->arg2`: number of bytes to read (suitably aligned)
+ * `msg->arg3`: mode of reading (TYPE_BYTE, TYPE_HALF or TYPE_WORD)
 
 \return size of returned message
 */
@@ -1715,10 +1731,11 @@ starting at msg->data. If half or word alignment is specified, the
 address and count must be 2 or 4 byte aligned. (Unlikely to be
 called by application code).
 
-\param msg->arg1 first address to be written (suitably aligned)
-\param msg->arg2 number of bytes to write (suitably aligned)
-\param msg->arg3 mode of writing (TYPE_BYTE, TYPE_HALF or TYPE_WORD)
-\param msg->data data to be written
+\param msg: The message
+ * `msg->arg1`: first address to be written (suitably aligned)
+ * `msg->arg2`: number of bytes to write (suitably aligned)
+ * `msg->arg3`: mode of writing (TYPE_BYTE, TYPE_HALF or TYPE_WORD)
+ * `msg->data`: data to be written
 
 \return size of returned message (usually 0)
 */
@@ -1729,9 +1746,10 @@ uint sark_cmd_write (sdp_msg_t *msg);
 SCP handler for the Fill command which fills memory with a data word.
 (Unlikely to be called by application code).
 
-\param msg->arg1 first address to be written (must be word aligned)
-\param msg->arg2 data word
-\param msg->arg3 byte count (must be non-zero and a multiple of 4)
+\param msg: The message
+ * `msg->arg1`: first address to be written (must be word aligned)
+ * `msg->arg2`: data word
+ * `msg->arg3`: byte count (must be non-zero and a multiple of 4)
 
 \return size of returned message (usually 0)
 */
@@ -1746,9 +1764,9 @@ word of each block is a pointer to the next block. Returns a pointer
 to the last block. The buffer can be used to initialise a "root"
 struct of type mem_block_t.
 
-\param buf base address of memory buffer (word aligned)
-\param size of each block (at least 4 and a multiple of 4)
-\param count number of blocks
+\param buf: base address of memory buffer (word aligned)
+\param size: of each block (at least 4 and a multiple of 4)
+\param count: number of blocks
 \return pointer to last block
 */
 
@@ -1758,7 +1776,7 @@ void *sark_block_init (void *buf, uint size, uint count);
 Generic call to get a buffer from a pool whose "root" is supplied.
 Returns pointer to buffer on success, NULL on failure.
 
-\param root pointer to a block pool held in a mem_block_t
+\param root: pointer to a block pool held in a mem_block_t
 \return pointer to a free block if available or NULL if not
 */
 
@@ -1768,8 +1786,8 @@ void *sark_block_get (mem_block_t *root);
 Generic call to free a buffer into a pool whose "root" is supplied.
 The block should have been allocated from the same pool previously!
 
-\param root pointer to a block pool held in a mem_block_t
-\param blk pointer to the block to be freed.
+\param root: pointer to a block pool held in a mem_block_t
+\param blk: pointer to the block to be freed.
 */
 
 void sark_block_free (mem_block_t *root, void *blk);
@@ -1793,10 +1811,10 @@ concurrently, a hardware lock is used to ensure exclusive
 access. Interrupts are turned off while this occurs but this should be
 for a relatively short time (1-5us ??)
 
-\param msg pointer to the message
+\param msg: pointer to the message
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 sark_shmsg_free(sdp_msg_t *msg);
 
 /*!
@@ -1840,7 +1858,7 @@ to char array
 \param ... arguments to be formatted
 */
 
-__attribute__((nonnull(2))) void
+NONNULL2 void
 io_printf(char *stream, char *format, ...);
 
 /*!
@@ -1873,22 +1891,25 @@ Returns either a pointer to the block on success or NULL on failure.
 The total amount of memory available for allocation is around 62KB
 less all of the static variables used by the application.
 
-\param count number of sub-blocks to allocate
-\param size size of each sub-block
+\param count: number of sub-blocks to allocate
+\param size: size of each sub-block
 \return pointer to block or NULL
 */
 
-SARK_IS_A_CALLOC(1, 2) void *
+#ifndef DOXYGEN
+SARK_IS_A_CALLOC(1, 2)
+#endif
+void *
 sark_alloc(uint count, uint size);
 
 /*!
 Frees a block of memory which was previously allocated by sark_alloc
 (ie from the DTCM heap).
 
-\param ptr pointer to memory block
+\param ptr: pointer to memory block
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 sark_free(void *ptr);
 
 /*!
@@ -1912,10 +1933,10 @@ caller's, the user should set sv->app_data[app_id].clean to 0 for the
 application concerned.  This ensures that the memory will be cleaned
 up by a stop signal.
 
-\param heap the heap from which the block should be allocated
-\param size the size of the block in bytes
-\param tag 8-bit tag
-\param flag flags to control locking and AppID
+\param heap: the heap from which the block should be allocated
+\param size: the size of the block in bytes
+\param tag: 8-bit tag
+\param flag: flags to control locking and AppID
 \return pointer to allocated block or NULL on failure
 */
 
@@ -1932,10 +1953,10 @@ is set to NULL.
 
 \param heap the heap to which the free block should be returned
 \param ptr a pointer to the memory block to be freed
-\param flags bit 0 set if the heap should be locked during free
+\param flag bit 0 set if the heap should be locked during free
 */
 
-__attribute__((nonnull(2))) void
+NONNULL2 void
 sark_xfree(heap_t *heap, void *ptr, uint flag);
 
 /*!
@@ -1956,8 +1977,8 @@ Search the supplied heap and return the size of the largest free
 block (in bytes). The flag parameter allows the heap to be locked
 while the search takes place.
 
-\param heap the heap to be searched
-\param flag controls locking of heap transactions
+\param heap: the heap to be searched
+\param flag: controls locking of heap transactions
 \return size of largest block
 */
 
@@ -2068,7 +2089,7 @@ SLOT_FIQ in which case the FIQ interrupt is set up.
 \param handler pointer to the handler code
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 sark_vic_set(vic_slot slot, uint interrupt, uint enable, int_handler handler);
 
 /*!
@@ -2140,7 +2161,7 @@ copy if non-zero. Otherwise it will be taken from SARK.
 \return 1 if successful, 0 on failure (count or entry out of range)
 */
 
-__attribute__((nonnull)) uint
+NONNULL uint
 rtr_mc_load(rtr_entry_t *e, uint count, uint offset, uint app_id);
 
 /*!
@@ -2171,7 +2192,7 @@ is maintained by the system.
 \return 1 on success, 0 on failure (entry out of range)
 */
 
-__attribute__((nonnull)) uint rtr_mc_get(uint entry, rtr_entry_t *r);
+NONNULL uint rtr_mc_get(uint entry, rtr_entry_t *r);
 
 /*!
 Sets the fixed-route register in the router. Only the lower 24 bits
@@ -2230,7 +2251,7 @@ the counters are enabled. (Unlikely to be used by application code).
 \param table pointer to table of 16 initialisation words
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 rtr_diag_init(const uint *table);
 
 /*!
@@ -2289,7 +2310,7 @@ Free a previously allocated event. The event MUST NOT have been scheduled.
 \param e the event to free
 */
 
-__attribute__((nonnull))
+NONNULL
 void event_free(event_t *e);
 
 /*!
@@ -2302,13 +2323,13 @@ and "arg2" fields. The "ID", "next" and "time" fields are also set.
 \return pointer to event if successful, NULL otherwise
 */
 
-__attribute__((nonnull)) event_t *
+NONNULL event_t *
 event_new(event_proc proc, uint arg1, uint arg2);
 
-/*
-// Configure a (reusable) event that has already been allocated.
-// Configure fields "proc", "arg1" and "arg2" from the parameters.
-// Fields "next" and "time" are set to default values.
+/*!
+Configure a (reusable) event that has already been allocated.
+Configure fields "proc", "arg1" and "arg2" from the parameters.
+Fields "next" and "time" are set to default values.
 
 \param event pointer to an event (to be configured)
 \param proc pointer to an event_proc
@@ -2438,7 +2459,7 @@ etc.
 \return zero on failure (invalid priority), 1 otherwise
 */
 
-__attribute__((nonnull)) uint
+NONNULL uint
 event_queue(event_t *e, event_priority priority);
 
 /*!
@@ -2455,7 +2476,7 @@ queue.
 event), 1 otherwise
 */
 
-__attribute__((nonnull)) uint
+NONNULL uint
 event_queue_proc (event_proc proc, uint arg1, uint arg2, event_priority priority);
 
 /*!
@@ -2485,7 +2506,7 @@ once.
 \param slot the VIC slot to use (or SLOT_FIQ for FIQs)
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 event_register_int(event_proc proc, event_type event, vic_slot slot);
 
 /*!
@@ -2502,7 +2523,7 @@ used.
 \param priority the priority of the event queue to use
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 event_register_queue(event_proc proc, event_type event, vic_slot slot,
 	event_priority priority);
 
@@ -2515,7 +2536,7 @@ its first argument and the value of "arg2" as its second argument.
 \param arg2 the second argument to be supplied to the event_proc
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 event_register_pause(event_proc proc, uint arg2);
 
 /*!
@@ -2586,7 +2607,7 @@ e->time == 0
 \param time delay in microseconds (non-zero)
 */
 
-__attribute__((nonnull)) void
+NONNULL void
 timer_schedule(event_t *e, uint time);
 
 /*!
@@ -2601,7 +2622,7 @@ second timer has been set up by a call to timer_register.
 \return zero if allocation of new event failed, one otherwise
 */
 
-__attribute__((nonnull)) uint
+NONNULL uint
 timer_schedule_proc(event_proc proc, uint arg1, uint arg2, uint time);
 
 /*!
@@ -2621,7 +2642,7 @@ to terminate on the timer interrupt.
 \param ID ID of event to cancel
 */
 
-__attribute__((nonnull)) void timer_cancel(event_t *e, uint ID);
+NONNULL void timer_cancel(event_t *e, uint ID);
 
 /*!
 Initialise a statically allocated event to be used in place

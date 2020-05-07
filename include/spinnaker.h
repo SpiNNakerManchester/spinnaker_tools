@@ -46,12 +46,12 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 // Miscellaneous...
 
 #ifndef NULL
-#define NULL            0           // Null pointer value
+#define NULL            0           //!< Null pointer value
 #endif
 
-#define BIT_31          0x80000000  // Bit number 31
+#define BIT_31          0x80000000  //!< Bit number 31
 
-// Define BUF_WRITE to place all peripherals & memories in buffered write space
+//! Define BUF_WRITE to place all peripherals & memories in buffered write space
 
 #define BUF_WRITE       1
 
@@ -439,11 +439,11 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 #define MC_CORE_ROUTE(x)   (1 << ((x) + NUM_LINKS))
 #define MC_LINK_ROUTE(x)   (1 << (x))
 
-#define P2P_EPW         8           // Entries per word
-#define P2P_LOG_EPW     3           // Log of entries per word
-#define P2P_EMASK       (P2P_EPW-1) // Entries per word - 1
-#define P2P_BPE         3           // Bits per entry
-#define P2P_BMASK       7           // Mask for entry bits
+#define P2P_EPW         8           //!< Entries per word
+#define P2P_LOG_EPW     3           //!< Log of entries per word
+#define P2P_EMASK       (P2P_EPW-1) //!< Entries per word - 1
+#define P2P_BPE         3           //!< Bits per entry
+#define P2P_BMASK       7           //!< Mask for entry bits
 
 #define P2P_INIT        0x00db6db6  // All thrown away!
 
@@ -659,10 +659,10 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 
 // Spinnaker packet definitions
 
-#define PKT_MC          0x00000000  // Bits in control byte
+#define PKT_MC          0x00000000  //!< Bits in control byte
 #define PKT_P2P         0x00400000
-#define PKT_NN          0x00800000  // Normal NN
-#define PKT_NND         0x00a00000  // Peek/poke NN
+#define PKT_NN          0x00800000  //!< Normal NN
+#define PKT_NND         0x00a00000  //!< Peek/poke NN
 #define PKT_FR          0x00c00000
 
 #define PKT_PL          0x00020000  // Payload bit
@@ -676,7 +676,7 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 
 // Clock & PLL definitions
 
-#define CLK_XTAL_MHZ    10          // Crystal frequency (MHz)
+#define CLK_XTAL_MHZ    10          //!< Crystal frequency (MHz)
 
 #define PLL_260         0x0007011a  // Assuming 10 MHz in
 #define PLL_300         0x0007011e  //
@@ -685,7 +685,7 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 
 #define PLL_LOCK_TIME   80          // Microseconds
 
-#define PLL_CLK_SEL     0x809488a5  // CPU/2, SYS/3, RTR/3, MEM/1
+#define PLL_CLK_SEL     0x809488a5  //!< CPU/2, SYS/3, RTR/3, MEM/1
 
 //------------------------------------------------------------------------------
 
@@ -719,7 +719,7 @@ static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 
 // LEDs
 
-#define LED_0           0x00000001  // LED on bit 0
+#define LED_0           0x00000001  //!< LED on bit 0
 
 //------------------------------------------------------------------------------
 
