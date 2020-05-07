@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// spinn_srom.c     Serial ROM interface routines for Spinnaker
-//
-// Copyright (C)    The University of Manchester - 2009, 2010
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Serial ROM interface routines for Spinnaker
+//!
+//! \copyright &copy; The University of Manchester - 2009, 2010
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*

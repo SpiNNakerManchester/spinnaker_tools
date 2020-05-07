@@ -1,12 +1,21 @@
-/****a* spinn_api_params.h/spinn_api_params_header
+/*! \file
 *
-* SUMMARY
+* \brief
 *  SpiNNaker API internal parameters and function prototypes
 *
-* AUTHOR
+* \author
 *  Luis Plana   - lap@cs.man.ac.uk
 *  Thomas Sharp - thomas.sharp@cs.man.ac.uk
 *
+* \date 03 May 2011
+*
+* \copyright
+*  &copy; The University of Manchester, 2011. All rights reserved.
+*  SpiNNaker Project
+*  Advanced Processor Technologies Group
+*  School of Computer Science
+*
+* \internal
 * DETAILS
 *  Created on       : 03 May 2011
 *  Version          : $Revision: 2023 $
@@ -14,12 +23,6 @@
 *  Last modified by : $Author: plana $
 *  $Id: spin1_api_params.h 2023 2012-10-26 09:37:47Z plana $
 *  $HeadURL: https://solem.cs.man.ac.uk/svn/spin1_api/trunk/src/spin1_api_params.h $
-*
-* COPYRIGHT
-*  Copyright (c) The University of Manchester, 2011. All rights reserved.
-*  SpiNNaker Project
-*  Advanced Processor Technologies Group
-*  School of Computer Science
 *
 *******/
 

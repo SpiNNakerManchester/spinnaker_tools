@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// scamp-boot.c     BootROM support for SC&MP
-//
-// Copyright (C)    The University of Manchester - 2009-2012
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     BootROM support for SC&MP
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*

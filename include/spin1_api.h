@@ -15,6 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file
+//! \brief Header file describing the SpiNNaker API runtime environment
 #ifndef __SPIN1_API_H__
 #define __SPIN1_API_H__
 

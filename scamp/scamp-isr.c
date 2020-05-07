@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// scamp-isr.c      SC&MP interrupt routines
-//
-// Copyright (C)    The University of Manchester - 2009, 2010
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     SC&MP interrupt routines
+//!
+//! \copyright &copy; The University of Manchester - 2009, 2010
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*

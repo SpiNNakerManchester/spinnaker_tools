@@ -15,6 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \dir
+//! \brief SpiNNaker Higher-Level Runtime Foundation
+//! \file
+//! \brief The SpiNNaker API runtime environment
 #include <sark.h>
 
 #include <spin1_api.h>

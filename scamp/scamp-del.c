@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
-//
-// scamp-del.c      SC&MP monitor delegation routines
-//
-// Copyright (C)    The University of Manchester - 2017, 2018
-//
-// Author           Luis Plana, APT Group, School of Computer Science
-// Email            luis.plana@manchester.ac.uk
-//
+//! \file
+//! \brief     SC&MP monitor delegation routines
+//!
+//! \copyright &copy; The University of Manchester - 2017-2019
+//!
+//! \author    Luis Plana, APT Group, School of Computer Science
+//! Email:     luis.plana@manchester.ac.uk
+//!
 //------------------------------------------------------------------------------
 
 /*

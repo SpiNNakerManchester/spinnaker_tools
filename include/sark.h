@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// sark.h           Header file describing the SARK runtime environment
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
+//! \file      sark.h
+//! \brief     Spinnaker Application Runtime Kernel API
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -25,8 +24,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-/*! Doxygen \file */
 
 #ifndef __SARK_H__
 #define __SARK_H__

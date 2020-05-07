@@ -15,6 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file
+//! \brief Miscellaneous test registers
+
 #ifndef SPINN_REGS_H
 #define SPINN_REGS_H
 

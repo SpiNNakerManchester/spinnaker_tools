@@ -15,9 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file
+//! \brief Main entry point for SARK
 #include "sark.h"
 
-
+//! Main entry point
 void c_main(void)
 {
     sark_cpu_state(CPU_STATE_IDLE);

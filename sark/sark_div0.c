@@ -15,6 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//------------------------------------------------------------------------------
+//! \file
+//! \brief     Functions to handle division by 0
+//!
+//! \copyright &copy; The University of Manchester - 2017-2019
+//!
+//------------------------------------------------------------------------------
+
 #include <sark.h>
 
 // Functions to handle division by 0 (simply RTE)

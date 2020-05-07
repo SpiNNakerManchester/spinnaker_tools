@@ -1,15 +1,13 @@
 //------------------------------------------------------------------------------
-//
-// sark_io.c        Simple character I/O library for Spinnaker
-//
-// Copyright (C)    The University of Manchester - 2009, 2010, 2011
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-//                  Fixed point formats by Paul Richmond (Univ. of Sheffield)
-//                                     and Dave Lester (APT Group)
-//
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Simple character I/O library for Spinnaker
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science.
+//!            Fixed point formats by Paul Richmond (Univ. of Sheffield)
+//!                               and Dave Lester (APT Group)
+//!
 //------------------------------------------------------------------------------
 
 /*

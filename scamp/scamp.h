@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// scamp.h          Header file for SC&MP
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
+//! \file
+//! \brief     Header file for SC&MP
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -33,9 +32,9 @@
 
 // Misc constants
 
-#define MAX_CPUS                20                      // Legacy const!
+#define MAX_CPUS                20                      //!< Legacy const!
 
-#define MONITOR_CPU             0                       // Virtual CPU number
+#define MONITOR_CPU             0                       //!< Virtual CPU number
 
 //------------------------------------------------------------------------------
 
@@ -59,21 +58,21 @@
 
 #define IPTAG_MAX               4
 
-#define IPFLAG_VALID            0x8000  // Entry is valid
-#define IPFLAG_TRANS            0x4000  // Entry is transient
-#define IPFLAG_ARP              0x2000  // Awaiting ARP resolution
+#define IPFLAG_VALID            0x8000  //!< Entry is valid
+#define IPFLAG_TRANS            0x4000  //!< Entry is transient
+#define IPFLAG_ARP              0x2000  //!< Awaiting ARP resolution
 
-#define IPFLAG_USE_SENDER       0x0400  // Use sender address and port
-#define IPFLAG_REV              0x0200  // Reverse IPTag
-#define IPFLAG_STRIP            0x0100  // Strip SDP headers
+#define IPFLAG_USE_SENDER       0x0400  //!< Use sender address and port
+#define IPFLAG_REV              0x0200  //!< Reverse IPTag
+#define IPFLAG_STRIP            0x0100  //!< Strip SDP headers
 
 //------------------------------------------------------------------------------
 
 // Bits in SDP Flags byte (3 used)
 
-#define SDPF_REPLY              0x80    // Reply expected
-#define SDPF_SUM                0x40    // Checksum before routing
-#define SDPF_NR                 0x20    // Don't route via P2P
+#define SDPF_REPLY              0x80    //!< Reply expected
+#define SDPF_SUM                0x40    //!< Checksum before routing
+#define SDPF_NR                 0x20    //!< Don't route via P2P
 
 //------------------------------------------------------------------------------
 
@@ -86,25 +85,25 @@
 // HW errors have bit 7 set & bit 6 set
 // SW errors have bit 7 set & bit 6 clr
 
-#define FAIL_RESET              0xc0            // Catch-all - set at reset
-#define FAIL_ROMX               0xc1            // Exception in ROM code
-#define FAIL_ITCM0              0xc2            // ITCM top 512 failure
-#define FAIL_ITCM1              0xc3            // ITCM main test failure
-#define FAIL_DTCM               0xc4            // DTCM test failure
+#define FAIL_RESET              0xc0            //!< Catch-all - set at reset
+#define FAIL_ROMX               0xc1            //!< Exception in ROM code
+#define FAIL_ITCM0              0xc2            //!< ITCM top 512 failure
+#define FAIL_ITCM1              0xc3            //!< ITCM main test failure
+#define FAIL_DTCM               0xc4            //!< DTCM test failure
 
-#define FAIL_TIMER              0xc5            // Timer reg test failed
-#define FAIL_VIC                0xc6            // VIC reg test failed
-#define FAIL_CC                 0xc7            // Comms ctlr reg test failed
-#define FAIL_DMA                0xc8            // DMAC reg test failed
+#define FAIL_TIMER              0xc5            //!< Timer reg test failed
+#define FAIL_VIC                0xc6            //!< VIC reg test failed
+#define FAIL_CC                 0xc7            //!< Comms ctlr reg test failed
+#define FAIL_DMA                0xc8            //!< DMAC reg test failed
 
-#define FAIL_MP                 0xc9            // Previous monitor proc failure
-#define FAIL_LATE               0xca            // App CPU failed to set CPU_OK
-#define FAIL_MANUF              0xcb            // App CPU in manuf test
-#define FAIL_SLEEP              0xcc            // Ordered to sleep in startup
+#define FAIL_MP                 0xc9            //!< Previous monitor proc failure
+#define FAIL_LATE               0xca            //!< App CPU failed to set CPU_OK
+#define FAIL_MANUF              0xcb            //!< App CPU in manuf test
+#define FAIL_SLEEP              0xcc            //!< Ordered to sleep in startup
 
-#define FAIL_TLM                0xcf            // Special for TLM
+#define FAIL_TLM                0xcf            //!< Special for TLM
 
-#define FAIL_VEC                0xa0            // Unhandled exception
+#define FAIL_VEC                0xa0            //!< Unhandled exception
 
 //------------------------------------------------------------------------------
 
@@ -145,30 +144,30 @@
 //   key[1] Must be 0, differentiator between peek/poke responses and other
 //          NN packets
 
-#define NN_CMD_SIG0             0       // Misc (GTPC, Set FwdRty, LED, etc)
-#define NN_CMD_RTRC             1       // Router Control Reg
-#define NN_CMD_LTPC             2       // Local Time Phase Ctrl (ID=0, Fwd=0)
-#define NN_CMD_SP_3             3       // Spare
+#define NN_CMD_SIG0             0       //!< Misc (GTPC, Set FwdRty, LED, etc)
+#define NN_CMD_RTRC             1       //!< Router Control Reg
+#define NN_CMD_LTPC             2       //!< Local Time Phase Ctrl (ID=0, Fwd=0)
+#define NN_CMD_SP_3             3       //!< Spare
 
-#define NN_CMD_SIG1             4       // Misc (MEM, etc)
-#define NN_CMD_P2PC             5       // P2P Address setup (Handled specially)
-#define NN_CMD_FFS              6       // Flood fill start
-#define NN_CMD_FFCS             7       // Flood fill core and region select
+#define NN_CMD_SIG1             4       //!< Misc (MEM, etc)
+#define NN_CMD_P2PC             5       //!< P2P Address setup (Handled specially)
+#define NN_CMD_FFS              6       //!< Flood fill start
+#define NN_CMD_FFCS             7       //!< Flood fill core and region select
 
-#define NN_CMD_P2PB             8       // Hop count limited
-#define NN_CMD_SP_9             9       // Spare
-#define NN_CMD_SP_10            10      // Spare
-#define NN_CMD_BIFF             11      // Board-info flood-fill (handled specially)
+#define NN_CMD_P2PB             8       //!< Hop count limited
+#define NN_CMD_SP_9             9       //!< Spare
+#define NN_CMD_SP_10            10      //!< Spare
+#define NN_CMD_BIFF             11      //!< Board-info flood-fill (handled specially)
 
-#define NN_CMD_FBS              12      // Filtered in FF code
+#define NN_CMD_FBS              12      //!< Filtered in FF code
 #define NN_CMD_FBD              13
 #define NN_CMD_FBE              14
 #define NN_CMD_FFE              15
 
 // NN_CMD_P2PC sub-command codes
-#define P2PC_ADDR 0  // Your P2P address is...
-#define P2PC_NEW  1  // (Broadcast) I/somebody just discovered/updated my/their P2P address
-#define P2PC_DIMS 2  // (Broadcast) The current best guess of P2P coordinates is...
+#define P2PC_ADDR 0  //!< Your P2P address is...
+#define P2PC_NEW  1  //!< (Broadcast) I/somebody just discovered/updated my/their P2P address
+#define P2PC_DIMS 2  //!< (Broadcast) The current best guess of P2P coordinates is...
 
 //------------------------------------------------------------------------------
 
@@ -186,54 +185,54 @@
 #define P2P_CLOSE_REQ           (4 << 24)
 #define P2P_CLOSE_ACK           (5 << 24)
 
-#define P2P_DEF_SQL             4                       // Seq len = 2^4
+#define P2P_DEF_SQL             4                       //!< Seq len = 2<sup>4</sup>
 
 
 //------------------------------------------------------------------------------
 
 // Hop table
 
-#define NN_HOP_MASK             0x3ff           // !! Allows hops <= 1023
+#define NN_HOP_MASK             0x3ff           //!< !! Allows hops <= 1023
 
 #define HOP_TABLE_SIZE          65536
 
 //------------------------------------------------------------------------------
 
-// Number of microseconds to wait between sending P2PB packets on neighbouring
-// chips
+//! Number of microseconds to wait between sending P2PB packets on neighbouring
+//! chips
 #define P2PB_OFFSET_USEC 100
 
 //------------------------------------------------------------------------------
 
-// Phases of the network initialisation process, in order
+//! Phases of the network initialisation process, in order
 enum netinit_phase_e {
-    // Configure P2P addresses for all chips while waiting for all chips to
-    // come online.
+    //! Configure P2P addresses for all chips while waiting for all chips to
+    //! come online.
     NETINIT_PHASE_P2P_ADDR,
-    // Determine the dimensions of the system and kill off all chips outside
-    // this range (ensuring incorrectly guessed dimensions do not result in
-    // address aliasing).
+    //! Determine the dimensions of the system and kill off all chips outside
+    //! this range (ensuring incorrectly guessed dimensions do not result in
+    //! address aliasing).
     NETINIT_PHASE_P2P_DIMS,
-    // Send Board-info flood-fill messages to disable all known iffy links,
-    // cores and chips.
+    //! Send Board-info flood-fill messages to disable all known iffy links,
+    //! cores and chips.
     NETINIT_PHASE_BIFF,
-    // Construct the P2P routing tables
+    //! Construct the P2P routing tables
     NETINIT_PHASE_P2P_TABLE,
-    // Setting the Ethernet address
+    //! Setting the Ethernet address
     NETINIT_PHASE_SET_ETHERNET_ADDR,
-    // blacklisted monitor delegates its functions to another core
+    //! Blacklisted monitor delegates its functions to another core
     NETINIT_PHASE_DEL,
-    // The boot process is complete and the system is ready for use
+    //! The boot process is complete and the system is ready for use
     NETINIT_PHASE_DONE = 0xFF,
 };
 
-// Phases of the Ethernet initialisation process, in order
+//! Phases of the Ethernet initialisation process, in order
 enum ethinit_phase_e {
-    // FIRST PHASE - wait for Ethernet to come up
+    //! FIRST PHASE - wait for Ethernet to come up
     ETHINIT_PHASE_WAIT_1,
-    // SECOND_PHASE - wait for Ethernet to come up
+    //! SECOND_PHASE - wait for Ethernet to come up
     ETHINIT_PHASE_WAIT_2,
-    // Ethernet either up or timed out
+    //! Ethernet either up or timed out
     ETHINIT_PHASE_DONE = 0xFF,
 };
 
@@ -253,7 +252,7 @@ enum alloc_cmd_e {
 
 //------------------------------------------------------------------------------
 
-typedef struct {                // IPTAG entry (32 bytes)
+typedef struct {                //!< IPTAG entry (32 bytes)
     uchar ip[4];
     uchar mac[6];
     ushort tx_port;
@@ -269,7 +268,7 @@ typedef struct {                // IPTAG entry (32 bytes)
 
 #define PKT_QUEUE_SIZE          32
 
-typedef struct pkt_queue_t {    // Queue of packets
+typedef struct pkt_queue_t {    //!< Queue of packets
     uchar insert;
     uchar remove;
     volatile uchar count;
@@ -278,7 +277,7 @@ typedef struct pkt_queue_t {    // Queue of packets
 } pkt_queue_t;
 
 
-typedef struct pkt_buf_t {      // Holds a NN packet awaiting transmission
+typedef struct pkt_buf_t {      //!< Holds a NN packet awaiting transmission
     struct pkt_buf_t *next;
     volatile uchar flags;
     uchar fwd;
@@ -289,14 +288,14 @@ typedef struct pkt_buf_t {      // Holds a NN packet awaiting transmission
 
 
 typedef struct {        // 64 bytes
-    uint   level_addr;  // 0: This chip's region at this level
-    ushort sent;        // 4: Number of requests sent out in this region
-    ushort rcvd;        // 6: Number of responses received
-    ushort parent;      // 8: P2P address of the chip which sent the last request
-    ushort __PAD1;      // 10
-    uint result;        // 12: Result accumulated within this region
-    ushort addr[16];    // 16: A working chip p2p for each subregion, if valid
-    uchar  valid[16];   // 48: Is at least one chip in each sub-region known to be alive?
+    uint   level_addr;  //!< 0: This chip's region at this level
+    ushort sent;        //!< 4: Number of requests sent out in this region
+    ushort rcvd;        //!< 6: Number of responses received
+    ushort parent;      //!< 8: P2P address of the chip which sent the last request
+    ushort __PAD1;      //!< 10
+    uint result;        //!< 12: Result accumulated within this region
+    ushort addr[16];    //!< 16: A working chip p2p for each subregion, if valid
+    uchar  valid[16];   //!< 48: Is at least one chip in each sub-region known to be alive?
 } level_t;
 
 //------------------------------------------------------------------------------

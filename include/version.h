@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
-//
-// version.h        Header file describing SpiNNaker low-level tool version
-//
-// Copyright (C)    The University of Manchester - 2016
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
+//! \file version.h
+//! \brief Header file describing SpiNNaker low-level tool version
+//!
+//! \copyright &copy; The University of Manchester - 2016
+//!
+//! \author Steve Temple, APT Group, School of Computer Science
+//! Email:            steven.temple@manchester.ac.uk
+//!
 //------------------------------------------------------------------------------
 
 /*

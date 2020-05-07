@@ -1,12 +1,13 @@
+//! \dir
+//! \brief Spinnaker Application Runtime Kernel
 //------------------------------------------------------------------------------
-//
-// sark_base.c      SARK - Spinnaker Application Runtime Kernel
-//
-// Copyright (C)    The University of Manchester - 2010-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
+//! \file      sark_base.c
+//! \brief     SARK - Spinnaker Application Runtime Kernel
+//!
+//! \copyright &copy; The University of Manchester - 2010-2013
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*

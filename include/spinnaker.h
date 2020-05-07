@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
-//
-// spinnaker.h      Header file describing SpiNNaker hardware
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
+//! \file  spinnaker.h
+//! \brief Header file describing SpiNNaker hardware
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author Steve Temple, APT Group, School of Computer Science
+//! Email:            steven.temple@manchester.ac.uk
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -610,29 +610,49 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 
 // Handy constants that point to hardware
 
+//! Communications controller
 static volatile uint * const cc  = (uint *) CC_BASE;
+//! Timer controller
 static volatile uint * const tc  = (uint *) TIMER_BASE;
+//! Timer 1
 static volatile uint * const tc1 = (uint *) TIMER1_BASE;
-static volatile uint * const tc2 = (uint *) TIMER2_BASE;;
+//! Timer 2
+static volatile uint * const tc2 = (uint *) TIMER2_BASE;
+//! Vectored interrupt controller
 static volatile uint * const vic = (uint *) VIC_BASE_UNBUF; // NB unbuffered
+//! DMA controller
 static volatile uint * const dma = (uint *) DMA_BASE;
 
+//! System controller
 static volatile uint * const sc  = (uint *) SYSCTL_BASE;
+//! Router controller
 static volatile uint * const rtr = (uint *) RTR_BASE;
+//! Ethernet controller
 static volatile uint * const er  = (uint *) ETH_REGS;
+//! PL340 memory controller
 static volatile uint * const mc  = (uint *) PL340_BASE;
+//! Watchdog controller
 static volatile uint * const wd  = (uint *) WDOG_BASE;
 
+//! Base address of SDRAM
 static uint * const sdram        = (uint *) SDRAM_BASE;
+//! Base address of System RAM
 static uint * const sysram       = (uint *) SYSRAM_BASE;
 
+//! Router memory
 static uint * const rtr_ram      = (uint *) RTR_MCRAM_BASE;
+//! Router key array
 static uint * const rtr_key      = (uint *) RTR_MCKEY_BASE;
+//! Router mask array
 static uint * const rtr_mask     = (uint *) RTR_MCMASK_BASE;
+//! Router peer-to-peer table
 static uint * const rtr_p2p      = (uint *) RTR_P2P_BASE;
 
+//! Ethernet transmit memory
 static uchar * const eth_tx_ram  = (uchar *) ETH_TX_BASE;
+//! Ethernet receive memory
 static uchar * const eth_rx_ram  = (uchar *) ETH_RX_BASE;
+//! Ethernet receive descriptor array
 static uint  * const eth_rx_desc = (uint *)  ETH_RX_DESC_RAM;
 
 //------------------------------------------------------------------------------

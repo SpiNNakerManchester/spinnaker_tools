@@ -1,12 +1,13 @@
+//! \dir
+//! \brief Spinnaker Control & Monitor Program
 //------------------------------------------------------------------------------
-//
-// scamp.c          SC&MP - Spinnaker Control & Monitor Program
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
+//! \file
+//! \brief     SC&MP - Spinnaker Control & Monitor Program
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*

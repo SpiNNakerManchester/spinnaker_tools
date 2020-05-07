@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// scamp-nn.c       NN packet handling for SC&MP
-//
-// Copyright (C)    The University of Manchester - 2009-2011
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     NN packet handling for SC&MP
+//!
+//! \copyright &copy; The University of Manchester - 2009-2011
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
