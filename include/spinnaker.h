@@ -1096,7 +1096,7 @@ enum {
 };
 
 // On-chip SDRAM
-//!< Bits in #GPIO_PORT, also on-chip SDRAM
+//! Bits in #GPIO_PORT, also on-chip SDRAM
 enum {
     SDRAM_TQ =      (1 << 31),
     SDRAM_DPD =     (1 << 30),
@@ -1108,7 +1108,7 @@ enum {
     JTAG_TCK =      (1 << 24)
 };
 
-//!< Bits in #SC_MISC_CTRL
+//! Bits in #SC_MISC_CTRL
 enum {
     JTAG_RTCK =     (1 << 20), //!< read value on JTAG_RTCK pin
     JTAG_TDO =      (1 << 19), //!< read value on JTAG_TDO pin
