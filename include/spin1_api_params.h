@@ -53,6 +53,7 @@
 // ---------------------
 /* simulation control */
 // ---------------------
+#if 0 // DKF: are these unused?
 /* synchronization barrier key and mask codes */
 #define GO_KEY                (uint) ((0x1ffff << 11) | 0)
 #define RDYGO_KEY             (uint) ((0x1ffff << 11) | 1)
@@ -72,102 +73,128 @@
 #define CLEAR_LCK             0
 #define RTR_INIT_LCK          0xad
 #define RDYGO_LCK             0xbe
+#endif
 
-/* link orientation codes */
-#define EAST                  0
-#define NORTH_EAST            1
-#define NORTH                 2
-#define WEST                  3
-#define SOUTH_WEST            4
-#define SOUTH                 5
+//! link orientation codes
+enum spin1_api_link_orientations {
+    EAST =                0,
+    NORTH_EAST =          1,
+    NORTH =               2,
+    WEST =                3,
+    SOUTH_WEST =          4,
+    SOUTH =               5
+};
 
-/* print warnings at end of simulation */
+//! print warnings at end of simulation
 #define API_WARN              TRUE
-/* print debug messages */
+//! print debug messages
 #define API_DEBUG             TRUE
-/* make diagnostics available to the application */
+//! make diagnostics available to the application
 #define API_DIAGNOSTICS       TRUE
 #define NON_ROOT              FALSE
+//! suggested delay (in &mu;s) between calls to io_printf()
 #define API_PRINT_DLY         200
 
-/* internal error/warning return codes */
-#define NO_ERROR              0
-#define TASK_QUEUE_FULL       1
-#define DMA_QUEUE_FULL        2
-#define PACKET_QUEUE_FULL     4
-#define WRITE_BUFFER_ERROR    8
-#define SYNCHRO_ERROR         16
+//! internal error/warning return codes
+enum spin1_api_error_codes {
+    NO_ERROR =            0,
+    TASK_QUEUE_FULL =     1,
+    DMA_QUEUE_FULL =      2,
+    PACKET_QUEUE_FULL =   4,
+    WRITE_BUFFER_ERROR =  8,
+    SYNCHRO_ERROR =      16
+};
 // --------------------------------
 
 // ----------------
 /* data transfer */
 // ----------------
-// DMA transfer parameters: 16-doubleword bursts
+//! DMA transfer parameters: <b>16</b>-doubleword bursts
 //TODO: may need adjustment for SpiNNaker
 #define DMA_BURST_SIZE        4
+//! DMA transfer parameters: 16-<b>doubleword</b> bursts
 #define DMA_WIDTH             1
-// internal DMA queue size
+//! internal DMA queue size
 #define DMA_QUEUE_SIZE        16
-// select write buffer use
+//! select write buffer use
 #define USE_WRITE_BUFFER      FALSE
 // ---------------------------
 
 // -----------------
 // communications */
 // -----------------
+//! Size of outbound packet queue
 #define TX_PACKET_QUEUE_SIZE  16
 // TX control register programming
+//! Default transmit control register value for multicast messages
 #define TX_TCR_MCDEFAULT      0x00000000
+//! Transmit hardware full mask
 #define TX_FULL_MASK          0x40000000
+//! Transmit hardware empty mask
 #define TX_EMPTY_MASK         0x80000000
+//! Message received mask
 #define RX_RECEIVED_MASK      0x80000000
 // -----------------
 
 // --------------------
 /* memory allocation */
 // --------------------
-// memory space reserved for RTS stacks
+//! memory space reserved for RTS stacks
 #define RTS_STACKS            4096
 // --------------------
 
 // -----------------------
 /* scheduler/dispatcher */
 // -----------------------
-// callback queue parameters
-#define NUM_PRIORITIES    5
-#define TASK_QUEUE_SIZE   16
+//! callback queue parameters
+enum spin1_api_callback_queue_params {
+    NUM_PRIORITIES =  5,  //!< Number of priorities
+    TASK_QUEUE_SIZE = 16  //!< Size of task queue
+};
 // -----------------------
 
 // -----------------------
-// Allocation of entries in MC table
+//! Allocation of entries in MC table
 // -----------------------
 
-//#define SYS_MC_ENTRIES 24
-#define SYS_MC_ENTRIES 1
-#define APP_MC_ENTRIES (MC_TABLE_SIZE - SYS_MC_ENTRIES)
-
+enum spin1_api_multicast_entries {
+    SYS_MC_ENTRIES = 1,
+    APP_MC_ENTRIES = (MC_TABLE_SIZE - SYS_MC_ENTRIES)
+};
 
 // -----------------------
-// VIC priorities
+//! VIC priorities
 // -----------------------
-#define SARK_PRIORITY          0
-#define TIMER1_PRIORITY        1
-#define DMA_DONE_PRIORITY      2
-#define RX_READY_PRIORITY      3
-#define FR_READY_PRIORITY      4
-#define CC_TMT_PRIORITY        5
-#define SOFT_INT_PRIORITY      6
+enum spin1_api_vic_priorties {
+    SARK_PRIORITY =        0, //!< Communication with SARK/SCAMP
+    TIMER1_PRIORITY =      1, //!< Timer interrupt
+    DMA_DONE_PRIORITY =    2, //!< DMA complete
+    RX_READY_PRIORITY =    3, //!< Multicast message ready to receive
+    FR_READY_PRIORITY =    4, //!< Fixed route message ready to receive
+    CC_TMT_PRIORITY =      5, //!< Comms controller timeout
+    SOFT_INT_PRIORITY =    6, //!< Software-driven interrupt
 #if USE_WRITE_BUFFER == TRUE
-  #define DMA_ERR_PRIORITY     7
+    DMA_ERR_PRIORITY =     7  //!< DMA error
 #endif
+};
 
 // ------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------
 // helpful macros
 // ------------------------------------------------------------------------
+//! \brief The address of a chip
+//! \param[in] x: X coordinate of the chip
+//! \param[in] y: Y coordinate of the chip
+//! \return The packed chip coordinates
 #define CHIP_ADDR(x, y)      ((x << 8) | y)
+//! \brief A peer-to-peer route
+//! \param[in] addr: The address of the chip
+//! \return The route bit to that chip
 #define P2P_ROUTE(addr)      (1 << p2p_get(addr))
+//! \brief The route to a core on the current chip
+//! \param[in] core: The core to route to
+//! \return The route bit to that core
 #define CORE_ROUTE(core)     (1 << (core + NUM_LINKS))
 // ------------------------------------------------------------------------
 
@@ -177,6 +204,7 @@
 // ----------------
 /* data transfer */
 // ----------------
+//! Describes a DMA transfer
 typedef struct {
     uint id;
     uint tag;
@@ -185,7 +213,8 @@ typedef struct {
     uint description;
 } copy_t;
 
-
+//! \brief The queue of DMA transfers.
+//! \details Internally a circular buffer
 typedef struct {
     uint start;
     uint end;
@@ -196,12 +225,18 @@ typedef struct {
 // -----------------
 /* communications */
 // -----------------
+//! A multicast packet
 typedef struct {
+    //! The MC packet key
     uint key;
+    //! The MC packet payload (if defined)
     uint data;
+    //! The MC packet control word
     uint TCR;
 } packet_t;
 
+//! \brief The queue of multicast packets to be sent
+//! \details Internally a circular buffer
 typedef struct {
     uint start;
     uint end;
@@ -212,26 +247,31 @@ typedef struct {
 // -----------------------
 /* scheduler/dispatcher */
 // -----------------------
+//! An external interrupt handler
 typedef struct {
     callback_t cback;
     int priority;
 } cback_t;
 
+//! An internal interrupt/callback handler
 typedef struct {
     callback_t cback;
     uint arg0;
     uint arg1;
 } task_t;
 
+//! \brief The queue of callbacks to do.
+//! \details Internally a circular buffer
 typedef struct {
     uint start;
     uint end;
     task_t queue[TASK_QUEUE_SIZE];
 } task_queue_t;
 
+//! The external interrupt handlers
 extern cback_t callback[NUM_EVENTS];
 
-// interrupt service routine
+//! interrupt service routine
 #ifdef __GNUC__
 typedef void (*isr_t) (void);
 #else
@@ -242,8 +282,9 @@ typedef __irq void (*isr_t) (void);
 // ------------------------------------------------------------------------
 // internal variables -- not visible in the API
 // ------------------------------------------------------------------------
-/* VIC vector tables */
+//! VIC vector table
 static volatile isr_t * const vic_vectors  = (isr_t *) (VIC_BASE + 0x100);
+//! VIC control table
 static volatile uint * const vic_controls = (uint *) (VIC_BASE + 0x200);
 
 // ------------------------------------------------------------------------
