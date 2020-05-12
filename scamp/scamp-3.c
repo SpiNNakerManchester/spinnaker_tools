@@ -104,38 +104,45 @@ uint p2p_up = 0;
 
 uint ltpc_timer;
 
-uint link_en = 0x3f;    // Bitmap of enabled links
+uint link_en = 0x3f;    //!< Bitmap of enabled links
 
-srom_data_t srom;       // Copy of SROM struct
+srom_data_t srom;       //!< Copy of SROM struct
 
 pkt_queue_t tx_pkt_queue;
 
 uchar watchdog[20]; // !! const - needs to be multiple of 4?
 
+//! Table of all IPTags
 iptag_t tag_table[TAG_TABLE_SIZE];
 
-uint tag_tto = 9;       // 2.56s = 10ms * (1 << (9-1))
+//! \brief IPTag timeout (logarithmic)
+uint tag_tto = 9;       //!< 2.56s = 10ms * (1 << (9-1))
 
 //------------------------------------------------------------------------------
 
 // Network initialisation state variables
 
-// The network initialisation process phase currently in progress
+//! The network initialisation process phase currently in progress
 volatile enum netinit_phase_e netinit_phase;
 
-// The Ethernet initialisation process phase currently in progress
+//! The Ethernet initialisation process phase currently in progress
 volatile enum ethinit_phase_e ethinit_phase;
 
-// Number of 10ms ticks ellapsed since the last P2PC_NEW arrived
+//! Number of 10ms ticks ellapsed since the last P2PC_NEW arrived
 volatile uint ticks_since_last_p2pc_new;
-// Number of 10ms ticks ellapsed since the last P2PC_DIMS arrived
+//! Number of 10ms ticks ellapsed since the last P2PC_DIMS arrived
 volatile uint ticks_since_last_p2pc_dims;
 
-// During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address. Note
-// that this value may be negative and may be much larger than realistic
-// machines as the first P2P address assigned may be the result of a packet
-// taking a very spirally route.
+//! \brief X coordinate of the current best guess of P2P address
+//!
+//! During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address. Note
+//! that this value may be negative and may be much larger than realistic
+//! machines as the first P2P address assigned may be the result of a packet
+//! taking a very spirally route.
 volatile int p2p_addr_guess_x;
+//! \brief Y coordinate of the current best guess of P2P address
+//!
+//! See ::p2p_addr_guess_x
 volatile int p2p_addr_guess_y;
 
 // During NETINIT_PHASE_P2P_DIMS, records the current best guess of the systems
@@ -145,9 +152,9 @@ volatile int p2p_max_x;
 volatile int p2p_min_y;
 volatile int p2p_max_y;
 
-// A bitmap giving the coordinates of all P2P coordinates which have been seen
-// mentioned in a P2PC_NEW message. A 2D array of bits whose *bit* indexes are
-// ((bx<<9) | by) where bx and by are x + 256 and y + 256 respectively.
+//! A bitmap giving the coordinates of all P2P coordinates which have been seen
+//! mentioned in a P2PC_NEW message. A 2D array of bits whose *bit* indexes are
+//! `((bx<<9) | by)` where `bx` and `by` are `x + 256` and `y + 256` respectively.
 uchar *p2p_addr_table = NULL;
 
 

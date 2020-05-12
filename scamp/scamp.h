@@ -468,13 +468,30 @@ extern void boot_nn(uint hw_ver);
 
 //------------------------------------------------------------------------------
 
-//! \name SCAMP nearest-neighbour discovery protocol
-//! \{
-extern uint mon_del;
-//! \}
 //! \name SCAMP core
 //! \{
 extern srom_data_t srom;
+
+extern uint link_en;
+extern uint num_cpus;
+
+extern iptag_t tag_table[];
+extern uint tag_tto;
+
+extern uchar v2p_map[MAX_CPUS];
+
+extern volatile enum netinit_phase_e netinit_phase;
+extern volatile enum ethinit_phase_e ethinit_phase;
+//! \}
+
+//! \name SCAMP nearest-neighbour discovery protocol
+//! \{
+extern uint mon_del;
+
+extern uint* hop_table;
+
+extern uchar core_app[MAX_CPUS];
+extern uint app_mask[256];
 //! \}
 
 //! \name SCAMP peer-to-peer networking
@@ -483,23 +500,7 @@ extern uint p2p_addr;
 extern uint p2p_dims;
 extern uint p2p_root;
 extern uint p2p_up;
-//! \}
-extern uint link_en;
-extern uint num_cpus;
 
-extern uint* hop_table;
-
-extern iptag_t tag_table[];
-extern uint tag_tto;
-
-extern uchar v2p_map[MAX_CPUS];
-extern uchar core_app[MAX_CPUS];
-extern uint app_mask[256];
-
-extern volatile enum netinit_phase_e netinit_phase;
-extern volatile enum ethinit_phase_e ethinit_phase;
-//! \name SCAMP peer-to-peer networking
-//! \{
 extern volatile uint ticks_since_last_p2pc_new;
 extern volatile uint ticks_since_last_p2pc_dims;
 extern volatile int p2p_addr_guess_x;
@@ -512,7 +513,5 @@ extern uchar *p2p_addr_table;
 //! \}
 
 //------------------------------------------------------------------------------
-
-extern void putz(uint v);
 
 #endif

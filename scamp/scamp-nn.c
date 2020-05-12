@@ -36,18 +36,18 @@
 
 #define BC_TABLE_SIZE           16
 
-#define FF_ST_IDLE  0           // Doing nothing
-#define FF_ST_EXBLK 1           // Rcvd FFS or FBE, awaiting FBS, FFE
-#define FF_ST_INBLK 2           // Rcvd FBS, awaiting FBD, FBE
+enum ff_states {
+    FF_ST_IDLE = 0,             //!< Doing nothing
+    FF_ST_EXBLK = 1,            //!< Rcvd FFS or FBE, awaiting FBS, FFE
+    FF_ST_INBLK = 2,            //!< Rcvd FBS, awaiting FBD, FBE
+};
 
-#define PART_ID (CHIP_ID_CODE & 0xfff00000)
-
-#define NN_STATS
+#define PART_ID         (CHIP_ID_CODE & 0xfff00000)
 
 //------------------------------------------------------------------------------
 
 typedef struct nn_desc_t {
-    uchar state;                //!< FF state
+    uchar state;                //!< FF state (see ::ff_states enum)
     uchar error;                //!< Error flag
     uchar forward;              //!< Rebroadcast code
     uchar retry;                //!< Rebroadcast retry
@@ -92,6 +92,14 @@ pkt_buf_t *pkt_buf_list;
 uint pkt_buf_count;
 uint pkt_buf_max;
 
+//! \brief Table "hop_table" has entries of type `(id << 24, hops)` for each
+//! possible P2P address.
+//!
+//! Field "hops" contains the number of hops to the address (initialised to
+//! 65535) and "id" contains the ID of the last packet used to update the
+//! table (initialised to 128). These are packed into a word.
+//!
+//! Stored in SYSRAM so visible to all cores. Should only be updated by SCAMP
 uint *hop_table;
 
 level_t levels[4];
@@ -101,7 +109,9 @@ uint app_mask[256];
 
 nn_desc_t nn_desc;
 
+//! Packet reserved for performing P2P peeks
 pkt_buf_t peek_pkt;
+//! Packet reserved for performing P2P pokes
 pkt_buf_t poke_pkt;
 
 //! delegate blacklisted monitor
@@ -154,7 +164,7 @@ char eth_map[12][12] = {
     {0x47, 0x57, 0x67, 0x77, 0x03, 0x13, 0x23, 0x33, 0x43, 0x53, 0x63, 0x73}
 };
 
-
+//! Computes where our board's ethernet chip is.
 void compute_eth(void)
 {
     int x = p2p_addr >> 8;
@@ -214,9 +224,8 @@ const signed char ly[6] = { 0, -1, -1,  0, +1, +1};
 
 //------------------------------------------------------------------------------
 
-//! Given a P2P address, compute region addresses for each of the four
+//! \brief Given a P2P address, compute region addresses for each of the four
 //! levels, updating the levels structure.
-
 void compute_level(uint p2p_addr)
 {
     uint x = p2p_addr >> 8;
@@ -232,9 +241,8 @@ void compute_level(uint p2p_addr)
     }
 }
 
-//! For all regions at all levels, find a working chip within each of the 16
-//! subregions and record its coordinates.
-
+//! \brief For all regions at all levels, find a working chip within each of
+//! the 16 subregions and record its coordinates.
 void level_config(void)
 {
     compute_level(p2p_addr);
@@ -369,7 +377,7 @@ uint link_write_word(uint addr, uint link, uint *buf, uint timeout)
 //------------------------------------------------------------------------------
 
 
-pkt_buf_t* pkt_buf_get()
+pkt_buf_t* pkt_buf_get(void)
 {
     pkt_buf_t *pkt = pkt_buf_list;
 
@@ -474,7 +482,8 @@ void biff_nn_send(uint data)
 
 //------------------------------------------------------------------------------
 
-//! Transmit our current best guess of coordinates to all neighbouring chips
+//! \brief Transmit our current best guess of coordinates to all neighbouring
+//!     chips
 void p2pc_addr_nn_send(uint arg1, uint arg2)
 {
     // Don't send anything if our address is actually unknown...
@@ -493,7 +502,8 @@ void p2pc_addr_nn_send(uint arg1, uint arg2)
     }
 }
 
-//! Broadcast the existance of a new P2P coordinate having been discovered
+//! \brief Broadcast the existance of a new P2P coordinate having been
+//!     discovered
 void p2pc_new_nn_send(uint x, uint y)
 {
     uint key = (NN_CMD_P2PC << 24) | (P2PC_NEW << 2);
@@ -506,7 +516,8 @@ void p2pc_new_nn_send(uint x, uint y)
     }
 }
 
-//! Transmit our current best guess of coordinates to all neighbouring chips.
+//! \brief Transmit our current best guess of coordinates to all neighbouring
+//!     chips.
 void p2pc_dims_nn_send(uint arg1, uint arg2)
 {
     uint key = (NN_CMD_P2PC << 24) | (P2PC_DIMS << 2);
@@ -522,7 +533,7 @@ void p2pc_dims_nn_send(uint arg1, uint arg2)
     }
 }
 
-//! Transmit "P2PB" table generating packets
+//! \brief Transmit "P2PB" table generating packets
 void p2pb_nn_send(uint arg1, uint arg2)
 {
     static int id = 0;
@@ -541,6 +552,9 @@ void p2pb_nn_send(uint arg1, uint arg2)
 
 //! \brief Update our current best guess of our coordinates based on a packet
 //! from a neighbour
+//! \param[in] link: What link was the packet received on
+//! \param[in] data: The payload from the packet
+//! \param[in] key: The key from the packet
 void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
 {
     // Coordinates of neighbour
@@ -592,7 +606,10 @@ void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
     }
 }
 
-//! A new P2P coordinate has been broadcast to us.
+//! \brief A new P2P coordinate has been broadcast to us.
+//! \param[in] link: What link was the packet received on
+//! \param[in] data: The payload from the packet
+//! \param[in] key: The key from the packet
 void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
 {
     // Coordinates of the new coordinate
@@ -625,7 +642,10 @@ void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
     }
 }
 
-//! A neighbour has reported their P2P coordinates to us
+//! \brief A neighbour has reported their P2P coordinates to us
+//! \param[in] link: What link was the packet received on
+//! \param[in] data: The payload from the packet
+//! \param[in] key: The key from the packet
 void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
 {
     // Bounds of the coordinates
@@ -668,7 +688,16 @@ void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
     }
 }
 
-
+//! \brief Handle P2PC packet
+//!
+//! Delegates to:
+//! * nn_rcv_p2pc_addr_pct()
+//! * nn_rcv_p2pc_dims_pct()
+//! * nn_rcv_p2pc_new_pct()
+//!
+//! \param[in] link: What link was the packet received on
+//! \param[in] data: The payload from the packet
+//! \param[in] key: The key from the packet
 void nn_rcv_p2pc_pct(uint link, uint data, uint key)
 {
     int p2pc_cmd = (key >> 2) & 0x3;
@@ -822,7 +851,7 @@ void nn_cmd_sig1(uint data, uint key)
 
 //------------------------------------------------------------------------------
 
-#define P2PB_STOP_BIT 0x400        //! Set to stop propagation
+#define P2PB_STOP_BIT 0x400        //!< Set to stop propagation
 
 //! \brief P2P Broadcast, used to propagate P2P addresses and maintain the P2P
 //! routing table.
@@ -1147,6 +1176,9 @@ void nn_cmd_biff(uint x, uint y, uint data)
 }
 
 //! Board info packet receiver
+//! \param[in] link: What link was the packet received on
+//! \param[in] data: The payload from the packet
+//! \param[in] key: The key from the packet
 void nn_rcv_biff_pct(uint link, uint data, uint key)
 {
     // When this function has been called, the checksum has already been
@@ -1220,7 +1252,10 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     }
 }
 
-//! Nearest-neighbour packet received handler
+//! \brief Nearest-neighbour packet received handler
+//! \param[in] link: What link was the packet received on
+//! \param[in] data: The payload from the packet
+//! \param[in] key: The key from the packet
 void nn_rcv_pkt(uint link, uint data, uint key)
 {
     uint t = chksum_64(key, data);
@@ -1241,9 +1276,7 @@ void nn_rcv_pkt(uint link, uint data, uint key)
         return;
     }
 
-#ifdef NN_STATS
     nn_desc.stats[cmd]++;
-#endif
 
     if (cmd < 7 && id != 0) { //const - use (non-zero) ID to stop propagation
         uint word = id >> 5;                    // Word in id_set

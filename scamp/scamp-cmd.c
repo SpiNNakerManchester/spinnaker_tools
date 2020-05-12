@@ -582,8 +582,9 @@ void proc_process(uint data, uint srce)
 }
 
 
-// Handler for P2P Region packets
-
+//! Handler for P2P Region packets
+//! \param[in] data: The payload from the packet
+//! \param[in] srce: The sender address (lower 16 bits) from the packet
 void p2p_region(uint data, uint srce)
 {
     uint t = chksum_32(data);

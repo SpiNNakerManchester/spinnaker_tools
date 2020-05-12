@@ -115,39 +115,94 @@ extern const uchar bc_mac[];
 //! Zero MAC address
 extern const uchar zero_mac[];
 
-//! Initialise the ethernet subsystem
+//! \brief Initialise the ethernet subsystem
+//! \param[in] mac: Our MAC address
 void eth_init(uchar *mac);
 
-//! Compute an IP checksum
+//! \brief Compute an IP checksum
+//! \param[in] d: The data to checksum
+//! \param[in] len: Number of bytes in data
+//! \param[in] sum: Initial value; allows chaining of summing
+//! \return the checksum
 uint ipsum(uchar *d, uint len, uint sum);
 
-//! Copy MAC address
+//! \brief Copy MAC address
+//! \param[in] f: Where to copy from. Must be at least half-word aligned
+//! \param[out] t: Where to copy to. Must be at least half-word aligned
 void copy_mac(const uchar *f, uchar *t);
-//! Copy IP address
+
+//! \brief Copy IP address
+//! \param[in] f: Where to copy from. Must be at least half-word aligned
+//! \param[out] t: Where to copy to. Must be at least half-word aligned
 void copy_ip(const uchar *f, uchar *t);
-//! Compare IP addresses
-uint cmp_ip(uchar *a, uchar *b);
-//! Copy IP header
+
+//! \brief Compare IP addresses
+//! \param[in] a: First address to compare
+//! \param[in] b: Second address to compare
+//! \return True if the addresses are equal, false otherwise
+uint cmp_ip(const uchar *a, const uchar *b);
+
+//! \brief Initialise IP header
+//! \param[in] dest: Destination address
+//! \param[in] prot: Protocol to use
+//! \param[in,out] ip: Packet with header to initialise, copying \p dest into.
+//!     The payload must have already been placed in the packet.
+//! \param[in] len: The length of the payload in the packet.
 void copy_ip_hdr(uchar *dest, uint prot, ip_hdr_t *ip, uint len);
 
-//! Transmit ethernet packet
+//! \brief Transmit ethernet packet
+//! \param[in,out] buf: The buffer containing the packet to send.
+//!     Will have the parts that are the ethernet header modified.
+//! \param[in] len: Length of buffer (headers and payload)
+//! \param[in] type: The type of ethernet packet to send
+//! \param[in] dest: The destination MAC address
 void eth_transmit(uchar *buf, uint len, uint type, const uchar *dest);
-//! Transmit ethernet packet
+
+//! \brief Transmit ethernet packet
+//! \param[in] hdr: The ethernet header, _already prepared._
+//! \param[in] buf: The buffer containing the payload to send.
+//! \param[in] hdr_len: Length of header, \p hdr
+//! \param[in] buf_len: Length of payload, \p buf
 void eth_transmit2(uchar *hdr, uchar *buf, uint hdr_len, uint buf_len);
 
-//! Send an ARP packet
+//! \brief Send an ARP packet
+//! \param[in,out] buf: Buffer containing ARP packet.
+//!     Payload must have been set.
+//! \param[in] dest: Destination MAC address
+//! \param[in] tha: Target hadrware address
+//! \param[in] tpa: Target protocol address
+//! \param[in] type: Opcode (e.g., #ARP_REQ)
 void send_arp_pkt(uchar *buf, const uchar *dest,
                   const uchar *tha, const uchar *tpa, uint type);
-//! ARP lookup
+
+//! \brief Initiate ARP lookup if required. Lookup might be immediate (out of
+//!     cache) or require network traffic.
+//! \param[in,out] iptag: The IPTag that needs the lookup done. Will be
+//!     updated with results when available.
 void arp_lookup(iptag_t *iptag);
-//! ARP packet
+
+//! \brief ARP packet received handler
+//! \param[in] rx_pkt: The received packet
+//! \param[in] rx_len: The length of the received packet
+//! \param[in] tag_table_size: How large is our tag table?
 void arp_pkt(uchar *rx_pkt, uint rx_len, uint tag_table_size);
-//! Add a MAC/IP address binding to our ARP cache
+
+//! \brief Add a MAC/IP address binding to our ARP cache
+//! \param[in] mac: The MAC address
+//! \param[in] ip: The IP address
 void arp_add(uchar *mac, uchar *ip);
 
-//! ICMP packet
+//! \brief ICMP packet received handler
+//! \param[in] rx_pkt: The received packet
+//! \param[in] rx_len: The length of the received packet
 void icmp_pkt(uchar *rx_pkt, uint rx_len);
-//! Copy UDP header
+
+//! \brief Initialise UDP packet header
+//! \param[in,out] buf: The UDP packet, header and payload. Payload must have
+//!     been initialised.
+//! \param[in] len: Length of payload.
+//! \param[in] dest: Destination port.
+//! \param[in] srce: Source port.
 void copy_udp(uchar *buf, uint len, uint dest, uint srce);
 
 #endif
