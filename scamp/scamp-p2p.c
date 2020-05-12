@@ -145,9 +145,7 @@ uint close_ack_time = 250;
 
 //------------------------------------------------------------------------------
 
-/*
- initialise TX and RX descriptors
-*/
+//! initialise TX and RX descriptors
 
 void desc_init(void)
 {
@@ -221,7 +219,8 @@ p2p_send_pkt
 
 #else // !ASM
 
-void p2p_send_data(uint data, uint addr)
+//! Send a P2P data packet. Delegates to pkt_tx()
+static void p2p_send_data(uint data, uint addr)
 {
 #ifdef STATS
     uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_DATA << 16));
@@ -233,7 +232,8 @@ void p2p_send_data(uint data, uint addr)
 #endif // STATS
 }
 
-void p2p_send_ctl(uint ctrl, uint addr, uint data)
+//! Send a P2P control packet. Delegates to pkt_tx()
+static void p2p_send_ctl(uint ctrl, uint addr, uint data)
 {
     data |= ctrl;
     data |= chksum_32(data);
@@ -250,14 +250,15 @@ void p2p_send_ctl(uint ctrl, uint addr, uint data)
 #endif // ASM
 
 
-// Received ACK from receiver. Cancel ack timeout and update tx_desc
-
-/*      +-------+-----+-+---+-+---------+---------------+---------------+
-        |       |     | |   |P|         |                               |
-  Data  |  Sum  | 001 |1| 00|H|   TID   |           Ack mask            |
-  Ack   |       |     | |   |A|         |                               |
-        +-------+-----+-+---+-+---------+---------------+---------------+
-*/
+//! \brief Received ACK from receiver. Cancel ack timeout and update tx_desc
+//!
+//! ```
+//!      +-------+-----+-+---+-+---------+---------------+---------------+
+//!      |       |     | |   |P|         |                               |
+//! Data |  Sum  | 001 |1| 00|H|   TID   |           Ack mask            |
+//! Ack  |       |     | |   |A|         |                               |
+//!      +-------+-----+-+---+-+---------+---------------+---------------+
+//! ```
 
 void p2p_data_ack(uint data, uint srce)
 {
@@ -279,8 +280,10 @@ void p2p_data_ack(uint data, uint srce)
 }
 
 
-// Received CLOSE_REQ from receiver. If TX_OPEN then tidy up tx_desc.
-// In any case, send a CLOSE_ACK back to receiver.
+//! \brief Received CLOSE_REQ from receiver.
+//!
+//! If TX_OPEN then tidy up tx_desc.
+//! In any case, send a CLOSE_ACK back to receiver.
 
 void p2p_close_req(uint data, uint srce)
 {
@@ -299,8 +302,9 @@ void p2p_close_req(uint data, uint srce)
 }
 
 
-// Timed out waiting for data ACK from receiver. This suggests that the
-// receiver has died so close the connection.
+//! \brief Timed out waiting for data ACK from receiver.
+//!
+//! This suggests that the receiver has died so close the connection.
 
 void p2p_ack_timeout(uint txd, uint a2)
 {
@@ -333,7 +337,11 @@ void p2p_open_timeout(uint a, uint b)
 #endif
 }
 
-
+//! \brief Send an SDP message to another SCAMP instance
+//! \param[in] addr: the P2P address of the SCAMP to send to
+//! \param[in] msg: the message to send, presumably for either the target
+//!     SCAMP or a core that that SCAMP can deliver to
+//! \return result code saying whether message sending was successful
 uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 {
     uchar *buf = (uchar *) &msg->length;        // Point to len/sum
@@ -468,8 +476,8 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 //------------------------------------------------------------------------------
 
 
-// Timed out waiting for "seq_len" data packets. Send P2P_DATA_ACK
-// with current mask and restart timeout.
+//! Timed out waiting for "seq_len" data packets. Send P2P_DATA_ACK
+//! with current mask and restart timeout.
 
 void p2p_data_timeout(uint rxd, uint a2)
 {
@@ -503,9 +511,10 @@ void p2p_data_timeout(uint rxd, uint a2)
 }
 
 
-// Received OPEN_ACK packet. If RX_BUSY do nothing so that timeout
-// will expire (and we keep trying). Otherwise update tx_desc and
-// cancel timeout.
+//! \brief Received OPEN_ACK packet.
+//!
+//! If RX_BUSY do nothing so that timeout will expire (and we keep trying).
+//! Otherwise update tx_desc and cancel timeout.
 
 void p2p_open_ack(uint data, uint srce)
 {
@@ -538,6 +547,7 @@ void p2p_open_ack(uint data, uint srce)
         +-------+-----+-+-----+---------+---------------+---------------+
 */
 
+//! Another SCAMP has asked for an open channel
 void p2p_open_req(uint data, uint addr)
 {
     uint len = (data >> 8) & 0xffff; // Real length from SDP hdr on...
@@ -646,9 +656,9 @@ void p2p_open_req(uint data, uint addr)
 }
 
 
-// Timed out waiting for CLOSE_ACK. Repeat P2P_CLOSE_REQ a few times
-// then give up
-// State should be RX_CLOSE_REQ
+//! Timed out waiting for CLOSE_ACK. Repeat P2P_CLOSE_REQ a few times
+//! then give up.
+//! State should be RX_CLOSE_REQ
 
 void p2p_close_timeout(uint rxd, uint rid)
 {
@@ -679,7 +689,7 @@ void p2p_close_timeout(uint rxd, uint rid)
     timer_schedule(e, close_ack_time);
 }
 
-
+//! Received an acknowledge that a channel has been closed
 void p2p_close_ack(uint data, uint srce)
 {
     uint rid = (data >> 21) & 7; //##
@@ -696,7 +706,9 @@ void p2p_close_ack(uint data, uint srce)
     }
 }
 
-// May write 1 or 2 bytes beyond end of buffer (buffer has pad word)
+//! \brief Receive data on channel
+//!
+//! May write 1 or 2 bytes beyond end of buffer (buffer has pad word)
 // Could write further if error in "seq" field? - check!
 // Rearrange base/limit to write at -1, -2, -3  then can
 // save if ptr < limit
@@ -818,6 +830,7 @@ __asm void p2p_rcv_pkt(uint data, uint addr)
         bx      lr                      ;// None of the above
 }
 #else
+//! Received P2P control packet
 void p2p_rcv_ctrl(uint data, uint addr)
 {
     uint t = chksum_32(data);

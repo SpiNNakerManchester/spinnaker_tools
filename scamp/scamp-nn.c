@@ -47,40 +47,40 @@
 //------------------------------------------------------------------------------
 
 typedef struct nn_desc_t {
-    uchar state;                // FF state
-    uchar error;                // Error flag
-    uchar forward;              // Rebroadcast code
-    uchar retry;                // Rebroadcast retry
+    uchar state;                //!< FF state
+    uchar error;                //!< Error flag
+    uchar forward;              //!< Rebroadcast code
+    uchar retry;                //!< Rebroadcast retry
 
-    uchar id;                   // ID of current FF
-    uchar block_len;            // Block length
-    uchar block_count;          // Block count
-    uchar block_num;            // Block number
+    uchar id;                   //!< ID of current FF
+    uchar block_len;            //!< Block length
+    uchar block_count;          //!< Block count
+    uchar block_num;            //!< Block number
 
-    uchar app_id;               // AppID
-    uchar load;                 // Set if for us
-    ushort srce_addr;           // P2P of sender
+    uchar app_id;               //!< AppID
+    uchar load;                 //!< Set if for us
+    ushort srce_addr;           //!< P2P of sender
 
-    ushort word_len;            // Number of words in block
-    ushort word_count;          // Count of received words
+    ushort word_len;            //!< Number of words in block
+    ushort word_count;          //!< Count of received words
 
-    uint gidr_id;               // GIDR ID
+    uint gidr_id;               //!< GIDR ID
 
-    uint sum;                   // Checksum
-    uint region;                // Region
-    uint cores;                 // Selected cores to load
-    uint* aplx_addr;            // APLX block addr
-    uint load_addr;             // Block load base
-    uint id_set[4];             // ID bitmap (128 bits)
-    uint biff_id_set[4];        // Board-level flood-fill ID bitmap (128 bits)
-    uint fbs_set[8];            // Block bitmap for FBS (must be >= 8 words)
-    uint fbd_set[8];            // Word bitmap for FBD (must be >= 8 words)
-    uint fbe_set[8];            // Block bitmap for FBE (must be >= 8 words)
-    uint stats[16];             // Counters for each packet type
-    uint errors;                // Counter for bad checksums
-    uint buf[SDP_BUF_SIZE/4];   // Holding buffer
+    uint sum;                   //!< Checksum
+    uint region;                //!< Region
+    uint cores;                 //!< Selected cores to load
+    uint* aplx_addr;            //!< APLX block addr
+    uint load_addr;             //!< Block load base
+    uint id_set[4];             //!< ID bitmap (128 bits)
+    uint biff_id_set[4];        //!< Board-level flood-fill ID bitmap (128 bits)
+    uint fbs_set[8];            //!< Block bitmap for FBS (must be >= 8 words)
+    uint fbd_set[8];            //!< Word bitmap for FBD (must be >= 8 words)
+    uint fbe_set[8];            //!< Block bitmap for FBE (must be >= 8 words)
+    uint stats[16];             //!< Counters for each packet type
+    uint errors;                //!< Counter for bad checksums
+    uint buf[SDP_BUF_SIZE/4];   //!< Holding buffer
 
-    uint64 last_ffcs;           // Index of the last FFCS packet
+    uint64 last_ffcs;           //!< Index of the last FFCS packet
 } nn_desc_t;
 
 //------------------------------------------------------------------------------
@@ -104,11 +104,12 @@ nn_desc_t nn_desc;
 pkt_buf_t peek_pkt;
 pkt_buf_t poke_pkt;
 
-// delegate blacklisted monitor
+//! delegate blacklisted monitor
 uint mon_del = 0;
 //------------------------------------------------------------------------------
 
-void nn_init()
+//! Initialise the nearest-neighbour data structures
+void nn_init(void)
 {
     nn_desc.forward = sv->forward; // V104 20jul12 (was 0x3e)
 
@@ -125,14 +126,16 @@ void nn_init()
 
 //------------------------------------------------------------------------------
 
-// Given a P2P address, compute P2P address of chip with Ethernet interface
-// on same PCB. Table is for standard 48-chip boards only. Will work with
-// 4-chip boards - may not work for more exotic combinations!
-// Also computes the position of the chip on the PCB as offset from (0,0)
-
-// Each byte in this table is a pair of X,Y values which are subtracted
-// from a P2P address to give the address of the Ethernet-attached chip
-// on the same 48-chip PCB.
+//! \brief Local ethernet chip locator map
+//!
+//! Given a P2P address, compute P2P address of chip with Ethernet interface
+//! on same PCB. Table is for standard 48-chip boards only. Will work with
+//! 4-chip boards - may not work for more exotic combinations!
+//! Also computes the position of the chip on the PCB as offset from (0,0)
+//!
+//! Each byte in this table is a pair of X,Y values which are subtracted
+//! from a P2P address to give the address of the Ethernet-attached chip
+//! on the same 48-chip PCB.
 
 char eth_map[12][12] = {
     {0x00, 0x10, 0x20, 0x30, 0x40, 0x14, 0x24, 0x34, 0x44, 0x54, 0x64, 0x74},
@@ -211,8 +214,8 @@ const signed char ly[6] = { 0, -1, -1,  0, +1, +1};
 
 //------------------------------------------------------------------------------
 
-// Given a P2P address, compute region addresses for each of the four
-// levels, updating the levels structure.
+//! Given a P2P address, compute region addresses for each of the four
+//! levels, updating the levels structure.
 
 void compute_level(uint p2p_addr)
 {
@@ -229,8 +232,8 @@ void compute_level(uint p2p_addr)
     }
 }
 
-// For all regions at all levels, find a working chip within each of the 16
-// subregions and record its coordinates.
+//! For all regions at all levels, find a working chip within each of the 16
+//! subregions and record its coordinates.
 
 void level_config(void)
 {
@@ -471,7 +474,7 @@ void biff_nn_send(uint data)
 
 //------------------------------------------------------------------------------
 
-// Transmit our current best guess of coordinates to all neighbouring chips
+//! Transmit our current best guess of coordinates to all neighbouring chips
 void p2pc_addr_nn_send(uint arg1, uint arg2)
 {
     // Don't send anything if our address is actually unknown...
@@ -490,7 +493,7 @@ void p2pc_addr_nn_send(uint arg1, uint arg2)
     }
 }
 
-// Broadcast the existance of a new P2P coordinate having been discovered
+//! Broadcast the existance of a new P2P coordinate having been discovered
 void p2pc_new_nn_send(uint x, uint y)
 {
     uint key = (NN_CMD_P2PC << 24) | (P2PC_NEW << 2);
@@ -503,7 +506,7 @@ void p2pc_new_nn_send(uint x, uint y)
     }
 }
 
-// Transmit our current best guess of coordinates to all neighbouring chips.
+//! Transmit our current best guess of coordinates to all neighbouring chips.
 void p2pc_dims_nn_send(uint arg1, uint arg2)
 {
     uint key = (NN_CMD_P2PC << 24) | (P2PC_DIMS << 2);
@@ -519,7 +522,7 @@ void p2pc_dims_nn_send(uint arg1, uint arg2)
     }
 }
 
-// Transmit "P2PB" table generating packets
+//! Transmit "P2PB" table generating packets
 void p2pb_nn_send(uint arg1, uint arg2)
 {
     static int id = 0;
@@ -536,8 +539,8 @@ void p2pb_nn_send(uint arg1, uint arg2)
     }
 }
 
-// Update our current best guess of our coordinates based on a packet from a
-// neighbour
+//! \brief Update our current best guess of our coordinates based on a packet
+//! from a neighbour
 void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
 {
     // Coordinates of neighbour
@@ -589,7 +592,7 @@ void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
     }
 }
 
-// A new P2P coordinate has been broadcast to us.
+//! A new P2P coordinate has been broadcast to us.
 void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
 {
     // Coordinates of the new coordinate
@@ -622,7 +625,7 @@ void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
     }
 }
 
-// A neighbour has reported their P2P coordinates to us
+//! A neighbour has reported their P2P coordinates to us
 void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
 {
     // Bounds of the coordinates
@@ -686,15 +689,16 @@ void nn_rcv_p2pc_pct(uint link, uint data, uint key)
 
 //------------------------------------------------------------------------------
 
-// Write the Router Control Register. Various fields may be selected
-// using 'spare' bits in the word. The field is updated if the bit
-// is set
-//
-// bit 5 - Wait2
-// bit 4 - Wait1
-// bit 3 - W bit
-// bit 2 - MP field
-// bit 1 - TP field
+//! \brief Write the Router Control Register.
+//!
+//! Various fields may be selected using 'spare' bits in the word. The field
+//! is updated if the bit is set
+//!
+//! bit 5 - Wait2 <br>
+//! bit 4 - Wait1 <br>
+//! bit 3 - W bit <br>
+//! bit 2 - MP field <br>
+//! bit 1 - TP field
 
 // !! resync TP update timer?
 
@@ -731,8 +735,8 @@ void nn_cmd_rtrc(uint data)
 
 //------------------------------------------------------------------------------
 
-// SIG0 does simple commands whose data fits into 28 bits. Returns 0 if
-// packet should not be propagated, 1 otherwise.
+//! SIG0 does simple commands whose data fits into 28 bits. Returns 0 if
+//! packet should not be propagated, 1 otherwise.
 
 uint nn_cmd_sig0(uint data)
 {
@@ -818,21 +822,21 @@ void nn_cmd_sig1(uint data, uint key)
 
 //------------------------------------------------------------------------------
 
-// P2P Broadcast - used to propagate P2P addresses and maintain the P2P
-// routing table.
+#define P2PB_STOP_BIT 0x400        //! Set to stop propagation
 
-// Table "hop_table" has entries of type (id << 24, hops) for each possible
-// P2P address. Field "hops" contains the number of hops to the address
-// (initialised to 65535) and "id" contains the ID of the last packet
-// used to update the table (initialised to 128).
-
-// An update occurs when a packet with a lower hop count than the current
-// one arrives via an enabled link. The link on which the packet arrived
-// is used to update the P2P routing table.
-
-// Returns data with P2P_STOP_BIT set if the packet should not be propagated
-
-#define P2PB_STOP_BIT 0x400        // Set to stop propagation
+//! \brief P2P Broadcast, used to propagate P2P addresses and maintain the P2P
+//! routing table.
+//!
+//! Table "hop_table" has entries of type (id << 24, hops) for each possible
+//! P2P address. Field "hops" contains the number of hops to the address
+//! (initialised to 65535) and "id" contains the ID of the last packet
+//! used to update the table (initialised to 128).
+//!
+//! An update occurs when a packet with a lower hop count than the current
+//! one arrives via an enabled link. The link on which the packet arrived
+//! is used to update the P2P routing table.
+//!
+//! Returns data with P2P_STOP_BIT set if the packet should not be propagated
 
 uint nn_cmd_p2pb(uint id, uint data, uint link)
 {
@@ -868,7 +872,7 @@ uint nn_cmd_p2pb(uint id, uint data, uint link)
 
 //------------------------------------------------------------------------------
 
-
+//! Flood fill start
 void nn_cmd_ffs(uint data, uint key)
 {
     nn_desc.aplx_addr = sv->sdram_sys;
@@ -898,7 +902,7 @@ void nn_cmd_ffs(uint data, uint key)
     nn_desc.state = FF_ST_EXBLK;
 }
 
-
+//! Flood fill core select
 uint nn_cmd_ffcs(uint data, uint key)
 {
     // Select cores to flood-fill to
@@ -1022,7 +1026,7 @@ uint nn_cmd_fbe(uint id, uint data, uint key)
     return 1;
 }
 
-
+//! Flood fill end
 uint nn_cmd_ffe(uint id, uint data, uint key)
 {
     if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK) {
@@ -1080,7 +1084,7 @@ void proc_pkt_bc(uint i_pkt, uint count)
     }
 }
 
-
+//! Board info?
 void nn_cmd_biff(uint x, uint y, uint data)
 {
     // Board info data is formatted like so:
@@ -1142,6 +1146,7 @@ void nn_cmd_biff(uint x, uint y, uint data)
     }
 }
 
+//! Board info packet receiver
 void nn_rcv_biff_pct(uint link, uint data, uint key)
 {
     // When this function has been called, the checksum has already been
@@ -1215,7 +1220,7 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     }
 }
 
-
+//! Nearest-neighbour packet received handler
 void nn_rcv_pkt(uint link, uint data, uint key)
 {
     uint t = chksum_64(key, data);
@@ -1227,7 +1232,7 @@ void nn_rcv_pkt(uint link, uint data, uint key)
     uint cmd = (key >> 24) & 15;
     uint id = (key >> 1) & 127;
 
-    // NN_CMD_BIFF and NN_CMD_P2PC are handled seperately
+    // NN_CMD_BIFF and NN_CMD_P2PC are handled separately
     if (cmd == NN_CMD_BIFF) {
         nn_rcv_biff_pct(link, data, key);
         return;

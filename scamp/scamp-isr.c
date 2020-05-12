@@ -29,7 +29,7 @@
 #include "sark.h"
 #include "scamp.h"
 
-
+//! Multicast packet handler uses the FIQ VIC slot
 #define MC_SLOT SLOT_FIQ
 
 
@@ -55,12 +55,12 @@ extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 extern uchar v2p_map[MAX_CPUS];
 extern uint num_cpus;
 
-static uint centi_ms;   // Counts 0 to 9 in ms
+static uint centi_ms;   //!< Counts 0 to 9 in ms
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER pkt_tx_int() // SPIN2 - optimise for register order??
+//! Packet transmit ready handler
+INT_HANDLER pkt_tx_int(void) // SPIN2 - optimise for register order??
 {
     pkt_queue_t *txq = &tx_pkt_queue;
     txq->remove = (txq->remove + 1) % PKT_QUEUE_SIZE;
@@ -84,12 +84,12 @@ INT_HANDLER pkt_tx_int() // SPIN2 - optimise for register order??
 
 //------------------------------------------------------------------------------
 
-
+//! Ethernet packet received handler. Delegates to eth_receive()
 #ifdef __GNUC__
 void eth_rx_int(void)
 {
-  asm volatile (
-  "     .arm \n\
+    asm volatile (
+    "   .arm \n\
         .global eth_receive \n\
         .equ    MODE_SYS, 0x1f \n\
         .equ    MODE_IRQ, 0x12 \n\
@@ -110,7 +110,7 @@ void eth_rx_int(void)
         ldmfd   sp!, {r12, lr} \n\
         msr     spsr_cxsf, lr \n\
         ldmfd   sp!, {r0, pc}^ \n\
-  " :::);
+    " :::);
 }
 #else
 __asm void eth_rx_int(void)
@@ -148,8 +148,8 @@ __asm void eth_rx_int(void)
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER pkt_mc_int()
+//! Multicast packet received handler. Delegates to signal_app()
+INT_HANDLER pkt_mc_int(void)
 {
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
@@ -165,8 +165,13 @@ INT_HANDLER pkt_mc_int()
 #endif
 }
 
-
-INT_HANDLER pkt_nn_int()
+//! \brief Nearest-neighbour packet received handler
+//!
+//! Delegates to one of:
+//! * nn_rcv_pkt()
+//! * peek_ack_pkt()
+//! * poke_ack_pkt()
+INT_HANDLER pkt_nn_int(void)
 {
     uint ctrl = cc[CC_RSR];
     uint data = cc[CC_RXDATA];
@@ -190,8 +195,13 @@ INT_HANDLER pkt_nn_int()
     vic[VIC_VADDR] = (uint) vic;
 }
 
-
-INT_HANDLER pkt_p2p_int()
+//! \brief Peer-to-peer packet received handler
+//!
+//! Delegates to one of:
+//! * p2p_region()
+//! * p2p_rcv_data()
+//! * p2p_rcv_ctrl()
+INT_HANDLER pkt_p2p_int(void)
 {
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
@@ -212,8 +222,13 @@ INT_HANDLER pkt_p2p_int()
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER ms_timer_int()
+//! \brief Millisecond timer interrupt handler
+//!
+//! Delegates (with appropriate freqency) to:
+//! * proc_1khz()
+//! * proc_100hz()
+//! * proc_1hz()
+INT_HANDLER ms_timer_int(void)
 {
     tc[T1_INT_CLR] = (uint) tc;         // Clear interrupt
 
@@ -256,10 +271,11 @@ INT_HANDLER ms_timer_int()
 
 //------------------------------------------------------------------------------
 
+//! Round robin counter for ap_int()
+static uint next_box;
 
-uint next_box;
-
-INT_HANDLER ap_int()
+//! Application (local core) message available handler
+INT_HANDLER ap_int(void)
 {
     do {
         next_box++;
@@ -310,7 +326,7 @@ INT_HANDLER ap_int()
 
 extern INT_HANDLER timer2_int_han(void);
 
-
+//! Initialise the VIC
 void vic_setup(void)
 {
     tc[T2_CONTROL] = 0; // Disable timer2

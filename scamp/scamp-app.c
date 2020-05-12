@@ -33,7 +33,7 @@
 //------------------------------------------------------------------------------
 
 
-// Enable/disable clocks to a set of cores specified by a bit mask
+//! Enable/disable clocks to a set of cores specified by a bit mask
 
 void clock_ap(uint phys_mask, uint enable)
 {
@@ -49,8 +49,9 @@ void clock_ap(uint phys_mask, uint enable)
 }
 
 
-// Soft reset a set of cores specified by a bit mask. Clocks for those
-// cores are enabled.
+//! \brief Soft reset a set of cores specified by a bit mask.
+//!
+//! Clocks for those cores are enabled.
 
 void reset_ap(uint virt_mask)
 {
@@ -63,10 +64,12 @@ void reset_ap(uint virt_mask)
 }
 
 
-// Boot APs. Assumes the "boot_aplx" image has been placed at 0x7f00 and
-// the default "sark" image at 0x7000. Copies "boot_aplx" to start of
-// SysRAM and the default image to SDRAM. Then starts the default
-// app on all cores.
+//! \brief Boot APs.
+//!
+//! Assumes the "boot_aplx" image has been placed at 0x7f00 and
+//! the default "sark" image at 0x7000. Copies "boot_aplx" to start of
+//! SysRAM and the default image to SDRAM. Then starts the default
+//! app on all cores.
 
 void boot_ap(void)
 {
@@ -79,7 +82,7 @@ void boot_ap(void)
 }
 
 
-// Send a signal to a set of cores
+//! Send a signal to a set of cores
 
 void signal_sark(uint cmd, uint data, uint virt_mask, uint phys_mask)
 {
@@ -95,7 +98,7 @@ void signal_sark(uint cmd, uint data, uint virt_mask, uint phys_mask)
 }
 
 
-// Update some status variables for a set of cores
+//! Update some status variables for a set of cores
 
 void set_cpu_info(uint virt_mask, uint state, uint app_id)
 {
@@ -115,7 +118,7 @@ void set_cpu_info(uint virt_mask, uint state, uint app_id)
 //------------------------------------------------------------------------------
 
 
-// Find the position of the least significant bit in a word
+//! Find the position of the least significant bit in a word
 
 uint find_lead(uint mask)
 {
@@ -128,7 +131,7 @@ uint find_lead(uint mask)
     return count;
 }
 
-// Start an application on a set of cores
+//! Start an application on a set of cores
 
 void proc_start_app(uint aplx_addr, uint id_op_mask)
 {
@@ -164,7 +167,7 @@ void proc_start_app(uint aplx_addr, uint id_op_mask)
 }
 
 
-// Clean up shared data belonging to a given AppID
+//! Clean up shared data belonging to a given AppID
 
 void clean_app_id(uint app_id)
 {
@@ -185,7 +188,7 @@ void clean_app_id(uint app_id)
 }
 
 
-// Initialise a set of core so that they run the default application
+//! Initialise a set of core so that they run the default application
 
 void proc_init_cores(uint virt_mask, uint phys_mask)
 {
@@ -197,8 +200,8 @@ void proc_init_cores(uint virt_mask, uint phys_mask)
 }
 
 
-// Stop an application on a set of cores and free up any global resources
-// associated with the application
+//! \brief Stop an application on a set of cores and free up any global
+//! resources associated with the application
 
 void proc_stop_app(uint app_id_and_virt_mask, uint app_mask_and_phys_mask)
 {
@@ -220,7 +223,7 @@ void proc_stop_app(uint app_id_and_virt_mask, uint app_mask_and_phys_mask)
 }
 
 
-// Powerdown a set of cores
+//! Power down a set of cores
 
 void proc_power_down(uint virt_mask, uint phys_mask)
 {
@@ -229,8 +232,8 @@ void proc_power_down(uint virt_mask, uint phys_mask)
 }
 
 
-// Signal cores running a range of applications identified by an AppID
-// and a mask
+//! \brief Signal cores running a range of applications identified by an AppID
+//! and a mask
 
 void signal_app(uint data)
 {

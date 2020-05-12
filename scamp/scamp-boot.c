@@ -32,8 +32,8 @@
 
 //------------------------------------------------------------------------------
 
-// This currently sends an image of 28kB at most.
-// Images up to 32kB are possible.
+//! This currently sends an image of 28kB at most.
+//! Images up to 32kB are possible.
 
 #define BOOT_BUF (DTCM_BASE + 0x8000)
 
@@ -51,8 +51,8 @@
 
 #define FF_TARGET_MONITOR               0x0
 
-
-const uint crc_table[] = {
+//! Support table for crc32()
+static const uint crc_table[] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
     0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
     0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -98,7 +98,7 @@ const uint crc_table[] = {
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-
+//! Compute a CRC
 uint crc32(uchar *buf, uint len)
 {
     uint crc = 0xffffffff;
@@ -109,7 +109,7 @@ uint crc32(uchar *buf, uint len)
     return crc ^ 0xffffffff;
 }
 
-
+//! Send NN packet
 void nn_tx(uint key, uint data)
 {
     key |= chksum_64(key, data);
@@ -127,7 +127,7 @@ void nn_tx(uint key, uint data)
     sark_delay_us(sv->boot_delay);      // ST - 05jul12 - allow time to propagate...
 }
 
-
+//! Boot SCAMP on chips using the bootROM protocols
 void boot_nn(uint hw_ver)
 {
     uint * const image = (uint *) BOOT_BUF;

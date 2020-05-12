@@ -33,7 +33,7 @@
 
 //------------------------------------------------------------------------------
 
-// Version command string for SC&MP
+//! Version command string for SC&MP
 
 #define SCAMP_ID_STR            "SC&MP/SpiNNaker"
 
@@ -91,6 +91,7 @@ uint cmd_ffd(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+//! IPTag manipulation command handler
 // arg1 = flags[11:8] : timeout : command : dest_port : tag
 // arg2 = dest_addr : port
 // arg3 = IP
@@ -190,6 +191,7 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
 
 //-------------------------------------------------------------------------
 
+//! Version command handler
 uint cmd_ver(sdp_msg_t *msg)
 {
     // Report P2P address of 255,255 until boot completes (as an indication
@@ -211,6 +213,7 @@ uint cmd_ver(sdp_msg_t *msg)
 
 //-------------------------------------------------------------------------
 
+//! Link read command handler
 // arg1=addr
 // arg2=len
 // arg3=link_num
@@ -246,6 +249,7 @@ uint cmd_link_read(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+//! Link write command handler
 // arg1=addr
 // arg2=len
 // arg3=link_num
@@ -281,7 +285,7 @@ uint cmd_link_write(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! Application start command handler
 uint cmd_as(sdp_msg_t *msg)
 {
     proc_start_app(msg->arg1, msg->arg2);
@@ -292,7 +296,7 @@ uint cmd_as(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! Application reset command handler
 uint cmd_ar(sdp_msg_t *msg)
 {
     uint id_op_mask = msg->arg1;
@@ -310,6 +314,7 @@ uint cmd_ar(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+//! Router control command handler
 // arg1 = (count << 16) + (app_id << 8) + op
 
 // op = 0 - initialise
@@ -352,36 +357,38 @@ uint cmd_rtr(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-// Get information about this chip. Intended to support a host probing the
-// machine for its basic information.
-//
-// No input arguments expected.
-//
-// The response will contain arg1-3 as desribed below with an additional data
-// payload indicating the application states of all cores.
-// * arg1:
-//   * Bits  4:0  - The number of working cores (including the monitor)
-//   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
-//                  Chip ID in system controller, 0 otherwise. This check is
-//                  performed on demand.
-//   * Bits 24:14 - The number of routing table entries in the
-//                  largest free block.
-//   * Bit 25     - 1 if Ethernet is up, 0 otherwise.
-//   * Bits 31:26 - Undefined
-// * arg2: The size (in bytes) of the largest free block in the SDRAM heap
-// * arg3: The size (in bytes) of the largest free block in the SysRAM heap
-//
-// The data payload consists of (in order):
-// * an 18-byte block which gives the cpu_state_e of each application core with
-//   byte 0 containing core 0's state and so-on.
-// * a short giving the P2P address of the closest chip with an active Ethernet.
-//   Note that this is the chip to which SDP packets will be sent to from this
-//   chip when they contain a destination address indicating that they should be
-//   sent over Ethernet.
-// * a 4-byte block containing the IPv4 address of the Ethernet connection on
-//   this chip, made up of the 4 segments of the IPv4 address, each between
-//   0 and 255.  This might equate to an address of 0.0.0.0 if this chip is not
-//   physically connected to the Ethernet port of a board.
+//! \brief General chip information command handler
+//!
+//! Get information about this chip. Intended to support a host probing the
+//! machine for its basic information.
+//!
+//! No input arguments expected.
+//!
+//! The response will contain arg1-3 as desribed below with an additional data
+//! payload indicating the application states of all cores.
+//! * arg1:
+//!   * Bits  4:0  - The number of working cores (including the monitor)
+//!   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
+//!                  Chip ID in system controller, 0 otherwise. This check is
+//!                  performed on demand.
+//!   * Bits 24:14 - The number of routing table entries in the
+//!                  largest free block.
+//!   * Bit 25     - 1 if Ethernet is up, 0 otherwise.
+//!   * Bits 31:26 - Undefined
+//! * arg2: The size (in bytes) of the largest free block in the SDRAM heap
+//! * arg3: The size (in bytes) of the largest free block in the SysRAM heap
+//!
+//! The data payload consists of (in order):
+//! * an 18-byte block which gives the cpu_state_e of each application core with
+//!   byte 0 containing core 0's state and so-on.
+//! * a short giving the P2P address of the closest chip with an active Ethernet.
+//!   Note that this is the chip to which SDP packets will be sent to from this
+//!   chip when they contain a destination address indicating that they should be
+//!   sent over Ethernet.
+//! * a 4-byte block containing the IPv4 address of the Ethernet connection on
+//!   this chip, made up of the 4 segments of the IPv4 address, each between
+//!   0 and 255.  This might equate to an address of 0.0.0.0 if this chip is not
+//!   physically connected to the Ethernet port of a board.
 
 uint cmd_info(sdp_msg_t *msg)
 {
@@ -682,6 +689,7 @@ uint cmd_sig(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+//! Resource allocation command handler
 // arg1 = (app_id << 8) + op
 
 // op 0 - allocate SDRAM - arg2 = size, arg3 = tag
@@ -747,7 +755,7 @@ uint cmd_alloc(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! Core remap command handler
 // May want to check all cores are idle?
 
 uint cmd_remap(sdp_msg_t *msg)
@@ -782,7 +790,7 @@ uint cmd_remap(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! General debugging and control command handler
 uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
 {
     uint len = msg->length;

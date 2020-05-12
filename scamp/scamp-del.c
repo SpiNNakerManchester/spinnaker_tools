@@ -33,7 +33,7 @@
 
 //------------------------------------------------------------------------------
 
-
+//! Copy executable image from SDRAM to ITCM and boot it
 void img_cp_exe (void) {
     typedef void (*boot_img_t)(void);
     boot_img_t boot_img = (boot_img_t) ITCM_BASE;
