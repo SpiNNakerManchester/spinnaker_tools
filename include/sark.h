@@ -66,19 +66,20 @@
 Defines and typedefs to rationalise ARM/GNU interrupt handlers
 */
 
-#ifndef DOXYGEN
-#ifdef __GNUC__
+#ifdef DOXYGEN
+//! The basic type of an interrupt handler. Takes no arguments. Returns nothing.
+typedef void (*int_handler) (void);
 
+#elif defined(__GNUC__)
 # define INT_HANDLER \
     void __attribute__ ((interrupt ("IRQ")))
 # define SARK_IS_A_MALLOC(size_arg) \
     __attribute__ ((malloc, alloc_size(size_arg), assume_aligned(4)))
 # define SARK_IS_A_CALLOC(size_arg1, size_arg2) \
     __attribute__ ((malloc, alloc_size(size_arg1, size_arg2), assume_aligned(4)))
-typedef void (*int_handler) (void); //!< Interrupt handler
+typedef void (*int_handler) (void);
 
 #else // ARM
-
 # define INT_HANDLER \
     __irq void
 # define SARK_IS_A_MALLOC(size_arg) \
@@ -86,18 +87,14 @@ typedef void (*int_handler) (void); //!< Interrupt handler
 # define SARK_IS_A_CALLOC(size_arg1, size_arg2) \
     __attribute__ ((malloc))
 typedef __irq void (*int_handler) (void);   //!< Interrupt handler
-#endif
+#endif // DOXYGEN / GNUC / ARM
 
-#else
-typedef void (*int_handler) (void); //!< Interrupt handler
-#endif
-
+// doxygen has overrides for all of these.
 #ifndef NONNULL
 #define NONNULL __attribute__((nonnull))
 #define NONNULL2 __attribute__((nonnull(2)))
 #define NORETURN __attribute__((noreturn))
 #endif
-#endif // !DOXYGEN
 
 //------------------------------------------------------------------------------
 
