@@ -201,7 +201,15 @@
 
 // Number of microseconds to wait between sending P2PB packets on neighbouring
 // chips
-#define P2PB_OFFSET_USEC 100
+#define P2PB_OFFSET_USEC        100
+
+//------------------------------------------------------------------------------
+
+// sync0/sync1 arrival alignment
+
+#define NODE_DLY_NS             500     // per-node delay (ns)
+#define BRD_DLY_NS              900     // board-to-board delay (ns)
+#define TOP_DLY_US              155     // largest delay in 256x256 nodes (us)
 
 //------------------------------------------------------------------------------
 
