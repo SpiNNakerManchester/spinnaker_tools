@@ -96,7 +96,7 @@ while (<>) {
 		printf "%-15s else\n", '';
     } elsif (/^#endif$/) {
 		printf "%-15s endif\n", '';
-    } elsif (!$in_enum && /^enum .* \{/) {
+    } elsif (!$in_enum && /^enum .*\{/) {
     	$in_enum = 1;
     	$enum_count = 0;
     } elsif ($in_enum) {
