@@ -201,7 +201,7 @@ enum scamp_nn_p2p_config_subcommands {
     P2PC_ADDR = 0, //!< Your P2P address is...
     P2PC_NEW = 1,  //!< (Broadcast) I/somebody just discovered/updated my/their P2P address
     P2PC_DIMS = 2  //!< (Broadcast) The current best guess of P2P coordinates is...
-}
+};
 //! \}
 
 //------------------------------------------------------------------------------
