@@ -1,3 +1,18 @@
+# Copyright (c) 2013-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #-------------------------------------------------------------------------------
 
 name = sv
@@ -86,7 +101,7 @@ __PAD4               v  0xbe  %d    0           #
 
 sdram_base           V  0xc0  %08x  0           # Base of user SDRAM
 sysram_base          V  0xc4  %08x  0           # Base of user SysRAM
-sdram_sys            V  0xc8  %08x  0           # 
+sdram_sys            V  0xc8  %08x  0           #
 vcpu_base            V  0xcc  %08x  0           # Start of VCPU blocks
 
 sys_heap             V  0xd0  %08x  0           # System heap in SDRAM
@@ -134,7 +149,7 @@ sw_count             v  0x3a  %d    0           # SW error count (saturating)
 sw_file              V  0x3c  %08x  0           # SW source file name
 sw_line              V  0x40  %d    0           # SW source line
 time                 V  0x44  %08x  0           # Time of loading
-app_name[16]         A16 0x48  %s   0           # Application name 
+app_name[16]         A16 0x48  %s   0           # Application name
 iobuf                V  0x58  %08x  0           # IO buffer
 sw_ver               V  0x5c  %08x  0           # SW version
 __PAD[4]             V  0x60  %08x  0           # PAD

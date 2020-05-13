@@ -9,6 +9,23 @@
 //
 //------------------------------------------------------------------------------
 
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 
 //------------------------------------------------------------------------------
 // TODO
@@ -342,13 +359,13 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
             tag = msg->tag = transient_tag(ip_hdr->srce, rx_pkt+6, udp_srce, tag_tto);
         }
 
-        eth_discard();
-
         if ((flags & SDPF_REPLY) == 0 ||
                 (tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0)) {
             arp_add(rx_pkt+6, ip_hdr->srce);
+            eth_discard();
             msg_queue_insert(msg, srce_ip);
         } else {
+            eth_discard();
             sark_msg_free(msg);
         }
     } else {                            // Reverse IPTag...
@@ -511,9 +528,6 @@ void eth_send_msg(uint tag, sdp_msg_t *msg)
 uint shm_ping(uint dest)
 {
     vcpu_t *vcpu = sv_vcpu + dest;
-    vcpu->mbox_ap_cmd = SHM_NOP;
-    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
-
     volatile uchar flag = 0;
     event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
     if (e == NULL) {
@@ -521,6 +535,8 @@ uint shm_ping(uint dest)
         return 1;
     }
 
+    vcpu->mbox_ap_cmd = SHM_NOP;
+    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
     uint id = e->ID;
     timer_schedule(e, 1000); // !! const??
 
@@ -542,39 +558,47 @@ uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
 {
     vcpu_t *vcpu = sv_vcpu + dest;
 
+    // Wait for the box to be idle
+    if (vcpu->mbox_ap_cmd != SHM_IDLE) {
+        volatile uchar flag = 0;
+
+        // If we can't get an event, fail
+        event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
+        if (e == NULL) {
+            sw_error(SW_OPT);
+            return RC_BUF;          // !! not the right RC
+        }
+
+        // Set up a timer to wait
+        uint id = e->ID;
+        timer_schedule(e, 1000);    // !! const??
+
+        // Wait for the box to be idle, or a timeout
+        while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
+            continue;
+        }
+
+        // Return error if timed out
+        if (flag != 0) {
+            return RC_TIMEOUT;
+        }
+
+        // Cancel the timer if not timed out
+        timer_cancel(e, id);
+    }
+
+    // Get a message to do the sending
     sdp_msg_t *shm_msg = sark_shmsg_get();
     if (shm_msg == NULL) {
         return RC_BUF;
     }
 
+    // Send the message
     sark_msg_cpy(shm_msg, msg);
-
     vcpu->mbox_ap_msg = shm_msg;
     vcpu->mbox_ap_cmd = SHM_MSG;
-
     sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
 
-    volatile uchar flag = 0;
-    event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
-    if (e == NULL) {
-        sw_error(SW_OPT);
-        sark_shmsg_free(shm_msg);
-        return RC_BUF;          // !! not the right RC
-    }
-
-    uint id = e->ID;
-    timer_schedule(e, 1000);    // !! const??
-
-    while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
-        continue;
-    }
-
-    if (flag != 0) {
-        sark_shmsg_free(shm_msg);
-        return RC_TIMEOUT;
-    }
-
-    timer_cancel(e, id);
     return RC_OK;
 }
 
@@ -1066,6 +1090,39 @@ void init_link_en(void)
     sv->link_en = link_en;
 }
 
+// disable links that have been disabled by neighbours
+void disable_unidirectional_links(void)
+{
+    uint timeout = sv->peek_time;
+    uint remote_link_en;
+    uint remote_addr = (uint) &(sv->link_en) & 0xfffffffc;  // word aligned
+    uint remote_offs = (uint) &(sv->link_en) & 0x00000003;  // byte offset
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        if (link_en & (1 << link)) {
+            uint rc = link_read_word(remote_addr, link,
+                    &remote_link_en, timeout);
+            remote_link_en = remote_link_en >> (remote_offs * 8);
+
+            // check opposite link in neighbour
+            uint rl = link + 3;
+            if (rl >= NUM_LINKS)
+            {
+                rl -= NUM_LINKS;
+            }
+
+            // disable link if its opposite was disabled
+            // by the corresponding neighbouring chip
+            if ((rc != RC_OK) ||
+                ((remote_link_en & (1 << rl)) == 0)
+               ){
+              link_en &= ~(1 << link);
+            }
+        }
+    }
+
+    sv->link_en = link_en;
+}
+
 // Start the higher-level network initialisation process. Must be called only
 // once, before the nearest neighbour interrupt handler is enabled.
 void netinit_start(void)
@@ -1270,6 +1327,7 @@ void proc_100hz(uint a1, uint a2)
 
                 level_config();
                 compute_st();
+                disable_unidirectional_links();
                 sv->p2p_up = p2p_up = 1;
 
                 if (srom.flags & SRF_ETH) {

@@ -11,6 +11,21 @@
 ##
 ##------------------------------------------------------------------------------
 
+# Copyright (c) 2009-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 use strict;
 use warnings;
@@ -782,7 +797,7 @@ sub cmd_app_sig
 
 	# find a working chip in the target region (try at most 16 addresses)
 	my $inc = ($level == 3) ? 1 : 2;  # if possible, spread out target chips
-	
+
 	for (my $i = 0; $i < 16; $i++)
 	{
 	    my $addr = [$xb + ($inc * ($i >> 2)), $yb + ($inc * ($i & 3)), 0];

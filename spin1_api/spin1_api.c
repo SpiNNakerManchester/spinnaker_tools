@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2017-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <sark.h>
 
 #include <spin1_api.h>
@@ -101,77 +118,6 @@ extern INT_HANDLER sark_int_han(void);
 
 extern void spin1_wfi(void);
 uint spin1_int_enable(void);
-
-// !! ST replaced by SARK routine
-
-void spin1_msg_free(sdp_msg_t *msg)
-{
-    sark_msg_free(msg);
-}
-
-sdp_msg_t* spin1_msg_get(void)
-{
-    return sark_msg_get();
-}
-
-uint spin1_send_sdp_msg(sdp_msg_t *msg, uint timeout)
-{
-    return sark_msg_send(msg, timeout);
-}
-
-// ------------------------------------------------------------------------
-// pseudo-random number generation functions
-// ------------------------------------------------------------------------
-/****f* spin1_isr.c/spin1_srand
-*
-* SUMMARY
-*  This function is used to initialize the seed for the
-*  pseudo-random number generator.
-*
-* SYNOPSIS
-*  void spin1_srand (uint seed)
-*
-* SOURCE
-*/
-
-// !! ST now calls SARK srand
-
-void spin1_srand(uint seed)
-{
-    sark_srand(seed);
-}
-/*
-*******/
-
-
-/****f* spin1_isr.c/spin1_rand
-*
-* SUMMARY
-*  This function generates a pseudo-random 32-bit integer.
-*  Taken from "Programming Techniques"
-*  ARM document ARM DUI 0021A
-*
-* SYNOPSIS
-*  uint spin1_rand (void)
-*
-* OUTPUTS
-*  32-bit pseudo-random integer
-*
-* SOURCE
-*/
-/*
-*******/
-
-// !! ST now uses equivalent SARK routine
-
-uint spin1_rand(void)
-{
-    return sark_rand();
-}
-
-/*
-*******/
-
 
 // ------------------------------------------------------------------------
 // hardware support functions
@@ -288,6 +234,10 @@ void configure_timer1(uint time, uint phase)
 /*
 *******/
 
+#ifndef VIC_ENABLE_VECTOR
+#define VIC_ENABLE_VECTOR (0x20)
+#endif //VIC_ENABLE_VECTOR
+
 /****f* spin1_api.c/configure_vic
 *
 * SUMMARY
@@ -357,33 +307,33 @@ void configure_vic(uint enable_timer)
     vic_controls[sark_vec->sark_slot] = 0;        // Disable previous slot
 
     vic_vectors[SARK_PRIORITY]  = sark_int_han;
-    vic_controls[SARK_PRIORITY] = 0x20 | CPU_INT;
+    vic_controls[SARK_PRIORITY] = VIC_ENABLE_VECTOR | CPU_INT;
 
     // Configure API callback interrupts
     vic_vectors[RX_READY_PRIORITY] = cc_rx_ready_isr;
-    vic_controls[RX_READY_PRIORITY] = 0x20 | CC_MC_INT;
+    vic_controls[RX_READY_PRIORITY] = VIC_ENABLE_VECTOR | CC_MC_INT;
 
     vic_vectors[FR_READY_PRIORITY] = cc_fr_ready_isr;
-    vic_controls[FR_READY_PRIORITY] = 0x20 | CC_FR_INT;
+    vic_controls[FR_READY_PRIORITY] = VIC_ENABLE_VECTOR | CC_FR_INT;
 
     vic_vectors[DMA_DONE_PRIORITY]  = dma_done_isr;
-    vic_controls[DMA_DONE_PRIORITY] = 0x20 | DMA_DONE_INT;
+    vic_controls[DMA_DONE_PRIORITY] = VIC_ENABLE_VECTOR | DMA_DONE_INT;
 
     vic_vectors[TIMER1_PRIORITY]  = timer1_isr;
-    vic_controls[TIMER1_PRIORITY] = 0x20 | TIMER1_INT;
+    vic_controls[TIMER1_PRIORITY] = VIC_ENABLE_VECTOR | TIMER1_INT;
 
     // configure the TX empty interrupt but don't enable it yet!
     vic_vectors[CC_TMT_PRIORITY] = cc_tx_empty_isr;
-    vic_controls[CC_TMT_PRIORITY] = 0x20 | CC_TMT_INT;
+    vic_controls[CC_TMT_PRIORITY] = VIC_ENABLE_VECTOR | CC_TMT_INT;
 
     // configure the software interrupt
     vic_vectors[SOFT_INT_PRIORITY]  = soft_int_isr;
-    vic_controls[SOFT_INT_PRIORITY] = 0x20 | SOFTWARE_INT;
+    vic_controls[SOFT_INT_PRIORITY] = VIC_ENABLE_VECTOR | SOFTWARE_INT;
 
 #if USE_WRITE_BUFFER == TRUE
     /* configure the DMA error interrupt */
     vic_vectors[DMA_ERR_PRIORITY]  = dma_error_isr;
-    vic_controls[DMA_ERR_PRIORITY] = 0x20 | DMA_ERR_INT;
+    vic_controls[DMA_ERR_PRIORITY] = VIC_ENABLE_VECTOR | DMA_ERR_INT;
 #endif // USE_WRITE_BUFFER == TRUE
 
     vic[VIC_SELECT] = fiq_select;
@@ -1017,27 +967,6 @@ uint spin1_start_paused()
 {
     return start(SYNC_NOWAIT, 1);
 }
-
-
-/****f* spin1_api.c/spin1_delay_us
-*
-* SUMMARY
-*  This function implements a delay measured in microseconds
-*  The function busy waits to implement the delay.
-*
-* SYNOPSIS
-*  void spin1_delay_us(uint n)
-*
-* INPUTS
-*  uint n: requested delay (in microseconds)
-*
-* SOURCE
-*/
-// !! ST replaced by SARK routine
-void spin1_delay_us(uint n)
-{
-    sark_delay_us(n);
-}
 /*
 *******/
 
@@ -1107,6 +1036,75 @@ uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
 
     spin1_mode_restore(cpsr);
     return id;
+}
+/*
+*******/
+
+/****f* spin1_api.c/spin1_dma_flush
+*
+* SUMMARY
+*  This function:
+*    flushes the hardware queue in the DMA controller,
+*    aborts any ongoing transfer in the DMA controller,
+*    clears any pending DMA_COMPLETE interrupts in the DMA controller and
+*    purges any queued DMA_COMPLETE callbacks in the callback queues.
+*    flushes the software DMA queue,
+*
+* SYNOPSIS
+*  void spin1_dma_flush(void);
+*
+ SOURCE
+*/
+void spin1_dma_flush(void)
+{
+    // flush the hardware queue in the DMA controller,
+    // abort any ongoing transfer in the DMA controller,
+    // and clear any pending DMA_COMPLETE interrupts in the DMA controller
+    dma[DMA_CTRL] = 0x1f;
+    dma[DMA_CTRL] = 0x0d;
+
+    // purge any queued DMA_COMPLETE callbacks in the callback queues
+    if (callback[DMA_TRANSFER_DONE].priority > 0) {
+        task_queue_t *tq = &task_queue[callback[DMA_TRANSFER_DONE].priority-1];
+
+        // check only if the queue is not empty
+        uint cpsr = spin1_int_disable();
+        if (tq->end != tq->start) {
+            callback_t cb = callback[DMA_TRANSFER_DONE].cback;
+            uint mtp = tq->start;
+            uint end = tq->end;
+
+            // find first queued DMA_COMPLETE callback
+            while ((mtp != end) && (tq->queue[mtp].cback != cb)) {
+                mtp = (mtp + 1) % TASK_QUEUE_SIZE;
+            }
+
+            // if found, remove it and move up the rest of the queue
+            if (mtp != end) {
+                uint mfp = (mtp + 1) % TASK_QUEUE_SIZE;
+                while (mfp != end) {
+                    // jump over other queued DMA_COMPLETE callbacks
+                    if (tq->queue[mfp].cback != cb) {
+                        tq->queue[mtp].cback = tq->queue[mfp].cback;
+                        tq->queue[mtp].arg0  = tq->queue[mfp].arg0;
+                        tq->queue[mtp].arg1  = tq->queue[mfp].arg1;
+                        mtp = (mtp + 1) % TASK_QUEUE_SIZE;
+                    }
+                    mfp = (mfp + 1) % TASK_QUEUE_SIZE;
+                }
+
+                // update queue end pointer
+                tq->end = mtp;
+            }
+        }
+        spin1_mode_restore(cpsr);
+    }
+
+    // and flush the software DMA transfer queue
+    uint cpsr = spin1_int_disable();
+    dma_queue.start = 0;
+    dma_queue.end   = 0;
+    spin1_mode_restore(cpsr);
 }
 /*
 *******/
@@ -1197,6 +1195,7 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
 
     /* clear sticky TX full bit and check TX state */
     cc[CC_TCR] = TX_TCR_MCDEFAULT;
+    (void) cc[CC_TCR];  // needed to avoid a RAW hazard accessing CC_TCR
 
     if (cc[CC_TCR] & TX_FULL_MASK) {
         if ((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE
@@ -1263,150 +1262,6 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
     return rc;
 }
 
-/****f* spin1_api.c/spin1_send_mc_packet
-*
-* SUMMARY
-*  This function enqueues a request to send a multicast packet. If
-*  the software buffer is full then a failure code is returned. If the comms
-*  controller hardware buffer and the software buffer are empty then the
-*  the packet is sent immediately, otherwise it is placed in a queue to be
-*  consumed later by cc_tx_empty interrupt service routine.
-*
-* SYNOPSIS
-*  uint spin1_send_mc_packet(uint key, uint data, uint load)
-*
-* INPUTS
-*  uint key: packet routining key
-*  uint data: packet payload
-*  uint load: 0 = no payload (ignore data param), 1 = send payload
-*
-* OUTPUTS
-*  1 if packet is enqueued or sent successfully, 0 otherwise
-*
-* SOURCE
-*/
-
-uint spin1_send_mc_packet(uint key, uint data, uint load)
-{
-    uint tcr = (load) ? PKT_MC_PL : PKT_MC;
-
-    return spin1_send_packet(key, data, tcr);
-}
-/*
-*******/
-
-/****f* spin1_api.c/spin1_send_ft_packet
-*
-* SUMMARY
-*  This function enqueues a request to send a fixed-route packet. If
-*  the software buffer is full then a failure code is returned. If the comms
-*  controller hardware buffer and the software buffer are empty then the
-*  the packet is sent immediately, otherwise it is placed in a queue to be
-*  consumed later by cc_tx_empty interrupt service routine.
-*
-* SYNOPSIS
-*  uint spin1_send_fr_packet(uint key, uint data, uint load)
-*
-* INPUTS
-*  uint key: packet routining key
-*  uint data: packet payload
-*  uint load: 0 = no payload (ignore data param), 1 = send payload
-*
-* OUTPUTS
-*  1 if packet is enqueued or sent successfully, 0 otherwise
-*
-* SOURCE
-*/
-
-uint spin1_send_fr_packet(uint key, uint data, uint load)
-{
-    uint tcr = (load) ? PKT_FR_PL : PKT_FR;
-
-    return spin1_send_packet(key, data, tcr);
-}
-
-/*
-*******/
-
-
-/****f* spin1_api.c/spin1_irq_disable
-*
-* SUMMARY
-*  This function sets the I bit in the CPSR in order to disable IRQ
-*  interrupts to the processor.
-*
-* SYNOPSIS
-*  uint spin1_irq_disable()
-*
-* OUTPUTS
-*  state of the CPSR before the interrupt disable
-*
-* SOURCE
-*/
-#ifdef THUMB
-extern uint spin1_irq_disable(void);
-#elif defined(__GNUC__)
-__inline uint spin1_irq_disable(void)
-{
-    uint old_val, new_val;
-
-    asm volatile (
-    "mrs        %[old_val], cpsr \n\
-     orr        %[new_val], %[old_val], #0x80 \n\
-     msr        cpsr_c, %[new_val] \n"
-     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
-     :
-     : );
-
-    return old_val;
-}
-#else
-__forceinline uint spin1_irq_disable(void)
-{
-    uint old_val, new_val;
-
-    __asm { mrs old_val, cpsr }
-    __asm { orr new_val, old_val, 0x80 }
-    __asm { msr cpsr_c, new_val }
-
-    return old_val;
-}
-#endif
-/*
-*******/
-
-
-/****f* spin1_api.c/spin1_mode_restore
-*
-* SUMMARY
-*  This function sets the CPSR to the value given in parameter sr, in order to
-*  restore the CPSR following a call to spin1_irq_disable.
-*
-* SYNOPSIS
-*  void spin1_mode_restore(uint sr)
-*
-* INPUTS
-*  uint sr: value with which to set the CPSR
-*
-* SOURCE
-*/
-#ifdef THUMB
-extern void spin1_mode_restore(uint cpsr);
-#elif defined(__GNUC__)
-__inline void spin1_mode_restore(uint cpsr)
-{
-    asm volatile (
-    "msr        cpsr_c, %[cpsr]"
-    :
-    : [cpsr] "r" (cpsr)
-    :);
-}
-#else
-__forceinline void spin1_mode_restore(uint sr)
-{
-    __asm { msr cpsr_c, sr }
-}
-#endif
 /*
 *******/
 
@@ -1449,100 +1304,6 @@ __forceinline uint spin1_irq_enable(void)
 
     __asm { mrs old_val, cpsr }
     __asm { bic new_val, old_val, 0x80 }
-    __asm { msr cpsr_c, new_val }
-
-    return old_val;
-}
-#endif
-/*
-*******/
-
-
-/****f* spin1_api.c/spin1_fiq_disable
-*
-* SUMMARY
-*  This function sets the F bit in the CPSR in order to disable
-*  FIQ interrupts in the processor.
-*
-* SYNOPSIS
-*  uint spin1_fiq_disable()
-*
-* OUTPUTS
-*  state of the CPSR before the interrupts disable
-*
-* SOURCE
-*/
-#ifdef THUMB
-extern uint spin1_fiq_disable(void);
-#elif defined(__GNUC__)
-__inline uint spin1_fiq_disable(void)
-{
-    uint old_val, new_val;
-
-    asm volatile (
-    "mrs        %[old_val], cpsr \n\
-     orr        %[new_val], %[old_val], #0x40 \n\
-     msr        cpsr_c, %[new_val] \n"
-     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
-     :
-     : );
-
-    return old_val;
-}
-#else
-__forceinline uint spin1_fiq_disable(void)
-{
-    uint old_val, new_val;
-
-    __asm { mrs old_val, cpsr }
-    __asm { orr new_val, old_val, 0x40 }
-    __asm { msr cpsr_c, new_val }
-
-    return old_val;
-}
-#endif
-/*
-*******/
-
-
-/****f* spin1_api.c/spin1_int_disable
-*
-* SUMMARY
-*  This function sets the F and I bits in the CPSR in order to disable
-*  FIQ and IRQ interrupts in the processor.
-*
-* SYNOPSIS
-*  uint spin1_int_disable()
-*
-* OUTPUTS
-*  state of the CPSR before the interrupts disable
-*
-* SOURCE
-*/
-#ifdef THUMB
-extern uint spin1_int_disable(void);
-#elif defined(__GNUC__)
-__inline uint spin1_int_disable(void)
-{
-    uint old_val, new_val;
-
-    asm volatile (
-    "mrs        %[old_val], cpsr \n\
-     orr        %[new_val], %[old_val], #0xc0 \n\
-     msr        cpsr_c, %[new_val] \n"
-     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
-     :
-     : );
-
-    return old_val;
-}
-#else
-__forceinline uint spin1_int_disable(void)
-{
-    uint old_val, new_val;
-
-    __asm { mrs old_val, cpsr }
-    __asm { orr new_val, old_val, 0xc0 }
     __asm { msr cpsr_c, new_val }
 
     return old_val;
@@ -1653,35 +1414,6 @@ uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 }
 #endif
 
-/****f* spin1_api.c/spin1_led_control
-*
-* SUMMARY
-*  This function controls LEDs according to an input pattern.
-*  Macros for turning LED number N on, off or inverted are
-*  defined in spinnaker.h.
-*
-*  To turn LEDs 0 and 1 on, then invert LED2 and finally
-*  turn LED 0 off:
-*
-*   spin1_led_control (LED_ON (0) + LED_ON (1));
-*   spin1_led_control (LED_INV (2));
-*   spin1_led_control (LED_OFF (0));
-*
-* SYNOPSIS
-*  void spin1_set_leds(uint p);
-*
-* INPUTS
-*  uint p: led control word
-*
-* SOURCE
-*/
-
-// !! ST replaced by SARK routine
-
-void spin1_led_control(uint p)
-{
-    sark_led_set(p);
-}
 /*
 *******/
 
@@ -1689,27 +1421,6 @@ void spin1_led_control(uint p)
 // ------------------------------------------------------------------------
 // memory allocation functions
 // ------------------------------------------------------------------------
-/****f* spin1_api.c/spin1_malloc
-*
-* SUMMARY
-*  This function returns a pointer to a block of memory of size "bytes".
-*
-* SYNOPSIS
-*  void * spin1_malloc(uint bytes)
-*
-* INPUTS
-*  uint bytes: size, in bytes, of the requested memory block
-*
-* OUTPUTS
-*  pointer to the requested memory block or 0 if unavailable
-*
-* SOURCE
-*/
-
-void* spin1_malloc(uint bytes)
-{
-    return sark_alloc(bytes, 1);
-}
 
 /*
 *******/

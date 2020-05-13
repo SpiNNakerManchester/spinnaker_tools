@@ -9,6 +9,23 @@
 //
 //------------------------------------------------------------------------------
 
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "spinnaker.h"
 #include "sark.h"
 #include "scamp.h"
@@ -344,12 +361,14 @@ INT_HANDLER ap_int()
 
         if (msg != NULL) {
             sark_msg_cpy(msg, shm_msg);
+            sark_shmsg_free(shm_msg);
             vcpu->mbox_mp_cmd = SHM_IDLE;
             msg_queue_insert(msg, 0);
-            sark_shmsg_free(shm_msg);
         } else {
-            // failed to get buffer - do *not* flag
-            // mailbox as IDLE to cause sender timeout
+            // If we didn't get a message, we are just going to have to throw
+            // this one away...
+            sark_shmsg_free(shm_msg);
+            vcpu->mbox_mp_cmd = SHM_IDLE;
             sw_error(SW_OPT);
         }
 
