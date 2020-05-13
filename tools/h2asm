@@ -57,8 +57,8 @@ use warnings;
 
 
 my $blank = 0;
-my $inenum = 0;
-my $enumcount;
+my $in_enum = 0;
+my $enum_count;
 my $time = localtime(time());
 
 printf ";\n; Auto-generated from \"%s\" - $time\n;\n", $ARGV[0] || "<STDIN>";
@@ -68,6 +68,7 @@ while (<>) {
     chomp;
     s/^\s+|\s+$//g;
     s/\/\//;/;
+    s/!<//;
 
     if (/^$/) {
 		print "\n" unless $blank;
@@ -77,14 +78,16 @@ while (<>) {
 
     $blank = 0;
 
-    if (/^;/) {
-		print "$_\n";
+    if (/^;!?(.*)/) {
+		print ";$1\n";
     } elsif (/^#define\s+(\w+)\s+(.+)/) {
 	 	my ($name, $val) = ($1, $2);
 		my $rest = '';
 
-		($val, $rest) = ($2, $3) if $val =~ /^(INT|BYTE)_AT\((.+?)\)(.*)/;
-		printf "%-15s equ     $val$rest\n", $name;
+		if ($val !~ /^__/) {
+			($val, $rest) = ($2, $3) if $val =~ /^(INT|BYTE)_AT\((.+?)\)(.*)/;
+			printf "%-15s equ     $val$rest\n", $name;
+		}
     } elsif (/^#ifdef\s+(\w+)/) {
 		printf "%-15s if      :def: $1\n", '';
     } elsif (/^#ifndef\s+(\w+)/) {
@@ -93,18 +96,22 @@ while (<>) {
 		printf "%-15s else\n", '';
     } elsif (/^#endif$/) {
 		printf "%-15s endif\n", '';
-    } elsif (/^enum .* \{/) {
-    	$inenum = 1;
-    	$enumcount = 0;
-    } elsif ($inenum and m!^\s+(\w+)\s*=\s*([^,/]+)!) {
-    	my ($name, $val) = ($1, $2);
-    	printf "%-15s equ     $val\n", $name;
-    } elsif ($inenum and m!^\s+(\w+)\s*(?:/.*)?!) {
-    	my $name = $1;
-    	printf "%-15s equ     $enumcount\n", $name;
-    	$enumcount++;
-    } elsif ($inenum and /^\}/) {
-    	$inenum = 0;
+    } elsif (!$in_enum && /^enum .* \{/) {
+    	$in_enum = 1;
+    	$enum_count = 0;
+    } elsif ($in_enum) {
+	    if (/^(\w+)\s*=\s*([^,;]+),?\s*(;.*)?/) {
+	    	my ($name, $val, $comment) = ($1, $2, $3);
+    		$comment = "" unless defined $comment;
+	    	printf "%-15s equ     $val\t$comment\n", $name;
+	    } elsif (/^(\w+),?\s*(;.*)?/) {
+	    	my ($name, $comment) = ($1, $2);
+    		$comment = "" unless defined $comment;
+	    	printf "%-15s equ     $enum_count\t$comment\n", $name;
+	    	$enum_count++;
+	    } elsif (/^\}/) {
+	    	$in_enum = 0;
+	    }
     } else {
 		$blank = 1;
     }
