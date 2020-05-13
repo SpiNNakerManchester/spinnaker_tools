@@ -213,7 +213,7 @@ enum scamp_nn_p2p_config_subcommands {
 enum scamp_p2p_type_codes {
     P2P_DATA =  0,
     P2P_CTRL =  1,
-    P2P_LEVEL = 2
+    P2P_LEVEL = 2       //!< Used for CountState requests
 };
 
 //! Distinguish data/control packets in SDP/P2P
@@ -342,7 +342,7 @@ typedef struct pkt_buf_t {
     pkt_t pkt;                  //!< What to send
 } pkt_buf_t;
 
-
+//! Used for tracking signal dispatch
 typedef struct {        // 64 bytes
     uint   level_addr;  //!< 0: This chip's region at this level
     ushort sent;        //!< 4: Number of requests sent out in this region

@@ -102,6 +102,7 @@ uint pkt_buf_max;
 //! Stored in SYSRAM so visible to all cores. Should only be updated by SCAMP
 uint *hop_table;
 
+//! Used for tracking signal dispatch
 level_t levels[4];
 
 uchar core_app[MAX_CPUS];

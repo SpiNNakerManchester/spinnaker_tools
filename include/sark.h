@@ -86,6 +86,7 @@ typedef void (*int_handler) (void); //!< Interrupt handler
 # define SARK_IS_A_CALLOC(size_arg1, size_arg2) \
     __attribute__ ((malloc))
 typedef __irq void (*int_handler) (void);   //!< Interrupt handler
+#endif
 
 #else
 typedef void (*int_handler) (void); //!< Interrupt handler

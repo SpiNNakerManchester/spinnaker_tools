@@ -32,7 +32,7 @@
 
 extern void timer2_int(void);
 
-
+//! Interrupt handler for timer 2. Delegates to timer2_int()
 INT_HANDLER timer2_int_han(void)
 {
     timer2_int();

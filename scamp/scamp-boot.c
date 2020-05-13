@@ -25,30 +25,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "sark.h"
 #include "scamp.h"
 
-
 //------------------------------------------------------------------------------
 
-//! This currently sends an image of 28kB at most.
-//! Images up to 32kB are possible.
+// This currently sends an image of 28kB at most.
+// Images up to 32kB are possible.
 
+//! The address of the buffer used for booting cores
 #define BOOT_BUF (DTCM_BASE + 0x8000)
 
 // BLOCK_COUNT * BYTE_COUNT must be < 32kB
+//! The number of blocks in the image to boot
 #define BLOCK_COUNT     28      // From 1-256
+//! The number of words in a block (1kB)
 #define WORD_COUNT      256     // From 1-256
+//! The number of bytes in a block
 #define BYTE_COUNT      (WORD_COUNT * sizeof(uint))
 
+//! FF phases, used in nearest neighbour packets.
+enum boot_phases {
+    FF_START_PHASE_1 =          0x01000003,
+    FF_BLOCK_START_PHASE_1 =    0x02000003,
+    FF_BLOCK_DATA_PHASE_1 =     0x03000003,
+    FF_BLOCK_END_PHASE_1 =      0x04000003,
+    FF_CONTROL_PHASE_1 =        0x05000103
+};
 
-#define FF_START_PHASE_1                0x01000003
-#define FF_BLOCK_START_PHASE_1          0x02000003
-#define FF_BLOCK_DATA_PHASE_1           0x03000003
-#define FF_BLOCK_END_PHASE_1            0x04000003
-#define FF_CONTROL_PHASE_1              0x05000103
-
+//! Target monitor
+// TODO: What does this mean?
 #define FF_TARGET_MONITOR               0x0
 
 //! Support table for crc32()
@@ -98,8 +104,11 @@ static const uint crc_table[] = {
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-//! Compute a CRC
-uint crc32(uchar *buf, uint len)
+//! \brief Compute a CRC
+//! \param[in] buf: Buffer to compute the CRC of
+//! \param[in] len: Length of buffer, in bytes
+//! \return The CRC
+static uint crc32(const uchar *buf, uint len)
 {
     uint crc = 0xffffffff;
 
@@ -109,7 +118,9 @@ uint crc32(uchar *buf, uint len)
     return crc ^ 0xffffffff;
 }
 
-//! Send NN packet
+//! \brief Send NN packet
+//! \param[in] key: Key of packet
+//! \param[in] data: Data of packet
 void nn_tx(uint key, uint data)
 {
     key |= chksum_64(key, data);
@@ -127,7 +138,8 @@ void nn_tx(uint key, uint data)
     sark_delay_us(sv->boot_delay);      // ST - 05jul12 - allow time to propagate...
 }
 
-//! Boot SCAMP on chips using the bootROM protocols
+//! \brief Boot SCAMP on chips using the bootROM protocols
+//! \param[in] hw_ver: Hardware version
 void boot_nn(uint hw_ver)
 {
     uint * const image = (uint *) BOOT_BUF;

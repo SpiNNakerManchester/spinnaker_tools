@@ -241,7 +241,7 @@ void timer_cancel_init(void)
 //------------------------------------------------------------------------------
 
 
-// Interrupt handler for the timer which is handling timers.
+//! Interrupt handler for the timer which is handling timers.
 
 void timer2_int(void)
 {
