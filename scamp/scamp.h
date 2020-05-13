@@ -39,6 +39,25 @@
 
 //------------------------------------------------------------------------------
 
+// SCAMP Multicast constants
+
+// Key used in the routing table
+#define SCAMP_MC_ROUTING_KEY    0xffff5554
+
+// Mask used in the routing table
+#define SCAMP_MC_ROUTING_MASK   0xfffffffe
+
+// The meaning of the individual keys - an enum might be better but doesn't
+// work because the 'enumeration value is out of "int" range'
+
+// The key used for time synchronisation packets
+#define SCAMP_MC_TIME_SYNC_KEY 0xffff5554
+
+// The key used for signal packets
+#define SCAMP_MC_SIGNAL_KEY 0xffff5555
+
+//------------------------------------------------------------------------------
+
 // IPTag table sizes
 
 #define TAG_FIXED_SIZE          8       // At bottom of table

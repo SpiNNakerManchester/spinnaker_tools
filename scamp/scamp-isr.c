@@ -176,9 +176,9 @@ INT_HANDLER pkt_mc_int()
 
     // Checksum ??
 
-    if (key == 0xffff5555) {
+    if (key == SCAMP_MC_SIGNAL_KEY) {
         signal_app(data);
-    } else if (key == 0xffff5554 && netinit_phase == NETINIT_PHASE_DONE) {
+    } else if (key == SCAMP_MC_TIME_SYNC_KEY && netinit_phase == NETINIT_PHASE_DONE) {
         // Timer synchronisation - only do once netinit phase is complete to
         // avoid clashing with other network traffic.
         int ticks = tc[T1_COUNT];
@@ -283,7 +283,7 @@ INT_HANDLER ms_timer_int()
     if ((sv->p2p_root == sv->p2p_addr)
             && (netinit_phase == NETINIT_PHASE_DONE)) {
         if (time_to_next_sync == 0) {
-            pkt_tx(PKT_MC_PL, n_beacons_sent, 0xffff5554);
+            pkt_tx(PKT_MC_PL, n_beacons_sent, SCAMP_MC_TIME_SYNC_KEY);
             n_beacons_sent += 1;
             time_to_next_sync = TIME_BETWEEN_SYNC_US;
         }

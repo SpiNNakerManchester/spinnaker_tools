@@ -1193,7 +1193,7 @@ void compute_st(void)
         }
     }
 
-    rtr_mc_set(0, 0xffff5554, 0xfffffffe, route);
+    rtr_mc_set(0, SCAMP_MC_ROUTING_KEY, SCAMP_MC_ROUTING_MASK, route);
 }
 
 
