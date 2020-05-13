@@ -70,7 +70,8 @@ Defines and typedefs to rationalise ARM/GNU interrupt handlers
 //! The basic type of an interrupt handler. Takes no arguments. Returns nothing.
 typedef void (*int_handler) (void);
 
-#elif defined(__GNUC__)
+#else
+#ifdef __GNUC__
 # define INT_HANDLER \
     void __attribute__ ((interrupt ("IRQ")))
 # define SARK_IS_A_MALLOC(size_arg) \
@@ -79,7 +80,7 @@ typedef void (*int_handler) (void);
     __attribute__ ((malloc, alloc_size(size_arg1, size_arg2), assume_aligned(4)))
 typedef void (*int_handler) (void);
 
-#else // ARM
+#else
 # define INT_HANDLER \
     __irq void
 # define SARK_IS_A_MALLOC(size_arg) \
@@ -87,7 +88,9 @@ typedef void (*int_handler) (void);
 # define SARK_IS_A_CALLOC(size_arg1, size_arg2) \
     __attribute__ ((malloc))
 typedef __irq void (*int_handler) (void);   //!< Interrupt handler
-#endif // DOXYGEN / GNUC / ARM
+#endif
+
+#endif
 
 // doxygen has overrides for all of these.
 #ifndef NONNULL
@@ -188,7 +191,7 @@ typedef enum spin_lock_e spin_lock; //!< Typedef for enum spin_lock_e
 For "sark_alib.s" (maintain sync with enum spin_lock_e)
 */
 
-#define A_LOCK_SEMA 5
+#define A_LOCK_SEMA     5
 
 //------------------------------------------------------------------------------
 
@@ -197,7 +200,7 @@ Flags in app_flags field
 */
 
 enum app_flags_e {
-  APP_FLAG_WAIT         //!< Wait for start signal
+    APP_FLAG_WAIT       //!< Wait for start signal
 };
 
 
@@ -326,11 +329,24 @@ Slots in the VIC interrupt controller
 */
 
 enum vic_slot_e {
-    SLOT_0,  SLOT_1,  SLOT_2,  SLOT_3,
-    SLOT_4,  SLOT_5,  SLOT_6,  SLOT_7,
-    SLOT_8,  SLOT_9,  SLOT_10, SLOT_11,
-    SLOT_12, SLOT_13, SLOT_14, SLOT_15,
-    SLOT_MAX=SLOT_15, SLOT_FIQ
+    SLOT_0,
+    SLOT_1,
+    SLOT_2,
+    SLOT_3,
+    SLOT_4,
+    SLOT_5,
+    SLOT_6,
+    SLOT_7,
+    SLOT_8,
+    SLOT_9,
+    SLOT_10,
+    SLOT_11,
+    SLOT_12,
+    SLOT_13,
+    SLOT_14,
+    SLOT_15,
+    SLOT_FIQ,           //!< Special slot for FIQ
+    SLOT_MAX = SLOT_15  //!< Index of largest ordinary slot
 };
 
 typedef enum vic_slot_e vic_slot;   //!< Typedef for enum vic_slot_e
@@ -340,8 +356,11 @@ Event queue priorities
 */
 
 enum event_priority_e {
-    PRIO_0, PRIO_1, PRIO_2, PRIO_3,
-    PRIO_MAX=PRIO_3
+    PRIO_0,
+    PRIO_1,
+    PRIO_2,
+    PRIO_3,
+    PRIO_MAX = PRIO_3
 };
 
 typedef enum event_priority_e event_priority;   //!< Typedef for enum event_priority_e
@@ -1200,7 +1219,7 @@ uint cpu_int_disable (void);
 /*!
 Restore the CPSR to the state provided in the argument. Generally used
 after a call to cpu_xxx_disable (xxx = fiq/irq/int)
-\param cpsr - value to be restored to CPSR
+\param cpsr: value to be restored to CPSR
 */
 
 void cpu_int_restore (uint cpsr);
@@ -1210,7 +1229,7 @@ void cpu_int_restore (uint cpsr);
 Returns the current value of the core's stack pointer. (Unlikely
 to be needed by application code).
 
-\return - current SP value
+\return current SP value
 */
 
 uint *cpu_get_sp (void);
@@ -1219,7 +1238,7 @@ uint *cpu_get_sp (void);
 Returns the current value of the core's CPSR. (Unlikely to be needed
 by application code).
 
-\return - current CPSR value
+\return current CPSR value
 */
 
 uint cpu_get_cpsr (void);
@@ -1228,7 +1247,7 @@ uint cpu_get_cpsr (void);
 Set the core's CPSR to the supplied value. This routine always
 returns to the caller even if the mode changes as a result of
 the new CPSR value. (Unlikely to be needed by application code)
-\param cpsr - new value of the CPSR
+\param cpsr: new value of the CPSR
 */
 
 void cpu_set_cpsr (uint cpsr);
@@ -1236,7 +1255,7 @@ void cpu_set_cpsr (uint cpsr);
 /*!
 Returns the current value of the core's CP15 Control register.
 (Unlikely to be needed by application code)
-\return - current CP15 control register value
+\return current CP15 control register value
 */
 
 uint cpu_get_cp15_cr (void);
@@ -1244,7 +1263,7 @@ uint cpu_get_cp15_cr (void);
 /*!
 Set the core's CP15 Control Register to the supplied value.
 (Unlikely to be needed by application code)
-\param value - new value of the CP15 control register
+\param value: new value of the CP15 control register
 */
 
 void cpu_set_cp15_cr (uint value);
@@ -1310,8 +1329,8 @@ Copies a NULL terminated string from "src" to "dest". The string is
 copied byte by byte and so will be inefficient for long strings.
 Not intended for use where source and destination strings overlap.
 
-\param dest destination string address
-\param src source string address
+\param dest: destination string address
+\param src: source string address
 */
 
 NONNULL void
@@ -1321,7 +1340,7 @@ sark_str_cpy(char *dest, const char *src);
 Counts the number of characters in a zero terminated string. The
 terminator is not included in the count.
 
-\param string zero terminated string
+\param string: zero terminated string
 \return number of characters
 */
 
@@ -1331,7 +1350,7 @@ sark_str_len (char *string);
 /*!
 Sets the CPU state field in the VCPU block for this core
 
-\param state the state to set
+\param state: the state to set
 */
 
 void sark_cpu_state (cpu_state state);
@@ -1383,7 +1402,7 @@ the interrupt state can be restored by the matching "sark_lock_free"
 routine. Locks already defined for use by SARK are listed in the enum
 "sark_lock_e";
 
-\param lock hardware lock number
+\param lock: hardware lock number
 \return CPSR at time of call
 */
 
@@ -1394,8 +1413,8 @@ Free a previously acquired hardware lock. The supplied "cpsr" is used
 to restore the interrupt state that was in place when the lock was
 acquired.
 
-\param cpsr CPSR to be reinstated after unlocking
-\param lock hardware lock number
+\param cpsr: CPSR to be reinstated after unlocking
+\param lock: hardware lock number
 */
 
 void sark_lock_free (uint cpsr, spin_lock lock);
@@ -1407,7 +1426,7 @@ pointer. A hardware lock is used to gain exclusive access to the
 variable. Returns the post-increment value. No check is made for
 overflow from 255.
 
-\param sema pointer to semaphore byte (usually in shared memory)
+\param sema: pointer to semaphore byte (usually in shared memory)
 \return post-increment value of semaphore
 */
 
@@ -1419,7 +1438,7 @@ pointer. The decrement will only take place on a non-zero variable. A
 hardware lock is used to gain exclusive access to the variable.
 Returns the pre-decrement value.
 
-\param sema pointer to semaphore byte (usually in shared memory)
+\param sema: pointer to semaphore byte (usually in shared memory)
 \return pre-decrement value of semaphore
 */
 
@@ -1483,7 +1502,7 @@ uint sark_app_lead (void);
 Seed the random number generator with the supplied value. The 33rd
 bit of the random value is set to zero.
 
-\param seed 32-bit value to seed generator
+\param seed: 32-bit value to seed generator
 */
 
 void sark_srand (uint seed);
@@ -1502,7 +1521,7 @@ uint sark_rand (void);
 Divide the argument by 10 and return dividend and modulus in a
 struct of type divmod_t which has fields "div" and "mod".
 
-\param n number to divide by 10
+\param n: number to divide by 10
 \result a divmod_t containing dividend and modulus
 */
 
@@ -1511,7 +1530,7 @@ divmod_t sark_div10 (uint n);
 /*!
 Count the number of bits set in a word
 
-\param word whose bits are to be counted
+\param word: whose bits are to be counted
 \result number of bits set
 */
 
@@ -1522,7 +1541,7 @@ Performs an ARM BX instruction to the address in "addr". Can be used
 to branch to arbitrary pieces of code. Dangerous and unlikely to
 be useful to most applications!
 
-\param addr address to branch to (bottom bit to be set for Thumb)
+\param addr: address to branch to (bottom bit to be set for Thumb)
 */
 
 void sark_bx (uint addr);
@@ -1532,8 +1551,8 @@ Used to unpack an APLX table whose address is provided. Where this
 results in the loading and execution of a new application, the second
 argument is the AppID. (Unlikely to be needed by application code)
 
-\param table pointer to an APLX table
-\param app_id AppID to be passed to new application
+\param table: pointer to an APLX table
+\param app_id: AppID to be passed to new application
 */
 
 void sark_aplx (uint *table, uint app_id);
@@ -1544,9 +1563,9 @@ stack pointer then returns to original mode. Also computes base of
 stack which will probably be the top of an adjacent stack. (Unlikely to
 be needed by application code).
 
-\param stack top of stack for given mode
-\param mode mode for which stack applies
-\param size size of stack in words
+\param stack: top of stack for given mode
+\param mode: mode for which stack applies
+\param size: size of stack in words
 \return base of stack (ie stack - size)
 */
 
@@ -1556,8 +1575,8 @@ uint *cpu_init_mode (uint *stack, uint mode, uint size);
 Compute 4-bit ones-complement checksum of a 64-bit quantity.
 (Unlikely to be needed by application code).
 
-\param a low 32 bits of value to be summed
-\param b high 32 bits of value to be summed
+\param a: low 32 bits of value to be summed
+\param b: high 32 bits of value to be summed
 \result 4-bit checksum in bits 31:28 - other bits zero
 */
 
@@ -1567,7 +1586,7 @@ uint chksum_64 (uint a, uint b);
 Compute 4-bit ones-complement checksum of a 32-bit quantity.
 (Unlikely to be needed by application code).
 
-\param a value to be summed
+\param a: value to be summed
 \result 4-bit checksum in bits 31:28 - other bits zero
 */
 
@@ -1614,7 +1633,7 @@ Implemented as an inline.
 
 static inline char *sark_app_name (void)
 {
-  return build_name;
+    return build_name;
 }
 
 /*!
@@ -1632,7 +1651,7 @@ sdp_msg_t *sark_msg_get (void);
 Return an SDP message buffer which was acquired by sark_msg_get to the
 free buffer pool.
 
-\param msg pointer to SDP message
+\param msg: pointer to SDP message
 */
 
 void sark_msg_free (sdp_msg_t *msg);
@@ -1660,7 +1679,7 @@ Perform a busy-wait for the given number of microseconds. The core
 will continue to service interrupts while the delay takes place but
 this is otherwise a wasteful way to delay for long periods of time.
 
-\param delay number of microseconds to delay
+\param delay: number of microseconds to delay
 */
 
 void sark_delay_us (uint delay);
@@ -1673,9 +1692,9 @@ determines whether or not rt_error should be called to shut down the
 core. mode can be SW_RTE to always call rt_error, SW_NEVER to always
 return or SW_OPT which consults sark.sw_rte to choose what to do.
 
-\param mode determines if rt_error is called
-\param file file name
-\param line line number
+\param mode: determines if rt_error is called
+\param file: file name
+\param line: line number
 */
 
 void sw_error_fl (sw_err_mode mode, char *file, uint line);
@@ -1683,6 +1702,8 @@ void sw_error_fl (sw_err_mode mode, char *file, uint line);
 /*!
 sw_error calls sw_error_fl, inserting file name and line
 number automatically
+
+\param mode: determines if rt_error is called
 */
 
 # define sw_error(mode) sw_error_fl (mode, __FILE__, __LINE__)
@@ -1697,7 +1718,7 @@ application was built (32 bits). A text string is also returned which
 gives the base kernel name (eg SARK) and the system on which it is
 running (eg SpiNNaker). (Unlikely to be called by application code).
 
-\param msg SDP message buffer
+\param msg: SDP message buffer
 \return size of returned message
 */
 
@@ -1850,9 +1871,9 @@ Formats are
 - \%z - integer in hex, exactly N digits
 - \%n.mf - 16.16 fixed point with width n, precision m
 
-\param stream constant (IO_BUF, IO_STD, IO_DBG, IO_NULL) or pointer
+\param stream: constant (IO_BUF, IO_STD, IO_DBG, IO_NULL) or pointer
 to char array
-\param format a format string
+\param format: a format string
 \param ... arguments to be formatted
 */
 
@@ -1865,9 +1886,9 @@ for four possible streams - IO_STD, IO_BUF, IO_NULL and "sprintf" strings.
 For IO_STD and IO_BUF the character is placed in a holding buffer which
 is flushed on buffer-full or newline or NULL.
 
-\param stream constant (IO_BUF, IO_STD, IO_NULL) or pointer
-to char array
-\param c a character
+\param stream: constant (IO_BUF, IO_STD, IO_NULL) or pointer
+    to char array
+\param c: a character
 */
 
 void io_put_char (char *stream, uint c);
@@ -1949,9 +1970,9 @@ searched.  If a NULL pointer (ptr) is passed in, a runtime error will
 occur. If there is an "alloc_tag" entry associated with the block it
 is set to NULL.
 
-\param heap the heap to which the free block should be returned
-\param ptr a pointer to the memory block to be freed
-\param flag bit 0 set if the heap should be locked during free
+\param heap: the heap to which the free block should be returned
+\param ptr: a pointer to the memory block to be freed
+\param flag: bit 0 set if the heap should be locked during free
 */
 
 NONNULL2 void
@@ -1962,9 +1983,9 @@ Free all allocated blocks in the specified heap which are tagged with
 the given "app_id". The flag parameter specifies if locking is needed in
 the "sark_xfree" call. Returns the number of blocks freed.
 
-\param heap the heap from which blocks should be freed
-\param app_id the AppID whose block should be freed
-\param flag controls locking of heap transactions
+\param heap: the heap from which blocks should be freed
+\param app_id: the AppID whose block should be freed
+\param flag: controls locking of heap transactions
 \return number of blocks freed
 */
 
@@ -1988,8 +2009,8 @@ pointers to base and top of the area. Returns a pointer to the heap
 (same address as the base). Assumes the area is large enough to
 hold a minimal heap (a zero size heap needs 28 bytes).
 
-\param base pointer to bottom of heap memory
-\param top pointer to top of heap memory
+\param base: pointer to bottom of heap memory
+\param top: pointer to top of heap memory
 \return pointer to heap
 */
 
@@ -1999,7 +2020,7 @@ heap_t *sark_heap_init (uint *base, uint *top);
 Allocate a block of entries in the router multicast table (and
 associate the caller's app_id with this block).
 
-\param size number of entries to allocate
+\param size: number of entries to allocate
 \return index of first entry in block on success, zero on failure.
 */
 
@@ -2014,8 +2035,8 @@ caller's, the user should set sv->app_data[app_id].clean to 0 for the
 application concerned.  This ensures that the memory will be cleaned
 up by a stop signal.
 
-\param size number of entries to allocate
-\param app_id AppID associated with block
+\param size: number of entries to allocate
+\param app_id: AppID associated with block
 \return index of first entry in block on success, zero on failure.
 */
 
@@ -2025,8 +2046,8 @@ uint rtr_alloc_id (uint size, uint app_id);
 Free a block of MC table entries which starts with the supplied
 entry. The relevant router registers can be optionally re-initialised.
 
-\param entry first entry in the block (as returned by rtr_alloc)
-\param clear non-zero to cause router registers to be re-initialised
+\param entry: first entry in the block (as returned by rtr_alloc)
+\param clear: non-zero to cause router registers to be re-initialised
 */
 
 void rtr_free (uint entry, uint clear);
@@ -2036,8 +2057,8 @@ Free all allocated blocks in the router which are tagged with the
 given "app_id". The relevant router registers can be optionally
 re-initialised. Returns number of blocks freed.
 
-\param app_id AppID whose entries are to be freed
-\param clear non-zero to cause router registers to be re-initialised
+\param app_id: AppID whose entries are to be freed
+\param clear: non-zero to cause router registers to be re-initialised
 \return number of blocks freed
 */
 
@@ -2056,8 +2077,8 @@ uint rtr_alloc_max (void);
 Get a pointer to a tagged allocation. If the "app_id" parameter is zero uses
 the core's app_id.
 
-\param tag The tag of the allocation to get a pointer to
-\param app_id AppID whose tagged allocation to read (or 0 to use the core's app ID)
+\param tag: The tag of the allocation to get a pointer to
+\param app_id: AppID whose tagged allocation to read (or 0 to use the core's app ID)
 \return A pointer
 */
 
@@ -2081,10 +2102,10 @@ Initialises one of the VIC slots to set up an interrupt handler. No
 check is made that the slot is not already in use. The slot can be
 SLOT_FIQ in which case the FIQ interrupt is set up.
 
-\param slot the slot to be used
-\param interrupt the interrupt number (0..31)
-\param enable non-zero if the interrupt should be enabled
-\param handler pointer to the handler code
+\param slot: the slot to be used
+\param interrupt: the interrupt number (0..31)
+\param enable: non-zero if the interrupt should be enabled
+\param handler: pointer to the handler code
 */
 
 NONNULL void
@@ -2109,7 +2130,7 @@ To turn on LED 1 and turn off LED 2 the call looks like this...
   sark_led_set (LED_ON(1) + LED_OFF(2));
 \endcode
 
-\param leds encoded value specifying LEDs and operations thereon
+\param leds: encoded value specifying LEDs and operations thereon
 */
 
 void sark_led_set (uint leds);
@@ -2345,7 +2366,7 @@ which is sent is not modified by this routine so the previous value
 will be used. The routine pkt_register must be called (once)
 before any of the pkt_tx_XXX routines are used.
 
-\param key the key field to be placed in the packet
+\param key: the key field to be placed in the packet
 \return zero if the transmit queue is full, 1 otherwise
 */
 
@@ -2358,8 +2379,8 @@ transmit control register (TCR) which controls the type of packet which
 is sent is not modified by this routine so the previous value will be
 used.
 
-\param key the key field to be placed in the packet
-\param data the data field to be placed in the packet
+\param key; the key field to be placed in the packet
+\param data: the data field to be placed in the packet
 \return zero if the transmit queue is full, 1 otherwise
 */
 
@@ -2372,8 +2393,8 @@ of the queue. The "cb" field is in the bottom 8 bits of the argument
 and is shifted left by 16 bits when it is placed in the hardware TCR
 in the chip.
 
-\param key the key field to be placed in the packet
-\param ctrl the control byte to be placed in the packet
+\param key: the key field to be placed in the packet
+\param ctrl: the control byte to be placed in the packet
 \return zero if the transmit queue is full, 1 otherwise
 */
 
@@ -2386,9 +2407,9 @@ reaches the head of the queue. The "cb" field is in the bottom 8 bits
 of the argument and is shifted left by 16 bits when it is placed in
 the hardware TCR in the chip.
 
-\param key the key field to be placed in the packet
-\param data the key field to be placed in the packet
-\param ctrl the control byte to be placed in the packet
+\param key: the key field to be placed in the packet
+\param data: the key field to be placed in the packet
+\param ctrl: the control byte to be placed in the packet
 \return zero if the transmit queue is full, 1 otherwise
 */
 
@@ -2402,10 +2423,10 @@ with them will also be executed. This routine will exit if the
 application calls event_stop or if a kill signal is received from
 the host.
 
-\param period timer period in microseconds (timer disabled if zero)
-\param events number of new events to be created before processing begins
-\param wait if non-zero causes application to wait from signal from
-host before processing events.
+\param period: timer period in microseconds (timer disabled if zero)
+\param events: number of new events to be created before processing begins
+\param wait: if non-zero causes application to wait from signal from
+    host before processing events.
 
 \return return code from event_stop routine or 255 if killed
 */
@@ -2418,7 +2439,7 @@ handler has been registered then this will be called with "pause" as
 first argument and the second argument that was supplied at the time
 of registration. (Unlikely to be called from application code).
 
-\param pause non-zero to pause, zero to resume
+\param pause: non-zero to pause, zero to resume
 */
 
 void event_pause (uint pause);
@@ -2430,7 +2451,7 @@ event_start will return the value provided in the "rc" parameter.
 This is an internal routine of the event processing system and
 unlikely to be called from an application.
 
-\param rc return code to return from event_start
+\param rc: return code to return from event_start
 */
 
 void event_stop (uint rc);
@@ -2452,8 +2473,8 @@ priority) to PRIO_3 (lowest). Events are taken from queue 0 until it
 is empty, then they are taken from queue 1 until it is empty, etc,
 etc.
 
-\param e pointer to the event to add
-\param priority priority of queue to add to
+\param e: pointer to the event to add
+\param priority: priority of queue to add to
 \return zero on failure (invalid priority), 1 otherwise
 */
 
@@ -2466,12 +2487,12 @@ later time. Calls event_new to create and initialise a new event and
 then, if that is successful, calls event_queue to place it on an event
 queue.
 
-\param proc pointer to an event_proc
-\param arg1 argument 1 to the event_proc
-\param arg2 argument 2 to the event_proc
-\param priority priority of queue to add to
+\param proc: pointer to an event_proc
+\param arg1: argument 1 to the event_proc
+\param arg2: argument 2 to the event_proc
+\param priority: priority of queue to add to
 \return zero on failure (invalid priority or failed to allocate a new
-event), 1 otherwise
+    event), 1 otherwise
 */
 
 NONNULL uint
@@ -2485,7 +2506,7 @@ controls whether all queues are rescanned for events when processing
 of a queue at a particular priority is complete. In general, this will
 be necessary if executing an event can cause new events to be queued.
 
-\param restart non-zero to cause queues to be rescanned
+\param restart: non-zero to cause queues to be rescanned
 */
 
 void event_run (uint restart);
@@ -2499,9 +2520,9 @@ fastest possible processing. Only one event can be associated with
 each slot and a runtime error will occur if a slot is used more than
 once.
 
-\param proc the event_proc to call
-\param event the event to associate with the event_proc
-\param slot the VIC slot to use (or SLOT_FIQ for FIQs)
+\param proc: the event_proc to call
+\param event: the event to associate with the event_proc
+\param slot: the VIC slot to use (or SLOT_FIQ for FIQs)
 */
 
 NONNULL void
@@ -2515,10 +2536,10 @@ event can be associated with each slot and a runtime error will occur
 if a slot is used more than once or if an invalid queue priority is
 used.
 
-\param proc the event_proc to call
-\param event the event to associate with the event_proc
-\param slot the VIC slot to use
-\param priority the priority of the event queue to use
+\param proc: the event_proc to call
+\param event: the event to associate with the event_proc
+\param slot: the VIC slot to use
+\param priority: the priority of the event queue to use
 */
 
 NONNULL void
@@ -2530,8 +2551,8 @@ Register an event_proc to be called when event processing is paused.
 The event_proc will receive the pause state (0 = resume, 1 = pause) as
 its first argument and the value of "arg2" as its second argument.
 
-\param proc the event_proc to call
-\param arg2 the second argument to be supplied to the event_proc
+\param proc: the event_proc to call
+\param arg2: the second argument to be supplied to the event_proc
 */
 
 NONNULL void
@@ -2545,8 +2566,8 @@ and acknowledges the interrupt but which doesn't call the handler which was
 originally registered with the event. It is expected that disable will
 be called before enable in all cases
 
-\param event_num the event to enable
-\param enable non-zero to enable, zero to disable
+\param event_num: the event to enable
+\param enable: non-zero to enable, zero to disable
 */
 
 void event_enable (event_type event_num, uint enable);
@@ -2556,7 +2577,7 @@ Register the use of the second timer on the core so that it can be
 used to provide delayed events via timer_schedule. A runtime error will
 occur if the VIC slot is already in use.
 
-\param slot the VIC slot to use for the timer interrupt
+\param slot: the VIC slot to use for the timer interrupt
 */
 
 void event_register_timer (vic_slot slot);
@@ -2571,8 +2592,8 @@ slot is in use or memory for the packet queue could not be allocated.
 This routine also initialises the Transmit Control Register to send
 multicast packets.
 
-\param queue_size number of packets in the transmit queue
-\param slot the VIC slot to use for the packet transmit interrupt
+\param queue_size: number of packets in the transmit queue
+\param slot: the VIC slot to use for the packet transmit interrupt
 */
 
 void event_register_pkt (uint queue_size, vic_slot slot);
@@ -2582,8 +2603,8 @@ Used to trigger a user event if one has been registered. The two
 arguments will be provided to the event_proc when it is called.
 Only one user event can be outstanding at any given time.
 
-\param arg1 first argument to event_proc
-\param arg2 second argument to event_proc
+\param arg1: first argument to event_proc
+\param arg2: second argument to event_proc
 \return zero if a user event is already pending, 1 otherwise
 */
 
@@ -2601,8 +2622,8 @@ NOTE: this procedure assumes the following event conditions on entry:
 e->next == NULL
 e->time == 0
 
-\param e event to execute
-\param time delay in microseconds (non-zero)
+\param e: event to execute
+\param time: delay in microseconds (non-zero)
 */
 
 NONNULL void
@@ -2613,11 +2634,11 @@ Allocates an event, initialises it with the supplied parameters and
 schedules it to occur at some time in the future. Requires that the
 second timer has been set up by a call to timer_register.
 
-\param proc pointer to an event_proc
-\param arg1 argument 1 to the event_proc
-\param arg2 argument 2 to the event_proc
-\param time delay in microseconds (non-zero)
-\return zero if allocation of new event failed, one otherwise
+\param proc: pointer to an event_proc
+\param arg1: argument 1 to the event_proc
+\param arg2: argument 2 to the event_proc
+\param time: delay in microseconds (non-zero)
+\return zero: if allocation of new event failed, one otherwise
 */
 
 NONNULL uint
@@ -2636,8 +2657,8 @@ of the timer queue so in that case the timer is replaced with a
 placeholder with "proc" set to NULL and the placeholder is left
 to terminate on the timer interrupt.
 
-\param e event to cancel
-\param ID ID of event to cancel
+\param e: event to cancel
+\param ID: ID of event to cancel
 */
 
 NONNULL void timer_cancel(event_t *e, uint ID);
