@@ -690,9 +690,9 @@ void p2p_region(uint data, uint srce)
 
 //! The types of messages to use to send signals
 enum signal_type {
-    SIG_TYPE_MC = 0,
-    SIG_TYPE_P2P = 1,
-    SIG_TYPE_NN = 2
+    SIG_TYPE_MC = 0,    //!< Use multicast packets (standard signals)
+    SIG_TYPE_P2P = 1,   //!< Use P2P packets (state counting)
+    SIG_TYPE_NN = 2     //!< Use nearest neighbour packets (flood machine)
 };
 
 //! \brief Signal command handler.

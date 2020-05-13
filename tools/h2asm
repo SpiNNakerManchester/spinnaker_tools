@@ -57,57 +57,56 @@ use warnings;
 
 
 my $blank = 0;
-my $time = localtime (time ());
+my $inenum = 0;
+my $enumcount;
+my $time = localtime(time());
 
 printf ";\n; Auto-generated from \"%s\" - $time\n;\n", $ARGV[0] || "<STDIN>";
 
 
-while (<>)
-{
+while (<>) {
     chomp;
     s/^\s+|\s+$//g;
     s/\/\//;/;
 
-    if (/^$/)
-    {
-	print "\n" unless $blank;
-	$blank = 1;
-	next;
+    if (/^$/) {
+		print "\n" unless $blank;
+		$blank = 1;
+		next;
     }
 
     $blank = 0;
 
-    if (/^;/)
-    {
-	print "$_\n";
-    }
-    elsif (/^#define\s+(\w+)\s+(.+)/)
-    {
-	my ($name, $val) = ($1, $2);
-	my $rest = '';
+    if (/^;/) {
+		print "$_\n";
+    } elsif (/^#define\s+(\w+)\s+(.+)/) {
+	 	my ($name, $val) = ($1, $2);
+		my $rest = '';
 
-	($val, $rest) = ($2, $3) if $val =~ /^(INT|BYTE)_AT\((.+?)\)(.*)/;
-	printf "%-15s equ     $val$rest\n", $name;
-    }
-    elsif (/^#ifdef\s+(\w+)/)
-    {
-	printf "%-15s if      :def: $1\n", '';
-    }
-    elsif (/^#ifndef\s+(\w+)/)
-    {
-	printf "%-15s if      :lnot: :def: $1\n", '';
-    }
-    elsif (/^#else$/)
-    {
-	printf "%-15s else\n", '';
-    }
-    elsif (/^#endif$/)
-    {
-	printf "%-15s endif\n", '';
-    }
-    else
-    {
-	$blank = 1;
+		($val, $rest) = ($2, $3) if $val =~ /^(INT|BYTE)_AT\((.+?)\)(.*)/;
+		printf "%-15s equ     $val$rest\n", $name;
+    } elsif (/^#ifdef\s+(\w+)/) {
+		printf "%-15s if      :def: $1\n", '';
+    } elsif (/^#ifndef\s+(\w+)/) {
+		printf "%-15s if      :lnot: :def: $1\n", '';
+    } elsif (/^#else$/) {
+		printf "%-15s else\n", '';
+    } elsif (/^#endif$/) {
+		printf "%-15s endif\n", '';
+    } elsif (/^enum .* \{/) {
+    	$inenum = 1;
+    	$enumcount = 0;
+    } elsif ($inenum and m!^\s+(\w+)\s*=\s*([^,/]+)!) {
+    	my ($name, $val) = ($1, $2);
+    	printf "%-15s equ     $val\n", $name;
+    } elsif ($inenum and m!^\s+(\w+)\s*(?:/.*)?!) {
+    	my $name = $1;
+    	printf "%-15s equ     $enumcount\n", $name;
+    	$enumcount++;
+    } elsif ($inenum and /^\}/) {
+    	$inenum = 0;
+    } else {
+		$blank = 1;
     }
 }
 
