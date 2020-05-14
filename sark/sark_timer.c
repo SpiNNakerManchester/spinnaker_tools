@@ -29,7 +29,7 @@
 
 //------------------------------------------------------------------------------
 
-event_t cancelled;  // placeholder for events cancelled @ timer_queue head
+static event_t cancelled;  //!< placeholder for events cancelled @ timer_queue head
 
 //------------------------------------------------------------------------------
 

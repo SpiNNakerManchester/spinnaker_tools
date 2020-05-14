@@ -352,7 +352,7 @@ typedef unsigned long long uint64;  //!< Unsigned integer - 64 bits
 #define VIC_CNTL15      INT_AT(0x23c)
 
 //! Interrupt numbers for SpiNNaker
-enum spinnaker_interupt_numbers_e {
+enum spinnaker_interrupt_numbers_e {
     WDOG_INT = 0,       //!< Watchdog timer interrupt
     SOFTWARE_INT = 1,   //!< Used only for local software interrupt generation
     COMM_RX_INT = 2,    //!< Debug communications receiver interrupt

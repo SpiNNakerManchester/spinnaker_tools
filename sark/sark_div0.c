@@ -26,10 +26,13 @@
 #include <sark.h>
 
 // Functions to handle division by 0 (simply RTE)
-void __aeabi_idiv0() {
+
+//! Handles divide by zero by doing an RTE
+void __aeabi_idiv0(void) {
     rt_error(RTE_DIV0);
 }
 
-void __aeabi_ldiv0() {
+//! Handles divide by zero by doing an RTE
+void __aeabi_ldiv0(void) {
     rt_error(RTE_DIV0);
 }

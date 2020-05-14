@@ -50,12 +50,13 @@ typedef struct iobuf {
 } iobuf_t;
 
 
-static uint sp_ptr;             // Buffer pointer for 'sprintf'
-static uint buf_ptr;            // Buffer pointer for IO_BUF
+static uint sp_ptr;             //!< Buffer pointer for 'sprintf'
+static uint buf_ptr;            //!< Buffer pointer for #IO_BUF
 
-static sdp_msg_t *io_msg;       // Points to SDP buffer
-static iobuf_t   *io_buf;       // Points to SDRAM buffer
+static sdp_msg_t *io_msg;       //!< Points to SDP buffer
+static iobuf_t   *io_buf;       //!< Points to SDRAM buffer
 
+//! Hexadecimal characters
 static const char hex[] = "0123456789abcdef";
 
 //------------------------------------------------------------------------------
@@ -64,7 +65,9 @@ static const char hex[] = "0123456789abcdef";
 // cases a buffer is allocated from the heap and initialised. A run time
 // error occurs if the allocation fails.
 
-static sdp_msg_t *io_std_init()
+//! \brief Initialises the #IO_STD implementation
+//! \return a pointer to the message buffer to use to send to host
+static sdp_msg_t *io_std_init(void)
 {
     sdp_msg_t *msg = sark_alloc(1, sizeof(sdp_msg_t));
     if (msg == NULL) {
@@ -86,8 +89,9 @@ static sdp_msg_t *io_std_init()
     return msg;
 }
 
-
-static iobuf_t *io_buf_init()
+//! \brief Initialises a memory chunk for the #IO_BUF implementation
+//! \return a pointer to the chunk
+static iobuf_t *io_buf_init(void)
 {
     iobuf_t *iobuf = sark_xalloc(sv->sys_heap,
             sizeof(iobuf_t) + sv->iobuf_size, 0, 1);
@@ -184,11 +188,15 @@ void io_put_char(char *stream, uint c)
 
 //------------------------------------------------------------------------------
 
-// Routines to deal with the various printf formats. All end up calling
-// "io_put_char" above.
+//! \name Format implementations
+//! \{
+//! Routines to deal with the various printf formats. All end up calling
+//! io_put_char() to do the write of individual characters.
 
-// Put a string possibly left-padding with spaces.
-
+//! \brief Put a string possibly left-padding with spaces.
+//! \param[in] stream: Where to write to
+//! \param[in] s: The string to write
+//! \param[in] d: The number of digits to write; NB: pads with spaces
 static void io_put_str(char *stream, char *s, int d)
 {
     char *t = s;
@@ -206,9 +214,12 @@ static void io_put_str(char *stream, char *s, int d)
 }
 
 
-// Put an integer (signed) in given field width, left-padding with
-// spaces. Entire field is assumed to fit in 16 chars!.
-
+//! \brief Put an integer (signed) in given field width, left-padding with
+//! spaces. Entire field is assumed to fit in 16 chars!.
+//! \param[in] stream: Where to write to
+//! \param[in] n: The word to write
+//! \param[in] d: The number of digits to write
+//! \param[in] pad: The padding character to use
 static void io_put_int(char *stream, int n, uint d, uint pad) // pad not used!
 {
     char s[16];
@@ -242,9 +253,12 @@ static void io_put_int(char *stream, int n, uint d, uint pad) // pad not used!
 }
 
 
-// Put an integer (unsigned) in given field width, left-padding with
-// spaces. Entire field is assumed to fit in 16 chars!.
-
+//! \brief Put an integer (unsigned) in given field width, left-padding with
+//! spaces. Entire field is assumed to fit in 16 chars!.
+//! \param[in] stream: Where to write to
+//! \param[in] n: The word to write
+//! \param[in] d: The number of digits to write
+//! \param[in] pad: The padding character to use
 static void io_put_uint(char *stream, uint n, uint d, uint pad)
 {
     char s[16];
@@ -269,9 +283,11 @@ static void io_put_uint(char *stream, uint n, uint d, uint pad)
 }
 
 
-// Put a hex number in exactly the number of characters specified.
-// Truncates high digits if need be.
-
+//! \brief Put a hex number in exactly the number of characters specified.
+//! Truncates high digits if need be.
+//! \param[in] stream: Where to write to
+//! \param[in] n: The word to write
+//! \param[in] d: The number of digits to write
 static void io_put_zhex(char *stream, uint n, uint d)
 {
     for (int i = d - 1; i >= 0; i--) {
@@ -280,9 +296,12 @@ static void io_put_zhex(char *stream, uint n, uint d)
 }
 
 
-// Put an integer in hex in given field width, left-padding with
-// spaces. Entire field is assumed to fit in 16 chars!.
-
+//! \brief Put an integer in hex in given field width, left-padding with
+//! spaces. Entire field is assumed to fit in 16 chars!
+//! \param[in] stream: Where to write to
+//! \param[in] n: The word to write
+//! \param[in] d: The number of digits to write
+//! \param[in] pad: The padding character to use
 static void io_put_hex(char *stream, uint n, uint d, uint pad)
 {
     char s[16];
@@ -335,9 +354,16 @@ static void io_put_ip(char *stream, uchar *s)
 
 //------------------------------------------------------------------------------
 
-// Format for 16.16 fixed point by Paul Richmond and Dave Lester
-
 #ifdef SPINN_IO_FIX
+//! \brief Format for 16.16 fixed point
+//! \author Paul Richmond
+//! \author Dave Lester
+//! \param[in] stream: Where to write to
+//! \param[in] n: unsigned accum, as unsigned integer
+//! \param[in] d: Field width
+//! \param[in] a: Precision
+//! \param[in] pad: Padding character
+//! \param[in] neg: True if a minus sign needs to be written
 static
 void io_put_fixed(char *stream, uint n, uint d, uint a, uint pad, int neg)
 {
@@ -407,17 +433,32 @@ void io_put_fixed(char *stream, uint n, uint d, uint a, uint pad, int neg)
 }
 
  // <drl add>
+//! \brief Format for s15.16 fixed point
+//! \details Delegates to io_put_fixed()
+//! \param[in] stream: Where to write to
+//! \param[in] n: signed accum, as signed integer
+//! \param[in] d: Field width
+//! \param[in] a: Precision
+//! \param[in] pad: Padding character
 static void io_put_sfixed(char *stream, int n, uint d, uint a, uint pad)
 {
     io_put_fixed(stream, (uint)((n < 0)? (-n): n) << 1, d, a, pad, (n < 0));
 }
 
+//! \brief Format for 16.16 fixed point
+//! \details Delegates to io_put_fixed()
+//! \param[in] stream: Where to write to
+//! \param[in] n: unsigned accum, as unsigned integer
+//! \param[in] d: Field width
+//! \param[in] a: Precision
+//! \param[in] pad: Padding character
 static void io_put_ufixed(char *stream, uint n, uint d, uint a, uint pad)
 {
     io_put_fixed(stream, n, d, a, pad, (1==0));
 }
 #endif
 
+//! \}
 
 //------------------------------------------------------------------------------
 
