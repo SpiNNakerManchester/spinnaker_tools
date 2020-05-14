@@ -211,8 +211,8 @@ enum scamp_nn_p2p_config_subcommands {
 
 //! Values in P2P type (seq) field
 enum scamp_p2p_type_codes {
-    P2P_DATA =  0,
-    P2P_CTRL =  1,
+    P2P_DATA =  0,      //!< Data message
+    P2P_CTRL =  1,      //!< Control message
     P2P_LEVEL = 2       //!< Used for CountState requests
 };
 
@@ -253,6 +253,7 @@ enum scamp_p2p_control_message_codes {
 
 //! \name Network initialisation
 //! \{
+
 //! Phases of the network initialisation process, in order
 enum netinit_phase_e {
     //! Configure P2P addresses for all chips while waiting for all chips to

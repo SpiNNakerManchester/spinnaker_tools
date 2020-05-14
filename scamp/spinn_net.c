@@ -83,10 +83,12 @@ static void lock_free(uint lock)
 #endif // LOCK_ETH
 
 
-static void eth_discard(void) __attribute__((always_inline));
-
 //! Clear the ethernet receive buffer.
-static void eth_discard(void)
+static void
+#ifndef DOXYGEN
+__attribute__((always_inline))
+#endif
+eth_discard(void)
 {
     static volatile uint * const er = (uint *) ETH_REGS;
     er[ETH_RX_CMD] = (uint) er;

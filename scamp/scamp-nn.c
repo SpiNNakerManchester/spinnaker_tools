@@ -217,16 +217,21 @@ void compute_eth(void)
 
 //------------------------------------------------------------------------------
 
-// Given a packet arriving from a given direction which is labelled with an X
-// and Y coordinate, gives the dx, dy to get the current chip's coordinate.
+//! \name Level deltas
+//! \{
+//! Given a packet arriving from a given direction which is labelled with an X
+//! and Y coordinate, gives the dx, dy to get the current chip's coordinate.
 
-const signed char lx[6] = {-1, -1,  0, +1, +1,  0};
-const signed char ly[6] = { 0, -1, -1,  0, +1, +1};
+const signed char lx[6] = {-1, -1,  0, +1, +1,  0}; //!< X deltas, by link ID
+const signed char ly[6] = { 0, -1, -1,  0, +1, +1}; //!< Y deltas, by link ID
+
+//! \}
 
 //------------------------------------------------------------------------------
 
 //! \brief Given a P2P address, compute region addresses for each of the four
-//! levels, updating the levels structure.
+//!     levels, updating the levels structure.
+//! \param[in] p2p_addr: The address to compute for.
 void compute_level(uint p2p_addr)
 {
     uint x = p2p_addr >> 8;
@@ -243,7 +248,7 @@ void compute_level(uint p2p_addr)
 }
 
 //! \brief For all regions at all levels, find a working chip within each of
-//! the 16 subregions and record its coordinates.
+//!     the 16 subregions and record its coordinates.
 void level_config(void)
 {
     compute_level(p2p_addr);
@@ -309,7 +314,12 @@ void poke_ack_pkt(uint link, uint data, uint key)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Read a word from the chip (or device) over a link.
+//! \param[in] addr: The address to read from
+//! \param[in] link: The link to use
+//! \param[out] buf: The data that has been read (4 byte buffer)
+//! \param[in] timeout: How long to wait for the other side to respond
+//! \return result code
 uint link_read_word(uint addr, uint link, uint *buf, uint timeout)
 {
     peek_pkt.flags = 0;
@@ -344,7 +354,12 @@ uint link_read_word(uint addr, uint link, uint *buf, uint timeout)
     return RC_OK;
 }
 
-
+//! \brief Write a word to the chip (or device) over a link.
+//! \param[in] addr: The address to write to
+//! \param[in] link: The link to use
+//! \param[in] buf: The data that is to be written (buffer containing 4 bytes)
+//! \param[in] timeout: How long to wait for the other side to respond
+//! \return result code
 uint link_write_word(uint addr, uint link, uint *buf, uint timeout)
 {
     poke_pkt.flags = 0;
@@ -402,7 +417,7 @@ void pkt_buf_free(pkt_buf_t *pkt)
     pkt_buf_count--;
 }
 
-
+//! Get the next flood-fill identifier we should use
 uint next_id(void)
 {
     uint t = sv->last_id + 1;
@@ -460,12 +475,12 @@ void ff_nn_send(uint key, uint data, uint fwd_rty, uint add_id)
     } while (count--);
 }
 
-
+//! \brief Board information floodfill packet sender.
+//!
+//! Note: Should only be called on chips which are at position (0, 0) on
+//! their board.
 void biff_nn_send(uint data)
 {
-    // Note: Should only be called on chips which are at position (0, 0) on
-    // their board.
-
     uint key = NN_CMD_BIFF << 24;
     key |= next_biff_id();
     // NB: X = Y = 0
@@ -485,6 +500,8 @@ void biff_nn_send(uint data)
 
 //! \brief Transmit our current best guess of coordinates to all neighbouring
 //!     chips
+//! \param arg1: unused
+//! \param arg2: unused
 void p2pc_addr_nn_send(uint arg1, uint arg2)
 {
     // Don't send anything if our address is actually unknown...
@@ -503,8 +520,10 @@ void p2pc_addr_nn_send(uint arg1, uint arg2)
     }
 }
 
-//! \brief Broadcast the existance of a new P2P coordinate having been
+//! \brief Broadcast the existence of a new P2P coordinate having been
 //!     discovered
+//! \param[in] x: X coordinate
+//! \param[in] y: Y coordinate
 void p2pc_new_nn_send(uint x, uint y)
 {
     uint key = (NN_CMD_P2PC << 24) | (P2PC_NEW << 2);
@@ -519,6 +538,8 @@ void p2pc_new_nn_send(uint x, uint y)
 
 //! \brief Transmit our current best guess of coordinates to all neighbouring
 //!     chips.
+//! \param arg1: unused
+//! \param arg2: unused
 void p2pc_dims_nn_send(uint arg1, uint arg2)
 {
     uint key = (NN_CMD_P2PC << 24) | (P2PC_DIMS << 2);
@@ -535,6 +556,8 @@ void p2pc_dims_nn_send(uint arg1, uint arg2)
 }
 
 //! \brief Transmit "P2PB" table generating packets
+//! \param arg1: unused
+//! \param arg2: unused
 void p2pb_nn_send(uint arg1, uint arg2)
 {
     static int id = 0;
@@ -965,7 +988,7 @@ uint nn_cmd_ffcs(uint data, uint key)
     return 0;
 }
 
-
+//! Flood fill block start
 uint nn_cmd_fbs(uint id, uint data, uint key)
 {
     if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK) {
@@ -996,7 +1019,7 @@ uint nn_cmd_fbs(uint id, uint data, uint key)
     return 1;
 }
 
-
+//! Flood fill block data
 uint nn_cmd_fbd(uint id, uint data, uint key)
 {
     uint block_num = (key >> 16) & 0xff; // Block num
@@ -1023,7 +1046,7 @@ uint nn_cmd_fbd(uint id, uint data, uint key)
     return 1;
 }
 
-
+//! Flood fill block end
 uint nn_cmd_fbe(uint id, uint data, uint key)
 {
     uint block_num = (key >> 16) & 0xff;
@@ -1076,8 +1099,10 @@ uint nn_cmd_ffe(uint id, uint data, uint key)
     return 1;
 }
 
-
-void proc_pkt_bc(uint i_pkt, uint count)
+//! \brief Nearest neighbour packet broadcast handler
+//! \param[in] i_pkt: (Type-punned) pkt_buf_t pointer
+//! \param[in] count: Number of times to try; should be at least 1
+static void proc_pkt_bc(uint i_pkt, uint count)
 {
     pkt_buf_t *pkt = (pkt_buf_t *) i_pkt;
 
@@ -1114,7 +1139,12 @@ void proc_pkt_bc(uint i_pkt, uint count)
     }
 }
 
-//! Board info?
+//! \brief Board information flood fill command handler
+//!
+//! Can be invoked directly during setup, or in response to a BIFF message.
+//! \param[in] x: The believed X coordinate
+//! \param[in] y: The believed Y coordinate
+//! \param[in] data: The payload word from the message
 void nn_cmd_biff(uint x, uint y, uint data)
 {
     // Board info data is formatted like so:
@@ -1176,7 +1206,7 @@ void nn_cmd_biff(uint x, uint y, uint data)
     }
 }
 
-//! Board info packet receiver
+//! Board info flood fill packet receiver
 //! \param[in] link: What link was the packet received on
 //! \param[in] data: The payload from the packet
 //! \param[in] key: The key from the packet

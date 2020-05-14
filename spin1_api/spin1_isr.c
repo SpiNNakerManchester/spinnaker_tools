@@ -35,9 +35,8 @@ extern dma_queue_t dma_queue;
 extern tx_packet_queue_t tx_packet_queue;
 
 
-/****f* spin1_isr.c/cc_rx_ready_isr
+/*! \brief Handles an incoming multicast packet.
 *
-* SUMMARY
 *  This interrupt service routine is called in response to receipt of a packet
 *  from the router. Chips are configured such that fascicle processors receive
 *  only multicast neural event packets. In response to receipt of a MC packet
@@ -45,12 +44,7 @@ extern tx_packet_queue_t tx_packet_queue;
 *
 *  Checking for parity and framing errors is not performed. The VIC is
 *  configured so that the interrupts raised by erroneous packets prompt
-*  execution of cc_rx_error_isr which clears them.
-*
-* SYNOPSIS
-*  INT_HANDLER cc_rx_ready_isr()
-*
-* SOURCE
+*  execution of cc_rx_error_isr() which clears them.
 */
 INT_HANDLER cc_rx_ready_isr(void)
 {
@@ -90,9 +84,8 @@ INT_HANDLER cc_rx_ready_isr(void)
 *******/
 
 
-/****f* spin1_isr.c/cc_rx_ready_fiqsr
+/*! \brief Handles an incoming multicast packet. (FIQ)
 *
-* SUMMARY
 *  This interrupt service routine is called in response to receipt of a packet
 *  from the router. Chips are configured such that fascicle processors receive
 *  only multicast neural event packets. In response to receipt of a MC packet
@@ -100,14 +93,9 @@ INT_HANDLER cc_rx_ready_isr(void)
 *
 *  Checking for parity and framing errors is not performed. The VIC is
 *  configured so that the interrupts raised by erroneous packets prompt
-*  execution of cc_rx_error_isr which clears them.
-*
-* SYNOPSIS
-*  INT_HANDLER cc_rx_ready_fiqsr()
-*
-* SOURCE
+*  execution of cc_rx_error_isr() which clears them.
 */
-INT_HANDLER cc_rx_ready_fiqsr()
+INT_HANDLER cc_rx_ready_fiqsr(void)
 {
     uint rx_status = cc[CC_RSR];        // Get Rx status
 
@@ -130,9 +118,8 @@ INT_HANDLER cc_rx_ready_fiqsr()
 *******/
 
 
-/****f* spin1_isr.c/cc_fr_ready_isr
+/*! \brief Handles an incoming fixed-route packet.
 *
-* SUMMARY
 *  This interrupt service routine is called in response to receipt of a packet
 *  from the router. Chips are configured such that fascicle processors receive
 *  only multicast neural event packets. In response to receipt of a MC packet
@@ -140,12 +127,7 @@ INT_HANDLER cc_rx_ready_fiqsr()
 *
 *  Checking for parity and framing errors is not performed. The VIC is
 *  configured so that the interrupts raised by erroneous packets prompt
-*  execution of cc_rx_error_isr which clears them.
-*
-* SYNOPSIS
-*  INT_HANDLER cc_fr_ready_isr()
-*
-* SOURCE
+*  execution of cc_rx_error_isr() which clears them.
 */
 INT_HANDLER cc_fr_ready_isr(void)
 {
@@ -185,9 +167,8 @@ INT_HANDLER cc_fr_ready_isr(void)
 *******/
 
 
-/****f* spin1_isr.c/cc_fr_ready_fiqsr
+/*! \brief Handles an incoming fixed-route packet. (FIQ)
 *
-* SUMMARY
 *  This interrupt service routine is called in response to receipt of a packet
 *  from the router. Chips are configured such that fascicle processors receive
 *  only multicast neural event packets. In response to receipt of a MC packet
@@ -195,14 +176,9 @@ INT_HANDLER cc_fr_ready_isr(void)
 *
 *  Checking for parity and framing errors is not performed. The VIC is
 *  configured so that the interrupts raised by erroneous packets prompt
-*  execution of cc_rx_error_isr which clears them.
-*
-* SYNOPSIS
-*  INT_HANDLER cc_fr_ready_fiqsr()
-*
-* SOURCE
+*  execution of cc_rx_error_isr() which clears them.
 */
-INT_HANDLER cc_fr_ready_fiqsr()
+INT_HANDLER cc_fr_ready_fiqsr(void)
 {
     uint rx_status = cc[CC_RSR];        // Get Rx status
 
@@ -225,20 +201,14 @@ INT_HANDLER cc_fr_ready_fiqsr()
 *******/
 
 
-/****f* spin1_isr.c/cc_rx_error_isr
+/*! \brief Clears errors from the communications controller
 *
-* SUMMARY
 *  This interrupt service routine is called in response to receipt of a packet
 *  from the router with either parity or framing errors. The routine simply
 *  clears the error and disposes of the packet. The monitor processor may
 *  observe packet errors by reading from the router diagnostic registers.
-*
-* SYNOPSIS
-*  INT_HANDLER cc_rx_error_isr()
-*
-* SOURCE
 */
-INT_HANDLER cc_rx_error_isr()
+INT_HANDLER cc_rx_error_isr(void)
 {
     // Consume erroneous packet (also clears interrupt)
 
@@ -253,21 +223,18 @@ INT_HANDLER cc_rx_error_isr()
 *******/
 
 
-/****f* spin1_isr.c/cc_tx_empty_isr
+/*! \brief Comms controller ready to send interrupt handler.
 *
-* SUMMARY
 *  This interrupt service function is called when the comms controller
 *  transmit buffer is empty. The function dequeues packets queued for
-*  transmission by spin1_send_mc_packet function and writes them to the comms
-*  controller hardware, until either the packet queue is empty or the comms
-*  controller is full.
+*  transmission by spin1_send_mc_packet() function and writes them to the
+*  comms controller hardware, until either the packet queue is empty or the
+*  comms controller is full.
 *
-* SYNOPSIS
-*  INT_HANDLER cc_tx_empty_isr()
-*
-* SOURCE
+*  This interrupt is only enabled when there is at least one message to send
+*  in the transmit queue.
 */
-INT_HANDLER cc_tx_empty_isr()
+INT_HANDLER cc_tx_empty_isr(void)
 {
     //TODO: should use TX_not_full interrupt in SpiNNaker -- more efficient!
 
@@ -294,7 +261,7 @@ INT_HANDLER cc_tx_empty_isr()
             cc[CC_TXDATA] = data;
         }
 
-        cc[CC_TXKEY]  = key;
+        cc[CC_TXKEY] = key;
     }
 
     // If queue empty turn off tx_empty interrupt
@@ -310,9 +277,8 @@ INT_HANDLER cc_tx_empty_isr()
 *******/
 
 
-/****f* spin1_isr.c/dma_done_isr
+/*! \brief DMA complete interrupt handler.
 *
-* SUMMARY
 *  This interrupt service routine is called upon completion of a DMA transfer.
 *  A user callback is scheduled (with two parameters, the ID of the completed
 *  transfer and the user-provided transfer tag) and the next DMA transfer
@@ -320,13 +286,8 @@ INT_HANDLER cc_tx_empty_isr()
 *  of transfers must be atomic (as they are in this uninterruptable ISR)
 *  otherwise transfer requests may not be completed in the order they were
 *  made.
-*
-* SYNOPSIS
-*  INT_HANDLER dma_done_isr()
-*
-* SOURCE
 */
-INT_HANDLER dma_done_isr()
+INT_HANDLER dma_done_isr(void)
 {
     // Clear transfer done interrupt in DMAC
     dma[DMA_CTRL] = 0x8;
@@ -364,9 +325,8 @@ INT_HANDLER dma_done_isr()
 *******/
 
 
-/****f* spin1_isr.c/dma_done_fiqsr
+/*! \brief DMA complete interrupt handler. (FIQ)
 *
-* SUMMARY
 *  This interrupt service routine is called upon completion of a DMA transfer.
 *  A user callback is scheduled (with two parameters, the ID of the completed
 *  transfer and `1' indicating transfer success) and the next DMA transfer
@@ -374,13 +334,8 @@ INT_HANDLER dma_done_isr()
 *  of transfers must be atomic (as they are in this uninterruptable ISR)
 *  otherwise transfer requests may not be completed in the order they were
 *  made.
-*
-* SYNOPSIS
-*  INT_HANDLER dma_done_fiqsr()
-*
-* SOURCE
 */
-INT_HANDLER dma_done_fiqsr()
+INT_HANDLER dma_done_fiqsr(void)
 {
     // Clear transfer done interrupt in DMAC
 
@@ -415,18 +370,12 @@ INT_HANDLER dma_done_fiqsr()
 *******/
 
 
-/****f* spin1_isr.c/dma_error_isr
+/*! \brief DMA error interrupt handler.
 *
-* SUMMARY
 *  This interrupt service function is called when a DMA transfer error arises.
 *  Currently, such an event causes termination of the simulation.
-*
-* SYNOPSIS
-*  INT_HANDLER dma_error_isr()
-*
-* SOURCE
 */
-INT_HANDLER dma_error_isr()
+INT_HANDLER dma_error_isr(void)
 {
     //TODO: update to other dma error sources when supported
     // deal with write buffer errors
@@ -443,18 +392,12 @@ INT_HANDLER dma_error_isr()
 *******/
 
 
-/****f* spin1_isr.c/timer1_isr
+/*! \brief Timer 1 interrupt handler.
 *
-* SUMMARY
 *  This interrupt service routine is called upon countdown of the processor's
 *  primary timer to zero. In response, a callback is scheduled.
-*
-* SYNOPSIS
-*  INT_HANDLER timer1_isr()
-*
-* SOURCE
 */
-INT_HANDLER timer1_isr()
+INT_HANDLER timer1_isr(void)
 {
     // Clear timer interrupt
     tc[T1_INT_CLR] = 1;
@@ -488,18 +431,12 @@ INT_HANDLER timer1_isr()
 *******/
 
 
-/****f* spin1_isr.c/timer1_fiqsr
+/*! \brief Timer 1 interrupt handler. (FIQ)
 *
-* SUMMARY
 *  This interrupt service routine is called upon countdown of the processor's
 *  primary timer to zero. In response, a callback is scheduled.
-*
-* SYNOPSIS
-*  INT_HANDLER timer1_fiqsr()
-*
-* SOURCE
 */
-INT_HANDLER timer1_fiqsr()
+INT_HANDLER timer1_fiqsr(void)
 {
     // clear timer interrupt
     tc[T1_INT_CLR] = 1;
@@ -514,18 +451,12 @@ INT_HANDLER timer1_fiqsr()
 *******/
 
 
-/****f* spin1_isr.c/soft_int_isr
+/*! \brief Software-initiated interrupt handler.
 *
-* SUMMARY
 *  This interrupt service routine is called upon receipt of software
 *  controller interrupt, triggered by a "USER EVENT".
-*
-* SYNOPSIS
-*  INT_HANDLER soft_int_isr()
-*
-* SOURCE
 */
-INT_HANDLER soft_int_isr()
+INT_HANDLER soft_int_isr(void)
 {
     // Clear software interrupt in the VIC
     vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
@@ -545,18 +476,12 @@ INT_HANDLER soft_int_isr()
 *******/
 
 
-/****f* spin1_isr.c/soft_int_fiqsr
+/*! \brief Software-initiated interrupt handler. (FIQ)
 *
-* SUMMARY
 *  This interrupt service routine is called upon receipt of software
 *  controller interrupt, triggered by a "USER EVENT".
-*
-* SYNOPSIS
-*  INT_HANDLER soft_int_fiqsr()
-*
-* SOURCE
 */
-INT_HANDLER soft_int_fiqsr()
+INT_HANDLER soft_int_fiqsr(void)
 {
     // Clear software interrupt in the VIC
     vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
