@@ -48,7 +48,9 @@ void __attribute__((weak)) schedule_sysmode(uchar event_id,
 
 sark_data_t sark;
 
+//! \brief Interrupt handler for messages from SCAMP.
 INT_HANDLER sark_int_han(void);
+//! \brief Interrupt handler for messages from SCAMP. (FIQ)
 INT_HANDLER sark_fiq_han(void);
 
 //------------------------------------------------------------------------------

@@ -22,7 +22,10 @@
 #include <spin1_api.h>
 #include <spin1_api_params.h>
 
-
+//! \brief Wrapper for schedule_sysmode() that handles interrupts
+//! \param[in] event_id: ID of the event triggering a callback
+//! \param[in] arg0: argument to be passed to the callback
+//! \param[in] arg1: argument to be passed to the callback
 extern void schedule(uchar event_id, uint arg0, uint arg1);
 
 extern uchar user_pending;

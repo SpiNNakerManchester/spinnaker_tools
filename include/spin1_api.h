@@ -164,13 +164,21 @@ static inline void spin1_delay_us(uint n) {
 // callback and task functions
 // ------------------------------------------------------------------------
 //! \brief Enables a callback for a class of event
+//! \details
+//!     This function sets the given callback to be scheduled on occurrence
+//!     of the specified event. The priority argument dictates the order in
+//!     which callbacks are executed by the scheduler.
 //! \param[in] event_id: Which event to enable
 //! \param[in] cback: The callback handler
-//! \param[in] priority: The priority of interrupt handling
+//! \param[in] priority: The priority of interrupt handling.
+//!      0 = non-queueable callback (associated to irq)
+//!    > 0 = queueable callback
+//!    < 0 = preeminent callback (associated to fiq)
 NONNULL void
 spin1_callback_on(uint event_id, callback_t cback, int priority);
 
 //! \brief Disables a callback for a class of event
+//! \details This function disables the callback for the specified event.
 //! \param[in] event_id: Which event to disable
 void spin1_callback_off(uint event_id);
 

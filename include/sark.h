@@ -858,9 +858,10 @@ typedef struct pkt {
     uint key;                   //!< Key (non-payload!) field
 } pkt_t;
 
-/*!
-Struct holding data for "sark_event" and "sark_timer". This
-holds all the variables needed by these two packages.
+/*! \brief
+Struct holding data for "sark_event" and "sark_timer".
+
+This holds all the variables needed by these two packages.
 */
 
 typedef struct event_data {
