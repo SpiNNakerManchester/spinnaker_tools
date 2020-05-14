@@ -1952,7 +1952,7 @@ void *
 sark_alloc(uint count, uint size);
 
 /*!
-Frees a block of memory which was previously allocated by sark_alloc()
+\brief Frees a block of memory which was previously allocated by sark_alloc()
 (i.e., from the DTCM heap).
 
 \param[in] ptr: pointer to memory block
@@ -2680,7 +2680,9 @@ A runtime error will occur if the VIC slot is already in use.
 void event_register_timer (vic_slot slot);
 
 /*!
-Register the use of "pkt" routines. In interrupt handler needs to be
+\brief Register the use of "pkt" routines.
+
+An interrupt handler needs to be
 installed and assigned to a VIC slot. In addition, the size of the
 transmit packet queue must be specified. It should be a power of two
 no larger than 256 and refers to the number of packets in the queue.
@@ -2696,8 +2698,9 @@ multicast packets.
 void event_register_pkt(uint queue_size, vic_slot slot);
 
 /*!
-Used to trigger a user event if one has been registered. The two
-arguments will be provided to the event_proc when it is called.
+\brief Used to trigger a user event if one has been registered.
+
+The two arguments will be provided to the event_proc() when it is called.
 Only one user event can be outstanding at any given time.
 
 \param arg1: first argument to event_proc
@@ -2712,8 +2715,9 @@ uint event_user (uint arg1, uint arg2);
 // Routines exported by SARK - sark_timer.c
 
 /*!
-Schedule an event to occur at some time in the future. Requires that
-(hardware) TIMER2 has been set up by a call to timer_register.
+\brief Schedule an event to occur at some time in the future.
+
+Requires that (hardware) TIMER2 has been set up by a call to timer_register()
 
 NOTE: this procedure assumes the following event conditions on entry:
 e->next == NULL
@@ -2727,9 +2731,10 @@ NONNULL void
 timer_schedule(event_t *e, uint time);
 
 /*!
-Allocates an event, initialises it with the supplied parameters and
-schedules it to occur at some time in the future. Requires that the
-second timer has been set up by a call to timer_register.
+\brief Allocates an event, initialises it with the supplied parameters and
+schedules it to occur at some time in the future.
+
+Requires that the second timer has been set up by a call to timer_register()
 
 \param proc: pointer to an event_proc
 \param arg1: argument 1 to the event_proc
@@ -2742,12 +2747,13 @@ NONNULL uint
 timer_schedule_proc(event_proc proc, uint arg1, uint arg2, uint time);
 
 /*!
-Cancel a timer event that was previously scheduled. The ID that was
-allocated when the timer was created must be given in case the timer
-has already executed and the event has possibly been recycled. This
-means that a timer event which may be cancelled must be allocated by
-event_new, the ID noted and the event then scheduled with
-timer_schedule.
+\brief Cancel a timer event that was previously scheduled.
+
+The ID that was allocated when the timer was created must be given in case
+the timer has already executed and the event has possibly been recycled.
+This means that a timer event which may be cancelled must be allocated by
+event_new(), the ID noted and the event then scheduled with
+timer_schedule().
 
 It is potentially quite difficult to cancel a timer at the head
 of the timer queue so in that case the timer is replaced with a
@@ -2761,7 +2767,7 @@ to terminate on the timer interrupt.
 NONNULL void timer_cancel(event_t *e, uint ID);
 
 /*!
-Initialise a statically allocated event to be used in place
+\brief Initialise a statically allocated event to be used in place
 of an event that is cancelled at the head of the timer queue.
 
 It is potentially quite difficult to cancel a timer at the head
@@ -2769,7 +2775,6 @@ of the timer queue so in that case the timer is replaced with a
 placeholder with "proc" set to NULL and the placeholder is left
 to terminate on the timer interrupt.
 */
-
 void timer_cancel_init(void);
 
 
