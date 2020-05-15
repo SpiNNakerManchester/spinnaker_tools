@@ -451,18 +451,18 @@ uint rtr_p2p_get(uint entry)
 
 //! \brief Default router diagnostic configuration.
 //!
-//! Counter 0: local multicast packets <br>
-//! Counter 1: non-local multicast packets <br>
-//! Counter 2: local peer-to-peer packets <br>
-//! Counter 3: non-local peer-to-peer packets <br>
-//! Counter 4: local nearest-neighbour packets <br>
-//! Counter 5: non-local nearest-neighbour packets <br>
-//! Counter 6: local fixed-route packets <br>
-//! Counter 7: non-local fixed-route packets <br>
-//! Counter 8: dumped multicast packets <br>
-//! Counter 9: dumped peer-to-peer packets <br>
-//! Counter 10: dumped nearest-neighbour packets <br>
-//! Counter 11: dumped fixed-route packets <br>
+//! Counter 0: local multicast packets \n
+//! Counter 1: non-local multicast packets \n
+//! Counter 2: local peer-to-peer packets \n
+//! Counter 3: non-local peer-to-peer packets \n
+//! Counter 4: local nearest-neighbour packets \n
+//! Counter 5: non-local nearest-neighbour packets \n
+//! Counter 6: local fixed-route packets \n
+//! Counter 7: non-local fixed-route packets \n
+//! Counter 8: dumped multicast packets \n
+//! Counter 9: dumped peer-to-peer packets \n
+//! Counter 10: dumped nearest-neighbour packets \n
+//! Counter 11: dumped fixed-route packets \n
 //!
 //! Counters 12&ndash;15 are turned off by default and are fully available
 //! for users.

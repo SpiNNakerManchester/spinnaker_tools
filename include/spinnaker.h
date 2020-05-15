@@ -515,7 +515,9 @@ enum spinnaker_interrupt_numbers_e {
 //! Memory controller r18: self-refresh command time register offset
 #define MC_ESR          INT_AT(0x48)
 
+//! \deprecated No definition available in datasheet
 #define MC_MCFG2        INT_AT(0x4c)
+//! \deprecated No definition available in datasheet
 #define MC_MCFG3        INT_AT(0x50)
 
 //! Memory controller QOS settings 0

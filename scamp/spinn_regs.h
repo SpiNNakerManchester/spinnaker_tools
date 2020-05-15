@@ -17,7 +17,7 @@
 
 //! \file
 //! \brief Miscellaneous test registers
-//! \details This file might be unused...
+//! \deprecated This file seems to be be unused.
 
 #ifndef SPINN_REGS_H
 #define SPINN_REGS_H

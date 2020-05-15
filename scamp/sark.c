@@ -21,7 +21,7 @@
 
 //! \brief Main entry point.
 //!
-//! Note that user application code will supply their own version of this;
+//! \note user application code will supply their own version of this;
 //! this version is just for raw SARK.
 void c_main(void)
 {

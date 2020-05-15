@@ -407,7 +407,7 @@ static uint resume_wait(void)
 *  order in which they were enqueued.
 *
 *  The dispatcher is the sole consumer of the scheduler queues and so can
-*  safely run with interrupts enabled. Note that deschedule(uint event_id)
+*  safely run with interrupts enabled. Note that deschedule()
 *  modifies the scheduler queues which naturally influences the callbacks
 *  that are dispatched by this function but not in such a way as to allow the
 *  dispatcher to move the processor into an invalid state such as calling a
@@ -416,8 +416,8 @@ static uint resume_wait(void)
 *  Upon emptying the scheduling queues the dispatcher goes into wait for
 *  interrupt mode.
 *
-*  Potential hazard: It is possible that an event will occur -and result in
-*  a callback being scheduled- AFTER the last check on the scheduler queues
+*  Potential hazard: It is possible that an event will occur _and result in
+*  a callback being scheduled_ AFTER the last check on the scheduler queues
 *  and BEFORE the wait for interrupt call. In this case, the scheduled
 *  callback would not be handled until the next event occurs and causes the
 *  wait for interrupt call to return.
@@ -560,7 +560,9 @@ void spin1_callback_off(uint event_id)
 *  This function deschedules all callbacks corresponding to the given event
 *  ID. One use for this function is to effectively discard all received
 *  packets which are yet to be processed by calling
-*  `deschedule(MC_PACKET_RECEIVED)`. Note that this function cannot guarantee
+*  `deschedule(MC_PACKET_RECEIVED)`.
+*
+*  \note this function cannot guarantee
 *  that all callbacks pertaining to the given event ID will be descheduled:
 *  once a callback has been prepared for execution by the dispatcher it is
 *  immune to descheduling and will be executed upon return to the dispatcher.
@@ -1265,6 +1267,9 @@ uint spin1_get_chip_id(void)
 /*
 *******/
 
+#if 0
+//## This routine has been removed - use "rtr_alloc", "rtr_mc_set" instead
+
 /****f* spin1_api.c/spin1_set_mc_table_entry
 *
 * SUMMARY
@@ -1283,9 +1288,6 @@ uint spin1_get_chip_id(void)
 * SOURCE
 */
 
-//## This routine has been removed - use "rtr_alloc", "rtr_mc_set" instead
-
-#if 0
 uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 {
     if (entry >= APP_MC_ENTRIES) { // top priority entries reserved for the system

@@ -39,7 +39,6 @@
 
 //! \name SARK stack defaults
 //! \{
-//! Note that default stack top and length are specified in the linker script.
 //! The sizes below define individual sizes for three modes of four used by
 //! SARK. The sizes of individual stacks and the stack top can be modified at
 //! startup by using "sark_config". The size of the SYS mode stack is the
@@ -47,6 +46,7 @@
 //! overall stack length from the linker script. The default is for a stack
 //! length of 2048 and hence a SYS stack of 1152 bytes. All of these values
 //! must be a multiple of 4!
+//! \note default stack top and length are specified in the linker script.
 
 #define SVC_STACK          384  //!< Size in bytes of SVC stack
 #define IRQ_STACK          256  //!< Size in bytes of IRQ stack
@@ -553,11 +553,10 @@ typedef struct app_data {
 /*!
 \brief SDP message definition
 
-Note that the length field is the number of bytes _following the
-checksum._ It will be a minimum of 8 as the SDP header should always
-be present.
+\note the length field is the number of bytes _following the checksum._
+It will be a minimum of 8 as the SDP header should always be present.
 
-NOTE: make sure to comply with 'sark_block_init()' requirements:
+\note make sure to comply with sark_block_init() requirements:
     1. size must be a non-zero multiple of 4 bytes.
     2. first field must be a pointer to same struct type.
 */
@@ -771,7 +770,7 @@ arguments. Queues of events are maintained either on a timer queue for
 events which have to occur at a particular time or on a set of
 priority ordered queues for events which are processed by a scheduler.
 
-NOTE: make sure to comply with 'sark_block_init()' requirements:
+\note make sure to comply with sark_block_init() requirements:
     1. size must be a non-zero multiple of 4 bytes.
     2. first field must be a pointer to same struct type.
 */
@@ -2719,9 +2718,11 @@ uint event_user (uint arg1, uint arg2);
 
 Requires that (hardware) TIMER2 has been set up by a call to timer_register()
 
-NOTE: this procedure assumes the following event conditions on entry:
+\note this procedure assumes the following event conditions on entry:
+<pre>
 e->next == NULL
 e->time == 0
+</pre>
 
 \param e: event to execute
 \param time: delay in microseconds (non-zero)

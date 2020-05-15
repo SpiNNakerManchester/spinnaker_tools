@@ -91,6 +91,7 @@ enum spin1_api_link_orientations {
 #define API_DEBUG             TRUE
 //! make diagnostics available to the application
 #define API_DIAGNOSTICS       TRUE
+//! \deprecated No definition available
 #define NON_ROOT              FALSE
 //! suggested delay (in &mu;s) between calls to io_printf()
 #define API_PRINT_DLY         200

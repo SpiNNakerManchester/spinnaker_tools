@@ -196,7 +196,8 @@ void io_put_char(char *stream, uint c)
 //! \brief Put a string possibly left-padding with spaces.
 //! \param[in] stream: Where to write to
 //! \param[in] s: The string to write
-//! \param[in] d: The number of digits to write; NB: pads with spaces
+//! \param[in] d: The number of characters to write
+//! \note Always pads with spaces (where any padding is required)
 static void io_put_str(char *stream, char *s, int d)
 {
     char *t = s;

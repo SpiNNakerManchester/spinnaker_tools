@@ -421,10 +421,10 @@ void sark_call_cpp_constructors(void)
 //! This is a weak declaration so that it may be replaced with another
 //! routine though not many systems will want to do this.
 //!
-//! "sark_config" (also weak - see sark_alib.s) can be used to preconfigure
+//! "sark_config" (also weak --- see sark_alib.s) can be used to preconfigure
 //! some parameters which are used here.
 //!
-//! NB - arrive in SVC mode - must leave in same mode!
+//! \note arrive in SVC mode --- must leave in same mode!
 //!
 //! \param[in] stack: the top of the SVC stack
 //! \return the mode (CPSR) which will be entered on return

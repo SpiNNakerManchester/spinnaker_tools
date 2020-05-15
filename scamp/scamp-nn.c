@@ -521,9 +521,8 @@ void ff_nn_send(uint key, uint data, uint fwd_rty, uint add_id)
 //! \{
 
 //! \brief Board information flood fill packet sender.
-//!
-//! Note: Should only be called on chips which are at position (0, 0) on
-//! their board.
+//! \note Should only be called on chips which are at position (0, 0) on
+//!     their board.
 //! \param[in] data: The payload of the packet to send.
 void biff_nn_send(uint data)
 {
@@ -794,14 +793,15 @@ void nn_rcv_p2pc_pct(uint link, uint data, uint key)
 //------------------------------------------------------------------------------
 
 //! \brief Write the Router Control Register.
-//! \param[in] data: payload from the NN packet.
-//!     Various fields may be selected using 'spare' bits in the word.
-//!     The field is updated if the bit is set. <p>
-//!     bit 5 - Wait2 <br>
-//!     bit 4 - Wait1 <br>
-//!     bit 3 - W bit <br>
-//!     bit 2 - MP field <br>
-//!     bit 1 - TP field
+//! \param[in] data:
+//! payload from the NN packet.
+//! Various fields may be selected using 'spare' bits in the word.
+//! The field is updated if the bit is set. \n
+//! bit 5 --- Wait2 \n
+//! bit 4 --- Wait1 \n
+//! bit 3 --- W bit \n
+//! bit 2 --- MP field \n
+//! bit 1 --- TP field
 
 // !! resync TP update timer?
 

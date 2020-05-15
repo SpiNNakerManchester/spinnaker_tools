@@ -391,6 +391,9 @@ extern uint link_read_word(uint addr, uint link, uint *buf, uint timeout);
 extern uint link_write_word(uint addr, uint link, uint *buf, uint timeout);
 extern uint next_id(void);
 extern void nn_init(void);
+//! \deprecated No definition available; not used
+//! \param aplx_addr: Address of APLX?
+//! \param cpu_mask: Core select mask?
 extern void proc_ffe(uint aplx_addr, uint cpu_mask);
 //! \}
 

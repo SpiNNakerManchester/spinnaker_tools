@@ -115,7 +115,7 @@ uint spin1_start(sync_bool sync);
 //! \return the exit code
 uint spin1_start_paused(void);
 //! \brief Terminates a simulation passing a return code.
-//! \details NB: This function returns! This technically terminates the
+//! \note This function returns! This technically terminates the
 //!     simulation loop, not the application.
 //! \param[in] error: error exit code
 void spin1_exit(uint error);
@@ -141,9 +141,10 @@ void spin1_pause(void);
 //! \brief Resume the simulation on this core that was paused with spin1_pause().
 //! \param[in] sync: Whether to synchronise the resume with other cores
 void spin1_resume(sync_bool sync);
-//! \brief Soft-RTEs the core. Note that this may return!
+//! \brief Soft-RTEs the core.
 //! \details
 //!     Sets the CPU into an RTE code and stops the timer.
+//! \note This may return!
 //! \param[in] code: the error code
 void spin1_rte(rte_code code);
 

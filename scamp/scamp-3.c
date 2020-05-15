@@ -145,8 +145,9 @@ volatile uint ticks_since_last_p2pc_dims;
 
 //! \name P2P Address Guess
 //! \{
-//! During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address. Note
-//! that this value may be negative and may be much larger than realistic
+//! During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address.
+//!
+//! \note this value may be negative and may be much larger than realistic
 //! machines as the first P2P address assigned may be the result of a packet
 //! taking a very spirally route.
 
@@ -286,7 +287,7 @@ void proc_route_msg(uint arg1, uint arg2);
 
 //! \brief Adds a message to SCAMP's master message queue, to be processed by
 //! 	::proc_route_msg().
-//! \details Note that this _silently_ drops messages if the queue is full.
+//! \note This _silently_ drops messages if the queue is full.
 //! \param[in] msg: The message to dispatch.
 //!     _Transfers ownership of the message._
 //! \param[in] srce_ip: Source IP address (if meaningful).
@@ -1573,17 +1574,17 @@ static uint pll_mult(uint freq)
 }
 
 
-// cpu_freq - CPU clock frequency in MHz
-// mem_freq - SDRAM clock frequency in MHz
-// sys_div - system bus clock divider (range 1..4)
-// rtr_div - router clock divider (range 1..4)
-//
-// Note that system bus is clocked at (cpu_freq * 2 / sys_div)
-// and router at (cpu_freq * 2 / rtr_div)
-//
-// To run CPUs at 200, SDRAM at 130, system bus and router at 133
-//
 //! \brief Initialise PLLs
+//! \internal
+//! cpu_freq - CPU clock frequency in MHz
+//! mem_freq - SDRAM clock frequency in MHz
+//! sys_div - system bus clock divider (range 1..4)
+//! rtr_div - router clock divider (range 1..4)
+//!
+//! Note that system bus is clocked at (cpu_freq * 2 / sys_div)
+//! and router at (cpu_freq * 2 / rtr_div)
+//!
+//! To run CPUs at 200, SDRAM at 130, system bus and router at 133
 void pll_init(void)
 {
     sark.cpu_clk = 10;                  // Set for delay_us
