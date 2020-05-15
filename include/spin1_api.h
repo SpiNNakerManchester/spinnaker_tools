@@ -218,6 +218,16 @@ uint spin1_trigger_user_event(uint arg0, uint arg1);
 NONNULL uint
 spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
         uint direction, uint length);
+
+//! \brief Flushes any current transfers in the DMA controller.
+//! \details
+//!     flushes the hardware queue in the DMA controller,
+//!     aborts any ongoing transfer in the DMA controller,
+//!     clears any pending DMA_COMPLETE interrupts in the DMA controller and
+//!     purges any queued DMA_COMPLETE callbacks in the callback queues.
+//!     flushes the software DMA queue,
+void spin1_dma_flush(void);
+
 //! \brief Directly copies data from \p src to \p dst.
 //! \details Does not require alignment.
 //! \param[out] dst: Where to copy to

@@ -163,7 +163,8 @@ void desc_init(void)
     tx_desc_t *tdesc = &tx_desc;
 
     // initialise TX descriptor reusable event
-    event_t* e = event_new((event_proc) NULL, 0, 0);
+    // proc_byte_set used as default (to avoid compiler warning)
+    event_t* e = event_new(proc_byte_set, 0, 0);
     tdesc->event = e;
     tdesc->event_id = e->ID;
     e->ID = 0;                          // mark event as inactive
@@ -172,8 +173,9 @@ void desc_init(void)
     rx_desc_t *rdesc = rx_desc_table;
 
     // initialise RX descriptor reusable events
+    // proc_byte_set used as default (to avoid compiler warning)
     for (uint i = 0; i < P2P_NUM_STR; i++) {
-        e = event_new((event_proc) NULL, 0, 0);
+        e = event_new(proc_byte_set, 0, 0);
         rdesc->event = e;
         rdesc->event_id = e->ID;
         e->ID = 0;                      // mark event as inactive

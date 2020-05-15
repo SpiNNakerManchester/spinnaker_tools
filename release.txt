@@ -4,6 +4,27 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.3.0 - Bug fixing and new feature
+
+New Feature:
+
+* Spin1 API: new function spin1_dma_flush clears hardware and software
+  DMA queues and aborts any ongoing DMA transfers.
+
+
+Bug fixes:
+
+* SCAMP/SARK: removes a potential SDP loophole in which both sender
+  and receiver could free a shared-buffer SDP message at the same time.
+
+* SCAMP/SARK: fixes a hazard by allocating events before accessing
+  shared resources.
+
+* Spin1 API: removes a read-after-write hazard in the comms controller.
+
+#-------------------------------------------------------------------------------
+
+
 Version 3.2.5 - Bug fixing
 
 Bug fixes:
@@ -18,6 +39,7 @@ Bug fixes:
   runs out of events and fails to timeout communications.
 
 * Adds citation and manifest files.
+
 #-------------------------------------------------------------------------------
 
 
