@@ -42,12 +42,17 @@
 //! \{
 // IPTag table sizes
 
+//! Number of IPTags available for application use
 #define TAG_FIXED_SIZE          8       // At bottom of table
+//! Number of (temporary) IPTags available for managing SDP replies
 #define TAG_POOL_SIZE           8
 
+//! Index of first temporary IPTag
 #define FIRST_POOL_TAG          TAG_FIXED_SIZE
+//! Index of last temporary IPTag
 #define LAST_POOL_TAG           (TAG_FIXED_SIZE + TAG_POOL_SIZE - 1)
 
+//! Total number of IPTags available
 #define TAG_TABLE_SIZE          (TAG_FIXED_SIZE + TAG_POOL_SIZE)
 
 // IPTAG definitions
@@ -143,7 +148,7 @@ enum scamp_failure_codes {
 //!
 //! Format for NN_CMD_P2PC commands:
 //! ```
-//!   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64)
+//!   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64())
 //!   key[27:24] NN command (== NN_CMD_P2PC)
 //!   key[23:4] Unused
 //!   key[3:2] Type: P2PC_ADDR, P2PC_NEW or P2PC_DIMS
@@ -153,7 +158,7 @@ enum scamp_failure_codes {
 //!
 //! Format for NN_CMD_BIFF commands
 //! ```
-//!   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64)
+//!   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64())
 //!   key[27:24] NN command (== NN_CMD_BIFF)
 //!   key[23:16] Unused
 //!   key[13:11] X coordinate of packet within board (updated when forwarded)
@@ -166,7 +171,7 @@ enum scamp_failure_codes {
 //!
 //! Nearest neighbour packet format all other commands
 //! ```
-//!   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64)
+//!   key[31:28] 4-bit one's complement checksum of key and data (see chksum_64())
 //!   key[27:24] NN command
 //!   key[23:16] Forward (for packets with command bit 2 set)
 //!   key[15:8] Retry (for packets with command bit 2 set)
@@ -178,7 +183,7 @@ enum scamp_failure_codes {
 enum scamp_nn_opcodes {
     NN_CMD_SIG0 =  0,  //!< Misc (GTPC, Set FwdRty, LED, etc)
     NN_CMD_RTRC =  1,  //!< Router Control Reg
-    NN_CMD_LTPC =  2,  //!< Local Time Phase Ctrl (ID=0, Fwd=0)
+    NN_CMD_LTPC =  2,  //!< Local Time Phase Control (ID=0, Fwd=0)
     NN_CMD_SP_3 =  3,  //!< Spare
 
     NN_CMD_SIG1 =  4,  //!< Misc (MEM, etc)
@@ -384,7 +389,6 @@ extern void nn_cmd_biff(uint x, uint y, uint data);
 extern void nn_mark(uint key);
 extern uint link_read_word(uint addr, uint link, uint *buf, uint timeout);
 extern uint link_write_word(uint addr, uint link, uint *buf, uint timeout);
-extern void proc_start_app(uint aplx_addr, uint id_mask);
 extern uint next_id(void);
 extern void nn_init(void);
 extern void proc_ffe(uint aplx_addr, uint cpu_mask);
@@ -431,6 +435,7 @@ extern void img_cp_exe(void);
 //! \brief See scamp-app.c
 //! \{
 
+extern void proc_start_app(uint aplx_addr, uint id_op_mask);
 extern void signal_app(uint data);
 extern void boot_ap(void);
 extern void clock_ap(uint virt_mask, uint enable);
@@ -456,6 +461,7 @@ extern void p2pb_nn_send(uint arg1, uint arg2);
 
 //! \name SCAMP command interface
 //! \brief See scamp-cmd.c
+//! \{
 
 extern uint scamp_debug(sdp_msg_t *msg, uint srce_ip);
 //! \}

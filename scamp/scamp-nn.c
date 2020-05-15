@@ -33,19 +33,22 @@
 
 //------------------------------------------------------------------------------
 
-
+//! Number of packets to allocate for the nearest neighbour protocols
 #define BC_TABLE_SIZE           16
 
+//! Flood fill states
 enum ff_states {
     FF_ST_IDLE = 0,             //!< Doing nothing
     FF_ST_EXBLK = 1,            //!< Rcvd FFS or FBE, awaiting FBS, FFE
     FF_ST_INBLK = 2,            //!< Rcvd FBS, awaiting FBD, FBE
 };
 
+//! Device identifier (`0x591 << 28`, for SpiNNaker)
 #define PART_ID         (CHIP_ID_CODE & 0xfff00000)
 
 //------------------------------------------------------------------------------
 
+//! Nearest neighbour protocol state
 typedef struct nn_desc_t {
     uchar state;                //!< FF state (see ::ff_states enum)
     uchar error;                //!< Error flag
@@ -85,11 +88,13 @@ typedef struct nn_desc_t {
 
 //------------------------------------------------------------------------------
 
-
+//! Storage for packets used in ::pkt_buf_list
 pkt_buf_t pkt_buf_table[BC_TABLE_SIZE];
+//! Free list of packets.
 pkt_buf_t *pkt_buf_list;
-
+//! Number of packets (in ::pkt_buf_table) not on free list (::pkt_buf_list)
 uint pkt_buf_count;
+//! Statistics: maximum value of ::pkt_buf_count
 uint pkt_buf_max;
 
 //! \brief Table "hop_table" has entries of type `(id << 24, hops)` for each
@@ -105,10 +110,13 @@ uint *hop_table;
 //! Used for tracking signal dispatch
 level_t levels[4];
 
+//! What application (or at least AppID) is running on each core.
 uchar core_app[MAX_CPUS];
+//! Unused?
 uint app_mask[256];
 
-nn_desc_t nn_desc;
+//! Nearest neighbour protocol state
+static nn_desc_t nn_desc;
 
 //! Packet reserved for performing P2P peeks
 pkt_buf_t peek_pkt;
@@ -292,6 +300,11 @@ void level_config(void)
 //------------------------------------------------------------------------------
 
 
+//! \brief Initialises ::peek_pkt to contain the given arguments
+//!     (presumably an acknowledge)
+//! \param[in] link: Which link to send the packet on
+//! \param[in] data: The payload of the packet
+//! \param[in] key: The key of the packet
 void peek_ack_pkt(uint link, uint data, uint key)
 {
     if (peek_pkt.flags != 1) {
@@ -302,6 +315,11 @@ void peek_ack_pkt(uint link, uint data, uint key)
 }
 
 
+//! \brief Initialises ::poke_pkt to contain the given arguments
+//!     (presumably an acknowledge)
+//! \param[in] link: Which link to send the packet on
+//! \param[in] data: The payload of the packet
+//! \param[in] key: The key of the packet
 void poke_ack_pkt(uint link, uint data, uint key)
 {
     if (poke_pkt.flags != 1) {
@@ -392,7 +410,8 @@ uint link_write_word(uint addr, uint link, uint *buf, uint timeout)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Allocate a packet (getting one from the free list, ::pkt_buf_list).
+//! \return The allocated packet, or `NULL` if none available
 pkt_buf_t* pkt_buf_get(void)
 {
     pkt_buf_t *pkt = pkt_buf_list;
@@ -408,7 +427,8 @@ pkt_buf_t* pkt_buf_get(void)
     return pkt;
 }
 
-
+//! \brief Add packet to free list (::pkt_buf_list), "freeing" it
+//! \param[in] pkt: Packet to free.
 void pkt_buf_free(pkt_buf_t *pkt)
 {
     pkt->next = pkt_buf_list;
@@ -417,7 +437,11 @@ void pkt_buf_free(pkt_buf_t *pkt)
     pkt_buf_count--;
 }
 
-//! Get the next flood-fill identifier we should use
+//! \name Flood fill
+//! \{
+
+//! \brief Get the next flood-fill identifier we should use
+//! \return A new flood fill ID (range: 2&ndash;254)
 uint next_id(void)
 {
     uint t = sv->last_id + 1;
@@ -427,7 +451,13 @@ uint next_id(void)
     sv->last_id = t;
     return t << 1;
 }
+//! \}
 
+//! \name Board information flood fill
+//! \{
+
+//! \brief Get the next board info flood-fill identifier we should use
+//! \return A new flood fill ID (range: 2&ndash;254)
 uint next_biff_id(void)
 {
     uint t = sv->last_biff_id + 1;
@@ -437,8 +467,11 @@ uint next_biff_id(void)
     sv->last_biff_id = t;
     return t << 1;
 }
+//! \}
 
-
+//! \brief Mark an ID as discovered
+//! \param[in] key: The key from the NN packet
+// Is this unused?
 void nn_mark(uint key)
 {
     uint id = (key >> 1) & 127;
@@ -452,7 +485,14 @@ void nn_mark(uint key)
     nn_desc.id_set[w] = 0;
 }
 
+//! \name Flood fill
+//! \{
 
+//! \brief Flood fill NN packet sender.
+//! \param[in] key: The key to use
+//! \param[in] data: The data to use
+//! \param[in] fwd_rty: Forward/delay/retry configuration
+//! \param[in] add_id: Whether to merge the next_id() result into the key
 void ff_nn_send(uint key, uint data, uint fwd_rty, uint add_id)
 {
     if (add_id) {
@@ -475,10 +515,16 @@ void ff_nn_send(uint key, uint data, uint fwd_rty, uint add_id)
     } while (count--);
 }
 
-//! \brief Board information floodfill packet sender.
+//! \}
+
+//! \name Board information flood fill
+//! \{
+
+//! \brief Board information flood fill packet sender.
 //!
 //! Note: Should only be called on chips which are at position (0, 0) on
 //! their board.
+//! \param[in] data: The payload of the packet to send.
 void biff_nn_send(uint data)
 {
     uint key = NN_CMD_BIFF << 24;
@@ -495,8 +541,12 @@ void biff_nn_send(uint data)
         }
     }
 }
+//! \}
 
 //------------------------------------------------------------------------------
+
+//! \name P2PC
+//! \{
 
 //! \brief Transmit our current best guess of coordinates to all neighbouring
 //!     chips
@@ -575,11 +625,11 @@ void p2pb_nn_send(uint arg1, uint arg2)
 }
 
 //! \brief Update our current best guess of our coordinates based on a packet
-//! from a neighbour
+//!     from a neighbour
 //! \param[in] link: What link was the packet received on
 //! \param[in] data: The payload from the packet
 //! \param[in] key: The key from the packet
-void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
+static void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
 {
     // Coordinates of neighbour
     int nx = data >> 16;
@@ -634,7 +684,7 @@ void nn_rcv_p2pc_addr_pct(uint link, uint data, uint key)
 //! \param[in] link: What link was the packet received on
 //! \param[in] data: The payload from the packet
 //! \param[in] key: The key from the packet
-void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
+static void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
 {
     // Coordinates of the new coordinate
     int x = data >> 16;
@@ -670,7 +720,7 @@ void nn_rcv_p2pc_new_pct(uint link, uint data, uint key)
 //! \param[in] link: What link was the packet received on
 //! \param[in] data: The payload from the packet
 //! \param[in] key: The key from the packet
-void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
+static void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
 {
     // Bounds of the coordinates
     int new_min_x = (data >> 24) & 0xFF;
@@ -739,23 +789,23 @@ void nn_rcv_p2pc_pct(uint link, uint data, uint key)
     }
 }
 
+//! \}
 
 //------------------------------------------------------------------------------
 
 //! \brief Write the Router Control Register.
-//!
-//! Various fields may be selected using 'spare' bits in the word. The field
-//! is updated if the bit is set
-//!
-//! bit 5 - Wait2 <br>
-//! bit 4 - Wait1 <br>
-//! bit 3 - W bit <br>
-//! bit 2 - MP field <br>
-//! bit 1 - TP field
+//! \param[in] data: payload from the NN packet.
+//!     Various fields may be selected using 'spare' bits in the word.
+//!     The field is updated if the bit is set. <p>
+//!     bit 5 - Wait2 <br>
+//!     bit 4 - Wait1 <br>
+//!     bit 3 - W bit <br>
+//!     bit 2 - MP field <br>
+//!     bit 1 - TP field
 
 // !! resync TP update timer?
 
-void nn_cmd_rtrc(uint data)
+static void nn_cmd_rtrc(uint data)
 {
     uint t1 = 0;
     uint t2 = 0;
@@ -788,29 +838,48 @@ void nn_cmd_rtrc(uint data)
 
 //------------------------------------------------------------------------------
 
-//! SIG0 does simple commands whose data fits into 28 bits. Returns 0 if
-//! packet should not be propagated, 1 otherwise.
+//! Operation codes for nn_cmd_sig0()
+enum sig0_operations {
+    SIG0_FWD_RTRY,      //!< Set forward and retry
+    SIG0_LEDS,          //!< Set LEDs (call sark_led_set())
+    SIG0_GTP,           //!< Global Time Phase
+    SIG0_ID,            //!< ID set/reset
+    SIG0_LEVEL,         //!< Trigger level_config()
+    SIG0_APP,           //!< Signal application (call signal_app())
+    SIG0_TP,            //!< Router time phase period _(unimplemented)_
+    SIG0_RST,           //!< Shut down APs _(unimplemented)_
+    SIG0_DOWN,          //!< Minimum power mode _(unimplemented)_
+    SIG0_UP             //!< Operational mode _(unimplemented)_
+};
 
+//! \brief SIG0 does simple commands whose data fits into 28 bits.
+//! \details Delegates to:
+//!
+//! * sark_led_set()
+//! * level_config()
+//! * signal_app()
+//! \param[in] data: The message payload
+//! \return 0 if packet should not be propagated, 1 otherwise.
 uint nn_cmd_sig0(uint data)
 {
     uint op = data >> 28;
 
     switch (op) {
-    case 0: // Set forward & retry
+    case SIG0_FWD_RTRY:
         nn_desc.forward = sv->forward = data >> 8;      // 8 bits
         nn_desc.retry = sv->retry = data;               // 8 bits
         break;
 
-    case 1: // Set LEDs
+    case SIG0_LEDS:
         sark_led_set(data);
         break;
 
-    case 2: // Global Time Phase
+    case SIG0_GTP:
         sv->tp_scale = data & 15;
         sv->tp_timer = 0;
         break;
 
-    case 3: // ID set/reset ## what's this? Set last_id here ?
+    case SIG0_ID: // what's this? Set last_id here ?
         if (data == nn_desc.gidr_id) {
             return 0;
         }
@@ -819,25 +888,29 @@ uint nn_cmd_sig0(uint data)
         sark_word_set(nn_desc.id_set, (data & 1) ? 0xff : 0x00, 16);
         break;
 
-    case 4: // Trigger "level_config"
+    case SIG0_LEVEL:
         event_queue_proc((event_proc) level_config, 0, 0, PRIO_0);
         break;
 
-    case 5: // Signal application
+    case SIG0_APP:
         signal_app(data);
         break;
       /*
-    case GSIG_TP:       // Router time phase period
-    case GSIG_RST:      // Shut down APs
-    case GSIG_DOWN:     // Minimum power mode
-    case GSIG_UP:       // Operational mode
+    case SIG0_TP:       // Router time phase period
+    case SIG0_RST:      // Shut down APs
+    case SIG0_DOWN:     // Minimum power mode
+    case SIG0_UP:       // Operational mode
       */
     }
     return 1;
 }
 
-
-void nn_cmd_mem(uint data, uint key)
+//! \brief Memory write operations
+//! \param[in] data: The data to write
+//! \param[in] key: The key from the NN packet. Encodes where to write
+//!     relative to (::sv, ::sysram, ::sc, or sv_t::mem_ptr), what the offset
+//!     should be, and how much to write (1, 2 or 4 bytes).
+static void nn_cmd_mem(uint data, uint key)
 {
     uint type = (key >> 18) & 3;
     uint op = (key >> 16) & 3;
@@ -862,12 +935,23 @@ void nn_cmd_mem(uint data, uint key)
     }
 }
 
+//! Operation codes for nn_cmd_sig1()
+enum sig1_operations {
+    SIG1_WRITE          //!< Memory write
+};
 
+//! \brief SIG1 does simple commands with a payload whose control fits in
+//!     20 bits
+//! \details Delegates to:
+//!
+//! * nn_cmd_mem()
+//! \param[in] data: The payload from the NN packet
+//! \param[in] key: The key from the NN packet
 void nn_cmd_sig1(uint data, uint key)
 {
     uint op = (key >> 20) & 15;
 
-    if (op == 0) {              // Memory write
+    if (op == SIG1_WRITE) {
         nn_cmd_mem(data, key);
     }
 }
@@ -889,9 +973,12 @@ void nn_cmd_sig1(uint data, uint key)
 //! one arrives via an enabled link. The link on which the packet arrived
 //! is used to update the P2P routing table.
 //!
-//! Returns data with P2P_STOP_BIT set if the packet should not be propagated
-
-uint nn_cmd_p2pb(uint id, uint data, uint link)
+//! \param[in] id: The ID from the key of the packet
+//! \param[in] data: The payload of the packet
+//! \param[in] link: What route the packet came from
+//! \return \p data, with P2P_STOP_BIT set if the packet should not be
+//!     propagated
+static uint nn_cmd_p2pb(uint id, uint data, uint link)
 {
     uint addr = data >> 16;
     uint hops = data & 0x3ff;   // Bottom 10 bits
@@ -899,9 +986,9 @@ uint nn_cmd_p2pb(uint id, uint data, uint link)
     uint table_hops = hop_table[addr] & 0xffff;
 
     if ((netinit_phase == NETINIT_PHASE_P2P_TABLE) &&
-        (addr != p2p_addr) &&
-        (hops < table_hops) &&
-        (link_en & (1 << link))) {
+	    (addr != p2p_addr) &&
+	    (hops < table_hops) &&
+	    (link_en & (1 << link))) {
 
         // keep a count of P2P addresses we've heard of
         if (table_hops == 0xffff) {
@@ -925,8 +1012,13 @@ uint nn_cmd_p2pb(uint id, uint data, uint link)
 
 //------------------------------------------------------------------------------
 
-//! Flood fill start
-void nn_cmd_ffs(uint data, uint key)
+//! \name Flood fill
+//! \{
+
+//! \brief Flood fill start
+//! \param[in] data: The payload of the packet
+//! \param[in] key: The key of the packet
+static void nn_cmd_ffs(uint data, uint key)
 {
     nn_desc.aplx_addr = sv->sdram_sys;
     nn_desc.region = data;
@@ -955,8 +1047,11 @@ void nn_cmd_ffs(uint data, uint key)
     nn_desc.state = FF_ST_EXBLK;
 }
 
-//! Flood fill core select
-uint nn_cmd_ffcs(uint data, uint key)
+//! \brief Flood fill core select
+//! \param[in] data: The payload of the packet
+//! \param[in] key: The key of the packet
+//! \return 1 if the packet should not be propagated further
+static uint nn_cmd_ffcs(uint data, uint key)
 {
     // Select cores to flood-fill to
     // Determine if we're in the region specified by the packet
@@ -988,8 +1083,12 @@ uint nn_cmd_ffcs(uint data, uint key)
     return 0;
 }
 
-//! Flood fill block start
-uint nn_cmd_fbs(uint id, uint data, uint key)
+//! \brief Flood fill block start
+//! \param[in] id: The ID from the key of the packet
+//! \param[in] data: The payload of the packet
+//! \param[in] key: The key of the packet
+//! \return 1 if the packet should not be propagated further
+static uint nn_cmd_fbs(uint id, uint data, uint key)
 {
     if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK) {
         return 0;
@@ -1019,8 +1118,12 @@ uint nn_cmd_fbs(uint id, uint data, uint key)
     return 1;
 }
 
-//! Flood fill block data
-uint nn_cmd_fbd(uint id, uint data, uint key)
+//! \brief Flood fill block data
+//! \param[in] id: The ID from the key of the packet
+//! \param[in] data: The payload of the packet
+//! \param[in] key: The key of the packet
+//! \return 1 if the packet should not be propagated further
+static uint nn_cmd_fbd(uint id, uint data, uint key)
 {
     uint block_num = (key >> 16) & 0xff; // Block num
 
@@ -1046,8 +1149,12 @@ uint nn_cmd_fbd(uint id, uint data, uint key)
     return 1;
 }
 
-//! Flood fill block end
-uint nn_cmd_fbe(uint id, uint data, uint key)
+//! \brief Flood fill block end
+//! \param[in] id: The ID from the key of the packet
+//! \param[in] data: The payload of the packet
+//! \param[in] key: The key of the packet
+//! \return 1 if the packet should not be propagated further
+static uint nn_cmd_fbe(uint id, uint data, uint key)
 {
     uint block_num = (key >> 16) & 0xff;
 
@@ -1079,8 +1186,12 @@ uint nn_cmd_fbe(uint id, uint data, uint key)
     return 1;
 }
 
-//! Flood fill end
-uint nn_cmd_ffe(uint id, uint data, uint key)
+//! \brief Flood fill end
+//! \param[in] id: The ID from the key of the packet
+//! \param[in] data: The payload of the packet
+//! \param[in] key: The key of the packet
+//! \return 1 if the packet should not be propagated further
+static uint nn_cmd_ffe(uint id, uint data, uint key)
 {
     if (id != nn_desc.id || nn_desc.state != FF_ST_EXBLK) {
         return 0;
@@ -1098,6 +1209,8 @@ uint nn_cmd_ffe(uint id, uint data, uint key)
 
     return 1;
 }
+
+//! \}
 
 //! \brief Nearest neighbour packet broadcast handler
 //! \param[in] i_pkt: (Type-punned) pkt_buf_t pointer
@@ -1138,6 +1251,9 @@ static void proc_pkt_bc(uint i_pkt, uint count)
         pkt_buf_free(pkt);
     }
 }
+
+//! \name Board information flood fill
+//! \{
 
 //! \brief Board information flood fill command handler
 //!
@@ -1283,6 +1399,8 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     }
 }
 
+//! \}
+
 //! \brief Nearest-neighbour packet received handler
 //! \param[in] link: What link was the packet received on
 //! \param[in] data: The payload from the packet
@@ -1334,6 +1452,7 @@ void nn_rcv_pkt(uint link, uint data, uint key)
         break;
 
     case NN_CMD_LTPC:
+	// Used to keep clocks approximately in phase
         t = sv->tp_timer + 2;
         if ((t <= data) && ((t ^ data) & BIT_31) == 0) {
             sv->tp_timer = data - 1;

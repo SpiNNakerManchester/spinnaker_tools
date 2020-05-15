@@ -109,6 +109,7 @@ uint p2p_root = 0;
 //! Whether the P2P system is operational or still needs to be initialised
 uint p2p_up = 0;
 
+//! Counter used to decide when to send an LTPC packet
 uint ltpc_timer;
 
 uint link_en = 0x3f;    //!< Bitmap of enabled links
@@ -142,24 +143,29 @@ volatile uint ticks_since_last_p2pc_new;
 //! Number of 10ms ticks ellapsed since the last P2PC_DIMS arrived
 volatile uint ticks_since_last_p2pc_dims;
 
-//! \brief X coordinate of the current best guess of P2P address
-//!
+//! \name P2P Address Guess
+//! \{
 //! During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address. Note
 //! that this value may be negative and may be much larger than realistic
 //! machines as the first P2P address assigned may be the result of a packet
 //! taking a very spirally route.
+
+//! \brief X coordinate of the current best guess of P2P address
 volatile int p2p_addr_guess_x;
 //! \brief Y coordinate of the current best guess of P2P address
-//!
-//! See ::p2p_addr_guess_x
 volatile int p2p_addr_guess_y;
+//! \}
 
-// During NETINIT_PHASE_P2P_DIMS, records the current best guess of the systems
-// dimensions.
-volatile int p2p_min_x;
-volatile int p2p_max_x;
-volatile int p2p_min_y;
-volatile int p2p_max_y;
+//! \name P2P Dimension Guess
+//! \{
+//! During NETINIT_PHASE_P2P_DIMS, records the current best guess of the
+//! system's dimensions.
+
+volatile int p2p_min_x; //!< Estimated minimum X size
+volatile int p2p_max_x; //!< Estimated maximum X size
+volatile int p2p_min_y; //!< Estimated minimum Y size
+volatile int p2p_max_y; //!< Estimated maximum Y size
+//! \}
 
 //! A bitmap giving the coordinates of all P2P coordinates which have been seen
 //! mentioned in a P2PC_NEW message. A 2D array of bits whose *bit* indexes are

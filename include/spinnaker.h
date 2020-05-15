@@ -763,6 +763,7 @@ enum spinnaker_interrupt_numbers_e {
 //! Magic code for System Controller
 #define SC_CODE         0x5ec00000
 
+//! Expected value of chip ID (see #SC_CHIP_ID)
 #define CHIP_ID_CODE    0x59111012
 
 //! System controller r0: chip ID register offset

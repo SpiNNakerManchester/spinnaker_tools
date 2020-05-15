@@ -980,7 +980,7 @@ typedef struct sv {
 
     volatile uint64 clock_ms;   //!< 10 Milliseconds since boot
     volatile ushort time_ms;    //!< 18 Milliseconds in second (0..999)
-    ushort ltpc_period;         //!< 1a
+    ushort ltpc_period;         //!< 1a Local Time Phase Control message interval (*10 ms)
 
     volatile uint unix_time;    //!< 1c Seconds since 1970
     uint tp_timer;              //!< 20 Router time phase timer
