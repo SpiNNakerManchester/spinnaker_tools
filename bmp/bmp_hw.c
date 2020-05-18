@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_hw.c         Low-level hardware interface code for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_hw.c
+//! \brief          Low-level hardware interface code for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -747,19 +748,19 @@ static uint32_t configure_pins(void)
 
 //------------------------------------------------------------------------------
 
-// "reset_spin" resets SpiNNaker by raising/lowering POR and switching the
-// Serial Flash multiplexer as needed when POR falls.
-
-// code = 0 - lower POR (reset off)
-// code = 1 - raise POR (reset on)
-// code = 2 - pulse POR
-
-// If Bit 2 of code is set then the FPGAs are also reset
-
-// The Serial Flash is dual ported on Spin5 and the SpiNNaker root chip reads
-// its IP address from it just after it is reset. The read takes about 12ms
-// for the 'standard' IP address block of 32 bytes. If the Serial Flash is
-// set up to contain more code, the delay of 20ms will need to be increased.
+//! "reset_spin" resets SpiNNaker by raising/lowering POR and switching the
+//! Serial Flash multiplexer as needed when POR falls.
+//!
+//! code = 0 - lower POR (reset off)
+//! code = 1 - raise POR (reset on)
+//! code = 2 - pulse POR
+//!
+//! If Bit 2 of code is set then the FPGAs are also reset
+//!
+//! The Serial Flash is dual ported on Spin5 and the SpiNNaker root chip reads
+//! its IP address from it just after it is reset. The read takes about 12ms
+//! for the 'standard' IP address block of 32 bytes. If the Serial Flash is
+//! set up to contain more code, the delay of 20ms will need to be increased.
 
 void reset_spin(uint32_t code)
 {
@@ -788,10 +789,10 @@ void reset_spin(uint32_t code)
 
 //------------------------------------------------------------------------------
 
-// Set up a 300kHz 120 degree duty-cycle waveform on three outputs
-// MC0B0, MC0B1, MC0B2 (NB outputs not enabled on Spin4)
+//! Set up a 300kHz 120 degree duty-cycle waveform on three outputs
+//! MC0B0, MC0B1, MC0B2 (NB outputs not enabled on Spin4)
 
-static void configure_mcpwm()
+static void configure_mcpwm(void)
 {
     clock_div(CLKPWR_PCLKSEL_MC, CLKPWR_PCLKSEL_CCLK_DIV_1);
 
@@ -814,12 +815,12 @@ static void configure_mcpwm()
 //------------------------------------------------------------------------------
 
 
-// Count transitions on the fan sensor inputs. This routine is called
-// once per millisec and it's assumed that the fan speed is low enough
-// for there to be no more than one transition per ms.
-
 static uint32_t fan_last[4];
 static uint16_t fan_count[4];
+
+//! Count transitions on the fan sensor inputs. This routine is called
+//! once per millisec and it's assumed that the fan speed is low enough
+//! for there to be no more than one transition per ms.
 
 void read_fans(void)
 {
@@ -844,8 +845,8 @@ void read_fans(void)
 }
 
 
-// Read I2C temperature sensors and also compute the fan speed. This
-// routine is called once per second.
+//! Read I2C temperature sensors and also compute the fan speed. This
+//! routine is called once per second.
 
 void read_temp(void)
 {
@@ -877,9 +878,9 @@ void read_temp(void)
 //------------------------------------------------------------------------------
 
 
-// Curl up and die (probably because of hardware failure or misconfiguration.
-// The top LED is turned on (Red on Spin5) and the code is put on the next
-// 4 LEDs (Green on Spin5). The bottom 3 LEDs are turned off.
+//! Curl up and die (probably because of hardware failure or misconfiguration.
+//! The top LED is turned on (Red on Spin5) and the code is put on the next
+//! 4 LEDs (Green on Spin5). The bottom 3 LEDs are turned off.
 
 void die(uint32_t code)
 {
@@ -923,15 +924,15 @@ void delay_ms(uint32_t n)
 
 // !! Comment needs updating ...
 
-// Copy the SpiNNaker IP address from buffer in memory (spin_ip) to
-// the bottom of the serial Flash. The 32 bytes of data is padded with
-// the necessary control codes to allow SpiNNaker to load the address
-// block. The first 44 bytes of the serial Flash are used for
-// this. The data is only updated if it is different from the buffer.
-
-// Word 12 is used to hold a count of the number of times the update has
-// occurred. If more load blocks are needed this word can form the
-// single entry in a dummy load block.
+//! Copy the SpiNNaker IP address from buffer in memory (spin_ip) to
+//! the bottom of the serial Flash. The 32 bytes of data is padded with
+//! the necessary control codes to allow SpiNNaker to load the address
+//! block. The first 44 bytes of the serial Flash are used for
+//! this. The data is only updated if it is different from the buffer.
+//!
+//! Word 12 is used to hold a count of the number of times the update has
+//! occurred. If more load blocks are needed this word can form the
+//! single entry in a dummy load block.
 
 
 #define SYSRAM_IP_DATA          0xf5007fe0

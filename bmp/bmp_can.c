@@ -1,11 +1,12 @@
 //------------------------------------------------------------------------------
 //
-// bmp_can.c        CAN hardware interface code for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
+//! \file bmp_can.c
+//! \brief          CAN hardware interface code for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
+//  Email           steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
 
@@ -39,29 +40,39 @@
 
 //------------------------------------------------------------------------------
 
-#define CAN_DATA        0       // CAN SDP command codes
-#define CAN_NACK        1
-#define CAN_OPEN_REQ    2
-#define CAN_OPEN_ACK    3
-#define CAN_CLOSE_REQ   4
-#define CAN_CLOSE_ACK   5
+//! CAN SDP command codes
+enum can_sdp_command {
+    CAN_DATA = 0,
+    CAN_NACK = 1,
+    CAN_OPEN_REQ = 2,
+    CAN_OPEN_ACK = 3,
+    CAN_CLOSE_REQ = 4,
+    CAN_CLOSE_ACK = 5,
 
-#define CAN_PROC        6       // Initiate a "proc"
-#define CAN_EXEC        7       // Immediate command
+    CAN_PROC = 6,       //!< Initiate a "proc"
+    CAN_EXEC = 7,       //!< Immediate command
+};
 
-#define TX_IDLE         0       // CAN SDP sender states
-#define TX_OPEN_REQ     1
-#define TX_DATA         2
+//!< CAN SDP sender states
+enum can_sdp_sender_states {
+    TX_IDLE = 0,
+    TX_OPEN_REQ = 1,
+    TX_DATA = 2,
+};
 
-#define RX_IDLE         0       // CAN SDP receiver states
-#define RX_DATA         1
-#define RX_CLOSE_REQ    2
+//!< CAN SDP receiver states
+enum can_sdp_receiver_states {
+    RX_IDLE = 0,
+    RX_DATA = 1,
+    RX_CLOSE_REQ = 2,
+};
 
-
-#define RC_SDP_NOREPLY  0x8b    // No reply to open
-#define RC_SDP_REJECT   0x8c    // Open rejected
-#define RC_SDP_BUSY     0x8d    // Dest busy
-#define RC_SDP_TIMEOUT  0x8e    // Dest died?
+enum can_sdp_results {
+    RC_SDP_NOREPLY = 0x8b,      //!< No reply to open
+    RC_SDP_REJECT = 0x8c,       //!< Open rejected
+    RC_SDP_BUSY = 0x8d,         //!< Dest busy
+    RC_SDP_TIMEOUT = 0x8e,      //!< Dest died?
+};
 
 #define CAN_NUM_STR     8
 
@@ -69,39 +80,39 @@
 #define TX_DATA_RETRY   4
 #define RX_CLOSE_RETRY  4
 
-#define CAN_OPEN_TO     1000    // Time for receiver to return CAN_OPEN_ACK
-#define CAN_CLOSE_TO    1000    // Time for sender to return CAN_CLOSE_ACK
+#define CAN_OPEN_TO     1000    //!< Time for receiver to return CAN_OPEN_ACK
+#define CAN_CLOSE_TO    1000    //!< Time for sender to return CAN_CLOSE_ACK
 
 
 typedef struct rx_desc {
-    event_t* event;     // Event and ID must be first in struct
+    event_t* event;     //!< Event and ID must be first in struct
     uint32_t event_id;
 
-    uint8_t state;      // State variable
-    uint8_t tid;        // Tx ID of sender
-    uint8_t srce;       // Source address of sender
-    uint8_t last;       // Sequence number of last packet in message
-    uint8_t seq;        // Expected sequence number
-    uint8_t retry;      // Counts retries for can_close_req
+    uint8_t state;      //!< State variable
+    uint8_t tid;        //!< Tx ID of sender
+    uint8_t srce;       //!< Source address of sender
+    uint8_t last;       //!< Sequence number of last packet in message
+    uint8_t seq;        //!< Expected sequence number
+    uint8_t retry;      //!< Counts retries for can_close_req
 
-    uint32_t *buf;      // Pointer to buffer in SDP message
-    sdp_msg_t *msg;     // Pointer to SDP message
+    uint32_t *buf;      //!< Pointer to buffer in SDP message
+    sdp_msg_t *msg;     //!< Pointer to SDP message
 } rx_desc_t;
 
 
 typedef struct {
-    event_t *event;     // Event and ID must be first in struct
+    event_t *event;     //!< Event and ID must be first in struct
     uint32_t event_id;
 
-    uint8_t state;      // State variable
-    uint8_t rid;        // Rx ID at receiver
-    uint8_t tid;        // Tx ID
-    volatile uint8_t seq; // Sequence number for sent DATA packets
+    uint8_t state;      //!< State variable
+    uint8_t rid;        //!< Rx ID at receiver
+    uint8_t tid;        //!< Tx ID
+    volatile uint8_t seq; //!< Sequence number for sent DATA packets
 
-    uint8_t dest;       // Address of receiver
-    uint8_t rc;         // Return code
-    uint8_t delay;      // Packet delay (not used yet)
-    volatile uint8_t ack; // Ack variable set by interrupt routines
+    uint8_t dest;       //!< Address of receiver
+    uint8_t rc;         //!< Return code
+    uint8_t delay;      //!< Packet delay (not used yet)
+    volatile uint8_t ack; //!< Ack variable set by interrupt routines
 } tx_desc_t;
 
 
@@ -145,7 +156,7 @@ stat_t stat;
 
 
 #define IO_CAN  IO_DBG
-/*
+#if 0
 void can_dump(void)
 {
     io_printf(IO_CAN,
@@ -161,7 +172,7 @@ void can_dump(void)
                 rx_desc->seq, rx_desc->retry);
     }
 }
-*/
+#endif
 
 //------------------------------------------------------------------------------
 
@@ -234,9 +245,9 @@ static void timeout_event(void *desc, event_proc proc, uint32_t arg2,
 //------------------------------------------------------------------------------
 
 
-// Received an OPEN_ACK packet from receiver. Unless return code says
-// "busy" move to state TX_DATA and fill in "tx_desc". If busy, set a
-// packet delay and allow more requests to be sent.
+//! Received an OPEN_ACK packet from receiver. Unless return code says
+//! "busy" move to state TX_DATA and fill in "tx_desc". If busy, set a
+//! packet delay and allow more requests to be sent.
 
 static void can_open_ack(uint32_t id)
 {
@@ -260,8 +271,8 @@ static void can_open_ack(uint32_t id)
 }
 
 
-// Received CLOSE_REQ from receiver. If TX_DATA then signal in "ack".
-// In any case, send a CLOSE_ACK back to receiver.
+//! Received CLOSE_REQ from receiver. If TX_DATA then signal in "ack".
+//! In any case, send a CLOSE_ACK back to receiver.
 
 static void can_close_req(uint32_t id)
 {
@@ -280,8 +291,8 @@ static void can_close_req(uint32_t id)
 }
 
 
-// Received NACK from receiver because it found a packet out of
-// sequence. Restart from the sequence number provided by receiver.
+//! Received NACK from receiver because it found a packet out of
+//! sequence. Restart from the sequence number provided by receiver.
 
 static void can_nack(uint32_t id)
 {
@@ -298,7 +309,7 @@ static void can_nack(uint32_t id)
 }
 
 
-// Timed out waiting for CAN_CLOSE_REQ or CAN_NACK. Set "tx_desc->ack" to 3
+//! Timed out waiting for CAN_CLOSE_REQ or CAN_NACK. Set "tx_desc->ack" to 3
 
 static void can_data_timeout(uint32_t a1, uint32_t a2)
 {
@@ -308,7 +319,7 @@ static void can_data_timeout(uint32_t a1, uint32_t a2)
 }
 
 
-// Timed out waiting for CAN_OPEN_ACK. Set "tx_desc->ack" to 2
+//! Timed out waiting for CAN_OPEN_ACK. Set "tx_desc->ack" to 2
 
 static void can_open_timeout(uint32_t a1, uint32_t a2)
 {
@@ -498,7 +509,7 @@ static void can_open_req(uint32_t id)
 }
 
 
-// Received CAN_CLOSE_ACK from sender. Cancel timeout and go to IDLE
+//! Received CAN_CLOSE_ACK from sender. Cancel timeout and go to IDLE
 
 static void can_close_ack(uint32_t id)
 {
@@ -519,8 +530,8 @@ static void can_close_ack(uint32_t id)
 }
 
 
-// Receiver timed out waiting for CAN_CLOSE_ACK. Retry a few times
-// and then give up, returning to IDLE
+//! Receiver timed out waiting for CAN_CLOSE_ACK. Retry a few times
+//! and then give up, returning to IDLE
 
 static void can_close_timeout(uint32_t arg1, uint32_t arg2)
 {
@@ -540,7 +551,7 @@ static void can_close_timeout(uint32_t arg1, uint32_t arg2)
 }
 
 
-// Called when DATA packet arrives
+//! Called when DATA packet arrives
 
 static void can_data(uint32_t id, uint32_t d1, uint32_t d2)
 {
@@ -681,9 +692,9 @@ void can_proc_cmd(uint32_t dest, uint32_t op, uint32_t arg1, uint32_t arg2)
 //------------------------------------------------------------------------------
 
 
-// "can_timer" is called every 10ms on all boards. Non-zero
-// boards just use it to timeout the CAN LED. The zero board uses
-// it to ping all other boards and send them "config1" and "config2"
+//! "can_timer" is called every 10ms on all boards. Non-zero
+//! boards just use it to timeout the CAN LED. The zero board uses
+//! it to ping all other boards and send them "config1" and "config2"
 
 
 static uint32_t can_next;

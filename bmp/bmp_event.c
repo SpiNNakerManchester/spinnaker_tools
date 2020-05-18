@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_event.c      Event handling routines for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_event.c
+//! \brief          Event handling routines for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -31,15 +32,15 @@
 
 //------------------------------------------------------------------------------
 
-static event_t *event_list;     // List of free events
-static event_t *event_queue;    // List of active events
+static event_t *event_list;     //!< List of free events
+static event_t *event_queue;    //!< List of active events
 
-static event_t *proc_head;      // List of queued "proc" events
-static event_t *proc_tail;      // and tail of that list
+static event_t *proc_head;      //!< List of queued "proc" events
+static event_t *proc_tail;      //!< and tail of that list
 
-static uint32_t event_id;       // Makes unique ID for active events
-static uint32_t event_count;    // Number of events currently in use
-static uint32_t event_max;      // Maximum number ever used
+static uint32_t event_id;       //!< Makes unique ID for active events
+static uint32_t event_count;    //!< Number of events currently in use
+static uint32_t event_max;      //!< Maximum number ever used
 
 #define NUM_EVENTS 16
 
@@ -70,9 +71,9 @@ void event_init(uint32_t priority)
 }
 
 
-// Adds an event to a list of events which can (all) be executed at some
-// later time. The order of execution is the same as that of addition to
-// the list.
+//! Adds an event to a list of events which can (all) be executed at some
+//! later time. The order of execution is the same as that of addition to
+//! the list.
 
 void proc_queue_add(event_t *e)
 {
@@ -89,10 +90,10 @@ void proc_queue_add(event_t *e)
 }
 
 
-// Execute a list of events (in the order in which they were added to the
-// list). Events are returned to the free queue after execution.
+//! Execute a list of events (in the order in which they were added to the
+//! list). Events are returned to the free queue after execution.
 
-void proc_queue_run()
+void proc_queue_run(void)
 {
     uint32_t cpsr = cpu_int_off();
 
@@ -120,7 +121,7 @@ void proc_queue_run()
 }
 
 
-// Interrupt handler for the timer which is handling events.
+//! Interrupt handler for the timer which is handling events.
 
 void TIMER3_IRQHandler(void)
 {
@@ -172,13 +173,13 @@ void TIMER3_IRQHandler(void)
 }
 
 
-// Cancel an event that was previously scheduled. The ID that was
-// allocated when the event was created must be given in case the
-// event has already executed and possibly been recycled.
-
-// It is potentially quite difficult to cancel an event at the head
-// of the event queue so in this case the "proc" is made NULL and
-// the event left to terminate on the timer interrupt.
+//! Cancel an event that was previously scheduled. The ID that was
+//! allocated when the event was created must be given in case the
+//! event has already executed and possibly been recycled.
+//!
+//! It is potentially quite difficult to cancel an event at the head
+//! of the event queue so in this case the "proc" is made NULL and
+//! the event left to terminate on the timer interrupt.
 
 void event_cancel(event_t *e, uint32_t ID)
 {
@@ -218,9 +219,9 @@ void event_cancel(event_t *e, uint32_t ID)
 }
 
 
-// Allocate a new event from the free queue and intialise "proc",
-// "arg1" and "arg2" fields. The "ID", "next" and "time" fields are also
-// set.
+//! Allocate a new event from the free queue and intialise "proc",
+//! "arg1" and "arg2" fields. The "ID", "next" and "time" fields are also
+//! set.
 
 event_t* event_new(event_proc proc, uint32_t arg1, uint32_t arg2)
 {

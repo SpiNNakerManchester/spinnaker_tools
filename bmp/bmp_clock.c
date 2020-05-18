@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_clock.c      Clock configuration code for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_clock.c
+//! \brief          Clock configuration code for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -178,7 +179,8 @@
 
 //------------------------------------------------------------------------------
 
-void configure_clocks()
+//! Configure the clocks
+void configure_clocks(void)
 {
     LPC_SC->SCS = SCS_V;                // Configure main osc.
 

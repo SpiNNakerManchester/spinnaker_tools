@@ -1,8 +1,9 @@
 //------------------------------------------------------------------------------
 //
-// bmp_crc.c        CRC32 routines for BMP LPC1768
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_crc.c
+//! \brief          CRC32 routines for BMP LPC1768
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -78,9 +79,9 @@ const uint32_t crc_table[] = {
 };
 
 
-// Compute CRC32 for a buffer of given length. Argument "crc" can
-// be 0xffffffff to start checking or result of a previous call.
-// The final result needs to be inverted to produce valid CRC32.
+//! Compute CRC32 for a buffer of given length. Argument "crc" can
+//! be 0xffffffff to start checking or result of a previous call.
+//! The final result needs to be inverted to produce valid CRC32.
 
 uint32_t crc32(void *buf, uint32_t len, uint32_t crc)
 {
@@ -105,8 +106,8 @@ uint32_t crc32_chk(void *buf, uint32_t len)
 }
 
 
-// Compute and insert CRC32 of a buffer where the CRC is placed in
-// the last 4 bytes
+//! Compute and insert CRC32 of a buffer where the CRC is placed in
+//! the last 4 bytes
 
 void crc32_buf(void *buf, uint32_t len)
 {

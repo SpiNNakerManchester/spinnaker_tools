@@ -27,10 +27,18 @@
  */
 
 //
-// Header file for Spin4/Spin5 Board Management Processor (BMP)
+//! \file
+//! \brief Header file for Spin4/Spin5 Board Management Processor (BMP, LPC1768)
 //
 
 #include <stdbool.h>
+
+#ifndef DOXYGEN
+#define NORETURN        __attribute__((noreturn))
+#define SECTION(sec)    __attribute__((section (sec)))
+#define ALIAS(fun)      __attribute__((weak, alias(#fun)))
+#define ALIGNED(a)      __attribute__ ((aligned(a)))
+#endif
 
 //------------------------------------------------------------------------------
 
@@ -49,14 +57,16 @@
 
 //------------------------------------------------------------------------------
 
-#define LED_0                   (1 << 4)        // Green
-#define LED_1                   (1 << 5)        // Orange
-#define LED_2                   (1 << 19)       // Red
-#define LED_3                   (1 << 20)       // Green
-#define LED_4                   (1 << 21)       // Green
-#define LED_5                   (1 << 22)       // Green
-#define LED_6                   (1 << 29)       // Green
-#define LED_7                   (1 << 30)       // Red
+enum bmp_led_code {
+    LED_0 = (1 << 4),   //!< Green
+    LED_1 = (1 << 5),   //!< Orange
+    LED_2 = (1 << 19),  //!< Red
+    LED_3 = (1 << 20),  //!< Green
+    LED_4 = (1 << 21),  //!< Green
+    LED_5 = (1 << 22),  //!< Green
+    LED_6 = (1 << 29),  //!< Green
+    LED_7 = (1 << 30),  //!< Red
+};
 
 #define LED_MASK                (LED_0 + LED_1 + LED_2 + LED_3 + \
                                  LED_4 + LED_5 + LED_6 + LED_7)
@@ -71,77 +81,82 @@
 
 #define NUM_FPGAS               3
 
-#define FPGA_READ               0
-#define FPGA_WRITE              1
+enum bmp_fpga_command {
+    FPGA_READ = 0,
+    FPGA_WRITE = 1
+};
 
 //------------------------------------------------------------------------------
 
-#define CMD_VER                 0
-#define CMD_RUN                 1
-#define CMD_READ                2
-#define CMD_WRITE               3
-#define CMD_FILL                5
+enum bmp_commands {
+    CMD_VER = 0,
+    CMD_RUN = 1,
+    CMD_READ = 2,
+    CMD_WRITE = 3,
+    CMD_FILL = 5,
 
-#define CMD_FPGA_READ           17      // SPI interface to FPGAs
-#define CMD_FPGA_WRITE          18      //
+    CMD_FPGA_READ = 17,      // SPI interface to FPGAs
+    CMD_FPGA_WRITE = 18,      //
 
-#define CMD_LED                 25
-#define CMD_IPTAG               26
+    CMD_LED = 25,
+    CMD_IPTAG = 26,
 
-#define CMD_BMP_INFO            48
-#define CMD_FLASH_COPY          49
-#define CMD_FLASH_ERASE         50
-#define CMD_FLASH_WRITE         51
-#define CMD_XXX_52              52
-#define CMD_BMP_SF              53
-#define CMD_BMP_EE              54
-#define CMD_RESET               55
-#define CMD_XILINX              56
-#define CMD_POWER               57
+    CMD_BMP_INFO = 48,
+    CMD_FLASH_COPY = 49,
+    CMD_FLASH_ERASE = 50,
+    CMD_FLASH_WRITE = 51,
+    CMD_XXX_52 = 52,
+    CMD_BMP_SF = 53,
+    CMD_BMP_EE = 54,
+    CMD_RESET = 55,
+    CMD_XILINX = 56,
+    CMD_POWER = 57,
 
-#define CMD_BMP_TEST            63
+    CMD_BMP_TEST = 63,
 
-#define CMD_TUBE                64
+    CMD_TUBE = 64
+};
 
+enum bmp_type_code {
+    TYPE_BYTE = 0,
+    TYPE_HALF = 1,
+    TYPE_WORD = 2
+};
 
-#define TYPE_BYTE               0
-#define TYPE_HALF               1
-#define TYPE_WORD               2
-
-#define RC_OK                   0x80    // Command completed OK
-#define RC_LEN                  0x81    // Bad packet length
-#define RC_SUM                  0x82    // Bad checksum
-#define RC_CMD                  0x83    // Bad/invalid command
-#define RC_ARG                  0x84    // Invalid arguments
-
-#define RC_OK                   0x80    // Command completed OK
-#define RC_LEN                  0x81    // Bad packet length
-#define RC_SUM                  0x82    // Bad checksum
-#define RC_CMD                  0x83    // Bad/invalid command
-#define RC_ARG                  0x84    // Invalid arguments
-#define RC_PORT                 0x85    // Bad port number
-#define RC_TIMEOUT              0x86    // Timeout
-#define RC_ROUTE                0x87    // No P2P route
-#define RC_CPU                  0x88    // Bad CPU number
+enum bmp_return_code {
+    RC_OK = 0x80,       //!< Command completed OK
+    RC_LEN = 0x81,      //!< Bad packet length
+    RC_SUM = 0x82,      //!< Bad checksum
+    RC_CMD = 0x83,      //!< Bad/invalid command
+    RC_ARG = 0x84,      //!< Invalid arguments
+    RC_PORT = 0x85,     //!< Bad port number
+    RC_TIMEOUT = 0x86,  //!< Timeout
+    RC_ROUTE = 0x87,    //!< No P2P route
+    RC_CPU = 0x88       //!< Bad CPU number
+};
 
 #define BOARD_MASK              31
 
-#define FLASH_BYTES             4096    // Size of flash buffer
-#define FLASH_WORDS             1024
+#define FLASH_BYTES             4096    //!< Size of flash buffer (bytes)
+#define FLASH_WORDS             1024    //!< Size of flash buffer (words)
 
 // IPTAG definitions
 
-#define IPTAG_NEW               0
-#define IPTAG_SET               1
-#define IPTAG_GET               2
-#define IPTAG_CLR               3
-#define IPTAG_TTO               4
+enum bmp_iptag_commands {
+    IPTAG_NEW = 0,
+    IPTAG_SET = 1,
+    IPTAG_GET = 2,
+    IPTAG_CLR = 3,
+    IPTAG_TTO = 4
+};
 
 #define IPTAG_MAX               4
 
-#define IPTAG_VALID             0x8000  // Entry is valid
-#define IPTAG_TRANS             0x4000  // Entry is transient
-#define IPTAG_ARP               0x2000  // Awaiting ARP resolution
+enum bmp_iptag_flags {
+    IPTAG_VALID = 0x8000,       //!< Entry is valid
+    IPTAG_TRANS = 0x4000,       //!< Entry is transient
+    IPTAG_ARP = 0x2000          //!< Awaiting ARP resolution
+};
 
 #define TAG_NONE                255     // Invalid tag/transient request
 #define TAG_HOST                0       // Reserved for host
@@ -157,7 +172,7 @@
 #define SDPF_REPLY              0x80
 
 
-typedef struct {                // IPTAG entry (24 bytes)
+typedef struct {                //!< IPTAG entry (24 bytes)
     uint8_t ip[4];
     uint8_t mac[6];
     uint16_t port;
@@ -178,60 +193,66 @@ typedef struct {                // IPTAG entry (24 bytes)
 #define SDP_BUF_SIZE            256
 
 // ------------------------------------------------------------------------
-// SDP type definitions
+//! \brief SDP message type definition
 // ------------------------------------------------------------------------
-// Note that the length field is the number of bytes following
-// the checksum. It will be a minimum of 8 as the SDP header
-// should always be present.
+//! \details
+//! Note that the length field is the number of bytes following
+//! the checksum. It will be a minimum of 8 as the SDP header
+//! should always be present.
 
 typedef struct sdp_msg {        // SDP message (=292 bytes)
-    struct sdp_msg *next;       // Next in free list
-    uint16_t length;            // length
-    uint16_t checksum;          // checksum (if used)
+    struct sdp_msg *next;       //!< Next in free list
+    uint16_t length;            //!< length
+    uint16_t checksum;          //!< checksum (if used)
 
     // sdp_hdr_t
 
-    uint8_t flags;              // SDP flag byte
-    uint8_t tag;                // SDP IPtag
-    uint8_t dest_port;          // SDP destination port/CPU
-    uint8_t srce_port;          // SDP source port/CPU
-    uint16_t dest_addr;         // SDP destination address
-    uint16_t srce_addr;         // SDP source address
+    uint8_t flags;              //!< SDP flag byte
+    uint8_t tag;                //!< SDP IPtag
+    uint8_t dest_port;          //!< SDP destination port/CPU
+    uint8_t srce_port;          //!< SDP source port/CPU
+    uint16_t dest_addr;         //!< SDP destination address
+    uint16_t srce_addr;         //!< SDP source address
 
     // cmd_hdr_t (optional)
 
-    uint16_t cmd_rc;            // Command/Return Code
-    uint16_t seq;               // Sequence number
-    uint32_t arg1;              // Arg 1
-    uint32_t arg2;              // Arg 2
-    uint32_t arg3;              // Arg 3
+    uint16_t cmd_rc;            //!< Command/Return Code
+    uint16_t seq;               //!< Sequence number
+    uint32_t arg1;              //!< Arg 1
+    uint32_t arg2;              //!< Arg 2
+    uint32_t arg3;              //!< Arg 3
 
     // user data (optional)
 
-    uint8_t data[SDP_BUF_SIZE]; // User data (256 bytes)
+    uint8_t data[SDP_BUF_SIZE]; //!< User data (256 bytes)
 
     uint32_t _PAD;              // Private padding
 } sdp_msg_t;
 
 //------------------------------------------------------------------------------
 
+//! IO stream that goes immediately to host (tubotron)
 #define IO_STD          ((char *) 0)            // Stream numbers
+//! IO stream for debugging
 #define IO_DBG          ((char *) 1)
+//! IO stream that goes to the LCD panel
 #define IO_LCD          ((char *) 2)
+//! IO stream that gets dumped
 #define IO_NULL         ((char *) 3)
 
 #define LCD_POS(x, y)   (0x80 + (y) * 64 + (x))
 
 //------------------------------------------------------------------------------
 
-#define FL_DIR_SIZE     16              // Number of fl_dir entries
+#define FL_DIR_SIZE     16              //!< Number of fl_dir entries
 
-// Values in fl_dir->type
-
-#define FL_BMP_IP       1
-#define FL_SPIN_IP      2
-#define FL_FPGA         3
-#define FL_XREG         4
+//! Values in fl_dir->type
+enum bmp_fl_dir_type {
+    FL_BMP_IP = 1,
+    FL_SPIN_IP = 2,
+    FL_FPGA = 3,
+    FL_XREG = 4,
+};
 
 typedef struct {        // 128 bytes
     uint8_t type;
@@ -248,37 +269,37 @@ typedef struct {        // 128 bytes
 } fl_dir_t;
 
 typedef struct {        // 256 bytes
-    uint8_t marker;             // 0 0x96
-    uint8_t sw_ver;             // 1 EE Data format version
-    uint8_t hw_ver;             // 2 Backplane HW version (0..7)
-    uint8_t frame_ID;           // 3 Frame Identifier
+    uint8_t marker;             //!< 0: == 0x96
+    uint8_t sw_ver;             //!< 1: EE Data format version
+    uint8_t hw_ver;             //!< 2: Backplane HW version (0..7)
+    uint8_t frame_ID;           //!< 3: Frame Identifier
 
-    uint32_t mod_date;          // 4 Date written
-    uint8_t gw_addr[4];         // 8 Gateway address (& IP base)
-    uint8_t flags;              // 12 8 flag bits
-    uint8_t mask_bits;          // 13 IP mask bits (0..31)
-    uint8_t mac_byte;           // 14 Byte 1 of MAC address
-    uint8_t LCD_time;           // 15 Time (secs) for initial display
+    uint32_t mod_date;          //!< 4: Date written
+    uint8_t gw_addr[4];         //!< 8: Gateway address (& IP base)
+    uint8_t flags;              //!< 12: 8 flag bits
+    uint8_t mask_bits;          //!< 13: IP mask bits (0..31)
+    uint8_t mac_byte;           //!< 14: Byte 1 of MAC address
+    uint8_t LCD_time;           //!< 15: Time (secs) for initial display
 
     uint8_t __PAD1[16];
 
-    int8_t warn_int[4];         // 32 Int Temp Warning settings
-    int8_t shut_int[4];         // 36 Int Temp Shutdown settings
+    int8_t warn_int[4];         //!< 32: Int Temp Warning settings
+    int8_t shut_int[4];         //!< 36: Int Temp Shutdown settings
 
-    int8_t warn_ext[4];         // 40 Ext Temp Warning settings
-    int8_t shut_ext[4];         // 44 Ext Temp Shutdown settings
+    int8_t warn_ext[4];         //!< 40: Ext Temp Warning settings
+    int8_t shut_ext[4];         //!< 44: Ext Temp Shutdown settings
 
-    uint8_t warn_fan[4];        // 48 Fan Speed Warning settings
-    uint8_t shut_fan[4];        // 52 Fan Speed Shutdown settings
+    uint8_t warn_fan[4];        //!< 48: Fan Speed Warning settings
+    uint8_t shut_fan[4];        //!< 52: Fan Speed Shutdown settings
 
-    uint8_t warn_vlow[8];       // 56 Under-voltage Warning settings
-    uint8_t shut_vlow[8];       // 64 Under-voltage Shutdown settings
+    uint8_t warn_vlow[8];       //!< 56: Under-voltage Warning settings
+    uint8_t shut_vlow[8];       //!< 64: Under-voltage Shutdown settings
 
-    uint8_t warn_vhigh[8];      // 72 Over-voltage Warning settings
-    uint8_t shut_vhigh[8];      // 80 Over-voltage Shutdown settings
+    uint8_t warn_vhigh[8];      //!< 72: Over-voltage Warning settings
+    uint8_t shut_vhigh[8];      //!< 80: Over-voltage Shutdown settings
 
     uint8_t __PAD2[164];        // 88
-    uint32_t CRC32;             // 252
+    uint32_t CRC32;             //!< 252: CRC
 } ee_data_t;
 
 typedef struct {        // 48 bytes
@@ -454,17 +475,20 @@ static uint32_t * const uni_vec = (uint32_t *) 0x10001000;
 static uint32_t * const dbg_vec = (uint32_t *) 0x10001020;
 
 //------------------------------------------------------------------------------
-// bmp_event.c
+//! \name bmp_event.c
+//! \{
 
+//! The type of an event handler
 typedef void (*event_proc) (uint32_t, uint32_t);
 
+//! Record of how to handle an event
 typedef struct event {
-    event_proc proc;    // Proc to be called or NULL
-    uint32_t arg1;      // First arg to proc
-    uint32_t arg2;      // Second arg to proc
-    uint32_t time;      // Time (CPU ticks) until event due (0 if at head of Q)
-    uint32_t ID;        // Unique ID for active event (0 if inactive)
-    struct event *next; // Next in Q or NULL
+    event_proc proc;    //!< Proc to be called or NULL
+    uint32_t arg1;      //!< First arg to proc
+    uint32_t arg2;      //!< Second arg to proc
+    uint32_t time;      //!< Time (CPU ticks) until event due (0 if at head of Q)
+    uint32_t ID;        //!< Unique ID for active event (0 if inactive)
+    struct event *next; //!< Next in Q or NULL
 } event_t;
 
 void event_init (uint32_t priority);
@@ -478,13 +502,17 @@ void event_cancel (event_t *e, uint32_t ID);
 void proc_queue_add (event_t *e);
 void proc_queue_run (void);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_heap.c
+//! \name bmp_heap.c
+//! \{
 
 void heap_init (char *base, char *top);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_i2c.c
+//! \name bmp_i2c.c
+//! \{
 
 void configure_i2c (void);
 
@@ -506,8 +534,10 @@ void configure_lcd (void);
 void lcd_ctrl (uint32_t c);
 void lcd_putc (uint32_t c);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_hw.c
+//! \name bmp_hw.c
+//! \{
 
 void clock_div (uint32_t bit_pos, uint32_t value);
 
@@ -533,23 +563,31 @@ void led_set (uint32_t leds);
 
 void ssp0_pins (uint32_t on);
 
-//## void die (uint32_t code) __attribute__((noreturn));
+#if 0
+void die(uint32_t code) NORETURN;
+#endif
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_flash.c
+//! \name bmp_flash.c
+//! \{
 
 uint32_t is_blank (void *buf, uint32_t len);
 uint32_t flash_sector (uint32_t addr);
 uint32_t flash_write (uint32_t addr, uint32_t length, uint32_t *buffer);
 uint32_t flash_erase (uint32_t start, uint32_t end);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_clock.c
+//! \name bmp_clock.c
+//! \{
 
 void configure_clocks (void);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_cmd.c
+//! \name bmp_cmd.c
+//! \{
 
 void flash_buf_init (void);
 
@@ -559,8 +597,10 @@ void proc_led   (uint32_t arg1, uint32_t arg2);
 
 uint32_t debug (sdp_msg_t *);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_net.c
+//! \name bmp_net.c
+//! \{
 
 void eth_receive (void);
 void copy_ip_data (void);
@@ -569,8 +609,10 @@ void copy_ip (const uint8_t *f, uint8_t *t);
 void arp_lookup (iptag_t *iptag);
 uint32_t iptag_new (void);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_eth.c
+//! \name bmp_eth.c
+//! \{
 
 uint32_t eth_rx_rdy (void);
 uint32_t eth_tx_rdy (void);
@@ -582,28 +624,36 @@ void eth_copy_rxbuf (uint32_t *buffer, uint32_t length);
 
 void configure_eth (uint8_t *mac_addr);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_can.c
+//! \name bmp_can.c
+//! \{
 
 void configure_can (uint32_t id);
 uint32_t can_send_msg (uint32_t dest, sdp_msg_t *msg);
 void can_timer (void);
 void can_proc_cmd (uint32_t dest, uint32_t op, uint32_t arg1, uint32_t arg2);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_crc.c
+//! \name bmp_crc.c
+//! \{
 
 uint32_t crc32 (void *buf, uint32_t len, uint32_t crc);
 uint32_t crc32_chk (void *buf, uint32_t len);
 void     crc32_buf (void *buf, uint32_t len);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_io.c
+//! \name bmp_io.c
+//! \{
 
 void io_printf (char *stream, char *f, ...);
 
+//! \}
 //------------------------------------------------------------------------------
-// bmp_ssp.c
+//! \name bmp_ssp.c
+//! \{
 
 void configure_ssp (void);
 
@@ -622,6 +672,7 @@ uint32_t sf_crc32 (uint32_t addr, uint32_t len);
 
 void fpga_word (uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir);
 
+//! \}
 //------------------------------------------------------------------------------
 
 void msg_init (void);

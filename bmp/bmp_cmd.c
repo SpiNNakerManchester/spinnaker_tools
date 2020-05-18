@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_cmd.c        Command handling for BC&MP
-//
-// Copyright (C)    The University of Manchester - 2012-2016
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_cmd.c
+//! \brief          Command handling for BC&MP
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2016
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -454,7 +455,7 @@ static uint32_t cmd_ver(sdp_msg_t *msg)
 //------------------------------------------------------------------------------
 
 
-// Return various useful bits of information about the BMP
+//! Return various useful bits of information about the BMP
 
 // arg1 = 0 returns
 //          0   - hw_ver

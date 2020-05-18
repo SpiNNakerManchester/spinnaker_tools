@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_net.c        Networking code for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_net.c
+//! \brief          Networking code for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -145,7 +146,7 @@ uint32_t tag_tto = 9;   // 2.56s = 10ms * (1 << (9-1))
 
 //------------------------------------------------------------------------------
 
-void msg_init()
+void msg_init(void)
 {
     sdp_msg_t *msg = msg_root = msg_bufs;
 
@@ -157,7 +158,7 @@ void msg_init()
     msg_queue.insert = 1;
 }
 
-sdp_msg_t* msg_get()
+sdp_msg_t* msg_get(void)
 {
     uint32_t cpsr = cpu_int_off();
 
@@ -275,7 +276,7 @@ uint32_t cmp_ip(const uint8_t *a, const uint8_t *b)
 
 //------------------------------------------------------------------------------
 
-void iptag_timer()
+void iptag_timer(void)
 {
     iptag_t *tag = tag_table;
 
@@ -290,7 +291,7 @@ void iptag_timer()
     }
 }
 
-uint32_t iptag_new()
+uint32_t iptag_new(void)
 {
     for (uint32_t i = FIRST_POOL_TAG; i <= LAST_POOL_TAG; i++) {
         if (tag_table[i].flags == 0) {
@@ -508,7 +509,7 @@ void udp_pkt(uint8_t *rx_pkt, uint32_t rx_len)
     }
 }
 
-void eth_receive()
+void eth_receive(void)
 {
     uint8_t *rx_pkt = eth_buf;
     int32_t len = eth_rx_size() - 3;    // Removes CRC ??

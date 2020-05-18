@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_init.c       System initialisation code for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_init.c
+//! \brief          System initialisation code for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -35,6 +36,7 @@
 
 // Linker generated symbols
 
+#ifndef DOXYGEN
 #define RO_BASE         Image$$PROGRAM$$RO$$Base
 #define RO_LIMIT        Image$$PROGRAM$$RO$$Limit
 #define RO_LENGTH       Image$$PROGRAM$$RO$$Length
@@ -48,6 +50,7 @@
 
 #define STACK_LIMIT     Image$$STACK$$ZI$$Limit
 #define STACK_BASE      Image$$STACK$$ZI$$Base
+#endif
 
 
 extern uint32_t RO_BASE, RO_LIMIT, RO_LENGTH;
@@ -57,7 +60,7 @@ extern uint32_t STACK_LIMIT, STACK_BASE;
 
 // Fudge to force 4 byte alignment
 
-const int pad __attribute__ ((section (".padding"))) = 0xdeaddead;
+const int pad SECTION(".padding") = 0xdeaddead;
 
 //------------------------------------------------------------------------------
 
@@ -66,7 +69,7 @@ const int pad __attribute__ ((section (".padding"))) = 0xdeaddead;
 
 extern void c_main(void);
 
-void  __attribute__((noreturn)) error_han(void)
+void NORETURN error_han(void)
 {
     // remember active interrupts (sticky),
     uni_vec[5] |= NVIC->IABR[0];
@@ -89,7 +92,7 @@ void  __attribute__((noreturn)) error_han(void)
 
 // Cortex M3 core interrupt handlers
 
-// HardFault: copy relevant data to SRAM buffer and reset
+//! HardFault: copy relevant data to SRAM buffer and reset
 void HardFault_Handler_C(
   uint32_t * stack_frame, uint32_t lr_value)
 {
@@ -114,8 +117,8 @@ void HardFault_Handler_C(
     error_han();
 }
 
-// HardFault: extract the location of the stack frame and
-// lr/exc_return and pass them to the handler written in C
+//! HardFault: extract the location of the stack frame and
+//! lr/exc_return and pass them to the handler written in C
 __asm void HardFault_Handler(void)
 {
     tst     lr, #4
@@ -126,55 +129,55 @@ __asm void HardFault_Handler(void)
     b       __cpp(HardFault_Handler_C)
 }
 
-void NMI_Handler            (void) __attribute__ ((weak, alias ("error_han")));
-void MemManage_Handler      (void) __attribute__ ((weak, alias ("error_han")));
-void BusFault_Handler       (void) __attribute__ ((weak, alias ("error_han")));
-void UsageFault_Handler     (void) __attribute__ ((weak, alias ("error_han")));
-void SVC_Handler            (void) __attribute__ ((weak, alias ("error_han")));
-void DebugMon_Handler       (void) __attribute__ ((weak, alias ("error_han")));
-void PendSV_Handler         (void) __attribute__ ((weak, alias ("error_han")));
-void SysTick_Handler        (void) __attribute__ ((weak, alias ("error_han")));
+void NMI_Handler            (void) ALIAS(error_han);
+void MemManage_Handler      (void) ALIAS(error_han);
+void BusFault_Handler       (void) ALIAS(error_han);
+void UsageFault_Handler     (void) ALIAS(error_han);
+void SVC_Handler            (void) ALIAS(error_han);
+void DebugMon_Handler       (void) ALIAS(error_han);
+void PendSV_Handler         (void) ALIAS(error_han);
+void SysTick_Handler        (void) ALIAS(error_han);
 
 // LPC17xx specific interrupt handlers
 
-void WDT_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void TIMER0_IRQHandler      (void) __attribute__ ((weak, alias ("error_han")));
-void TIMER1_IRQHandler      (void) __attribute__ ((weak, alias ("error_han")));
-void TIMER2_IRQHandler      (void) __attribute__ ((weak, alias ("error_han")));
-void TIMER3_IRQHandler      (void) __attribute__ ((weak, alias ("error_han")));
-void UART0_IRQHandler       (void) __attribute__ ((weak, alias ("error_han")));
-void UART1_IRQHandler       (void) __attribute__ ((weak, alias ("error_han")));
-void UART2_IRQHandler       (void) __attribute__ ((weak, alias ("error_han")));
-void UART3_IRQHandler       (void) __attribute__ ((weak, alias ("error_han")));
-void PWM1_IRQHandler        (void) __attribute__ ((weak, alias ("error_han")));
-void I2C0_IRQHandler        (void) __attribute__ ((weak, alias ("error_han")));
-void I2C1_IRQHandler        (void) __attribute__ ((weak, alias ("error_han")));
-void I2C2_IRQHandler        (void) __attribute__ ((weak, alias ("error_han")));
-void SPI_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void SSP0_IRQHandler        (void) __attribute__ ((weak, alias ("error_han")));
-void SSP1_IRQHandler        (void) __attribute__ ((weak, alias ("error_han")));
-void PLL0_IRQHandler        (void) __attribute__ ((weak, alias ("error_han")));
-void RTC_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void EINT0_IRQHandler       (void) __attribute__ ((weak, alias ("error_han")));
-void EINT1_IRQHandler       (void) __attribute__ ((weak, alias ("error_han")));
-void EINT2_IRQHandler       (void) __attribute__ ((weak, alias ("error_han")));
-void EINT3_IRQHandler       (void) __attribute__ ((weak, alias ("error_han")));
-void ADC_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void BOD_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void USB_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void CAN_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void DMA_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void I2S_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void ENET_IRQHandler        (void) __attribute__ ((weak, alias ("error_han")));
-void RIT_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void MCPWM_IRQHandler       (void) __attribute__ ((weak, alias ("error_han")));
-void QEI_IRQHandler         (void) __attribute__ ((weak, alias ("error_han")));
-void PLL1_IRQHandler        (void) __attribute__ ((weak, alias ("error_han")));
-void USBActivity_IRQHandler (void) __attribute__ ((weak, alias ("error_han")));
-void CANActivity_IRQHandler (void) __attribute__ ((weak, alias ("error_han")));
+void WDT_IRQHandler         (void) ALIAS(error_han);
+void TIMER0_IRQHandler      (void) ALIAS(error_han);
+void TIMER1_IRQHandler      (void) ALIAS(error_han);
+void TIMER2_IRQHandler      (void) ALIAS(error_han);
+void TIMER3_IRQHandler      (void) ALIAS(error_han);
+void UART0_IRQHandler       (void) ALIAS(error_han);
+void UART1_IRQHandler       (void) ALIAS(error_han);
+void UART2_IRQHandler       (void) ALIAS(error_han);
+void UART3_IRQHandler       (void) ALIAS(error_han);
+void PWM1_IRQHandler        (void) ALIAS(error_han);
+void I2C0_IRQHandler        (void) ALIAS(error_han);
+void I2C1_IRQHandler        (void) ALIAS(error_han);
+void I2C2_IRQHandler        (void) ALIAS(error_han);
+void SPI_IRQHandler         (void) ALIAS(error_han);
+void SSP0_IRQHandler        (void) ALIAS(error_han);
+void SSP1_IRQHandler        (void) ALIAS(error_han);
+void PLL0_IRQHandler        (void) ALIAS(error_han);
+void RTC_IRQHandler         (void) ALIAS(error_han);
+void EINT0_IRQHandler       (void) ALIAS(error_han);
+void EINT1_IRQHandler       (void) ALIAS(error_han);
+void EINT2_IRQHandler       (void) ALIAS(error_han);
+void EINT3_IRQHandler       (void) ALIAS(error_han);
+void ADC_IRQHandler         (void) ALIAS(error_han);
+void BOD_IRQHandler         (void) ALIAS(error_han);
+void USB_IRQHandler         (void) ALIAS(error_han);
+void CAN_IRQHandler         (void) ALIAS(error_han);
+void DMA_IRQHandler         (void) ALIAS(error_han);
+void I2S_IRQHandler         (void) ALIAS(error_han);
+void ENET_IRQHandler        (void) ALIAS(error_han);
+void RIT_IRQHandler         (void) ALIAS(error_han);
+void MCPWM_IRQHandler       (void) ALIAS(error_han);
+void QEI_IRQHandler         (void) ALIAS(error_han);
+void PLL1_IRQHandler        (void) ALIAS(error_han);
+void USBActivity_IRQHandler (void) ALIAS(error_han);
+void CANActivity_IRQHandler (void) ALIAS(error_han);
 
 
-const cortex_vec_t main_vec __attribute__ ((section (".vectors"))) = {
+const cortex_vec_t main_vec SECTION(".vectors") = {
     (uint32_t *) &STACK_LIMIT,     // 0:  Stack top
     (main_proc) c_main,            // 1:  Entry point
 

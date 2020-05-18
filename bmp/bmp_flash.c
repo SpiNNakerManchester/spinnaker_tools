@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_flash.c      Flash routines for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2013-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_flash.c
+//! \brief          Flash routines for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2013-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -33,7 +34,7 @@
 
 //------------------------------------------------------------------------------
 
-// Check if an area of (flash) memory is blank
+//! Check if an area of (flash) memory is blank
 
 uint32_t is_blank(void *buf, uint32_t len)
 {
@@ -50,9 +51,9 @@ uint32_t is_blank(void *buf, uint32_t len)
 
 //------------------------------------------------------------------------------
 
-// Convert flash address to sector number (LPC17xx specific)
+//! Convert flash address to sector number (LPC17xx specific)
 
-// Sectors 0..15 are 4096 bytes and sectors 16..29 are 32768 bytes
+//! Sectors 0..15 are 4096 bytes and sectors 16..29 are 32768 bytes
 
 uint32_t flash_sector(uint32_t addr)
 {
@@ -66,7 +67,7 @@ uint32_t flash_sector(uint32_t addr)
 
 //------------------------------------------------------------------------------
 
-// Erase sectors given start and end (byte) addresses
+//! Erase sectors given start and end (byte) addresses
 
 uint32_t flash_erase(uint32_t start, uint32_t end)
 {
@@ -94,9 +95,9 @@ uint32_t flash_erase(uint32_t start, uint32_t end)
 
 //------------------------------------------------------------------------------
 
-// Write to flash from supplied buffer
-//
-// "addr" is a byte address, "buf" points to uint32, "length" is in bytes
+//! Write to flash from supplied buffer
+//!
+//! "addr" is a byte address, "buf" points to uint32, "length" is in bytes
 
 uint32_t flash_write(uint32_t addr, uint32_t length, uint32_t *buffer)
 {

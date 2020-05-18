@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_main.c       Control program for Spin4/Spin5 BMP
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_main.c
+//! \brief          Control program for Spin4/Spin5 BMP
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -47,12 +48,12 @@
 
 //------------------------------------------------------------------------------
 
-static uint32_t ms_tens;        // counts 1ms ticks 0..9
-static uint32_t ticks;          // counts 10ms ticks 0..99
+static uint32_t ms_tens;        //!< counts 1ms ticks 0..9
+static uint32_t ticks;          //!< counts 10ms ticks 0..99
 
-bool data_ok;                   // Data sector CRC OK
-uint32_t boot_sec;              // Boot block number
-cortex_vec_t *cortex_vec;       // Cortex boot vector
+bool data_ok;                   //!< Data sector CRC OK
+uint32_t boot_sec;              //!< Boot block number
+cortex_vec_t *cortex_vec;       //!< Cortex boot vector
 
 //------------------------------------------------------------------------------
 

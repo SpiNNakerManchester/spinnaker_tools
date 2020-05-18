@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_i2c.c        I2C peripheral handling for BC&MP
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_i2c.c
+//! \brief          I2C peripheral handling for BC&MP
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -47,13 +48,13 @@ bool lcd_active;
 
 //------------------------------------------------------------------------------
 
-// Set up I2C0 and I2C2 - 25MHz PCLK
+//! Set up I2C0 and I2C2 - 25MHz PCLK
+//!
+//! Use I2SCLH = I2SCLL = 125 for 100 kHz
+//! Use I2SCLH = I2SCLL = 62  for 200 kHz
+//! Use I2SCLH = I2SCLL = 31  for 400 kHz
 
-// Use I2SCLH = I2SCLL = 125 for 100 kHz
-// Use I2SCLH = I2SCLL = 62  for 200 kHz
-// Use I2SCLH = I2SCLL = 31  for 400 kHz
-
-void configure_i2c()
+void configure_i2c(void)
 {
     clock_div(CLKPWR_PCLKSEL_I2C0, CLKPWR_PCLKSEL_CCLK_DIV_4);
     clock_div(CLKPWR_PCLKSEL_I2C2, CLKPWR_PCLKSEL_CCLK_DIV_4);

@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_io.c         Simple character I/O library for BMP
-//
-// Copyright (C)    The University of Manchester - 2009-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_io.c
+//! \brief          Simple character I/O library for BMP
+//!
+//! \copyright      &copy; The University of Manchester - 2009-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------

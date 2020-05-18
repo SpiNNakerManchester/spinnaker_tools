@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_ssp.c        SSP peripheral handling for BC&MP
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_ssp.c
+//! \brief          SSP peripheral handling for BC&MP
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -225,7 +226,7 @@ void ssp0_read(uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
 
 //------------------------------------------------------------------------------
 
-// Copy from Serial Flash on SSP0 to FPGA(s) on SSP1
+//! Copy from Serial Flash on SSP0 to FPGA(s) on SSP1
 
 void ssp0_copy(uint32_t addr, uint32_t len)
 {
