@@ -113,6 +113,9 @@
 
 //------------------------------------------------------------------------------
 
+#if 0
+// DKF: This appears to be unused, and duplicates bmp_clock.c
+
 #define XTAL_CLK 25000000       // Xtal clock (25 MHz)
 
 /*
@@ -226,23 +229,23 @@
   (PDIV4 << PCLKSEL_RIT) + \
   (PDIV4 << PCLKSEL_SYSCON) + \
   (PDIV1 << PCLKSEL_MC)
-
+#endif
 
 //------------------------------------------------------------------------------
 
-
+//! Board status
 board_stat_t board_stat[CAN_SIZE];
 
 static uint32_t adc_chan;
 
-uint8_t can_ID;         // CAN ID (from backplane)
-uint8_t board_ID;       // Board ID (devived from can_ID)
-bool bp_ctrl;           // Backplane controller
-bool fan_sense;         // Compute fan speed
+uint8_t can_ID;         //!< CAN ID (from backplane)
+uint8_t board_ID;       //!< Board ID (devived from can_ID)
+bool bp_ctrl;           //!< Backplane controller
+bool fan_sense;         //!< Compute fan speed
 
-uint8_t power_state;    // Power supply state
+uint8_t power_state;    //!< Power supply state
 
-ee_data_t ee_data;      // Copy of EEPROM data
+ee_data_t ee_data;      //!< Copy of EEPROM data
 
 extern uint32_t config1, config2;
 
@@ -256,6 +259,8 @@ const uint32_t hw_ver = 5;
 
 // Enable/disable interrupts
 
+//! \brief Disable interrupts.
+//! \return old CPSR state
 __asm uint32_t cpu_int_off(void)
 {
     mrs     r0, primask
@@ -263,6 +268,8 @@ __asm uint32_t cpu_int_off(void)
     bx      lr
 }
 
+//! \brief Restore interrupts.
+//! \param[in] cpsr: old CPSR state to restore
 __asm void cpu_int_restore(uint32_t cpsr)
 {
     msr     primask, r0
@@ -272,6 +279,9 @@ __asm void cpu_int_restore(uint32_t cpsr)
 
 //------------------------------------------------------------------------------
 
+//! \brief Configure clock division
+//! \param bit_pos: the bit position to configure
+//! \param value: the value of that bit
 void clock_div (uint32_t bit_pos, uint32_t value)
 {
     if (bit_pos < 32) {
@@ -286,7 +296,8 @@ void clock_div (uint32_t bit_pos, uint32_t value)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Turn board off or on
+//! \param[in] state: State to go into.
 void set_power(uint32_t state)
 {
     if (state == POWER_ON) {
@@ -312,13 +323,15 @@ void set_power(uint32_t state)
 
 //------------------------------------------------------------------------------
 
-
+//! Mapping from LED index to GPIO pin flags
 static const uint32_t led_bit[] = {
     LED_0, LED_1, LED_2, LED_3,
     LED_4, LED_5, LED_6, LED_7
 };
 
-
+//! \brief Control the LEDs
+//! \param[in] leds: Encoded packed LED control word. Two bits per LED:
+//!     0 = ignore, 1 = toggle, 2 = turn off, 3 = turn on.
 void led_set(uint32_t leds)
 {
     for (uint32_t i = 0; i < 8; i++) {
@@ -344,7 +357,9 @@ void led_set(uint32_t leds)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Reset the FPGAs
+//! \param[in] code: How to do the reset. 0 = clear reset line, 1 = set reset
+//!     line, 2 = cycle reset line
 void fpga_reset(uint32_t code)
 {
     if (code == 0) {
@@ -360,7 +375,9 @@ void fpga_reset(uint32_t code)
     }
 }
 
-
+//! \brief Initialise FPGAs
+//! \param[in] mask: Which FPGAs to initialise
+//! \return True if initalisation succeeded
 uint32_t fpga_init(uint32_t mask)
 {
     uint32_t xprogb = 0;
@@ -416,14 +433,15 @@ uint32_t fpga_init(uint32_t mask)
 //------------------------------------------------------------------------------
 
 
-#define ADC_PCLK        25000000        // 25 MHz
-#define ADC_CLK         13000000        // 13 MHz
+#define ADC_PCLK        25000000        //!< 25 MHz
+#define ADC_CLK         13000000        //!< 13 MHz
 #define ADC_PDN         (1 << 21)
 
-#define ADC_VALID       0xde            // Channels 0, 5 not used on Spin5
+#define ADC_VALID       0xde            //!< Channels 0, 5 not used on Spin5
 
 // Channels 0-7 - V12d, V12c, V12b, V12a, V18, V25, V33, Vpwr
 
+//! Configure analog-to-digital converters for voltage monitoring
 static void configure_adc(void)
 {
     uint32_t div = (ADC_PCLK * 2 + ADC_CLK) / ( 2 * ADC_CLK);
@@ -435,7 +453,10 @@ static void configure_adc(void)
     }
 }
 
-
+//! \brief Read voltage from an ADC (directly into board_stat_t::adc) and
+//! start the read of the next ADC.
+//!
+//! This is called approx every 80ms from proc_100hz().
 void read_adc(void)
 {
     uint32_t *adc = (uint32_t *) &LPC_ADC->ADDR0;
@@ -457,6 +478,8 @@ void read_adc(void)
 
 // WDT/reset routines
 
+//! \brief Configure the watchdog timer
+//! \param[in] period: Timer period
 static void configure_wdt(uint32_t period)
 {
     LPC_WDT->WDTC = period;
@@ -466,14 +489,14 @@ static void configure_wdt(uint32_t period)
     LPC_WDT->WDFEED = 0x55;
 }
 
-
+//! Refresh the watchdog timer so that the watchdog doesn't bark.
 void refresh_wdt(void)
 {
     LPC_WDT->WDFEED = 0xaa;
     LPC_WDT->WDFEED = 0x55;
 }
 
-
+//! Reset critical vectors and timers.
 static void process_reset(void)
 {
     uint32_t rsid = LPC_SC->RSID;
@@ -521,6 +544,9 @@ static void process_reset(void)
 //------------------------------------------------------------------------------
 
 
+//! \brief Configure pulse-width modulation hardware
+//! \param[in] period: Overall period
+//! \param[in] width: Pulse width. No longer than than \p period.
 void configure_pwm(uint32_t period, uint32_t width)
 {
     LPC_PWM1->TCR = 0;                  // Disable...
@@ -537,7 +563,10 @@ void configure_pwm(uint32_t period, uint32_t width)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Configure a timer.
+//! \param[in] timer: The timer to configure
+//! \param[in] channel: The channel to put a timer on
+//! \param[in] value: Timer match value
 static void timer_init(LPC_TIM_TypeDef *timer, uint32_t channel,
         uint32_t value)
 {
@@ -551,7 +580,7 @@ static void timer_init(LPC_TIM_TypeDef *timer, uint32_t channel,
     timer->TCR = 1;                     // Enable timer
 }
 
-
+//! Configure _periodic_ timers.
 static void configure_timers(void)
 {
     clock_div(CLKPWR_PCLKSEL_TIMER0, CLKPWR_PCLKSEL_CCLK_DIV_1);
@@ -571,7 +600,7 @@ static void configure_timers(void)
     // Timer2 - generates 25MHz on P4.28
     timer_init(LPC_TIM2, 0, 2);
 
-    // Timer3 - used for events - initialised in bmp_event code
+    // Timer3 - used for events - initialised in bmp_event() code
 
     // CLKOUT produces 50 MHz on P1.27
     LPC_SC->CLKOUTCFG = CLKPWR_CLKOUTCFG_CLKOUTSEL_CPU +
@@ -582,7 +611,11 @@ static void configure_timers(void)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Set pin mode and function.
+//! \param[in] port: Port index
+//! \param[in] pin: Pin number
+//! \param[in] mode: Mode
+//! \param[in] function: Function
 static void set_pin_mf(uint32_t port, uint32_t pin, uint32_t mode,
         uint32_t function)
 {
@@ -603,7 +636,10 @@ static void set_pin_mf(uint32_t port, uint32_t pin, uint32_t mode,
     *mode_reg |= mode << pin;
 }
 
-
+//! \brief Set pin operation: open-drain or normal
+//! \param[in] port: Port index
+//! \param[in] pin: Pin number
+//! \param[in] mode: Mode
 static void set_pin_od(uint32_t port, uint32_t pin, uint32_t mode)
 {
     uint32_t *od_reg = (uint32_t *) &LPC_PINCON->PINMODE_OD0 + port;
@@ -615,7 +651,10 @@ static void set_pin_od(uint32_t port, uint32_t pin, uint32_t mode)
     }
 }
 
-
+//! \brief Set pin function.
+//! \param[in] port: Port index
+//! \param[in] pin: Pin number
+//! \param[in] func: Function
 static void config_pin(uint32_t port, uint32_t pin, uint32_t func)
 {
     set_pin_mf(port, pin, PINSEL_PINMODE_PULLUP, func);
@@ -625,6 +664,8 @@ static void config_pin(uint32_t port, uint32_t pin, uint32_t func)
 
 //  PORT_0, pin 16 is Flash NCS
 
+//! \brief Set up GPIO pins that talk to Flash
+//! \param[in] on: True to enable
 void ssp0_pins(uint32_t on)
 {
     if (on) {
@@ -648,7 +689,10 @@ void ssp0_pins(uint32_t on)
     delay_ms(1);
 }
 
-
+//! \brief Configure pins for talking to external peripherals.
+//!
+//! GPIO, CAN, Serial Flash, LED, I2C, Ethernet, FPGA
+//! \return our CAN ID
 static uint32_t configure_pins(void)
 {
     uint32_t id = LPC_GPIO2->FIOPIN & 31;
@@ -748,8 +792,9 @@ static uint32_t configure_pins(void)
 
 //------------------------------------------------------------------------------
 
-//! "reset_spin" resets SpiNNaker by raising/lowering POR and switching the
+//! \brief Resets SpiNNaker by raising/lowering POR and switching the
 //! Serial Flash multiplexer as needed when POR falls.
+//! \param[in] code: How to do the reset
 //!
 //! code = 0 - lower POR (reset off)
 //! code = 1 - raise POR (reset on)
@@ -761,7 +806,6 @@ static uint32_t configure_pins(void)
 //! its IP address from it just after it is reset. The read takes about 12ms
 //! for the 'standard' IP address block of 32 bytes. If the Serial Flash is
 //! set up to contain more code, the delay of 20ms will need to be increased.
-
 void reset_spin(uint32_t code)
 {
     uint32_t fpga = code & 4;
@@ -789,9 +833,8 @@ void reset_spin(uint32_t code)
 
 //------------------------------------------------------------------------------
 
-//! Set up a 300kHz 120 degree duty-cycle waveform on three outputs
+//! \brief Set up a 300kHz 120 degree duty-cycle waveform on three outputs
 //! MC0B0, MC0B1, MC0B2 (NB outputs not enabled on Spin4)
-
 static void configure_mcpwm(void)
 {
     clock_div(CLKPWR_PCLKSEL_MC, CLKPWR_PCLKSEL_CCLK_DIV_1);
@@ -814,14 +857,15 @@ static void configure_mcpwm(void)
 
 //------------------------------------------------------------------------------
 
-
+//! Last fan state
 static uint32_t fan_last[4];
+//! Fan rotation counter
 static uint16_t fan_count[4];
 
-//! Count transitions on the fan sensor inputs. This routine is called
-//! once per millisec and it's assumed that the fan speed is low enough
-//! for there to be no more than one transition per ms.
-
+//! \brief Count transitions on the fan sensor inputs.
+//!
+//! This routine is called once per millisec and it's assumed that the fan
+//! speed is low enough for there to be no more than one transition per ms.
 void read_fans(void)
 {
     uint32_t fan0 = LPC_GPIO2->FIOPIN;
@@ -845,9 +889,9 @@ void read_fans(void)
 }
 
 
-//! Read I2C temperature sensors and also compute the fan speed. This
-//! routine is called once per second.
-
+//! \brief Read I2C temperature sensors and also compute the fan speed.
+//!
+//! This routine is called once per second.
 void read_temp(void)
 {
     board_stat_t *stat = &board_stat[can_ID];
@@ -878,10 +922,12 @@ void read_temp(void)
 //------------------------------------------------------------------------------
 
 
-//! Curl up and die (probably because of hardware failure or misconfiguration.
+//! \brief Curl up and die (probably because of hardware failure or
+//!     misconfiguration.
+//!
 //! The top LED is turned on (Red on Spin5) and the code is put on the next
 //! 4 LEDs (Green on Spin5). The bottom 3 LEDs are turned off.
-
+//! \param[in] code: Failure code to indicate in LEDs
 void die(uint32_t code)
 {
     __disable_irq();
@@ -902,7 +948,8 @@ void die(uint32_t code)
     }
 }
 
-
+//! \brief Delay using a busy loop
+//! \param[in] n: How many &mu;s to delay for
 void delay_us(uint32_t n)
 {
     n *= 34;
@@ -911,7 +958,8 @@ void delay_us(uint32_t n)
     }
 }
 
-
+//! \brief Delay using a busy loop
+//! \param[in] n: How many milliseconds to delay for
 void delay_ms(uint32_t n)
 {
     while (n--) {
@@ -921,6 +969,10 @@ void delay_ms(uint32_t n)
 
 
 //------------------------------------------------------------------------------
+
+//! System RAM IP address data
+#define SYSRAM_IP_DATA          0xf5007fe0
+
 
 // !! Comment needs updating ...
 
@@ -933,10 +985,6 @@ void delay_ms(uint32_t n)
 //! Word 12 is used to hold a count of the number of times the update has
 //! occurred. If more load blocks are needed this word can form the
 //! single entry in a dummy load block.
-
-
-#define SYSRAM_IP_DATA          0xf5007fe0
-
 
 static void configure_spin(void)
 {
@@ -985,7 +1033,7 @@ static void configure_spin(void)
 
 //------------------------------------------------------------------------------
 
-
+//! Mapping from CAN ID to board number
 static const uint8_t can2board_0[] = {
     0,  1,  2,  3,  4,  5,   0,  0,
     6,  7,  8,  9,  10, 11,  0,  0,
@@ -993,6 +1041,7 @@ static const uint8_t can2board_0[] = {
     18, 19, 20, 21, 22, 23,  0,  0
 };
 
+//! Mapping from board number to CAN ID
 static const uint8_t board2can_0[] = {
     0,  1,  2,  3,  4,  5,
     8,  9, 10, 11, 12, 13,
@@ -1000,6 +1049,7 @@ static const uint8_t board2can_0[] = {
    24, 25, 26, 27, 28, 29
 };
 
+//! Test mapping. One-to-one.
 static const uint8_t null_map[] = {
     0,  1,  2,  3,  4,  5,  6,  7,
     8,  9, 10, 11, 12, 13, 14, 15,
@@ -1007,7 +1057,11 @@ static const uint8_t null_map[] = {
    24, 25, 26, 27, 28, 29, 30, 31
 };
 
-
+//! \brief Set up networking. Handles remote request across CAN from BMP master
+//! \param[in] d1: Combined hardware version, count of zero IP netmask bits,
+//!     and frame ID
+//! \param[in] d2: IP _gateway_ address. (Local addresses derive from this,
+//!     frame ID and board ID.)
 void proc_setup(uint32_t d1, uint32_t d2)
 {
     uint32_t hw_ver = d1 & 7;
@@ -1090,7 +1144,7 @@ void proc_setup(uint32_t d1, uint32_t d2)
 
 //------------------------------------------------------------------------------
 
-
+//! Default "EEPROM" data, when EEPROM fails
 static const ee_data_t ee_default = {
     0x96,                       // Marker
     0,                          // SW version
@@ -1115,7 +1169,7 @@ static const ee_data_t ee_default = {
     {152, 152, 152, 152, 221, 246, 0, 0}        // V-over shut
 };
 
-
+//! Configure the BMP hardware
 void configure_hw(void)
 {
     process_reset();

@@ -257,6 +257,7 @@ enum bmp_fl_dir_type {
     FL_XREG = 4,
 };
 
+//! Flash directory entry
 typedef struct {        // 128 bytes
     uint8_t type;
     uint8_t size;
@@ -271,6 +272,7 @@ typedef struct {        // 128 bytes
     uint8_t data[96];
 } fl_dir_t;
 
+//! Data read from EEPROM
 typedef struct {        // 256 bytes
     uint8_t marker;             //!< 0: == 0x96
     uint8_t sw_ver;             //!< 1: EE Data format version
@@ -305,13 +307,14 @@ typedef struct {        // 256 bytes
     uint32_t CRC32;             //!< 252: CRC
 } ee_data_t;
 
+//! Board status
 typedef struct {        // 48 bytes
-    uint16_t adc[8];
-    int16_t t_int[4];
-    int16_t t_ext[4];
-    uint16_t fan[4];
-    uint32_t warning;
-    uint32_t shutdown;
+    uint16_t adc[8];            //!< Voltages
+    int16_t t_int[4];           //!< Internal temperatures
+    int16_t t_ext[4];           //!< External temperatures
+    uint16_t fan[4];            //!< Fan speeds
+    uint32_t warning;           //!< Warning flags
+    uint32_t shutdown;          //!< Shutdown flags
 } board_stat_t;
 
 typedef struct {        // 32 bytes
@@ -551,7 +554,6 @@ void clock_div (uint32_t bit_pos, uint32_t value);
 
 void delay_us (uint32_t n);
 void delay_ms (uint32_t n);
-uint32_t is_blank (void *buf, uint32_t len);
 
 void configure_hw (void);
 void read_adc (void);
