@@ -454,28 +454,40 @@ static uint32_t cmd_ver(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
-//! Return various useful bits of information about the BMP
-
-// arg1 = 0 returns
-//          0   - hw_ver
-//          1-4 - LPC1768 serial number
-//          5   - flash buffer address
-//          6   - board_stat address (this board)
-//          7   - Cortex boot vector address
-// arg1 = 1 returns EE data buffer
-// arg1 = 2 returns CAN status buffer
-// arg1 = 3 returns Board status buffer
-// arg1 = 4 returns BMP & Spin IP address data
-// arg1 = 5 returns Uninitialised vectors
+//! Subcommands supported by cmd_bmp_info()
+enum bmp_info_subcommand {
+    BMP_INFO_BASIC = 0,
+    BMP_INFO_EE_BUF = 1,
+    BMP_INFO_CAN_STAT = 2,
+    BMP_INFO_BOARD_STAT = 3,
+    BMP_INFO_IP_ADDR = 4,
+    BMP_INFO_UNINIT_VEC = 5
+};
 
 
+//! \brief Return various useful bits of information about the BMP
+//!
+//! ```
+//! msg->arg1 = 0 returns
+//!          0   - hw_ver
+//!          1-4 - LPC1768 serial number
+//!          5   - flash buffer address
+//!          6   - board_stat address (this board)
+//!          7   - Cortex boot vector address
+//! msg->arg1 = 1 returns EE data buffer
+//! msg->arg1 = 2 returns CAN status buffer
+//! msg->arg1 = 3 returns Board status buffer
+//! msg->arg1 = 4 returns BMP & Spin IP address data
+//! msg->arg1 = 5 returns Uninitialised vectors
+//! ```
+//! \param[in,out] msg: The SDP message; will be updated with response
+//! \return The length of the response payload
 static uint32_t cmd_bmp_info(sdp_msg_t *msg)
 {
     uint32_t *buf = &msg->arg1;
 
     switch (msg->arg1) {
-    case 0:
+    case BMP_INFO_BASIC:
         buf[0] = 58;
         lpc_iap(buf, buf);
         buf[0] = hw_ver;
@@ -484,25 +496,25 @@ static uint32_t cmd_bmp_info(sdp_msg_t *msg)
         buf[7] = (uint32_t) cortex_vec;
         return 32;
 
-    case 1:
+    case BMP_INFO_EE_BUF:
         memcpy(buf, &ee_data, sizeof(ee_data_t));
         return sizeof(ee_data_t);
 
-    case 2:
+    case BMP_INFO_CAN_STAT:
         memcpy(buf, can_status, sizeof(can_status));
         return sizeof(can_status);
 
-    case 3:
+    case BMP_INFO_BOARD_STAT:
         memcpy(buf, &board_stat[can_ID], sizeof(board_stat_t));
         return sizeof(board_stat_t);
 
-    case 4:
+    case BMP_INFO_IP_ADDR:
         memcpy(buf, &bmp_ip, sizeof(ip_data_t));
         buf += sizeof(ip_data_t) / sizeof(uint32_t);
         memcpy(buf, &spin_ip, sizeof(ip_data_t));
         return 2 * sizeof(ip_data_t);
 
-    case 5:
+    case BMP_INFO_UNINIT_VEC:
         memcpy(buf, uni_vec, 32);
         return 32;
 

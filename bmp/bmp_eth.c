@@ -174,8 +174,9 @@ static void tx_desc_init(void)
     LPC_EMAC->TxProduceIndex = 0;
 }
 
-//! Configure the ethernet hardware
-void configure_eth(uint8_t *mac_addr)
+//! \brief Configure the ethernet hardware
+//! \param[in] mac_addr: The MAC address to use
+void configure_eth(const uint8_t *mac_addr)
 {
     // Reset all EMAC internal modules
     LPC_EMAC->MAC1 = EMAC_MAC1_RES_TX | EMAC_MAC1_RES_MCS_TX

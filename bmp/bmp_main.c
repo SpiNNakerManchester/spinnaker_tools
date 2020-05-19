@@ -57,16 +57,30 @@ cortex_vec_t *cortex_vec;       //!< Cortex boot vector
 
 //------------------------------------------------------------------------------
 
-
+//! (Half) period of LED2 flash (in units of 0.01s). Used by proc_100hz()
 static uint32_t led2_period;
+//! Used to determine when to flash LED2. Reloaded from ::led2_period
 static uint32_t led2_timer;
+//! Shut down counter. Ensures that shutdowns take 10 seconds
 static uint32_t shut_count;
+//! \brief Ethernet indicator timeout.
+//!
+//! Used to ensure that the ethernet indicator shows for 0.25s after packet
+//! reception.
 static uint32_t eth_timeout;
 
+//! \brief Buffer of text to show in LCD
+//!
+//! Written to by set_text().
+//! Copied over to LCD in update_lcd().
 static char text[12];
+
+//! Board index used with CAN scan
 static uint32_t scan_next;
 
-
+//! \brief Copy text to LCD buffer
+//! \param[in] s: String to write. Up to __11__ characters long.
+//! \param[in] mask: Selects which status indicators show
 static void set_text(const char *s, uint32_t mask)
 {
     strcpy(text, s);
@@ -85,7 +99,7 @@ static void set_text(const char *s, uint32_t mask)
     }
 }
 
-
+//! Prints current status to LCD
 static void update_lcd(void)
 {
     // Print frame number and up-time on top line
@@ -162,8 +176,10 @@ static void update_lcd(void)
     }
 }
 
+//! Current fan speed. 0 (off) .. 3 (high)
 static uint8_t fan = 0;
 
+//! Regulates fan speeds to manage board temperatures. Runs once a second.
 static void fan_control(void)
 {
     if (!bp_ctrl) {
@@ -207,7 +223,7 @@ static void fan_control(void)
     LPC_PWM1->LER = (1 << 6);
 }
 
-
+//! General board/frame status check. Runs once a second.
 static void check_status(void)
 {
     board_stat_t *stat = &board_stat[can_ID];
@@ -297,7 +313,9 @@ static void check_status(void)
     }
 }
 
-
+//! \brief 100Hz timer tick callback
+//! \param arg1 unused
+//! \param arg2 unused
 static void proc_100hz(uint32_t arg1, uint32_t arg2)
 {
     refresh_wdt();
@@ -338,6 +356,7 @@ static void proc_100hz(uint32_t arg1, uint32_t arg2)
     }
 }
 
+//! System tick handler. Frequency: 1kHz
 void SysTick_Handler(void)
 {
     if (fan_sense) {
@@ -355,6 +374,11 @@ void SysTick_Handler(void)
     }
 }
 
+//! \brief Main entry point
+//! \param cortex_vec_tmp: Cortex boot vector
+//! \param data_ok_tmp: Data sector CRC OK
+//! \param arg3 unused
+//! \param arg4 unused
 void c_main(cortex_vec_t *cortex_vec_tmp,
         bool data_ok_tmp,
         uint32_t arg3,

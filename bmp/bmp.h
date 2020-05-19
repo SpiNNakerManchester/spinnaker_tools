@@ -31,6 +31,7 @@
 //! \brief Header file for Spin4/Spin5 Board Management Processor (BMP, LPC1768)
 //
 
+#include <stdint.h>
 #include <stdbool.h>
 
 #ifndef DOXYGEN
@@ -79,11 +80,13 @@ enum bmp_led_code {
 
 //------------------------------------------------------------------------------
 
+//! Number of FPGAs available (on SpiNN-5 board)
 #define NUM_FPGAS               3
 
+//! Directions for fpga_word()
 enum bmp_fpga_command {
-    FPGA_READ = 0,
-    FPGA_WRITE = 1
+    FPGA_READ = 0,      //!< Read from FPGA
+    FPGA_WRITE = 1      //!< Write to FPGA
 };
 
 //------------------------------------------------------------------------------
@@ -432,12 +435,17 @@ static fl_dir_t  *const fl_dir =        (fl_dir_t *)  0x1000;
 static ip_data_t *const bmp_flash_ip =  (ip_data_t *) 0x1020;
 static ip_data_t *const spin_flash_ip = (ip_data_t *) 0x10a0;
 
+//! \brief LPC17xx In-Application Programming entry point
+//! \param[in] cmd: Command to apply
+//! \param[out] res: Result
 typedef void (*LPC_IAP) (uint32_t *cmd, uint32_t *res);
 
+//! \brief LPC17xx In Application Programming entry point
+//! \note This is a THUMB address in ROM
 static LPC_IAP const lpc_iap = (LPC_IAP) 0x1fff1ff1;
 
-// 4096 byte buffer used for writing to Flash and as a general purpose
-// buffer
+//! \brief 4096 byte buffer used for writing to Flash and as a general purpose
+//! buffer
 
 static uint32_t * const flash_buf = (uint32_t *) 0x10000000;
 
@@ -516,19 +524,19 @@ void heap_init (char *base, char *top);
 
 void configure_i2c (void);
 
-uint32_t i2c_poll (LPC_I2C_TypeDef *i2c, uint32_t ctrl);
+uint32_t i2c_poll (LPC_I2C_TypeDef *restrict i2c, uint32_t ctrl);
 
-uint32_t i2c_receive (LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
-                      uint32_t length, void *buf);
+uint32_t i2c_receive (LPC_I2C_TypeDef *restrict i2c, uint32_t ctrl,
+	uint32_t addr, uint32_t length, void *buf);
 
-uint32_t i2c_send (LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
-                   uint32_t length, void *buf);
+uint32_t i2c_send (LPC_I2C_TypeDef *restrict i2c, uint32_t ctrl,
+	uint32_t addr, uint32_t length, const void *buf);
 
-int16_t read_ts (LPC_I2C_TypeDef *i2c, uint32_t addr);
+int16_t read_ts (LPC_I2C_TypeDef *restrict i2c, uint32_t addr);
 
 uint32_t read_ee (uint32_t addr, uint32_t count, void *buf);
 
-uint32_t write_ee (uint32_t addr, uint32_t count, void *buf);
+uint32_t write_ee (uint32_t addr, uint32_t count, const void *buf);
 
 void configure_lcd (void);
 void lcd_ctrl (uint32_t c);
@@ -572,9 +580,9 @@ void die(uint32_t code) NORETURN;
 //! \name bmp_flash.c
 //! \{
 
-uint32_t is_blank (void *buf, uint32_t len);
+uint32_t is_blank (const void *buf, uint32_t len);
 uint32_t flash_sector (uint32_t addr);
-uint32_t flash_write (uint32_t addr, uint32_t length, uint32_t *buffer);
+uint32_t flash_write (uint32_t addr, uint32_t length, const uint32_t *buffer);
 uint32_t flash_erase (uint32_t start, uint32_t end);
 
 //! \}
@@ -622,7 +630,7 @@ void eth_rx_discard (void);
 void eth_copy_txbuf (uint32_t *buffer, uint32_t length);
 void eth_copy_rxbuf (uint32_t *buffer, uint32_t length);
 
-void configure_eth (uint8_t *mac_addr);
+void configure_eth (const uint8_t *mac_addr);
 
 //! \}
 //------------------------------------------------------------------------------
@@ -661,13 +669,13 @@ void ssp1_fast (void);
 void ssp1_slow (void);
 
 void ssp0_read (uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf);
-void ssp0_write (uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf);
+void ssp0_write (uint32_t cmd, uint32_t addr, uint32_t len, const uint8_t *buf);
 void ssp0_copy (uint32_t addr, uint32_t len);
 
-void ssp1_copy (uint32_t count, uint8_t *buf);
+void ssp1_copy (uint32_t count, const uint8_t *buf);
 
 void sf_read (uint32_t addr, uint32_t len, uint8_t *buf);
-void sf_write (uint32_t addr, uint32_t len, uint8_t *buf);
+void sf_write (uint32_t addr, uint32_t len, const uint8_t *buf);
 uint32_t sf_crc32 (uint32_t addr, uint32_t len);
 
 void fpga_word (uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir);
