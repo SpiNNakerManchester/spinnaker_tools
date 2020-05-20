@@ -34,7 +34,9 @@
 
 //------------------------------------------------------------------------------
 
-// Linker generated symbols
+//! \name Linker generated symbols
+//! \{
+//! \brief These are all very special, imported directly from the linker.
 
 #ifndef DOXYGEN
 #define RO_BASE         Image$$PROGRAM$$RO$$Base
@@ -53,13 +55,20 @@
 #endif
 
 
-extern uint32_t RO_BASE, RO_LIMIT, RO_LENGTH;
-extern uint32_t RW_BASE, RW_LIMIT, RW_LENGTH;
-extern uint32_t ZI_BASE, ZI_LIMIT;
-extern uint32_t STACK_LIMIT, STACK_BASE;
+extern uint32_t RO_BASE;        //!< Base address of RO section
+extern uint32_t RO_LIMIT;       //!< Limit address of RO section
+extern uint32_t RO_LENGTH;      //!< Length of RO section
+extern uint32_t RW_BASE;        //!< Base address of RW section
+extern uint32_t RW_LIMIT;       //!< Limit address of RW section
+extern uint32_t RW_LENGTH;      //!< Length of RW section
+extern uint32_t ZI_BASE;        //!< Base address of ZI section
+extern uint32_t ZI_LIMIT;       //!< Limit address of ZI section
+extern uint32_t STACK_LIMIT;    //!< Limit address of STACK section
+extern uint32_t STACK_BASE;     //!< Base address of STACK section
 
-// Fudge to force 4 byte alignment
+//! \}
 
+//! Fudge to force 4 byte alignment
 const int pad SECTION(".padding") = 0xdeaddead;
 
 //------------------------------------------------------------------------------
@@ -67,8 +76,12 @@ const int pad SECTION(".padding") = 0xdeaddead;
 
 // Cortex M3 vector tables for BMP LPC1768
 
-extern void c_main(void);
+extern void c_main(cortex_vec_t *, bool, uint32_t, uint32_t);
 
+//! \name Cortex M3 core interrupt handlers
+//! \{
+
+//! Critical error handler
 void NORETURN error_han(void)
 {
     // remember active interrupts (sticky),
@@ -90,11 +103,11 @@ void NORETURN error_han(void)
     }
 }
 
-// Cortex M3 core interrupt handlers
-
-//! HardFault: copy relevant data to SRAM buffer and reset
-void HardFault_Handler_C(
-  uint32_t * stack_frame, uint32_t lr_value)
+//! \brief Hardware fault handler: copy relevant data to SRAM buffer and reset
+//! \param[in] stack_frame: The stack frame address
+//! \param[in] lr_value: The link register value
+void NORETURN HardFault_Handler_C(
+	uint32_t * stack_frame, uint32_t lr_value)
 {
     // store relevant register contents in SRAM,
     dbg_vec[0]  = stack_frame[0];  // stacked r0
@@ -117,8 +130,9 @@ void HardFault_Handler_C(
     error_han();
 }
 
-//! HardFault: extract the location of the stack frame and
-//! lr/exc_return and pass them to the handler written in C
+//! \brief Hardware fault handler; assembly portion
+//! \details Extracts the location of the stack frame and lr/exc_return and
+//! passes them to HardFault_Handler_C()
 __asm void HardFault_Handler(void)
 {
     tst     lr, #4
@@ -129,54 +143,99 @@ __asm void HardFault_Handler(void)
     b       __cpp(HardFault_Handler_C)
 }
 
+//! Non-maskable interrupt handler
 void NMI_Handler            (void) ALIAS(error_han);
+//! Memory management interrupt handler
 void MemManage_Handler      (void) ALIAS(error_han);
+//! Bus fault interrupt handler
 void BusFault_Handler       (void) ALIAS(error_han);
+//! Usage fault interrupt handler
 void UsageFault_Handler     (void) ALIAS(error_han);
+//! Service mode interrupt handler
 void SVC_Handler            (void) ALIAS(error_han);
+//! Debug monitor interrupt handler
 void DebugMon_Handler       (void) ALIAS(error_han);
+//! Pending SV interrupt handler
 void PendSV_Handler         (void) ALIAS(error_han);
+//! System tick interrupt handler
 void SysTick_Handler        (void) ALIAS(error_han);
 
 // LPC17xx specific interrupt handlers
 
+//! Watchdog timer interrupt handler
 void WDT_IRQHandler         (void) ALIAS(error_han);
+//! Timer 0 interrupt handler
 void TIMER0_IRQHandler      (void) ALIAS(error_han);
+//! Timer 1 interrupt handler
 void TIMER1_IRQHandler      (void) ALIAS(error_han);
+//! Timer 2 interrupt handler
 void TIMER2_IRQHandler      (void) ALIAS(error_han);
+//! Timer 3 interrupt handler
 void TIMER3_IRQHandler      (void) ALIAS(error_han);
+//! UART 0 interrupt handler
 void UART0_IRQHandler       (void) ALIAS(error_han);
+//! UART 1 interrupt handler
 void UART1_IRQHandler       (void) ALIAS(error_han);
+//! UART 2 interrupt handler
 void UART2_IRQHandler       (void) ALIAS(error_han);
+//! UART 3 interrupt handler
 void UART3_IRQHandler       (void) ALIAS(error_han);
+//! PWM 1 interrupt handler
 void PWM1_IRQHandler        (void) ALIAS(error_han);
+//! I<sup>2</sup>C 1 interrupt handler
 void I2C0_IRQHandler        (void) ALIAS(error_han);
+//! I<sup>2</sup>C 1 interrupt handler
 void I2C1_IRQHandler        (void) ALIAS(error_han);
+//! I<sup>2</sup>C 2 interrupt handler
 void I2C2_IRQHandler        (void) ALIAS(error_han);
+//! S{I interrupt handler
 void SPI_IRQHandler         (void) ALIAS(error_han);
+//! SSP 0 interrupt handler
 void SSP0_IRQHandler        (void) ALIAS(error_han);
+//! SSP 1 interrupt handler
 void SSP1_IRQHandler        (void) ALIAS(error_han);
+//! PLL 0 interrupt handler
 void PLL0_IRQHandler        (void) ALIAS(error_han);
+//! Realtime clock interrupt handler
 void RTC_IRQHandler         (void) ALIAS(error_han);
+//! EINT 0 interrupt handler
 void EINT0_IRQHandler       (void) ALIAS(error_han);
+//! EINT 1 interrupt handler
 void EINT1_IRQHandler       (void) ALIAS(error_han);
+//! EINT 2 interrupt handler
 void EINT2_IRQHandler       (void) ALIAS(error_han);
+//! EINT 3 interrupt handler
 void EINT3_IRQHandler       (void) ALIAS(error_han);
+//! Analog-to-digital converter ready interrupt handler
 void ADC_IRQHandler         (void) ALIAS(error_han);
+//! BOD interrupt handler
 void BOD_IRQHandler         (void) ALIAS(error_han);
+//! USB request interrupt handler
 void USB_IRQHandler         (void) ALIAS(error_han);
+//! CAN request interrupt handler
 void CAN_IRQHandler         (void) ALIAS(error_han);
+//! DMA controller interrupt handler
 void DMA_IRQHandler         (void) ALIAS(error_han);
+//! I2S interrupt handler
 void I2S_IRQHandler         (void) ALIAS(error_han);
+//! Ethernet interrupt handler
 void ENET_IRQHandler        (void) ALIAS(error_han);
+//! RIT interrupt handler
 void RIT_IRQHandler         (void) ALIAS(error_han);
+//! MCPWM interrupt handler
 void MCPWM_IRQHandler       (void) ALIAS(error_han);
+//! QEI interrupt handler
 void QEI_IRQHandler         (void) ALIAS(error_han);
+//! PLL 1 interrupt handler
 void PLL1_IRQHandler        (void) ALIAS(error_han);
+//! USB activity interrupt handler
 void USBActivity_IRQHandler (void) ALIAS(error_han);
+//! CAN activity interrupt handler
 void CANActivity_IRQHandler (void) ALIAS(error_han);
 
+//! \}
 
+//! Main Cortex initialisation vector
 const cortex_vec_t main_vec SECTION(".vectors") = {
     (uint32_t *) &STACK_LIMIT,     // 0:  Stack top
     (main_proc) c_main,            // 1:  Entry point

@@ -43,21 +43,25 @@
 
 //------------------------------------------------------------------------------
 
+//! SpiNNaker BMP Version: string
 #define BMP_VER_STR             "2.1.2"
+//! SpiNNaker BMP Version: BCD
 #define BMP_VER_NUM             0x020102
-
+//! SpiNNaker BMP software identifier
 #define BMP_ID_STR              "BC&MP/Spin5-BMP"
 
 //------------------------------------------------------------------------------
 
-#define CCLK                    100000000       // CPU clock - 100 MHz
+#define CCLK                    100000000       //!< CPU clock - 100 MHz
 
+//! Null pointer
 #ifndef NULL
 #define NULL 0
 #endif
 
 //------------------------------------------------------------------------------
 
+//! Encoding of LED control bits
 enum bmp_led_code {
     LED_0 = (1 << 4),   //!< Green
     LED_1 = (1 << 5),   //!< Orange
@@ -69,9 +73,11 @@ enum bmp_led_code {
     LED_7 = (1 << 30),  //!< Red
 };
 
+//! Mask for LED control bits
 #define LED_MASK \
     (LED_0 + LED_1 + LED_2 + LED_3 + LED_4 + LED_5 + LED_6 + LED_7)
 
+//! Miscellaneous GPIO bits
 enum bmp_gpio_bits {
     SF_NCS = (1 << 16),
 
@@ -92,42 +98,49 @@ enum bmp_fpga_command {
 };
 
 //------------------------------------------------------------------------------
+//! \name SDP
+//! \{
 
+//! Commands supported by the BMP
 enum bmp_commands {
-    CMD_VER = 0,
-    CMD_RUN = 1,
-    CMD_READ = 2,
-    CMD_WRITE = 3,
-    CMD_FILL = 5,
+    CMD_VER = 0,         //!< Get BMP version
+    CMD_RUN = 1,         //!< Run
+    CMD_READ = 2,        //!< Read memory
+    CMD_WRITE = 3,       //!< Write memory
+    CMD_FILL = 5,        //!< Fill memory
 
-    CMD_FPGA_READ = 17,      // SPI interface to FPGAs
-    CMD_FPGA_WRITE = 18,      //
+    CMD_FPGA_READ = 17,  //!< Read FPGA memory
+    CMD_FPGA_WRITE = 18, //!< Write FPGA memory
 
-    CMD_LED = 25,
-    CMD_IPTAG = 26,
+    CMD_LED = 25,        //!< Control LEDs
+    CMD_IPTAG = 26,      //!< Control IPTags
 
-    CMD_BMP_INFO = 48,
-    CMD_FLASH_COPY = 49,
-    CMD_FLASH_ERASE = 50,
-    CMD_FLASH_WRITE = 51,
-    CMD_XXX_52 = 52,
-    CMD_BMP_SF = 53,
-    CMD_BMP_EE = 54,
-    CMD_RESET = 55,
-    CMD_XILINX = 56,
-    CMD_POWER = 57,
+    CMD_BMP_INFO = 48,   //!< Get BMP information
+    CMD_FLASH_COPY = 49, //!< Copy Flash
+    CMD_FLASH_ERASE = 50,//!< Erase Flash
+    CMD_FLASH_WRITE = 51,//!< Write Flash
+//  CMD_XXX_52 = 52,     //!< Unimplemented
+    CMD_BMP_SF = 53,     //!< Access Boot Flash
+    CMD_BMP_EE = 54,     //!< Access EEPROM
+    CMD_RESET = 55,      //!< Reset boards
+    CMD_XILINX = 56,     //!< Access XILINX
+    CMD_POWER = 57,      //!< Control board power
 
-    CMD_BMP_TEST = 63,
+    CMD_BMP_I2C = 61,    //!< Access I2C bus
+    CMD_BMP_PWM = 62, 	 //!< Configure PWM
+//  CMD_BMP_TEST = 63,   //!< Test (unimplemented)
 
-    CMD_TUBE = 64
+    CMD_TUBE = 64        //!< tubotron: _outbound_ message
 };
 
+//! Data transfer unit
 enum bmp_type_code {
-    TYPE_BYTE = 0,
-    TYPE_HALF = 1,
-    TYPE_WORD = 2
+    TYPE_BYTE = 0,      //!< Transfer by bytes
+    TYPE_HALF = 1,      //!< Transfer by half-words
+    TYPE_WORD = 2       //!< Transfer by words
 };
 
+//! SDP return codes
 enum bmp_return_code {
     RC_OK = 0x80,       //!< Command completed OK
     RC_LEN = 0x81,      //!< Bad packet length
@@ -144,57 +157,73 @@ enum bmp_return_code {
 
 #define FLASH_BYTES             4096    //!< Size of flash buffer (bytes)
 #define FLASH_WORDS             1024    //!< Size of flash buffer (words)
+//! \}
 
-// IPTAG definitions
+//! \name IPTAG definitions
+//! \{
 
+//! Subcommands for manipulating IPTags
 enum bmp_iptag_commands {
-    IPTAG_NEW = 0,
-    IPTAG_SET = 1,
-    IPTAG_GET = 2,
-    IPTAG_CLR = 3,
-    IPTAG_TTO = 4
+    IPTAG_NEW = 0,      //!< Allocate and configure IPTag
+    IPTAG_SET = 1,      //!< Configure existing IPTag
+    IPTAG_GET = 2,      //!< Read IPTag status
+    IPTAG_CLR = 3,      //!< Deallocate all IPTags
+    IPTAG_TTO = 4       //!< Set IPTag timeout (common)
 };
 
+//! Max operation code in ::bmp_iptag_commands
 #define IPTAG_MAX               4
 
+//! Flags on IPTags
 enum bmp_iptag_flags {
     IPTAG_VALID = 0x8000,       //!< Entry is valid
     IPTAG_TRANS = 0x4000,       //!< Entry is transient
     IPTAG_ARP = 0x2000          //!< Awaiting ARP resolution
 };
 
-#define TAG_NONE                255     // Invalid tag/transient request
-#define TAG_HOST                0       // Reserved for host
+#define TAG_NONE                255     //!< Invalid tag/transient request
+#define TAG_HOST                0       //!< Reserved for host
 
-
+//! Number of user-controllable IPTags
 #define TAG_FIXED_SIZE          8       // At bottom of table
+//! Number of transient IPTags
 #define TAG_POOL_SIZE           8
-
+//! Index of first transient IPTag
 #define FIRST_POOL_TAG          TAG_FIXED_SIZE
+//! Index of last transient IPTag
 #define LAST_POOL_TAG           (TAG_FIXED_SIZE + TAG_POOL_SIZE - 1)
-
+//! Size of the table of IPTags
 #define TAG_TABLE_SIZE          (TAG_FIXED_SIZE + TAG_POOL_SIZE)
+//! SDP flag bit: reply desired
 #define SDPF_REPLY              0x80
 
-
-typedef struct {                //!< IPTAG entry (24 bytes)
-    uint8_t ip[4];
-    uint8_t mac[6];
-    uint16_t port;
-    uint16_t timeout;
-    uint16_t flags;
-    uint32_t count;
-    uint32_t PAD;
+//! IPTag entry (24 bytes)
+typedef struct {
+    uint8_t ip[4];      //!< IP address of target
+    uint8_t mac[6];     //!< MAC address of target
+    uint16_t port;      //!< UDP port of target
+    uint16_t timeout;   //!< Timeout (in 10ms ticks)
+    uint16_t flags;     //!< Flags (::bmp_iptag_flags)
+    uint32_t count;     //!< Count of messages sent via IPTag
+    uint32_t _PAD;
 } iptag_t;
 
+//! \}
 //------------------------------------------------------------------------------
+//! \name SDP
+//! \{
 
+//! Where the port is in the SDP port/board word
 #define PORT_SHIFT              5
+//! How to mask off the port bits
 #define PORT_MASK               7
+//! How to mask off the board bits
 #define BOARD_MASK              31
 
+//! SDP port for Ethernet traffic
 #define PORT_ETH                (7 << PORT_SHIFT)       // Port 7
 
+//! Size of user data area of SDP message
 #define SDP_BUF_SIZE            256
 
 // ------------------------------------------------------------------------
@@ -234,6 +263,7 @@ typedef struct sdp_msg {        // SDP message (=292 bytes)
     uint32_t _PAD;              // Private padding
 } sdp_msg_t;
 
+//! \}
 //------------------------------------------------------------------------------
 
 //! IO stream that goes immediately to host (tubotron)
@@ -245,6 +275,10 @@ typedef struct sdp_msg {        // SDP message (=292 bytes)
 //! IO stream that gets dumped
 #define IO_NULL         ((char *) 3)
 
+//! \brief LCD cursor position to motion control byte encoder
+//! \param[in] x: Target X location (0..20)
+//! \param[in] y: Target Y location (0..1)
+//! \return control byte that will, when printed, move the LCD cursor
 #define LCD_POS(x, y)   (0x80 + (y) * 64 + (x))
 
 //------------------------------------------------------------------------------
@@ -319,13 +353,14 @@ typedef struct {        // 48 bytes
     uint32_t shutdown;          //!< Shutdown flags
 } board_stat_t;
 
+//! Information about an IP address
 typedef struct {        // 32 bytes
-    uint16_t flags;
-    uint8_t mac_addr[6];
-    uint8_t ip_addr[4];
-    uint8_t gw_addr[4];
-    uint8_t net_mask[4];
-    uint16_t udp_port;
+    uint16_t flags;             //!< Miscellaneous flags
+    uint8_t mac_addr[6];        //!< MAC address
+    uint8_t ip_addr[4];         //!< IP address
+    uint8_t gw_addr[4];         //!< Gateway IP address
+    uint8_t net_mask[4];        //!< Net mask
+    uint16_t udp_port;          //!< UDP port
     uint16_t __PAD1;
     uint32_t __PAD2;
     uint32_t __PAD3;
@@ -333,12 +368,17 @@ typedef struct {        // 32 bytes
 
 //------------------------------------------------------------------------------
 
-// Cortex boot vector formats
+//! \name Cortex boot vector formats
+//! \{
 
+//! Type of an interrupt handler
 typedef void (*handler) (void);
+//! Type of a function that takes four arguments
 typedef void (*proc4) (uint32_t, uint32_t, uint32_t, uint32_t);
+//! Type of a main entry point
 typedef void (*main_proc) (void *, uint32_t, uint32_t, uint32_t);
 
+//! Cortex master vector
 typedef struct {
     uint32_t *stack_top;        // 0
     main_proc main;
@@ -413,31 +453,40 @@ typedef struct {
     uint32_t *stack_limit;      // 63
 } cortex_vec_t;
 
+//! Boot vector
 typedef struct {
-    uint32_t *stack_top;        // 0
-    handler boot_proc;          // 1
-    proc4 flash_copy;           // 2
-    proc4 Rsvd_3;               // 3
-    proc4 Rsvd_4;               // 4
-    uint32_t build_date;        // 5
-    uint32_t sw_ver;            // 6
-    uint32_t checksum;          // 7
+    uint32_t *stack_top;        //!< Stack top
+    handler boot_proc;          //!< Boot handler
+    proc4 flash_copy;           //!< Flash copy
+    proc4 Rsvd_3;               // 3: reserved
+    proc4 Rsvd_4;               // 4: reserved
+    uint32_t build_date;        //!< Build date
+    uint32_t sw_ver;            //!< Software version
+    uint32_t checksum;          //!< Checksum
 } boot_vec_t;
 
+//! Boot vector
 static boot_vec_t * const boot_vec = (boot_vec_t *) 0;
 
 extern cortex_vec_t *cortex_vec;
 
+//! \}
 //------------------------------------------------------------------------------
 
-#define PROC_RESET 0
-#define PROC_POWER 1
-#define PROC_LED   2
+//! Commands that can be invoked over CAN
+enum bmp_proc_opcodes {
+    PROC_RESET = 0,     //!< proc_reset()
+    PROC_POWER = 1,     //!< proc_power()
+    PROC_LED = 2        //!< proc_led()
+};
 
 //------------------------------------------------------------------------------
 
+//! Address in Flash of Flash directory
 static fl_dir_t  *const fl_dir =        (fl_dir_t *)  0x1000;
+//! Address in Flash of BMP IP address
 static ip_data_t *const bmp_flash_ip =  (ip_data_t *) 0x1020;
+//! Address in Flash of SpiNNaker base IP address
 static ip_data_t *const spin_flash_ip = (ip_data_t *) 0x10a0;
 
 //! \brief LPC17xx In-Application Programming entry point
@@ -454,37 +503,45 @@ static LPC_IAP const lpc_iap = (LPC_IAP) 0x1fff1ff1;
 
 static uint32_t * const flash_buf = (uint32_t *) 0x10000000;
 
-// 32 byte (8 word) uninitialised vector
-// 0 - copy of last RSID register
-// 1 - count of WDT timeouts
-// 2 - up time (seconds)
-// 3 - time of last WDT/SYSRESET (copy of up time)
-// 4 - count of SYSRESETs
-// 5 - NVIC->IABR[0]: active interrupts @ call to 'error_han'
-// 6 - IPSR: exception that caused call to 'error_han'
-// 7 - count of calls to 'error_han'
-
+//! Size of ::uni_vec, in words
 #define UNI_VEC_SIZE            8
+
+//! \brief 32 byte (8 word) uninitialised vector
+//! \details
+//! ```
+//! 0 - copy of last RSID register
+//! 1 - count of WDT timeouts
+//! 2 - up time (seconds)
+//! 3 - time of last WDT/SYSRESET (copy of up time)
+//! 4 - count of SYSRESETs
+//! 5 - NVIC->IABR[0]: active interrupts @ call to error_han()
+//! 6 - IPSR: exception that caused call to error_han()
+//! 7 - count of calls to error_han()
+//! ```
 static uint32_t * const uni_vec = (uint32_t *) 0x10001000;
 
-// 64 byte (16 word) uninitialised fault debug vector
-//  0 - stacked r0
-//  1 - stacked r1
-//  2 - stacked r2
-//  3 - stacked r3
-//  4 - stacked r12
-//  5 - stacked lr
-//  6 - stacked pc
-//  7 - stacked psr
-//  8 - Configurable Fault Status Register
-//  9 - Hard Fault Status Register
-// 10 - Debug Fault Status Register
-// 11 - Auxiliary Fault Status Register
-// 12 - bus fault address
-// 13 - memory mgmt fault address
-// 14 - exc_return
-
+//! Size of ::dbg_vec, in words
 #define DBG_VEC_SIZE            16
+
+//! \brief 64 byte (16 word) uninitialised fault debug vector
+//! \details
+//! ```
+//!  0 - stacked r0
+//!  1 - stacked r1
+//!  2 - stacked r2
+//!  3 - stacked r3
+//!  4 - stacked r12
+//!  5 - stacked lr
+//!  6 - stacked pc
+//!  7 - stacked psr
+//!  8 - Configurable Fault Status Register
+//!  9 - Hard Fault Status Register
+//! 10 - Debug Fault Status Register
+//! 11 - Auxiliary Fault Status Register
+//! 12 - bus fault address
+//! 13 - memory mgmt fault address
+//! 14 - exc_return
+//! ```
 static uint32_t * const dbg_vec = (uint32_t *) 0x10001020;
 
 //------------------------------------------------------------------------------
@@ -494,15 +551,17 @@ static uint32_t * const dbg_vec = (uint32_t *) 0x10001020;
 //! The type of an event handler
 typedef void (*event_proc) (uint32_t, uint32_t);
 
+struct event_t;
+typedef struct event_t event_t;
 //! Record of how to handle an event
-typedef struct event {
+struct event_t {
     event_proc proc;    //!< Proc to be called or NULL
     uint32_t arg1;      //!< First arg to proc
     uint32_t arg2;      //!< Second arg to proc
     uint32_t time;      //!< Time (CPU ticks) until event due (0 if at head of Q)
     uint32_t ID;        //!< Unique ID for active event (0 if inactive)
-    struct event *next; //!< Next in Q or NULL
-} event_t;
+    event_t *next;      //!< Next in Q or NULL
+};
 
 void event_init (uint32_t priority);
 event_t* event_new (event_proc proc, uint32_t a1, uint32_t a2);
@@ -517,12 +576,15 @@ void proc_queue_run (void);
 
 //! \}
 //------------------------------------------------------------------------------
+#if 0 // DKF: Not used, not implemented
 //! \name bmp_heap.c
 //! \{
 
 void heap_init (char *base, char *top);
+void *bmp_malloc (uint32_t size);
 
 //! \}
+#endif
 //------------------------------------------------------------------------------
 //! \name bmp_i2c.c
 //! \{
@@ -575,6 +637,9 @@ void led_set (uint32_t leds);
 
 void ssp0_pins (uint32_t on);
 
+uint32_t cpu_int_off (void);
+void cpu_int_restore (uint32_t cpsr);
+
 #if 0
 void die(uint32_t code) NORETURN;
 #endif
@@ -617,9 +682,18 @@ uint32_t debug (sdp_msg_t *);
 void eth_receive (void);
 void copy_ip_data (void);
 void iptag_timer (void);
-void copy_ip (const uint8_t *f, uint8_t *t);
+void copy_ip (const uint8_t *restrict f, uint8_t *restrict t);
 void arp_lookup (iptag_t *iptag);
 uint32_t iptag_new (void);
+
+//------------------------------------------------------------------------------
+
+void msg_init (void);
+sdp_msg_t* msg_get (void);
+uint32_t msg_queue_size (void);
+uint32_t msg_queue_insert (sdp_msg_t *msg);
+sdp_msg_t* msg_queue_remove (void);
+void route_msg (sdp_msg_t * msg);
 
 //! \}
 //------------------------------------------------------------------------------
@@ -687,27 +761,11 @@ void fpga_word (uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir);
 //! \}
 //------------------------------------------------------------------------------
 
-void msg_init (void);
-
-sdp_msg_t* msg_get (void);
-
-uint32_t msg_queue_size (void);
-uint32_t msg_queue_insert (sdp_msg_t *msg);
-sdp_msg_t* msg_queue_remove (void);
-
-void route_msg (sdp_msg_t * msg);
-
-//------------------------------------------------------------------------------
-
-void *bmp_malloc (uint32_t size);
-uint32_t cpu_int_off (void);
-void cpu_int_restore (uint32_t cpsr);
-
-//------------------------------------------------------------------------------
-
-#define POWER_ON 2
-#define POWER_OFF 0
-#define POWER_SHUT 1
+enum bmp_power_status_commands {
+    POWER_ON = 2,
+    POWER_OFF = 0,
+    POWER_SHUT = 1
+};
 
 extern uint8_t can_ID;
 extern uint8_t board_ID;

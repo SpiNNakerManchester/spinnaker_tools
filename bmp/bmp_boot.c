@@ -190,7 +190,6 @@ void NORETURN boot_proc(void)
 
 // Self-contained flash copy code
 
-
 //! \brief Copy memory by words
 //! \param[in] to: Where to copy to
 //! \param[in] from: Where to copy from
@@ -203,16 +202,18 @@ static void mem_copy(
     }
 }
 
-
-//! Refresh WDT
-
+//! Refresh watchdog timer
 static void refresh_wdt(void)
 {
     LPC_WDT->WDFEED = 0xaa;
     LPC_WDT->WDFEED = 0x55;
 }
 
-
+//! \brief Copy data into flash
+//! \param[in] to: Where to copy data to
+//! \param[in] from: Where to copy data from
+//! \param[in] size: Number of bytes to copy; should be multiple of 4kB
+//! \param arg4 ignored
 static void SECTION(".flash_copy")
 flash_copy(uint32_t to, uint32_t from, int32_t size, int32_t arg4)
 {
@@ -238,16 +239,13 @@ flash_copy(uint32_t to, uint32_t from, int32_t size, int32_t arg4)
     die(15);    // WDT should reset now...
 }
 
-
 //------------------------------------------------------------------------------
 
-
-//! Cortex M3 vector table
-
+//! \brief Cortex M3 vector table
+//!
 //! This short one lives at the bottom of flash memory. It's only used for
 //! booting. The checksum at word 7 needs to be computed and filled in by
 //! someone. The "openocd" JTAG application can do this as can "sum.pl"
-
 static const boot_vec_t boot_data SECTION(".boot_vec") = {
     &STACK_LIMIT,               // 0: Boot stack pointer
     boot_proc,                  // 1; Boot routine

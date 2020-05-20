@@ -63,27 +63,38 @@ typedef struct {
 } tx_stat_t;
 
 
+//! Ethernet receive descriptors
 static rx_desc_t rx_desc[ETH_RX_BUFS];
+//! Ethernet receive status
 static ALIGNED(8) rx_stat_t rx_stat[ETH_RX_BUFS];
-static uint32_t  rx_buf[ETH_RX_BUFS][EMAC_ETH_MAX_FLEN>>2];
+//! Ethernet receive buffers
+static uint32_t  rx_buf[ETH_RX_BUFS][EMAC_ETH_MAX_FLEN >> 2];
 
+//! Ethernet transmit descriptors
 static tx_desc_t tx_desc[ETH_TX_BUFS];
+//! Ethernet transmit status
 static tx_stat_t tx_stat[ETH_TX_BUFS];
-static uint32_t  tx_buf[ETH_TX_BUFS][EMAC_ETH_MAX_FLEN>>2];
+//! Ethernet transmit buffers
+static uint32_t  tx_buf[ETH_TX_BUFS][EMAC_ETH_MAX_FLEN >> 2];
 
 
+//! \brief Is the ethernet hardware ready to receive?
+//! \return true if a packet has been received
 uint32_t eth_rx_rdy(void)
 {
     return LPC_EMAC->RxConsumeIndex != LPC_EMAC->RxProduceIndex;
 }
 
 
+//! \brief Is the ethernet hardware ready to transmit?
+//! \return true if a packet can be sent now
 uint32_t eth_tx_rdy(void)
 {
     return LPC_EMAC->TxProduceIndex != (LPC_EMAC->TxConsumeIndex - 1);
 }
 
 
+//! \brief Select the next transmission buffer.
 void eth_update_tx(void)
 {
     uint32_t idx = LPC_EMAC->TxProduceIndex + 1;
@@ -106,6 +117,9 @@ void eth_rx_discard(void)
 }
 
 
+//! \brief Copy supplied buffer into transmit hardware
+//! \param[in] buffer: Buffer to copy the message from
+//! \param[in] length: Length of message
 void eth_copy_txbuf(uint32_t *buffer, uint32_t length)
 {
     uint32_t idx = LPC_EMAC->TxProduceIndex;
@@ -118,6 +132,9 @@ void eth_copy_txbuf(uint32_t *buffer, uint32_t length)
 }
 
 
+//! \brief Copy received message into supplied buffer
+//! \param[out] buffer: Buffer to copy the message into
+//! \param[in] length: Length of message. Buffer must be at least this large.
 void eth_copy_rxbuf(uint32_t *buffer, uint32_t length)
 {
     uint32_t idx = LPC_EMAC->RxConsumeIndex;
@@ -128,6 +145,8 @@ void eth_copy_rxbuf(uint32_t *buffer, uint32_t length)
 }
 
 
+//! \brief Get size of received data.
+//! \return Size of message, in bytes
 uint32_t eth_rx_size(void)
 {
     uint32_t idx = LPC_EMAC->RxConsumeIndex;

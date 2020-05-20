@@ -34,11 +34,13 @@
 //------------------------------------------------------------------------------
 
 extern uint32_t tag_tto;
-extern uint32_t reset_vec;
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Boot an FPGA
+//! \param[in] base: Address of data to boot FPGA from
+//! \param[in] len: Length of data to boot FPGA from
+//! \param[in] mask: Selects which FPGAs to boot
 static void fpga_boot(uint32_t base, uint32_t len, uint32_t mask)
 {
     ssp0_pins(1);
@@ -51,7 +53,12 @@ static void fpga_boot(uint32_t base, uint32_t len, uint32_t mask)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Write to FPGA registers
+//! \param[in] count: The number of blocks of words+config to write
+//! \param[in] data: Pointer to block of data to write.
+//!     This is really an array of two-word descriptors, `addr` and `datum`.
+//!     `addr` describes where to write the word (which FPGAs and where therein).
+//!     `datum` is the word to write.
 static void fpga_xreg(uint32_t count, uint8_t *data)
 {
     uint32_t *words = (uint32_t *) data;
@@ -74,7 +81,7 @@ static void fpga_xreg(uint32_t count, uint8_t *data)
 
 //------------------------------------------------------------------------------
 
-
+//! Scan serial flash, booting and configuring FPGAs
 static void sf_scan(void)
 {
     if (! data_ok) {
@@ -107,7 +114,7 @@ static void sf_scan(void)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Initialise ::flash_buf
 void flash_buf_init(void)
 {
     for (uint32_t i = 0; i < FLASH_WORDS; i++) {
@@ -115,10 +122,14 @@ void flash_buf_init(void)
     }
 }
 
-
-// arg1 - start address
-// arg2 - end address
-
+//! \brief Erase flash
+//! \details
+//! ```
+//! arg1 - start address
+//! arg2 - end address
+//! ```
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_flash_erase (sdp_msg_t *msg)
 {
     msg->arg1 = flash_erase(msg->arg1, msg->arg2 - 1);
@@ -133,10 +144,15 @@ static uint32_t cmd_flash_erase (sdp_msg_t *msg)
 }
 
 
-// arg1 - Flash address
-// arg2 - Size in bytes
-// arg3 - Erase before write
-
+//! \brief Write to flash
+//! \details
+//! ```
+//! arg1 - Flash address
+//! arg2 - Size in bytes
+//! arg3 - Erase before write
+//! ```
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_flash_write(sdp_msg_t *msg)
 {
     uint32_t start = msg->arg1;
@@ -164,11 +180,16 @@ static uint32_t cmd_flash_write(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-// arg1 - opcode
-// arg2 - op=0 -> length
-//        op=1 -> mask
-//        op=2 -> reset code
-
+//! \brief Control FPGA
+//! \details
+//! ```
+//! arg1 - opcode
+//! arg2 - op=0 -> length
+//!        op=1 -> mask
+//!        op=2 -> reset code
+//! ```
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_xilinx(sdp_msg_t *msg)
 {
     uint32_t op = msg->arg1;
@@ -196,10 +217,15 @@ static uint32_t cmd_xilinx(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-// arg1=addr
-// arg2=len
-// arg3=fpga_num
-
+//! \brief Read from FPGA
+//! \details
+//! ```
+//! arg1 - addr
+//! arg2 - len
+//! arg3 - fpga_num
+//! ```
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 uint32_t cmd_fpga_read(sdp_msg_t *msg)
 {
     uint32_t len = msg->arg2;
@@ -226,10 +252,15 @@ uint32_t cmd_fpga_read(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-// arg1=addr
-// arg2=len
-// arg3=link_num
-
+//! \brief Write to FPGA
+//! \details
+//! ```
+//! arg1 - addr
+//! arg2 - len
+//! arg3 - link_num
+//! ```
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 uint32_t cmd_fpga_write(sdp_msg_t *msg)
 {
     uint32_t len = msg->arg2;
@@ -256,7 +287,9 @@ uint32_t cmd_fpga_write(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Access serial flash
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_sf(sdp_msg_t *msg)
 {
     uint32_t addr = msg->arg1;
@@ -289,7 +322,9 @@ static uint32_t cmd_sf(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Access EEPROM
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_ee(sdp_msg_t *msg)
 {
     uint32_t addr = msg->arg1;
@@ -331,7 +366,10 @@ static uint32_t cmd_ee(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Control the LEDs on this board; call led_set()
+//! \param[in] arg: Argument to pass to led_set()
+//! \param[in] mask: Which boards are being controlled;
+//!     this function only acts if this board is selected in the mask
 void proc_led(uint32_t arg, uint32_t mask)
 {
     if (mask & (1 << board_ID)) {
@@ -339,7 +377,9 @@ void proc_led(uint32_t arg, uint32_t mask)
     }
 }
 
-
+//! \brief Control the LEDs
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_led(sdp_msg_t *msg)
 {
     uint32_t mask = msg->arg2 & ~(1 << board_ID);
@@ -355,6 +395,10 @@ static uint32_t cmd_led(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+//! \brief Board reset handler; calls reset_spin()
+//! \param[in] arg: reset code and pre-reset delay factor
+//! \param[in] mask: Which boards are being controlled;
+//!     this function only acts if this board is selected in the mask
 void proc_reset(uint32_t arg, uint32_t mask)
 {
     uint32_t reset = arg & 255;
@@ -368,7 +412,9 @@ void proc_reset(uint32_t arg, uint32_t mask)
     }
 }
 
-
+//! \brief Reset a board
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_reset(sdp_msg_t *msg)
 {
     if ((msg->arg1 & 0xfb) > 2) {
@@ -388,10 +434,14 @@ static uint32_t cmd_reset(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
-// Spin4 (Murata) DC/DC converters turn on in ~10ms (measured)
-// Spin5 (Texas Inst.) converters turn on in ~5ms (measured)
-
+//! \brief Control power for this board;
+//!     calls set_power() (and sf_scan() and reset_spin() if powering on)
+//! \param[in] arg: target power state and pre-switch delay factor
+//! \param[in] mask: Which boards are being controlled;
+//!     this function only acts if this board is selected in the mask
+//! \internal
+//! Spin4 (Murata) DC/DC converters turn on in ~10ms (measured)
+//! Spin5 (Texas Inst.) converters turn on in ~5ms (measured)
 void proc_power(uint32_t arg, uint32_t mask)
 {
     uint32_t on = arg & 255;
@@ -412,7 +462,9 @@ void proc_power(uint32_t arg, uint32_t mask)
     }
 }
 
-
+//! \brief Control power
+//! \param[in,out] msg: SDP message, request and response
+//! \return length of response payload
 static uint32_t cmd_power(sdp_msg_t *msg)
 {
     if ((msg->arg1 & 255) > 1) {
@@ -433,7 +485,9 @@ static uint32_t cmd_power(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Get version information
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_ver(sdp_msg_t *msg)
 {
     uint32_t cv = (uint32_t) cortex_vec / 0x10000;
@@ -480,8 +534,8 @@ enum bmp_info_subcommand {
 //! msg->arg1 = 4 returns BMP & Spin IP address data
 //! msg->arg1 = 5 returns Uninitialised vectors
 //! ```
-//! \param[in,out] msg: The SDP message; will be updated with response
-//! \return The length of the response payload
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_bmp_info(sdp_msg_t *msg)
 {
     uint32_t *buf = &msg->arg1;
@@ -527,7 +581,9 @@ static uint32_t cmd_bmp_info(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Fill an area of memory
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_fill(sdp_msg_t *msg)
 {
     uint32_t *to = (uint32_t *) msg->arg1;
@@ -545,7 +601,9 @@ static uint32_t cmd_fill(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Read an area of memory
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_read(sdp_msg_t *msg)
 {
     uint32_t addr = msg->arg1;  // Address
@@ -587,7 +645,9 @@ static uint32_t cmd_read(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Write an area of memory
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_write(sdp_msg_t *msg)
 {
     uint32_t addr = msg->arg1;  // Address
@@ -630,10 +690,15 @@ static uint32_t cmd_write(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-// arg1 = 0 : command : 0 : tag
-// arg2 = timeout : port
-// arg3 = IP
-
+//! \brief Command to manipulate IPTags.
+//! \details
+//! ```
+//! arg1 - 0 : command : 0 : tag
+//! arg2 - timeout : port
+//! arg3 - IP
+//! ```
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_iptag(sdp_msg_t *msg)
 {
     uint32_t op = msg->arg1 >> 16;
@@ -696,11 +761,15 @@ static uint32_t cmd_iptag(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
-// arg1 = I2C ctrl byte
-// arg2 = addr (not used in receive)
-// arg3 = length
-
+//! \brief Access I<sup>2</sup>C bus.
+//! \details
+//! ```
+//! arg1 - I2C ctrl byte
+//! arg2 - addr (not used in receive)
+//! arg3 - length
+//! ```
+//! \param[in,out] msg: The message describing the command. The reply.
+//! \return The length of the reply payload
 static uint32_t cmd_i2c(sdp_msg_t *msg)
 {
     uint32_t count = msg->arg3;
@@ -730,6 +799,29 @@ static uint32_t cmd_i2c(sdp_msg_t *msg)
 
 extern void configure_pwm(uint32_t period, uint32_t width); //##
 
+//! \brief SDP message dispatcher
+//! \param[in,out] msg: The SDP message. Updated to be the response
+//! \return the length of the response payload
+//! \details Delegates to:
+//! * cmd_ver()
+//! * cmd_read()
+//! * cmd_write()
+//! * cmd_fill()
+//! * cmd_led()
+//! * cmd_flash_erase()
+//! * cmd_flash_write()
+//! * boot_vec_t::flash_copy
+//! * cmd_fpga_read()
+//! * cmd_fpga_write()
+//! * cmd_xilinx()
+//! * cmd_reset()
+//! * cmd_power()
+//! * cmd_iptag()
+//! * cmd_sf()
+//! * cmd_ee()
+//! * cmd_bmp_info()
+//! * cmd_i2c()
+//! * configure_pwm()
 uint32_t debug(sdp_msg_t *msg)
 {
     uint32_t len = msg->length;
@@ -798,10 +890,10 @@ uint32_t debug(sdp_msg_t *msg)
     case CMD_BMP_INFO:
         return cmd_bmp_info(msg);
 
-    case 61:
+    case CMD_BMP_I2C:
         return cmd_i2c(msg);
 
-    case 62:
+    case CMD_BMP_PWM:
         configure_pwm(msg->arg1, msg->arg2);
         return 0;
 

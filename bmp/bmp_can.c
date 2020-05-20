@@ -75,7 +75,7 @@ enum can_sdp_results {
     RC_SDP_TIMEOUT = 0x8e,      //!< Dest died?
 };
 
-#define CAN_NUM_STR     8
+#define CAN_NUM_STR     8       //!< Number of CAN receive streams
 
 #define TX_OPEN_RETRY   4       //!< Number of retries to open
 #define TX_DATA_RETRY   4       //!< Number of retries to send data item
@@ -139,17 +139,25 @@ typedef struct {
 uint32_t config1;       //!< Argument \p d1 to pass to proc_setup()
 uint32_t config2;       //!< Argument \p d2 to pass to proc_setup()
 
+//! Whether a particular board is talking to the CAN bus
 uint8_t can_status[CAN_SIZE];
 
+//! Receive descriptors
 static rx_desc_t rx_desc_table[CAN_NUM_STR];
+//! Transmit descriptor storage
 static tx_desc_t tx_desc_str;
+//! Transmit descriptor
 static tx_desc_t *tx_desc = &tx_desc_str;
 
+//! Used to work out when to show the LED indicating a bus timeout
 static uint32_t bus_timeout;
+//! Used to work out when to show the LED indicating a CAN timeout
 static uint32_t can_timeout;
 
+//! Whether we had a request on the CAN bus
 static bool had_CAN_req;
 
+//! Increment the named field in ::stat
 #define STAT(x) stat.x++;
 //! Collects statistics about CAN messages
 stat_t stat;
@@ -690,7 +698,7 @@ static void can_exec(uint32_t id, uint32_t d1, uint32_t d2)
     uint32_t seq = (id >> 8) & 255;
     uint32_t op = id & 255;
 
-    can_status[srce]= 5;                        //##
+    can_status[srce] = 5;                       //##
 
     if (op == CAN_EXEC_NOP) {                   // NOP
         // Do nothing
@@ -744,7 +752,9 @@ void can_proc_cmd(uint32_t dest, uint32_t op, uint32_t arg1, uint32_t arg2)
 
 //------------------------------------------------------------------------------
 
+//! The index of the next board to talk to in ::can2board
 static uint32_t can_next;
+//! Sequence number for CAN requests
 static uint32_t can_seq;
 
 //! \brief This is called every 10ms on all boards.
@@ -862,7 +872,7 @@ void CAN_IRQHandler(void)
 
 //------------------------------------------------------------------------------
 
-
+//! Clock divisor for the CAN
 // Double speed CAN clock!
 #define CAN_CLOCK       CLKPWR_PCLKSEL_CCLK_DIV_2
 //#define CAN_CLOCK     CLKPWR_PCLKSEL_CCLK_DIV_1
