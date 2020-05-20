@@ -36,81 +36,93 @@
 #include "bmp.h"
 
 //------------------------------------------------------------------------------
+//! \name Port 0
+//! \{
 
-// Port 0
+enum gpio_bits_port_0 {
+    FAN_ED2 = (1 << 6),
 
-#define FAN_ED2         (1 << 6)
+    IO_EN1 = (1 << 23),
 
-#define IO_EN1          (1 << 23)
-
-#define I2C_SDA         (1 << 27)
-#define I2C_SCL         (1 << 28)
+    I2C_SDA = (1 << 27),        //!< I<sup>2</sup>C data
+    I2C_SCL = (1 << 28)         //!< I<sup>2</sup>C clock
+};
 
 #define P0_EN           (SF_NCS + IO_EN1 + LED_MASK)
 
 #define P0_INIT         (SF_NCS + IO_EN1 + LED_0)
 
-
+//! \}
 //------------------------------------------------------------------------------
-// Port 1
+//! \name Port 1
+//! \{
 
-#define XIL_RST         (1 << 14)
+enum gpio_bits_port_1 {
+    XIL_RST = (1 << 14),        //!< FPGA reset
 
-#define EN_V12          (1 << 18)
-#define EN_V18          (1 << 19)
-#define EN_VFPGA        (1 << 20)
+    EN_V12 = (1 << 18),
+    EN_V18 = (1 << 19),
+    EN_VFPGA = (1 << 20),       //!< Enable FPGA
 
-#define XPROGB_0        (1 << 21)
-#define XPROGB_1        (1 << 23)
-#define XPROGB_2        (1 << 24)
+    XPROGB_0 = (1 << 21),
+    XPROGB_1 = (1 << 23),
+    XPROGB_2 = (1 << 24),
 
-#define XDONE           (1 << 31)
+    XDONE = (1 << 31),
+};
 
-#define P1_EN           (EN_V12 + EN_V18 + EN_VFPGA + XPROGB_0 + XPROGB_1 + \
-                         XPROGB_2 + XIL_RST)
+#define P1_EN \
+    (EN_V12 + EN_V18 + EN_VFPGA + XPROGB_0 + XPROGB_1 + XPROGB_2 + XIL_RST)
 
 #define P1_INIT         (EN_V12 + EN_V18 + XPROGB_0 + XPROGB_1 + XPROGB_2)
 
+//! \}
 //------------------------------------------------------------------------------
-// Port 2
+//! \name Port 2
+//! \{
 
-#define BOOT_1          (1 << 0)        // GPIO[1]
-#define IO_6            (1 << 1)        // GPIO[6]
-#define IO_7            (1 << 2)        // GPIO[7]
-#define IO_8            (1 << 3)
-#define IO_9            (1 << 4)
-#define FAN_PWM         (1 << 5)
-#define POR             (1 << 6)
-#define RST             (1 << 7)
+enum gpio_bits_port_2 {
+    BOOT_1 = (1 << 0),          //!< GPIO[1]
+    IO_6 = (1 << 1),            //!< GPIO[6]
+    IO_7 = (1 << 2),            //!< GPIO[7]
+    IO_8 = (1 << 3),
+    IO_9 = (1 << 4),
+    FAN_PWM = (1 << 5),         //!< Fan pulse width modulation
+    POR = (1 << 6),             //!< Power on reset
+    RST = (1 << 7),             //!< Reset
 
-#define FAN_ED0         (1 << 8)
-#define FAN_ED1         (1 << 9)
-#define IO_EN2          (1 << 10)
-#define XINITB_0        (1 << 11)
-#define XINITB_1        (1 << 12)
-#define XINITB_2        (1 << 13)
+    FAN_ED0 = (1 << 8),
+    FAN_ED1 = (1 << 9),
+    IO_EN2 = (1 << 10),
+    XINITB_0 = (1 << 11),
+    XINITB_1 = (1 << 12),
+    XINITB_2 = (1 << 13),
+};
 
 #define XINIT_B         (XINITB_0 + XINITB_1 + XINITB_2)
 
-#define P2_EN           (BOOT_1 + POR + RST + IO_EN2 + IO_6 + \
-                        IO_7 + IO_8 + IO_9)
+#define P2_EN \
+    (BOOT_1 + POR + RST + IO_EN2 + IO_6 + IO_7 + IO_8 + IO_9)
 
-#define P2_INIT         (IO_6 + IO_EN2) // BootROM + serial + POST
+#define P2_INIT         (IO_6 + IO_EN2) //!< BootROM + serial + POST
 
+//! \}
 //------------------------------------------------------------------------------
-// Port 3
-
+//! \name Port 3
+//! \{
 
 #define P3_EN           (XFSEL_0 + XFSEL_1)
 #define P3_INIT         (XFSEL_0 + XFSEL_1)
 
+//! \}
 //------------------------------------------------------------------------------
-// Port 4
-
+//! \name Port 4
+//! \{
 
 #define P4_EN           (XFSEL_2)
 #define P4_INIT         (XFSEL_2)
 
+//! \}
 //------------------------------------------------------------------------------
 
 #if 0
@@ -236,6 +248,7 @@
 //! Board status
 board_stat_t board_stat[CAN_SIZE];
 
+//! Current ADC channel (see read_adc())
 static uint32_t adc_chan;
 
 uint8_t can_ID;         //!< CAN ID (from backplane)
@@ -247,11 +260,14 @@ uint8_t power_state;    //!< Power supply state
 
 ee_data_t ee_data;      //!< Copy of EEPROM data
 
-extern uint32_t config1, config2;
+extern uint32_t config1;
+extern uint32_t config2;
 
+//! Mapping from CAN ID to board number
 const uint8_t *can2board;
+//! Mapping from board number to CAN ID
 const uint8_t *board2can;
-
+//! Hardware version
 const uint32_t hw_ver = 5;
 
 
@@ -1033,7 +1049,7 @@ static void configure_spin(void)
 
 //------------------------------------------------------------------------------
 
-//! Mapping from CAN ID to board number
+//! Default mapping from CAN ID to board number, for ::can2board
 static const uint8_t can2board_0[] = {
     0,  1,  2,  3,  4,  5,   0,  0,
     6,  7,  8,  9,  10, 11,  0,  0,
@@ -1041,7 +1057,7 @@ static const uint8_t can2board_0[] = {
     18, 19, 20, 21, 22, 23,  0,  0
 };
 
-//! Mapping from board number to CAN ID
+//! Default mapping from board number to CAN ID, for ::board2can
 static const uint8_t board2can_0[] = {
     0,  1,  2,  3,  4,  5,
     8,  9, 10, 11, 12, 13,
@@ -1049,7 +1065,7 @@ static const uint8_t board2can_0[] = {
    24, 25, 26, 27, 28, 29
 };
 
-//! Test mapping. One-to-one.
+//! Null mapping, used when not in a frame. One-to-one.
 static const uint8_t null_map[] = {
     0,  1,  2,  3,  4,  5,  6,  7,
     8,  9, 10, 11, 12, 13, 14, 15,

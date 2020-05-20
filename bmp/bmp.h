@@ -69,14 +69,16 @@ enum bmp_led_code {
     LED_7 = (1 << 30),  //!< Red
 };
 
-#define LED_MASK                (LED_0 + LED_1 + LED_2 + LED_3 + \
-                                 LED_4 + LED_5 + LED_6 + LED_7)
+#define LED_MASK \
+    (LED_0 + LED_1 + LED_2 + LED_3 + LED_4 + LED_5 + LED_6 + LED_7)
 
-#define SF_NCS                  (1 << 16)
+enum bmp_gpio_bits {
+    SF_NCS = (1 << 16),
 
-#define XFSEL_0                 (1 << 25)       // Port 3
-#define XFSEL_1                 (1 << 26)       // Port 3
-#define XFSEL_2                 (1 << 29)       // Port 4
+    XFSEL_0 = (1 << 25),        //!< Port 3
+    XFSEL_1 = (1 << 26),        //!< Port 3
+    XFSEL_2 = (1 << 29),        //!< Port 4
+};
 
 //------------------------------------------------------------------------------
 
@@ -716,6 +718,8 @@ extern uint8_t power_state;
 extern ip_data_t spin_ip;
 extern ip_data_t bmp_ip;
 
+//! \brief Number of boards that can be managed over the CAN bus.
+//! \details This is the _maximum_ number of boards in a frame.
 #define CAN_SIZE 24
 
 extern uint8_t can_status[CAN_SIZE];

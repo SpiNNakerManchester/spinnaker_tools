@@ -136,7 +136,8 @@ typedef struct {
 
 //------------------------------------------------------------------------------
 
-uint32_t config1, config2;
+uint32_t config1;       //!< Argument \p d1 to pass to proc_setup()
+uint32_t config2;       //!< Argument \p d2 to pass to proc_setup()
 
 uint8_t can_status[CAN_SIZE];
 
