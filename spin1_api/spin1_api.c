@@ -386,7 +386,8 @@ void spin1_resume(sync_bool sync)
 
 //! \brief Determines if we are waiting for SYNC flip
 //! \return true if we are waiting, false if not
-static uint resume_wait(void)
+//! \internal Referred to by FEC/simulation.c; must not be static
+uint resume_wait(void)
 {
     uint bit = 1 << sark.virt_cpu;
 
