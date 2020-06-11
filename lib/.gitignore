@@ -1,3 +1,5 @@
 *.a
 *.o
+*.dict
+*.ranges
 *.sqlite3
