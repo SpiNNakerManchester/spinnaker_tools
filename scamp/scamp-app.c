@@ -235,6 +235,8 @@ void proc_power_down(uint virt_mask, uint phys_mask)
 
 void signal_app(uint data)
 {
+    uint cpsr;
+
     uint sig = (data >> 16) & 15;
     uint app_mask = (data >> 8) & 255;
     uint app_id = data & 255;
@@ -263,13 +265,23 @@ void signal_app(uint data)
         break;
 
     case SIG_SYNC0:
+        // wait to align signal arrival with farthest chip
+        // do not allow interrupts to extend the delay!
+        cpsr = cpu_int_disable();
+        sark_delay_us(sv->sync_alignment);
         sc[SC_CLRFLAG] = virt_mask;
         sc[SC_SET_IRQ] = SC_CODE + phys_mask;
+        cpu_int_restore(cpsr);
         break;
 
     case SIG_SYNC1:
+        // wait to align signal arrival with farthest chip
+        // do not allow interrupts to extend the delay!
+        cpsr = cpu_int_disable();
+        sark_delay_us(sv->sync_alignment);
         sc[SC_SETFLAG] = virt_mask;
         sc[SC_SET_IRQ] = SC_CODE + phys_mask;
+        cpu_int_restore(cpsr);
         break;
 
     case SIG_TIMER:

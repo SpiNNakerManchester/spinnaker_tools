@@ -645,7 +645,7 @@ uint cmd_sig(sdp_msg_t *msg)
             msg->cmd_rc = RC_ARG;
             return 0;
         }
-        pkt_tx(PKT_MC_PL, data, 0xffff5555);
+        pkt_tx(PKT_MC_PL, data, SCAMP_MC_SIGNAL_KEY);
     } else if (type == 1) {
         uint mask = msg->arg3;
 
