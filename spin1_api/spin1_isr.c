@@ -28,6 +28,12 @@ extern uint user_arg0;
 extern uint user_arg1;
 
 extern uint ticks;
+extern uint timer_tick;
+extern uint timer_tick_clocks;
+extern int drift;
+extern int drift_accum;
+extern int drift_sign;
+extern int time_to_next_drift_update;
 
 extern dma_queue_t dma_queue;
 extern tx_packet_queue_t tx_packet_queue;
@@ -461,6 +467,26 @@ INT_HANDLER timer1_isr()
 
     // Increment simulation "time"
     ticks++;
+
+    // Update drift if needed
+    time_to_next_drift_update -= timer_tick;
+    if (time_to_next_drift_update <= 0) {
+        drift = timer_tick * sv->clock_drift;
+        drift_sign = 1;
+        if (drift < 0) {
+            drift = -drift;
+            drift_sign = -1;
+        }
+        time_to_next_drift_update += TIME_BETWEEN_SYNC_US;
+    }
+
+    // Each timer tick we add on the integer number of clock cycles accumulated
+    // and subtract this from the accumulator.
+    drift_accum += drift;
+    int drift_int = drift_accum & DRIFT_INT_MASK;
+    drift_accum -= drift_int;
+    drift_int = (drift_int >> DRIFT_FP_BITS) * drift_sign;
+    tc[T1_BG_LOAD] = timer_tick_clocks + drift_int;
 
     // If application callback registered schedule it
     if (callback[TIMER_TICK].cback != NULL) {
