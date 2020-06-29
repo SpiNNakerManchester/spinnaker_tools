@@ -26,7 +26,7 @@ fi
 cd "$SPINN_DIRS"
 
 # Version low-level tools version number
-VER=`grep SLLT_VER_STR include/version.h | cut -f3 | sed s/\"//g`
+VER=`grep SLLT_VER_STR include/version.h | tr -s ' ' | cut -d' ' -f3 | sed s/\"//g`
 
 # Release name
 NAME=spinnaker_tools_$VER
@@ -41,7 +41,7 @@ if [ -n "$(git status --porcelain | grep -vx " M setup")" ]; then
   echo "WARNING: There are some uncommitted changes."
   git status --short
   echo "Press <return> to build anyway or Ctrl+C to stop."
-  read
+  read REPLY
 fi
 
 # Warn if we're not in the master branch
@@ -49,7 +49,7 @@ if [ -z "$(git branch | grep -x "* master")" ]; then
   echo "WARNING: Not in master branch."
   git branch
   echo "Press <return> to build anyway or Ctrl+C to stop."
-  read
+  read REPLY
 fi
 
 # Use a temporary working directory to produce the build
