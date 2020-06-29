@@ -26,7 +26,7 @@ fi
 cd "$SPINN_DIRS"
 
 # Version low-level tools version number
-VER=`grep SLLT_VER_STR include/version.h | tr -s ' ' | cut -d' ' -f3 | sed s/\"//g`
+VER=`grep SLLT_VER_STR include/version.h | awk '{ print $3 }' | sed s/\"//g`
 
 # Release name
 NAME=spinnaker_tools_$VER
