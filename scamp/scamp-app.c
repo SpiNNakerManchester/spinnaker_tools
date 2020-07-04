@@ -257,6 +257,7 @@ void signal_app(uint data)
 
     uint virt_mask = 0;
     uint phys_mask = 0;
+    uint cpsr;
 
     for (uint i = 1; i < num_cpus; i++) {
         uint b = (core_app[i] & app_mask) == app_id;
@@ -279,13 +280,23 @@ void signal_app(uint data)
         break;
 
     case SIG_SYNC0:
+        // wait to align signal arrival with farthest chip
+        // do not allow interrupts to extend the delay!
+        cpsr = cpu_int_disable();
+        sark_delay_us(sv->sync_alignment);
         sc[SC_CLRFLAG] = virt_mask;
         sc[SC_SET_IRQ] = SC_CODE + phys_mask;
+        cpu_int_restore(cpsr);
         break;
 
     case SIG_SYNC1:
+        // wait to align signal arrival with farthest chip
+        // do not allow interrupts to extend the delay!
+        cpsr = cpu_int_disable();
+        sark_delay_us(sv->sync_alignment);
         sc[SC_SETFLAG] = virt_mask;
         sc[SC_SET_IRQ] = SC_CODE + phys_mask;
+        cpu_int_restore(cpsr);
         break;
 
     case SIG_TIMER:
