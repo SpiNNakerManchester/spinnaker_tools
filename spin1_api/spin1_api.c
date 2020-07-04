@@ -29,14 +29,19 @@
 /* simulation control */
 // ---------------------
 
-uchar leadAp;                         //!< lead appl. core has special functions
+uchar leadAp;                       //!< lead appl. core has special functions
 
-static volatile uint run;             //!< controls simulation start/exit
-static volatile uint paused;          //!< indicates when paused
-static volatile uint resume_sync;     //!< controls re-synchronisation
-uint ticks;                           //!< number of elapsed timer periods
-static uint timer_tick;               //!< timer tick period
-static uint timer_phase;              //!< additional phase on starting the timer
+static volatile uint run;           //!< controls simulation start/exit
+static volatile uint paused;        //!< indicates when paused
+static volatile uint resume_sync;   //!< controls re-synchronisation
+uint ticks;                         //!< number of elapsed timer periods
+uint timer_tick;                    //!< timer tick period
+uint timer_tick_clocks;             //!< timer tick period in clock cycles
+int drift;                          //!< drift in clock cycles per timer tick
+int drift_sign;                     //!< sign of the drift
+int drift_accum;                    //!< accumulation of drifts
+int time_to_next_drift_update;      //!< timer ticks until drift needs to be updated
+static uint timer_phase;            //!< additional phase on starting the timer
 
 //! Default FIQ handler. Restored after simulation
 static isr_t old_vector;
@@ -223,11 +228,30 @@ static void configure_dma_controller(void)
 */
 static void configure_timer1(uint time, uint phase)
 {
+    // Work out the drift per timer tick
+    drift = time * sv->clock_drift;
+
+    // Keep the drift positive as the maths is then easier
+    drift_sign = 1;
+    if (drift < 0) {
+        drift = -drift;
+        drift_sign = -1;
+    }
+
+    // Each timer tick we add on the integer number of clock cycles accumulated
+    // and subtract this from the accumulator.
+    drift_accum = drift;
+    int drift_int = drift_accum & DRIFT_INT_MASK;
+    drift_accum -= drift_int;
+    drift_int = (drift_int >> DRIFT_FP_BITS) * drift_sign;
+    time_to_next_drift_update = TIME_BETWEEN_SYNC_US;
+
     // do not enable yet!
+    timer_tick_clocks = sv->cpu_clk * time;
     tc[T1_CONTROL] = 0;
     tc[T1_INT_CLR] = 1;
-    tc[T1_LOAD] = sv->cpu_clk * (time + phase);
-    tc[T1_BG_LOAD] = sv->cpu_clk * time;
+    tc[T1_LOAD] = timer_tick_clocks + (sv->cpu_clk * phase) + drift_int;
+    tc[T1_BG_LOAD] = timer_tick_clocks + drift_int;
 }
 /*
 *******/
@@ -386,7 +410,8 @@ void spin1_resume(sync_bool sync)
 
 //! \brief Determines if we are waiting for SYNC flip
 //! \return true if we are waiting, false if not
-static uint resume_wait(void)
+//! \internal Referred to by FEC/simulation.c; must not be static
+uint resume_wait(void)
 {
     uint bit = 1 << sark.virt_cpu;
 

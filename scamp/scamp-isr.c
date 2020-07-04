@@ -147,6 +147,28 @@ __asm void eth_rx_int(void)
 
 
 //------------------------------------------------------------------------------
+//! \brief Maximum difference between timers over 2 seconds in clock ticks.
+//! \details Experiments have shown maximum difference is about 1ms over 160
+//! 	seconds which is 6.25us over 1 second, which is 2500 clock ticks at
+//! 	200Mhz.  This is multiplied by 2 as drift could be in either
+//! 	direction.  Further experiments show that slightly higher values are
+//! 	encountered, so 10000 is used.
+#define MAX_DIFF 10000
+
+//! Number of samples to keep to get an average
+#define N_ITEMS 16
+//! Samples used when synchronising time
+static int samples[N_ITEMS];
+//! Sum to make moving average easy
+static int sum = 0;
+//! Ticks recorded last time
+static int last_ticks = 0;
+//! Number of samples recorded
+static uint n_samples = 0;
+//! Position of next sample
+static uint sample_pos = 0;
+//! Beacon id recorded last time to detect missed packets
+static int last_beacon = 0;
 
 //! Multicast packet received handler. Delegates to signal_app()
 INT_HANDLER pkt_mc_int(void)
@@ -156,8 +178,48 @@ INT_HANDLER pkt_mc_int(void)
 
     // Checksum ??
 
-    if (key == 0xffff5555) {
+    if (key == SCAMP_MC_SIGNAL_KEY) {
         signal_app(data);
+    } else if (key == SCAMP_MC_TIME_SYNC_KEY && netinit_phase == NETINIT_PHASE_DONE) {
+        // Timer synchronisation - only do once netinit phase is complete to
+        // avoid clashing with other network traffic.
+        int ticks = tc[T1_COUNT];
+        if (n_samples == 0) {
+            // If there are no samples, take one now, but don't do anything else
+            last_ticks = ticks;
+            last_beacon = data;
+            n_samples++;
+        } else {
+            // Note maximum difference over 2 seconds is quite big but
+            // once divided into per-us value, it will be small again.
+            // We need a 64-bit int to represent the value before division
+            // but this will fit in a 32-bit value once divided.
+            int diff = last_ticks - ticks;
+            int n_beacons = data - last_beacon;
+            last_ticks = ticks;
+            last_beacon = data;
+            // Note, we store ticks even if out of range; this should help when
+            // things are moving but going to converge again on a different
+            // value.  This might mean that we ignore more than one value if
+            // there is a lot of jitter, but this is OK.
+            if ((diff <= MAX_DIFF) && (diff >= -MAX_DIFF) && (n_beacons > 0)) {
+                // Enough samples now, so do the difference
+                int scaled_diff = (diff << DRIFT_FP_BITS)
+                        / (n_beacons * TIME_BETWEEN_SYNC_US);
+                sum = (sum - samples[sample_pos]) + scaled_diff;
+                samples[sample_pos] = scaled_diff;
+                sample_pos = (sample_pos + 1) % N_ITEMS;
+                n_samples++;
+                // Just use the actual value until there are enough to average;
+                // using the average early on tends to lead to odd values, so
+                // this seems to work better in experiments
+                if (n_samples >= N_ITEMS) {
+                    sv->clock_drift = sum / N_ITEMS;
+                } else {
+                    sv->clock_drift = scaled_diff;
+                }
+            }
+        }
     }
 
 #if MC_SLOT != SLOT_FIQ
@@ -222,9 +284,14 @@ INT_HANDLER pkt_p2p_int(void)
 
 //------------------------------------------------------------------------------
 
+//! Time beacon counter
+static uint n_beacons_sent = 0;
+//! Inter-synchronisation time, in microseconds
+static uint time_to_next_sync = TIME_BETWEEN_SYNC_US;
+
 //! \brief Millisecond timer interrupt handler
 //!
-//! Delegates (with appropriate freqency) to:
+//! Delegates (with appropriate frequency) to:
 //! * proc_1khz()
 //! * proc_100hz()
 //! * proc_1hz()
@@ -232,11 +299,25 @@ INT_HANDLER ms_timer_int(void)
 {
     tc[T1_INT_CLR] = (uint) tc;         // Clear interrupt
 
+    // Send the sync signal if appropriate
+    if ((sv->p2p_root == sv->p2p_addr)
+            && (netinit_phase == NETINIT_PHASE_DONE)) {
+        if (time_to_next_sync == 0) {
+            pkt_tx(PKT_MC_PL, n_beacons_sent, SCAMP_MC_TIME_SYNC_KEY);
+            n_beacons_sent++;
+            time_to_next_sync = TIME_BETWEEN_SYNC_US;
+        }
+        // Take of 1000us per timer tick, assuming the timer is in ms
+        time_to_next_sync -= 1000;
+    }
+
     sv->clock_ms++;
     uint ms = sv->time_ms + 1;
+    uint unix_time = sv->unix_time;
     if (ms == 1000) {
         ms = 0;
-        sv->unix_time++;
+        unix_time++;
+        sv->unix_time = unix_time;
 
         if (!event_queue_proc(proc_1hz, 0, 0, PRIO_2)) { // !!const
             sw_error(SW_OPT);
