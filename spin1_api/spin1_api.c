@@ -62,15 +62,17 @@ dma_queue_t dma_queue;
 tx_packet_queue_t tx_packet_queue;
 // -----------------
 
+// --------------
+/* user events */
+// --------------
+user_event_queue_t user_event_queue;
+// --------------
 
 // -----------------------
 /* scheduler/dispatcher */
 // -----------------------
 static task_queue_t task_queue[NUM_PRIORITIES-1];  // priority <= 0 is non-queueable
 cback_t callback[NUM_EVENTS];
-uchar user_pending = FALSE;
-uint user_arg0;
-uint user_arg1;
 
 
 // -----------------------------------------
@@ -1551,19 +1553,32 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
 */
 uint spin1_trigger_user_event(uint arg0, uint arg1)
 {
-    if (!user_pending) {
-        /* remember callback arguments */
-        user_arg0 = arg0;
-        user_arg1 = arg1;
-        user_pending = TRUE;
+    uint cpsr = spin1_int_disable();
 
-        /* trigger software interrupt in the VIC */
-        vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
+    uint new_end = (user_event_queue.end + 1) % USER_EVENT_QUEUE_SIZE;
 
-        return (SUCCESS);
-    } else {
+    if (new_end == user_event_queue.start) {
+        spin1_mode_restore(cpsr);
+
+        #if (API_DIAGNOSTICS == TRUE)
+        diagnostics.user_event_queue_full++;
+        #endif // (API_DIAGNOSTICS == TRUE)
+
         return (FAILURE);
     }
+
+    user_event_queue.queue[user_event_queue.end].arg0 = arg0;
+    user_event_queue.queue[user_event_queue.end].arg1 = arg1;
+
+    /* if no other user event, trigger on now */
+    if (user_event_queue.start == user_event_queue.end) {
+        /* trigger software interrupt in the VIC */
+        vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
+    }
+
+    user_event_queue.end = new_end;
+    spin1_mode_restore(cpsr);
+    return (SUCCESS);
 }
 /*
 *******/

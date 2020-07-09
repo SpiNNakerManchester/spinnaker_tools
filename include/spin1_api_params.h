@@ -120,6 +120,12 @@
 #define RX_RECEIVED_MASK      0x80000000
 // -----------------
 
+// --------------
+/* user events */
+// --------------
+// internal user event queue size
+#define USER_EVENT_QUEUE_SIZE 4
+
 // --------------------
 /* memory allocation */
 // --------------------
@@ -205,6 +211,20 @@ typedef struct {
     packet_t queue[TX_PACKET_QUEUE_SIZE];
 } tx_packet_queue_t;
 // -----------------
+
+// --------------
+/* user events */
+// --------------
+typedef struct {
+    uint arg0;
+    uint arg1;
+} user_event_t;
+
+typedef struct {
+    uint start;
+    uint end;
+    user_event_t queue[USER_EVENT_QUEUE_SIZE];
+} user_event_queue_t;
 
 // -----------------------
 /* scheduler/dispatcher */

@@ -515,6 +515,7 @@ typedef struct {
     uint dma_queue_full;                // dma queue full count
     uint task_queue_full;               // task queue full count
     uint tx_packet_queue_full;          // transmitter packet queue full count
+    uint user_event_queue_full;         // user event queue full count
     uint writeBack_errors;              // write-back buffer error count
     uint total_fr_packets;              // total routed FR packets during simulation
     uint dumped_fr_packets;             // total dumped FR packets by the router
