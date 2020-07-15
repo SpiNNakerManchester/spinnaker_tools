@@ -4,6 +4,22 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.4.0 - New features
+
+New Features:
+
+* Spin1 API: a user event queue is implemented so that new user
+  events can be triggered while a previous one is being serviced.
+
+* SCAMP/SARK: Timers on different boards are synchronised through
+  periodic drift corrections.
+
+* SCAMP/SARK: signals sync0 and sync1 are phase-aligned across
+  all cores in the machine.
+
+#-------------------------------------------------------------------------------
+
+
 Version 3.3.0 - Bug fixing and new feature
 
 New Feature:
