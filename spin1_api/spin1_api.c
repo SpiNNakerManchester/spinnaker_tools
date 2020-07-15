@@ -1535,9 +1535,16 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
 /****f* spin1_api.c/spin1_trigger_user_event
 *
 * SUMMARY
-*  This function triggers a USER EVENT, i.e., a software interrupt.
-*  The function returns FAILURE if a previous trigger attempt
-*  is still pending.
+*  This function triggers a USER EVENT i.e. a software interrupt.
+*  If a previous trigger event is still pending or executing, the event will
+*  be queued until that callback completes.
+*  The function returns FAILURE if the queue of user events to be called is
+*  already full.
+*
+*  NOTE: The callback handler should be able to cope with the fact that a
+*  second call to the function may result in no work to do should a callback
+*  be queued whilst the first is still running and the first deals with
+*  "pending tasks".
 *
 * SYNOPSIS
 *  __irq void spin1_trigger_user_event(uint arg0, uint arg1)
