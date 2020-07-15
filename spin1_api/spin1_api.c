@@ -1570,11 +1570,8 @@ uint spin1_trigger_user_event(uint arg0, uint arg1)
     user_event_queue.queue[user_event_queue.end].arg0 = arg0;
     user_event_queue.queue[user_event_queue.end].arg1 = arg1;
 
-    /* if no other user event, trigger on now */
-    if (user_event_queue.start == user_event_queue.end) {
-        /* trigger software interrupt in the VIC */
-        vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
-    }
+    // Trigger a user event (doesn't matter if already set)
+    vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
 
     user_event_queue.end = new_end;
     spin1_mode_restore(cpsr);

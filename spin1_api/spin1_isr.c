@@ -554,17 +554,15 @@ INT_HANDLER timer1_fiqsr()
 */
 INT_HANDLER soft_int_isr()
 {
-    // Clear software interrupt in the VIC
-    vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
-
     uint arg0  = user_event_queue.queue[user_event_queue.start].arg0;
     uint arg1  = user_event_queue.queue[user_event_queue.start].arg1;
 
-    // Update queue pointer and trigger new event if queue not empty
+    // Update queue pointer
     user_event_queue.start = (user_event_queue.start + 1) % USER_EVENT_QUEUE_SIZE;
 
-    if (user_event_queue.start != user_event_queue.end) {
-        vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
+    // If the queue is now empty, clear the interrupt
+    if (user_event_queue.start == user_event_queue.end) {
+        vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
     }
 
     // If application callback registered schedule it
@@ -592,17 +590,15 @@ INT_HANDLER soft_int_isr()
 */
 INT_HANDLER soft_int_fiqsr()
 {
-    // Clear software interrupt in the VIC
-    vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
-
     uint arg0  = user_event_queue.queue[user_event_queue.start].arg0;
     uint arg1  = user_event_queue.queue[user_event_queue.start].arg1;
 
     // Update queue pointer and trigger new event if queue not empty
     user_event_queue.start = (user_event_queue.start + 1) % USER_EVENT_QUEUE_SIZE;
 
-    if (user_event_queue.start != user_event_queue.end) {
-        vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
+    // If the queue is now empty, clear the interrupt
+    if (user_event_queue.start == user_event_queue.end) {
+        vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
     }
 
     // Execute preeminent callback
