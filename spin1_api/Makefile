@@ -28,6 +28,7 @@ APIOBJS := spin1_api.o spin1_isr.o
 APIOBJ := $(APIOBJS:%.o=$(BUILD_DIR)/%.o)
 HEADERS := spinnaker.h sark.h spin1_api.h spin1_api_params.h
 HEADER := $(HEADERS:%.h=$(SPINN_INC_DIR)/%.h)
+INSTALL ?= install
 
 ifeq ($(GNU),1)
     LIBNAME := libspin1_api
@@ -65,5 +66,9 @@ $(BUILD_DIR)/spin1_isr.o: spin1_isr.c $(HEADER)
 
 clean:
 	$(RM) $(APILIB) $(APIOBJ) $(BUILD_DIR)/sark.o
+
+install: $(APILIB)
+	$(MKDIR) $(SPINN_DIRS)/libs
+	$(INSTALL) -c -m644 $< $(SPINN_DIRS)/libs
 
 .PHONY: clean
