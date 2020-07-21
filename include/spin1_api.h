@@ -570,9 +570,10 @@ typedef struct {
     volatile uint discarded_mc_packets; //!< total discarded MC packets by API
     uint dma_transfers;                 //!< total DMA transfers requested
     uint dma_bursts;                    //!< total DMA bursts completed
-    uint dma_queue_full;                //!< dma queue full count
+    uint dma_queue_full;                //!< DMA queue full count
     uint task_queue_full;               //!< task queue full count
     uint tx_packet_queue_full;          //!< transmitter packet queue full count
+    uint user_event_queue_full;         //!< user event queue full count
     uint writeBack_errors;              //!< write-back buffer error count
     uint total_fr_packets;              //!< total routed FR packets during simulation
     uint dumped_fr_packets;             //!< total dumped FR packets by the router

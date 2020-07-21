@@ -42,6 +42,7 @@ extern int time_to_next_drift_update;
 
 extern dma_queue_t dma_queue;
 extern tx_packet_queue_t tx_packet_queue;
+extern user_event_queue_t user_event_queue;
 
 
 /*! \brief Handles an incoming multicast packet.
@@ -489,16 +490,21 @@ INT_HANDLER timer1_fiqsr(void)
 */
 INT_HANDLER soft_int_isr(void)
 {
-    // Clear software interrupt in the VIC
-    vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
+    uint arg0  = user_event_queue.queue[user_event_queue.start].arg0;
+    uint arg1  = user_event_queue.queue[user_event_queue.start].arg1;
+
+    // Update queue pointer
+    user_event_queue.start = (user_event_queue.start + 1) % USER_EVENT_QUEUE_SIZE;
+
+    // If the queue is now empty, clear the interrupt
+    if (user_event_queue.start == user_event_queue.end) {
+        vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
+    }
 
     // If application callback registered schedule it
     if (callback[USER_EVENT].cback != NULL) {
-        schedule(USER_EVENT, user_arg0, user_arg1);
+        schedule(USER_EVENT, arg0, arg1);
     }
-
-    // Clear flag to indicate event has been serviced
-    user_pending = FALSE;
 
     // Ack VIC
     vic[VIC_VADDR] = 1;
@@ -514,14 +520,19 @@ INT_HANDLER soft_int_isr(void)
 */
 INT_HANDLER soft_int_fiqsr(void)
 {
-    // Clear software interrupt in the VIC
-    vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
+    uint arg0  = user_event_queue.queue[user_event_queue.start].arg0;
+    uint arg1  = user_event_queue.queue[user_event_queue.start].arg1;
+
+    // Update queue pointer and trigger new event if queue not empty
+    user_event_queue.start = (user_event_queue.start + 1) % USER_EVENT_QUEUE_SIZE;
+
+    // If the queue is now empty, clear the interrupt
+    if (user_event_queue.start == user_event_queue.end) {
+        vic[VIC_SOFT_CLR] = (1 << SOFTWARE_INT);
+    }
 
     // Execute preeminent callback
-    callback[USER_EVENT].cback(user_arg0, user_arg1);
-
-    // Clear flag to indicate event has been serviced
-    user_pending = FALSE;
+    callback[USER_EVENT].cback(arg0, arg1);
 }
 /*
 *******/
