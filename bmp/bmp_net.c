@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_net.c        Networking code for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_net.c
+//! \brief          Networking code for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -35,117 +36,164 @@
 
 // Internet constants and structs
 
+//! Maximum size of ethernet message. Larger messages are ignored.
+#define ETHERNET_SIZE_MAX       384
+
+//! Byteswap: network to host short
 #define ntohs(t)        ((((t) & 0x00ff) << 8) | (((t) & 0xff00) >> 8))
+//! Byteswap: host to network short
 #define htons(t)        ((((t) & 0x00ff) << 8) | (((t) & 0xff00) >> 8))
 
+//! Size of Ethernet header (::mac_hdr_t)
 #define MAC_HDR_SIZE            14
+//! Size of IP header (::ip_hdr_t)
 #define IP_HDR_SIZE             20
+//! Size of UDP header (::udp_hdr_t)
 #define UDP_HDR_SIZE            8
+//! Size of SDP header (::sdp_msg_t)
 #define SDP_PAD_SIZE            2
 
+//! Offset to IP header in Ethernet packet
 #define IP_HDR_OFFSET           MAC_HDR_SIZE
+//! Offset to IP body in Ethernet packet
 #define IP_DATA_OFFSET          (IP_HDR_OFFSET + IP_HDR_SIZE)
 
+//! Offset to UDP header in Ethernet packet
 #define UDP_HDR_OFFSET          IP_DATA_OFFSET
+//! Offset to UDP body in Ethernet packet
 #define UDP_DATA_OFFSET         (UDP_HDR_OFFSET + UDP_HDR_SIZE)
 
-#define ETYPE_IP                0x0800
-#define ETYPE_ARP               0x0806
+//! Types of Ethernet packets we understand
+enum ethernet_packet_types {
+    ETYPE_IP = 0x0800,          //!< Message is an IP message
+    ETYPE_ARP = 0x0806,         //!< Message is an ARP message
+};
 
-#define PROT_ICMP               1
-#define PROT_UDP                17
+//! Types of IP packets we understand
+enum internet_protocol_packet_types {
+    PROT_ICMP = 1,              //!< Message is an ICMP message
+    PROT_UDP = 17,              //!< Message is a UDP message
+};
 
-#define ARP_REQ                 1
-#define ARP_REPLY               2
+//! ARP operations we know about
+enum arp_opcodes {
+    ARP_REQ = 1,                //!< Message is an ARP request
+    ARP_REPLY = 2,              //!< Message is an ARP reply
+};
 
-#define ICMP_ECHO_REPLY         0
-#define ICMP_ECHO_REQ           8
+//! ICMP operations we know about
+enum icmp_commands {
+    ICMP_ECHO_REPLY = 0,        //!< Message is an ECHO reply
+    ICMP_ECHO_REQ = 8,          //!< Message is an ECHO request
+};
 
-
+//! ARP packet definition
 typedef struct {
-    uint16_t htype;
-    uint16_t ptype;
-    uint8_t hlen;
-    uint8_t plen;
-    uint16_t op;
-    uint8_t sha[6];
-    uint8_t spa[4];
-    uint8_t tha[6];
-    uint8_t tpa[4];
+    uint16_t htype;     //!< Hardware address type code
+    uint16_t ptype;     //!< Protocol address type code
+    uint8_t hlen;       //!< Hardware address length
+    uint8_t plen;       //!< Protocol address length
+    uint16_t op;        //!< Operation code (see ::arp_opcodes)
+    uint8_t sha[6];     //!< Source hardware address
+    uint8_t spa[4];     //!< Source protocol address
+    uint8_t tha[6];     //!< Target hardware address
+    uint8_t tpa[4];     //!< Target protocol address
 } arp_pkt_t;
 
+//! UDP header
 typedef struct {
-    uint16_t srce;
-    uint16_t dest;
-    uint16_t length;
-    uint16_t checksum;
+    uint16_t srce;      //!< Source port
+    uint16_t dest;      //!< Destination port
+    uint16_t length;    //!< Length of UDP header and payload
+    uint16_t checksum;  //!< Checksum of header and data
 } udp_hdr_t;
 
+//! ICMP header; only ECHO request and reply are supported
 typedef struct {
-    uint8_t type;
-    uint8_t code;
-    uint16_t checksum;
-    uint16_t ident;
-    uint16_t seq;
+    uint8_t type;       //!< ICMP message type (::icmp_commands)
+    uint8_t code;       //!< ICMP message subtype
+    uint16_t checksum;  //!< Checksum of ICMP message
+    uint16_t ident;     //!< Identifier (for ECHO)
+    uint16_t seq;       //!< Sequence number (for ECHO)
 } icmp_hdr_t;
 
+//! \brief Ethernet packet header; will be followed by ip_hdr_t or arp_pkt_t
+//! \note This is *14* bytes long; following data is not aligned!
 typedef struct {
-    uint8_t dest[6];
-    uint8_t srce[6];
-    uint16_t type;
+    uint8_t dest[6];    //!< Destination MAC address
+    uint8_t srce[6];    //!< Source MAC address
+    uint16_t type;      //!< Packet type (::ethernet_packet_types)
 } mac_hdr_t;
 
+//! IP header; will be followed by udp_hdr_t or icmp_hdr_t
 typedef struct {
-    uint8_t ver_len;
-    uint8_t DS;
-    uint16_t length;
-    uint16_t ident;
-    uint16_t flg_off;
-    uint8_t TTL;
-    uint8_t protocol;
-    uint16_t checksum;
-    uint8_t srce[4];
-    uint8_t dest[4];
+    uint8_t ver_len;    //!< Version and header length
+    uint8_t DS;         //!< Differentiated service flags
+    uint16_t length;    //!< Packet length
+    uint16_t ident;     //!< Packet identifier
+    uint16_t flg_off;   //!< Flags and fragment offset
+    uint8_t TTL;        //!< Time-to-live of packet
+    uint8_t protocol;   //!< Sub-protocol code (::internet_protocol_packet_types)
+    uint16_t checksum;  //!< Header checksum
+    uint8_t srce[4];    //!< Source IP address
+    uint8_t dest[4];    //!< Destination IP address
 } ip_hdr_t;
 
 //------------------------------------------------------------------------------
 
+//! The number of messages we have allocated
 #define NUM_MSGS                8
+//! The maximum message number, for allocation purposes
 #define MAX_MSG                 (NUM_MSGS - 1)
+//! Size of the message queue
 #define MSG_QUEUE_SIZE          NUM_MSGS
 
+//! The type of the message queue. This is a circular buffer
 typedef struct msg_queue_t {
-    uint8_t insert;
-    uint8_t remove;
-    volatile uint8_t count;
-    uint8_t max;
+    uint8_t insert;             //!< Where the next message is to be inserted
+    uint8_t remove;             //!< Where the next message is to be removed
+    volatile uint8_t count;     //!< Number of messages in the queue
+    uint8_t max;                //!< Maximum number of messages in the queue
+    //! The storage for the message queue
     sdp_msg_t *queue[MSG_QUEUE_SIZE];
 } msg_queue_t;
 
 //------------------------------------------------------------------------------
 
-static uint8_t eth_buf[384];
+//! Buffer used to mediate with ethernet hardware
+static uint8_t eth_buf[ETHERNET_SIZE_MAX];
 
+//! The table of IPTags
 iptag_t tag_table[TAG_TABLE_SIZE];
 
+//! The allocatable message buffers
 static sdp_msg_t msg_bufs[NUM_MSGS];
+//! Pointer to the next message to allocate
 static sdp_msg_t *msg_root;
+//! The number of allocated messages
 static uint32_t msg_count;
+//! The maximum value of ::msg_count
 static uint32_t msg_max;
 
+//! The message queue
 static msg_queue_t msg_queue;
 
+//! Broadcast MAC address
 static const uint8_t bc_mac[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+//! Network MAC address
 static const uint8_t zero_mac[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+//! IP address of the board we manage
 ip_data_t spin_ip;
+//! Our own IP address
 ip_data_t bmp_ip;
 
-uint32_t tag_tto = 9;   // 2.56s = 10ms * (1 << (9-1))
+uint32_t tag_tto = 9;   //!< Tag timeout: 2.56s = 10ms * (1 << (9-1))
 
 //------------------------------------------------------------------------------
 
-void msg_init()
+//! Initialise the message queue
+void msg_init(void)
 {
     sdp_msg_t *msg = msg_root = msg_bufs;
 
@@ -157,7 +205,9 @@ void msg_init()
     msg_queue.insert = 1;
 }
 
-sdp_msg_t* msg_get()
+//! \brief "Allocate" a message from the free message pool
+//! \return The message, or `NULL` if the pool is empty
+sdp_msg_t *msg_get(void)
 {
     uint32_t cpsr = cpu_int_off();
 
@@ -177,7 +227,9 @@ sdp_msg_t* msg_get()
     return msg;
 }
 
-void msg_free(sdp_msg_t *msg)
+//! \brief "Free" a message, returning it to the free message pool
+//! \param[in] msg: The message to free. Must not be used after this call.
+static void msg_free(sdp_msg_t *msg)
 {
     uint32_t cpsr = cpu_int_off();
 
@@ -189,6 +241,9 @@ void msg_free(sdp_msg_t *msg)
     cpu_int_restore(cpsr);
 }
 
+//! \brief Insert a message in the message queue
+//! \param[in] msg: The message to enqueue
+//! \return True if the message was enqueued, false if the queue was full
 uint32_t msg_queue_insert(sdp_msg_t *msg)
 {
     if (msg_queue.count >= MSG_QUEUE_SIZE) {    // !! Fatal error? - free msg?
@@ -210,7 +265,10 @@ uint32_t msg_queue_insert(sdp_msg_t *msg)
     return 1;
 }
 
-sdp_msg_t *msg_queue_remove()
+//! \brief Get a message from the head of the message queue and remove it
+//!     from the queue.
+//! \return the message, or `NULL` if the queue is empty
+sdp_msg_t *msg_queue_remove(void)
 {
     uint32_t cpsr = cpu_int_off();
 
@@ -222,6 +280,8 @@ sdp_msg_t *msg_queue_remove()
     return msg_queue.queue[msg_queue.remove];
 }
 
+//! \brief How big is the message queue?
+//! \return The number of messages in the queue
 uint32_t msg_queue_size(void)
 {
     return msg_queue.count;
@@ -229,7 +289,14 @@ uint32_t msg_queue_size(void)
 
 //------------------------------------------------------------------------------
 
-uint32_t ipsum(uint8_t *d, uint32_t len, uint32_t sum) // Use shorts for speed??
+//! \brief Compute a checksum using IP rules
+//! \param[in] d: The buffer to compute the checksum of
+//! \param[in] len: The length of buffer in \p d
+//! \param[in] sum: Existing checksum value to accumulate to;
+//!     use 0 for first step
+//! \return the checksum
+static uint32_t ipsum( // Use shorts for speed??
+	const uint8_t *d, uint32_t len, uint32_t sum)
 {
     if (len & 1) {
         sum += d[--len] << 8;
@@ -246,7 +313,10 @@ uint32_t ipsum(uint8_t *d, uint32_t len, uint32_t sum) // Use shorts for speed??
     return sum;
 }
 
-void copy_mac(const uint8_t *f, uint8_t *t)
+//! \brief Copy MAC address
+//! \param[in] f: Where to copy from
+//! \param[out] t: Where to copy to
+static void copy_mac(const uint8_t *restrict f, uint8_t *restrict t)
 {
     uint16_t *ts = (uint16_t*) t;
     uint16_t *fs = (uint16_t*) f;
@@ -256,7 +326,10 @@ void copy_mac(const uint8_t *f, uint8_t *t)
     ts[2] = fs[2];
 }
 
-void copy_ip(const uint8_t *f, uint8_t *t)
+//! \brief Copy IP address
+//! \param[in] f: Where to copy from
+//! \param[out] t: Where to copy to
+void copy_ip(const uint8_t *restrict f, uint8_t *restrict t)
 {
     uint16_t *ts = (uint16_t*) t;
     uint16_t *fs = (uint16_t*) f;
@@ -265,6 +338,10 @@ void copy_ip(const uint8_t *f, uint8_t *t)
     ts[1] = fs[1];
 }
 
+//! \brief Compare two IP addresses
+//! \param[in] a: IP address 1
+//! \param[in] b: IP address 2
+//! \return true if they are equal, false if they differ
 uint32_t cmp_ip(const uint8_t *a, const uint8_t *b)
 {
     uint16_t *as = (uint16_t*) a;
@@ -275,7 +352,8 @@ uint32_t cmp_ip(const uint8_t *a, const uint8_t *b)
 
 //------------------------------------------------------------------------------
 
-void iptag_timer()
+//! \brief IPTag timeout tick. Called from proc_100hz() every 10ms.
+void iptag_timer(void)
 {
     iptag_t *tag = tag_table;
 
@@ -290,7 +368,9 @@ void iptag_timer()
     }
 }
 
-uint32_t iptag_new()
+//! \brief Allocate a transient IPTag
+//! \return The IPTag ID, or #TAG_NONE if allocation failed
+uint32_t iptag_new(void)
 {
     for (uint32_t i = FIRST_POOL_TAG; i <= LAST_POOL_TAG; i++) {
         if (tag_table[i].flags == 0) {
@@ -301,7 +381,15 @@ uint32_t iptag_new()
     return TAG_NONE;
 }
 
-uint32_t transient_tag(uint8_t *ip, uint8_t *mac, uint32_t port, uint32_t timeout)
+//! \brief Allocate and initialise a transient IPTag
+//! \param ip: Source IP address
+//! \param mac: Sender MAC address (probably gateway)
+//! \param port: Sender UDP port
+//! \param timeout: Timeout associated with IPTag
+//!     (number of 10ms ticks the tag is to live for)
+//! \return The IPTag ID, or #TAG_NONE if allocation failed
+uint32_t transient_tag(
+	uint8_t *ip, uint8_t *mac, uint32_t port, uint32_t timeout)
 {
     uint32_t tag = iptag_new();
 
@@ -323,6 +411,11 @@ uint32_t transient_tag(uint8_t *ip, uint8_t *mac, uint32_t port, uint32_t timeou
 
 //------------------------------------------------------------------------------
 
+//! \brief Initialise IP header information
+//! \param[in] dest: Destination IP address
+//! \param[in] prot: IP sub-protocol
+//! \param[out] ip: Buffer holding IP header
+//! \param[in] len: Length of whole message
 void copy_ip_hdr(uint8_t *dest, uint32_t prot, ip_hdr_t *ip, uint32_t len)
 {
     ip->ver_len = 0x45;
@@ -340,6 +433,11 @@ void copy_ip_hdr(uint8_t *dest, uint32_t prot, ip_hdr_t *ip, uint32_t len)
     ip->checksum = htons(~sum);
 }
 
+//! \brief Initialise UDP header information
+//! \param[in,out] buf: Buffer holding whole Ethernet message
+//! \param[in] len: Length of message _payload_
+//! \param[in] dest: Destination UDP port
+//! \param[in] srce: Source UDP port
 void copy_udp(uint8_t *buf, uint32_t len, uint32_t dest, uint32_t srce)
 {
     udp_hdr_t *udp_hdr = (udp_hdr_t *) (buf+UDP_HDR_OFFSET);
@@ -360,7 +458,13 @@ void copy_udp(uint8_t *buf, uint32_t len, uint32_t dest, uint32_t srce)
 
 //------------------------------------------------------------------------------
 
-void eth_transmit(uint8_t *buf, uint32_t len, uint32_t type,
+//! \brief Send an _ethernet_ packet.
+//! \details Writes to the packet header; body must be supplied.
+//! \param[in] buf: The buffer holding the ethernet packet
+//! \param[in] len: Length of whole message in \p buf
+//! \param[in] type: The message type
+//! \param[in] dest: The destination MAC address
+static void eth_transmit(uint8_t *buf, uint32_t len, uint32_t type,
         const uint8_t *dest)
 {
     mac_hdr_t *mac_hdr = (mac_hdr_t *) buf;
@@ -381,8 +485,16 @@ void eth_transmit(uint8_t *buf, uint32_t len, uint32_t type,
     eth_update_tx();
 }
 
-void send_arp_pkt(uint8_t *buf, const uint8_t *dest, const uint8_t *tha,
-        const uint8_t *tpa, uint32_t type)
+//! \brief Send an ARP packet.
+//! \details Writes to the packet header; body must be supplied.
+//! \param[in] buf: The buffer holding the ARP packet, including space for
+//!     all headers
+//! \param[in] dest: The destination MAC address
+//! \param[in] tha: Target hardware address (MAC)
+//! \param[in] tpa: Target protocol address (IP)
+//! \param[in] type: ARP operation
+static void send_arp_pkt(uint8_t *buf, const uint8_t *dest,
+	const uint8_t *tha, const uint8_t *tpa, uint32_t type)
 {
     arp_pkt_t *arp = (arp_pkt_t *) (buf + MAC_HDR_SIZE);
 
@@ -401,7 +513,10 @@ void send_arp_pkt(uint8_t *buf, const uint8_t *dest, const uint8_t *tha,
     eth_transmit(buf, 42, ETYPE_ARP, dest);
 }
 
-void arp_pkt(uint8_t *buf, uint32_t rx_len)
+//! \brief Handle a received ARP packet.
+//! \param[in] buf: The received message, including ethernet headers
+//! \param[in] rx_len: The received length
+static void arp_pkt(uint8_t *buf, uint32_t rx_len)
 {
     arp_pkt_t *arp = (arp_pkt_t *) (buf + MAC_HDR_SIZE);
 
@@ -431,7 +546,10 @@ void arp_pkt(uint8_t *buf, uint32_t rx_len)
     }
 }
 
-void icmp_pkt(uint8_t *buf, uint32_t rx_len)
+//! \brief Handle a received ICMP packet.
+//! \param[in] buf: The received message, including ethernet headers
+//! \param[in] rx_len: The received length
+static void icmp_pkt(uint8_t *buf, uint32_t rx_len)
 {
     ip_hdr_t *ip_hdr = (ip_hdr_t *) (buf + IP_HDR_OFFSET);
 
@@ -464,7 +582,10 @@ void icmp_pkt(uint8_t *buf, uint32_t rx_len)
     }
 }
 
-void udp_pkt(uint8_t *rx_pkt, uint32_t rx_len)
+//! \brief Handle a received UDP packet.
+//! \param[in] rx_pkt: The received message, including ethernet headers
+//! \param[in] rx_len: The received length
+static void udp_pkt(uint8_t *rx_pkt, uint32_t rx_len)
 {
     ip_hdr_t *ip_hdr = (ip_hdr_t *) (rx_pkt + IP_HDR_OFFSET);
     uint32_t ip_len = (ip_hdr->ver_len & 15) * 4;
@@ -508,12 +629,17 @@ void udp_pkt(uint8_t *rx_pkt, uint32_t rx_len)
     }
 }
 
-void eth_receive()
+//! \brief Receive a packet off the ethernet hardware.
+//! \details Delegates to:
+//! * udp_pkt()
+//! * icmp_pkt()
+//! * arp_pkt()
+void eth_receive(void)
 {
     uint8_t *rx_pkt = eth_buf;
     int32_t len = eth_rx_size() - 3;    // Removes CRC ??
 
-    if (len > 384) {
+    if (len > ETHERNET_SIZE_MAX) {
         eth_rx_discard();
         return;
     }
@@ -536,7 +662,13 @@ void eth_receive()
     }
 }
 
-void eth_transmit2(uint8_t *hdr, uint8_t *buf, uint32_t len, uint8_t *dest)
+//! \brief Send an _ethernet_ message.
+//! \param[in] hdr: The ethernet + UDP headers
+//! \param[in] buf: The buffer holding the message payload
+//! \param[in] len: Length of payload in \p buf
+//! \param[in] dest: The destination MAC address
+static void eth_transmit2(
+	uint8_t *hdr, uint8_t *buf, uint32_t len, uint8_t *dest)
 {
     mac_hdr_t *mac_hdr = (mac_hdr_t *) hdr;
 
@@ -559,7 +691,10 @@ void eth_transmit2(uint8_t *hdr, uint8_t *buf, uint32_t len, uint8_t *dest)
     eth_update_tx();
 }
 
-void eth_send_msg(uint32_t tag, sdp_msg_t *msg)
+//! \brief Send an _SDP_ message over the ethernet port.
+//! \param[in] tag: The index of the IPTag that describes the destination
+//! \param[in] msg: The SDP message to send
+static void eth_send_msg(uint32_t tag, sdp_msg_t *msg)
 {
     uint8_t hdr[44];
     iptag_t *iptag = tag_table + tag;
@@ -600,7 +735,10 @@ void eth_send_msg(uint32_t tag, sdp_msg_t *msg)
     }
 }
 
-void swap_sdp_hdr(sdp_msg_t *msg)
+//! \brief Swap source and destination in an SDP message header
+//! \details This reflects the message so it can become its own reply
+//! \param[in] msg: The message to be swapped
+static void swap_sdp_hdr(sdp_msg_t *msg)
 {
     uint32_t dest_port = msg->dest_port;
     uint32_t dest_addr = msg->dest_addr;
@@ -612,7 +750,14 @@ void swap_sdp_hdr(sdp_msg_t *msg)
     msg->srce_addr = dest_addr;
 }
 
-void return_msg(sdp_msg_t *msg, uint32_t rc) // Zero "rc" skips updating cmd_hdr
+//! \brief Returns a message to sender, if sender asked for a response
+//! \param[in] msg: The message to return.
+//!     _Ownership of the message is taken!_
+//!     Caller must not use the message after this.
+//! \param[in] rc: Response code. Non-zero indicates an error (when only
+//!     header information is used). Zero is an OK response, in which case
+//!     the payload and length of the message should be set correctly.
+static void return_msg(sdp_msg_t *msg, uint32_t rc)
 {
     uint32_t f = msg->flags;
 
@@ -631,6 +776,10 @@ void return_msg(sdp_msg_t *msg, uint32_t rc) // Zero "rc" skips updating cmd_hdr
     }
 }
 
+//! \brief Route a message to its destination.
+//! \param[in] msg: The message to route.
+//!     _Ownership of the message is taken!_
+//!     Caller must not use the message after this.
 void route_msg(sdp_msg_t *msg)
 {
     uint32_t dest = msg->dest_port & BOARD_MASK;
@@ -659,6 +808,8 @@ void route_msg(sdp_msg_t *msg)
     }
 }
 
+//! \brief Request an ARP lookup
+//! \param[in] iptag: The IPTag to do the lookup for
 void arp_lookup(iptag_t *iptag)
 {
     uint8_t buf[128];
@@ -683,9 +834,16 @@ void arp_lookup(iptag_t *iptag)
 
 // ## Low level Tube
 
-static uint8_t tube_buf[384];
-static uint32_t tube_ptr;
+//! Accumulates chars to write to host
+static uint8_t tube_buf[ETHERNET_SIZE_MAX];
+static uint32_t tube_ptr;       //!< Point in ::tube_buf to write
 
+//! \brief Add character to ethernet-directed output stream
+//! \details If the buffer is full or at end of line, push the buffer to the
+//!     configured host machine.
+//! \param[in] c: The character to write
+//! \internal
+//! DKF: How is this different from std_putc()?
 void eth_putc(uint32_t c)
 {
     uint8_t *buf = (uint8_t *) tube_buf + 56;   // Point at start of msg buffer
@@ -718,6 +876,7 @@ void eth_putc(uint32_t c)
 
 //------------------------------------------------------------------------------
 
+//! Copy IP address data from Flash (::bmp_flash_ip and ::spin_flash_ip)
 void copy_ip_data(void)
 {
     // Copy the IP data from sector 1 of BMP Flash
