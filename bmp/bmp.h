@@ -103,34 +103,34 @@ enum bmp_fpga_command {
 
 //! Commands supported by the BMP
 enum bmp_commands {
-    CMD_VER = 0,         //!< Get BMP version
-    CMD_RUN = 1,         //!< Run
-    CMD_READ = 2,        //!< Read memory
-    CMD_WRITE = 3,       //!< Write memory
-    CMD_FILL = 5,        //!< Fill memory
+    CMD_VER = 0,            //!< Get BMP version
+    CMD_RUN = 1,            //!< Run
+    CMD_READ = 2,           //!< Read memory
+    CMD_WRITE = 3,          //!< Write memory
+    CMD_FILL = 5,           //!< Fill memory
 
-    CMD_FPGA_READ = 17,  //!< Read FPGA memory
-    CMD_FPGA_WRITE = 18, //!< Write FPGA memory
+    CMD_FPGA_READ = 17,     //!< Read FPGA memory
+    CMD_FPGA_WRITE = 18,    //!< Write FPGA memory
 
-    CMD_LED = 25,        //!< Control LEDs
-    CMD_IPTAG = 26,      //!< Control IPTags
+    CMD_LED = 25,           //!< Control LEDs
+    CMD_IPTAG = 26,         //!< Control IPTags
 
-    CMD_BMP_INFO = 48,   //!< Get BMP information
-    CMD_FLASH_COPY = 49, //!< Copy Flash
-    CMD_FLASH_ERASE = 50,//!< Erase Flash
-    CMD_FLASH_WRITE = 51,//!< Write Flash
-//  CMD_XXX_52 = 52,     //!< Unimplemented
-    CMD_BMP_SF = 53,     //!< Access Boot Flash
-    CMD_BMP_EE = 54,     //!< Access EEPROM
-    CMD_RESET = 55,      //!< Reset boards
-    CMD_XILINX = 56,     //!< Access XILINX
-    CMD_POWER = 57,      //!< Control board power
+    CMD_BMP_INFO = 48,      //!< Get BMP information
+    CMD_FLASH_COPY = 49,    //!< Copy Flash
+    CMD_FLASH_ERASE = 50,   //!< Erase Flash
+    CMD_FLASH_WRITE = 51,   //!< Write Flash
+//  CMD_XXX_52 = 52,        //!< Unimplemented
+    CMD_BMP_SF = 53,        //!< Access Boot Flash
+    CMD_BMP_EE = 54,        //!< Access EEPROM
+    CMD_RESET = 55,         //!< Reset boards
+    CMD_XILINX = 56,        //!< Access XILINX
+    CMD_POWER = 57,         //!< Control board power
 
-    CMD_BMP_I2C = 61,    //!< Access I2C bus
-    CMD_BMP_PWM = 62, 	 //!< Configure PWM
-//  CMD_BMP_TEST = 63,   //!< Test (unimplemented)
+    CMD_BMP_I2C = 61,       //!< Access I2C bus
+    CMD_BMP_PWM = 62, 	    //!< Configure PWM
+//  CMD_BMP_TEST = 63,      //!< Test (unimplemented)
 
-    CMD_TUBE = 64        //!< tubotron: _outbound_ message
+    CMD_TUBE = 64           //!< tubotron: _outbound_ message
 };
 
 //! Data transfer unit
