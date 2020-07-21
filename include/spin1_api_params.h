@@ -137,6 +137,12 @@ enum spin1_api_error_codes {
 #define RX_RECEIVED_MASK      0x80000000
 // -----------------
 
+// --------------
+/* user events */
+// --------------
+//! internal user event queue size
+#define USER_EVENT_QUEUE_SIZE 4
+
 // --------------------
 /* memory allocation */
 // --------------------
@@ -167,15 +173,15 @@ enum spin1_api_multicast_entries {
 //! VIC priorities
 // -----------------------
 enum spin1_api_vic_priorties {
-    SARK_PRIORITY =        0, //!< Communication with SARK/SCAMP
-    TIMER1_PRIORITY =      1, //!< Timer interrupt
-    DMA_DONE_PRIORITY =    2, //!< DMA complete
-    RX_READY_PRIORITY =    3, //!< Multicast message ready to receive
-    FR_READY_PRIORITY =    4, //!< Fixed route message ready to receive
-    CC_TMT_PRIORITY =      5, //!< Comms controller timeout
-    SOFT_INT_PRIORITY =    6, //!< Software-driven interrupt
+    SARK_PRIORITY =        0,   //!< Communication with SARK/SCAMP
+    TIMER1_PRIORITY =      1,   //!< Timer interrupt
+    DMA_DONE_PRIORITY =    2,   //!< DMA complete
+    RX_READY_PRIORITY =    3,   //!< Multicast message ready to receive
+    FR_READY_PRIORITY =    4,   //!< Fixed route message ready to receive
+    CC_TMT_PRIORITY =      5,   //!< Comms controller timeout
+    SOFT_INT_PRIORITY =    6,   //!< Software-driven interrupt
 #if USE_WRITE_BUFFER == TRUE
-    DMA_ERR_PRIORITY =     7  //!< DMA error
+    DMA_ERR_PRIORITY =     7    //!< DMA error
 #endif
 };
 
@@ -207,18 +213,19 @@ enum spin1_api_vic_priorties {
 // ----------------
 //! Describes a DMA transfer
 typedef struct {
-    uint id;
-    uint tag;
-    uint* system_address;
-    uint* tcm_address;
-    uint description;
+    uint id;                    //!< ID
+    uint tag;                   //!< User label
+    uint* system_address;       //!< Address in SDRAM (or other shared memory)
+    uint* tcm_address;          //!< Address in local TCM
+    uint description;           //!< Control descriptor
 } copy_t;
 
 //! \brief The queue of DMA transfers.
-//! \details Internally a circular buffer
+//! \details Implemented as a circular buffer
 typedef struct {
-    uint start;
-    uint end;
+    uint start;                 //!< Index of first transfer
+    uint end;                   //!< Index of last transfer
+    //! Array holding transfer descriptors
     copy_t queue[DMA_QUEUE_SIZE];
 } dma_queue_t;
 // ----------------
@@ -228,44 +235,61 @@ typedef struct {
 // -----------------
 //! A multicast packet
 typedef struct {
-    //! The MC packet key
-    uint key;
-    //! The MC packet payload (if defined)
-    uint data;
-    //! The MC packet control word
-    uint TCR;
+    uint key;                   //!< The MC packet key
+    uint data;                  //!< The MC packet payload (if defined)
+    uint TCR;                   //!< The MC packet control word
 } packet_t;
 
-//! \brief The queue of multicast packets to be sent
-//! \details Internally a circular buffer
+//! \brief The queue of multicast packets to be sent.
+//! \details Implemented as a circular buffer
 typedef struct {
-    uint start;
-    uint end;
+    uint start;                 //!< Index of first packet
+    uint end;                   //!< Index of last packet
+    //! Array holding packet descriptors
     packet_t queue[TX_PACKET_QUEUE_SIZE];
 } tx_packet_queue_t;
 // -----------------
+
+// --------------
+/* user events */
+// --------------
+//! Describes the parameters to pass to a user event.
+typedef struct {
+    uint arg0;                  //!< The first arbitrary parameter
+    uint arg1;                  //!< The second arbitrary parameter
+} user_event_t;
+
+//! \brief The type of the fixed-capacity queue of user events.
+//! \details Implemented as a circular buffer.
+typedef struct {
+    uint start;                 //!< Index of first event
+    uint end;                   //!< Index of last event
+    //! Array holding event descriptors
+    user_event_t queue[USER_EVENT_QUEUE_SIZE];
+} user_event_queue_t;
 
 // -----------------------
 /* scheduler/dispatcher */
 // -----------------------
 //! An external interrupt handler
 typedef struct {
-    callback_t cback;
-    int priority;
+    callback_t cback;           //!< Pointer to the function to call
+    int priority;               //!< The interrupt priority
 } cback_t;
 
 //! An internal interrupt/callback handler
 typedef struct {
-    callback_t cback;
-    uint arg0;
-    uint arg1;
+    callback_t cback;           //!< Pointer to the function to call
+    uint arg0;                  //!< The first arbitrary parameter
+    uint arg1;                  //!< The second arbitrary parameter
 } task_t;
 
 //! \brief The queue of callbacks to do.
-//! \details Internally a circular buffer
+//! \details Implemented as a circular buffer
 typedef struct {
-    uint start;
-    uint end;
+    uint start;                 //!< Index of first task
+    uint end;                   //!< Index of last task
+    //! Array holding task descriptors
     task_t queue[TASK_QUEUE_SIZE];
 } task_queue_t;
 

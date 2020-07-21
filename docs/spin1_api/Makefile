@@ -14,8 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 spin1_api.pdf: spin1_api.tex threads.eps
-	latex spin1_api.tex
-	dvipdf spin1_api.dvi
+	pdflatex spin1_api.tex
+	pdflatex spin1_api.tex
 
 clean:
 	/bin/rm -f *.dvi *.pdf *.log *.aux
