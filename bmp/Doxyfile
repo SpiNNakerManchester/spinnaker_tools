@@ -73,7 +73,7 @@ PROJECT_LOGO           =
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       =
+OUTPUT_DIRECTORY       = ../doxybuild/bmp
 
 # If the CREATE_SUBDIRS tag is set to YES then doxygen will create 4096 sub-
 # directories (in 2 levels) under the output directory of each output format and
@@ -886,7 +886,7 @@ EXCLUDE_PATTERNS       = */modified_src/* \
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories use the pattern */test/*
 
-EXCLUDE_SYMBOLS        = _* 
+EXCLUDE_SYMBOLS        = _*
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or directories
 # that contain example code fragments that are included (see the \include
@@ -1591,7 +1591,7 @@ INCLUDE_FILE_PATTERNS  =
 # recursively expanded use the := operator instead of the = operator.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-PREDEFINED             = __arm__ __GNUC__ __ARM_ARCH_5TE__ __ARM_FEATURE_DSP DOXYGEN NONNULL= NONNULL2= INT_HANDLER=void NORETURN= SARK_IS_A_MALLOC(a)= THUMB BUF_WRITE __inline= WEAK= SECTION(s)= ALIAS(f)= __asm= ALIGNED(a)= __asm= 
+PREDEFINED             = __arm__ __GNUC__ __ARM_ARCH_5TE__ __ARM_FEATURE_DSP DOXYGEN NONNULL= NONNULL2= INT_HANDLER=void NORETURN= SARK_IS_A_MALLOC(a)= THUMB BUF_WRITE __inline= WEAK= SECTION(s)= ALIAS(f)= __asm= ALIGNED(a)= __asm=
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

@@ -30,7 +30,7 @@ jobs:
   include:
     - name: Build
       env:
-        - DEPLOY_DIR=$PWD/html
+        - DEPLOY_DIR=$PWD/doxybuild/deploy
 
 install:
   - export SPINN_DIRS=$PWD
@@ -63,7 +63,7 @@ script:
   # Copyright check
   - support/rat.sh run
   # Documentation build
-  - doxygen
+  - make doxygen
 
 deploy:
   provider: pages

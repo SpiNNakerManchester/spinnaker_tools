@@ -22,3 +22,9 @@ all: $(DIRS)
 
 clean: $(DIRS)
 	@for d in $(DIRS); do $(MAKE) -C $$d GNU=$(GNU) clean || exit $$?; done
+
+doxygen:
+	doxygen
+	(cd bmp; exec doxygen)
+	cp -a doxybuild/tools/html/* doxybuild/deploy
+	cp -a doxybuild/bmp/html doxybuild/deploy/bmp
