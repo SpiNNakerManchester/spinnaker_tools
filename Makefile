@@ -26,5 +26,6 @@ clean: $(DIRS)
 doxygen:
 	doxygen
 	(cd bmp; exec doxygen)
+	-@rm -rf doxybuild/deploy/bmp
 	cp -a doxybuild/tools/html/* doxybuild/deploy
 	cp -a doxybuild/bmp/html doxybuild/deploy/bmp

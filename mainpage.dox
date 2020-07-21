@@ -1,0 +1,36 @@
+/*!
+* @cond copright_declaration
+* Copyright (c) 2020 The University of Manchester
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* @endcond
+*
+* @mainpage spinnaker_tools: SpiNNaker API, SARK, SC&MP, and Spin1 API
+*
+* The SpiNNaker low-level software tools consist of:
+*
+* * spinnaker.h &mdash; The low-level definition of how to access the SpiNNaker
+*   hardware
+* * SARK &mdash; The SpiNNaker Application Runtime Kernel (see sark.h).
+*   This can be considered to be the C library of SpiNNaker.
+* * SC&MP &mdash; The SpiNNaker Control and Monitor Processor (see scamp.h).
+*   This can be considered to be the operating system of SpiNNaker.
+* * Spin1 API &mdash; The SpiNNaker API runtime environment for simulation
+*   applications (see spin1_api.h).
+*
+* There is also the [Board Management Processor (BMP)][bmp], but this is
+* normally transparent to user code (and not usually addressable).
+*
+* [bmp]: bmp/index.html
+*/
