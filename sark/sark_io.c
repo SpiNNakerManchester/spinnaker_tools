@@ -433,8 +433,8 @@ void io_put_fixed(char *stream, uint n, uint d, uint a, uint pad, int neg)
     }
 }
 
- // <drl add>
-//! \brief Format for s15.16 fixed point
+// <drl add>
+//! \brief Format for s16.15 fixed point
 //! \details Delegates to io_put_fixed()
 //! \param[in] stream: Where to write to
 //! \param[in] n: signed accum, as signed integer
@@ -446,7 +446,7 @@ static void io_put_sfixed(char *stream, int n, uint d, uint a, uint pad)
     io_put_fixed(stream, (uint)((n < 0)? (-n): n) << 1, d, a, pad, (n < 0));
 }
 
-//! \brief Format for 16.16 fixed point
+//! \brief Format for u16.16 fixed point
 //! \details Delegates to io_put_fixed()
 //! \param[in] stream: Where to write to
 //! \param[in] n: unsigned accum, as unsigned integer

@@ -44,17 +44,18 @@
 //! The number of bytes in a block
 #define BYTE_COUNT      (WORD_COUNT * sizeof(uint))
 
-//! FF phases, used in nearest neighbour packets.
+//! \brief Flood fill phases, used in nearest neighbour packets.
+//! \details
+//! 	Note that these also set the low 8&ndash;16 bits of the control word.
 enum boot_phases {
-    FF_START_PHASE_1 =          0x01000003,
-    FF_BLOCK_START_PHASE_1 =    0x02000003,
-    FF_BLOCK_DATA_PHASE_1 =     0x03000003,
-    FF_BLOCK_END_PHASE_1 =      0x04000003,
-    FF_CONTROL_PHASE_1 =        0x05000103
+    FF_START_PHASE_1 =          0x01000003, //!< Start
+    FF_BLOCK_START_PHASE_1 =    0x02000003, //!< Block start
+    FF_BLOCK_DATA_PHASE_1 =     0x03000003, //!< Block data
+    FF_BLOCK_END_PHASE_1 =      0x04000003, //!< Block end
+    FF_CONTROL_PHASE_1 =        0x05000103  //!< Finish
 };
 
-//! Target monitor
-// TODO: What does this mean?
+//! Target monitor ID for flood-filled boot packets.
 #define FF_TARGET_MONITOR               0x0
 
 //! Support table for crc32()

@@ -7,8 +7,8 @@
 //! \copyright &copy; The University of Manchester - 2009-2019
 //!
 //! \author Steve Temple, APT Group, School of Computer Science
-//! Email:            steven.temple@manchester.ac.uk
-//!
+// Email:            steven.temple@manchester.ac.uk
+//
 //------------------------------------------------------------------------------
 
 /*
