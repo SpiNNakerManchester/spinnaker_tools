@@ -39,8 +39,10 @@
 #include "spin1_api.h"
 #include "spin1_api_params.h"
 
+// OVERRIDDEN BY SPIN1_API
 cback_t WEAK callback[NUM_EVENTS];
 
+// OVERRIDDEN BY SPIN1_API
 void WEAK schedule_sysmode(uchar event_id, uint arg0, uint arg1) {}
 
 #endif
