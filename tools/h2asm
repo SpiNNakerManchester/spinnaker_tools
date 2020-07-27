@@ -2,7 +2,7 @@
 
 ##------------------------------------------------------------------------------
 ##
-## mkhdr   	    Simplistic script to convert C header files to ARM assembly
+## mkhdr            Simplistic script to convert C header files to ARM assembly
 ##
 ## Copyright (C)    The University of Manchester - 2009, 2010, 2011, 2020
 ##
@@ -78,9 +78,9 @@ while (<>) {
     s/!<//;
 
     if (/^$/) {
-		print "\n" unless $blank;
-		$blank = 1;
-		next;
+        print "\n" unless $blank;
+        $blank = 1;
+        next;
     }
 
     $blank = 0;
@@ -95,41 +95,47 @@ while (<>) {
     next if $inskip;
 
     if (/^;!?(.*)/) {
-		print ";$1\n";
+        # Comment lines
+        print ";$1\n";
     } elsif (/^#define\s+(\w+)\s+(.+)/) {
-	 	my ($name, $val) = ($1, $2);
-		my $rest = '';
+        # Defines
+        my ($name, $val) = ($1, $2);
+        my $rest = '';
 
-		if ($val !~ /^__/) {
-			($val, $rest) = ($2, $3) if $val =~ /^(INT|BYTE)_AT\((.+?)\)(.*)/;
-			printf "%-15s equ     $val$rest\n", $name;
-		}
+        if ($val !~ /^__/) {
+            ($val, $rest) = ($2, $3) if $val =~ /^(INT|BYTE)_AT\((.+?)\)(.*)/;
+            printf "%-15s equ     $val$rest\n", $name;
+        }
     } elsif (/^#ifdef\s+(\w+)/) {
-		printf "%-15s if      :def: $1\n", '';
+        # Conditionals (next few clauses)
+        printf "%-15s if      :def: $1\n", '';
     } elsif (/^#ifndef\s+(\w+)/) {
-		printf "%-15s if      :lnot: :def: $1\n", '';
+        printf "%-15s if      :lnot: :def: $1\n", '';
     } elsif (/^#else$/) {
-		printf "%-15s else\n", '';
+        printf "%-15s else\n", '';
     } elsif (/^#endif$/) {
-		printf "%-15s endif\n", '';
+        printf "%-15s endif\n", '';
     } elsif (!$in_enum && /^enum .*\{/) {
-    	$in_enum = 1;
-    	$enum_count = 0;
+        # Enum start
+        $in_enum = 1;
+        $enum_count = 0;
     } elsif ($in_enum) {
-	    if (/^(\w+)\s*=\s*([^,;]+),?\s*(;.*)?/) {
-	    	my ($name, $val, $comment) = ($1, $2, $3);
-    		$comment = "" unless defined $comment;
-	    	printf "%-15s equ     $val\t$comment\n", $name;
-	    } elsif (/^(\w+),?\s*(;.*)?/) {
-	    	my ($name, $comment) = ($1, $2);
-    		$comment = "" unless defined $comment;
-	    	printf "%-15s equ     $enum_count\t$comment\n", $name;
-	    	$enum_count++;
-	    } elsif (/^\}/) {
-	    	$in_enum = 0;
-	    }
+        # Enum body and end
+        if (/^(\w+)\s*=\s*([^,;]+),?\s*(;.*)?/) {
+            my ($name, $val, $comment) = ($1, $2, $3);
+            $comment = "" unless defined $comment;
+            printf "%-15s equ     $val\t$comment\n", $name;
+        } elsif (/^(\w+),?\s*(;.*)?/) {
+            my ($name, $comment) = ($1, $2);
+            $comment = "" unless defined $comment;
+            printf "%-15s equ     $enum_count\t$comment\n", $name;
+            $enum_count++;
+        } elsif (/^\}/) {
+            $in_enum = 0;
+        }
     } else {
-		$blank = 1;
+        # All other lines are ignored
+        $blank = 1;
     }
 }
 
