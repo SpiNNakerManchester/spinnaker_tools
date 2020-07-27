@@ -149,7 +149,7 @@ var searchData=
   ['scamp_5fp2p_5ftype_5fcodes_1286',['scamp_p2p_type_codes',['../scamp_8h.html#a674d38d5c346910def25520a9d5505c0',1,'scamp.h']]],
   ['scamp_5fsdp_5fflags_1287',['scamp_sdp_flags',['../scamp_8h.html#a2f9a6b0247d45bd7f35f733e393e345a',1,'scamp.h']]],
   ['schedule_1288',['schedule',['../spin1__isr_8c.html#af15196e8b2360105ec0c061cbe9214d2',1,'spin1_isr.c']]],
-  ['schedule_5fsysmode_1289',['schedule_sysmode',['../spin1__api_8c.html#a36572c0080ae940c999eabb6e00e7f22',1,'spin1_api.c']]],
+  ['schedule_5fsysmode_1289',['schedule_sysmode',['../spin1__api_8c.html#aae2f320075d9cf52b46f9475ec0b16cc',1,'spin1_api.c']]],
   ['sdp_5fbuf_5fsize_1290',['SDP_BUF_SIZE',['../sark_8h.html#a0096e6ee6d2a16f2f252af0a8c023546',1,'sark.h']]],
   ['sdp_5ffiq_1291',['sdp_fiq',['../sark__isr_8c.html#a52379f3c6bd3c3000dfc7ffc4a2231dd',1,'sark_isr.c']]],
   ['sdp_5fhdr_1292',['sdp_hdr',['../sark_8h.html#structsdp__hdr',1,'']]],

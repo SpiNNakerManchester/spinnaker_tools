@@ -63,7 +63,7 @@ var searchData=
   ['sark_5fxfree_5fid_2141',['sark_xfree_id',['../sark_8h.html#a5197d7e0234aae820a2ddc722aeecbd4',1,'sark_xfree_id(heap_t *heap, uint app_id, uint flag):&#160;sark_alloc.c'],['../sark__alloc_8c.html#a0d1e347ad21b21b298040b27f36a2bba',1,'sark_xfree_id(heap_t *heap, uint app_id, uint lock):&#160;sark_alloc.c']]],
   ['scamp_5fdebug_2142',['scamp_debug',['../scamp-cmd_8c.html#a5b830754727615d4f6bba4876f348c27',1,'scamp_debug(sdp_msg_t *msg, uint srce_ip):&#160;scamp-cmd.c'],['../scamp_8h.html#a5b830754727615d4f6bba4876f348c27',1,'scamp_debug(sdp_msg_t *msg, uint srce_ip):&#160;scamp-cmd.c']]],
   ['schedule_2143',['schedule',['../spin1__isr_8c.html#af15196e8b2360105ec0c061cbe9214d2',1,'spin1_isr.c']]],
-  ['schedule_5fsysmode_2144',['schedule_sysmode',['../spin1__api_8c.html#a36572c0080ae940c999eabb6e00e7f22',1,'spin1_api.c']]],
+  ['schedule_5fsysmode_2144',['schedule_sysmode',['../spin1__api_8c.html#aae2f320075d9cf52b46f9475ec0b16cc',1,'spin1_api.c']]],
   ['sdp_5ffiq_2145',['sdp_fiq',['../sark__isr_8c.html#a52379f3c6bd3c3000dfc7ffc4a2231dd',1,'sark_isr.c']]],
   ['sdp_5firq_2146',['sdp_irq',['../sark__isr_8c.html#ae079bf742bf561071d5c4dfcba1af44f',1,'sark_isr.c']]],
   ['sdp_5fnull_2147',['sdp_null',['../sark__isr_8c.html#a804034908df51e94f11737e28d158cfb',1,'sark_isr.c']]],
