@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// sark_alloc.c     Memory management routines for SARK
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file      sark_alloc.c
+//! \brief     Memory management routines for SARK
+//!
+//! \copyright &copy; The University of Manchester - 2009-2013
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -425,11 +424,13 @@ void rtr_free(uint entry, uint clear)
 
 //------------------------------------------------------------------------------
 
+//! \brief Mask used to pick out whether a block is allocated and allocated
+//! to a particular application instance.
+#define FREE_MASK 0xe0ff
+
 // Free all allocated blocks in the router which are tagged with the
 // given "app_id". Argument clear causes the relevant router registers
 // to be re-initialised. Returns number of blocks freed.
-
-#define FREE_MASK 0xe0ff
 
 uint rtr_free_id(uint app_id, uint clear)
 {

@@ -15,6 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file
+//! \brief Wrapper for using sark.h from C++
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
 extern "C"

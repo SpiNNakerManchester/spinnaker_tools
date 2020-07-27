@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_io.c         Simple character I/O library for BMP
-//
-// Copyright (C)    The University of Manchester - 2009-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_io.c
+//! \brief          Simple character I/O library for BMP
+//!
+//! \copyright      &copy; The University of Manchester - 2009-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -35,18 +36,23 @@
 
 //------------------------------------------------------------------------------
 
-extern void eth_putc (uint32_t c);
+extern void eth_putc(uint32_t c);
 
 //------------------------------------------------------------------------------
 
+//! Hexadecimal characters
 static const char hex[] = "0123456789abcdef";
 
-static uint32_t sp_ptr;                 // for 'sprintf'
-static uint32_t tube_ptr;
-static uint8_t tube_buf[256];
+static uint32_t sp_ptr;         //!< Where in buffer to write, for 'sprintf'
+static uint32_t tube_ptr;       //!< Point in ::tube_buf to write
+static uint8_t tube_buf[256];   //!< Accumulates chars to write to host
 
 //------------------------------------------------------------------------------
 
+//! \brief Add character to standard output stream
+//! \details If the buffer is full or at end of line, push the buffer to the
+//!     configured host machine.
+//! \param[in] c: The character to write
 static void std_putc(uint32_t c)
 {
     tube_buf[tube_ptr++] = c;
@@ -79,6 +85,9 @@ static void std_putc(uint32_t c)
 
 //------------------------------------------------------------------------------
 
+//! \brief Add character to an output stream
+//! \param[in] stream: Where to write to.
+//! \param[in] c: The character to write
 static void io_put_char(char *stream, uint32_t c)
 {
     if (stream == IO_STD) {
@@ -93,6 +102,10 @@ static void io_put_char(char *stream, uint32_t c)
     }
 }
 
+//! \brief Add string to an output stream
+//! \param[in] stream: Where to write to.
+//! \param[in] s: The string to write
+//! \param[in] d: Field width
 static void io_put_str(char *stream, char *s, int d)
 {
     char *t = s;
@@ -109,7 +122,11 @@ static void io_put_str(char *stream, char *s, int d)
     }
 }
 
-// pad not used!
+//! \brief Add signed integer to an output stream
+//! \param[in] stream: Where to write to.
+//! \param[in] n: The number to write
+//! \param[in] d: Field width
+//! \param[in] pad: Padding character (unused!)
 static void io_put_int(char *stream, int n, uint32_t d, uint32_t pad)
 {
     char s[16];
@@ -143,6 +160,11 @@ static void io_put_int(char *stream, int n, uint32_t d, uint32_t pad)
     }
 }
 
+//! \brief Add unsigned integer to an output stream
+//! \param[in] stream: Where to write to.
+//! \param[in] n: The number to write
+//! \param[in] d: Field width
+//! \param[in] pad: Padding character (unused!)
 static void io_put_uint(char *stream, uint32_t n, uint32_t d, uint32_t pad)
 {
     char s[16];
@@ -167,6 +189,10 @@ static void io_put_uint(char *stream, uint32_t n, uint32_t d, uint32_t pad)
     }
 }
 
+//! \brief Add zero-padded hex integer to an output stream
+//! \param[in] stream: Where to write to.
+//! \param[in] n: The number to write
+//! \param[in] d: Field width
 static void io_put_zhex(char *stream, uint32_t n, uint32_t d)
 {
     for (int i = d - 1; i >= 0; i--) {
@@ -174,6 +200,11 @@ static void io_put_zhex(char *stream, uint32_t n, uint32_t d)
     }
 }
 
+//! \brief Add hex integer to an output stream
+//! \param[in] stream: Where to write to.
+//! \param[in] n: The number to write
+//! \param[in] d: Field width
+//! \param[in] pad: Padding character
 static void io_put_hex(char *stream, uint32_t n, uint32_t d, uint32_t pad)
 {
     char s[16];
@@ -201,6 +232,9 @@ static void io_put_hex(char *stream, uint32_t n, uint32_t d, uint32_t pad)
 }
 
 
+//! \brief Add MAC address to an output stream
+//! \param[in] stream: Where to write to.
+//! \param[in] s: The MAC address to write
 static void io_put_mac(char *stream, uint8_t *s)
 {
     for (uint32_t i = 0; i < 6; i++) {
@@ -212,6 +246,9 @@ static void io_put_mac(char *stream, uint8_t *s)
 }
 
 
+//! \brief Add IP address to an output stream
+//! \param[in] stream: Where to write to.
+//! \param[in] s: The IP address to write
 static void io_put_ip(char *stream, uint8_t *s)
 {
     for (uint32_t i = 0; i < 4; i++) {
@@ -223,6 +260,10 @@ static void io_put_ip(char *stream, uint8_t *s)
 }
 
 
+//! \brief Print to an output stream
+//! \param[in] stream: Where to write to.
+//! \param[in] f: The format string
+//! \param[in] ...: Values to fill into the format string
 void io_printf(char *stream, char *f, ...)
 {
     va_list ap;

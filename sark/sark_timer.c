@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// sark_timer.c     Timer routines for SARK
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Timer routines for SARK
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -30,7 +29,7 @@
 
 //------------------------------------------------------------------------------
 
-event_t cancelled;  // placeholder for events cancelled @ timer_queue head
+static event_t cancelled;  //!< placeholder for events cancelled @ timer_queue head
 
 //------------------------------------------------------------------------------
 
@@ -242,7 +241,7 @@ void timer_cancel_init(void)
 //------------------------------------------------------------------------------
 
 
-// Interrupt handler for the timer which is handling timers.
+//! Interrupt handler for the timer which is handling timers.
 
 void timer2_int(void)
 {
