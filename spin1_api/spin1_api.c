@@ -1357,11 +1357,13 @@ uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 *  that the function is only called by interrupt service routines responding
 *  to events, and these ISRs execute with interrupts disabled.
 *
+* \note Also called from sark_base.c and sark_alib.s via weak linking.
+*
 * \param[in] event_id: ID of the event triggering a callback
 * \param[in] arg0: argument to be passed to the callback
 * \param[in] arg1: argument to be passed to the callback
 */
-static void schedule_sysmode(uchar event_id, uint arg0, uint arg1)
+void schedule_sysmode(uchar event_id, uint arg0, uint arg1)
 {
     if (callback[event_id].priority <= 0) {
         callback[event_id].cback(arg0, arg1);
