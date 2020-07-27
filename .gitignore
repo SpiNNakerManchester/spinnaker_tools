@@ -19,3 +19,4 @@
 *.sv
 **/build
 html
+/doxybuild
