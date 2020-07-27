@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// spinn_phy.c      Spinnaker support routines for SMC PHY chip
-//
-// Copyright (C)    The University of Manchester - 2009, 2010
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Spinnaker support routines for SMC PHY chip
+//!
+//! \copyright &copy; The University of Manchester - 2009, 2010
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -29,15 +28,17 @@
 #include "spinnaker.h"
 #include "sark.h"
 
-
-void phy_reset()
+void phy_reset(void)
 {
     er[ETH_PHY_CTRL] = 0;
     sark_delay_us(10);
     er[ETH_PHY_CTRL] = PHY_CTRL_NRST;
 }
 
-
+//! \brief Sends bits to the PHY chip via the SMC
+//! \param[in] data: the data to move, in the _upper_ bits
+//! 	(critical when fewer than 32 bits being moved)
+//! \param[in] len: the number of bits to move (up to 32)
 static void phy_shift_out(uint data, uint len)
 {
     uint c = er[ETH_PHY_CTRL];
@@ -59,7 +60,9 @@ static void phy_shift_out(uint data, uint len)
     }
 }
 
-
+//! \brief Receive some bits from the PHY chip via the SMC
+//! \param[in] len: the number of bits to receive (up to 32)
+//! \return The received data, in the _low_ bits
 static uint phy_shift_in(uint len)
 {
     uint c = er[ETH_PHY_CTRL];

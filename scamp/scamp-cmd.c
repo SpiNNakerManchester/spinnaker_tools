@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// scamp-cmd.c      Command handling for SC&MP
-//
-// Copyright (C)    The University of Manchester - 2009-2011
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
+//! \file
+//! \brief     Command handling for SC&MP
+//!
+//! \copyright &copy; The University of Manchester - 2009-2011
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -34,17 +33,22 @@
 
 //------------------------------------------------------------------------------
 
-// Version command string for SC&MP
+//! Version command string for SC&MP
 
 #define SCAMP_ID_STR            "SC&MP/SpiNNaker"
 
 //------------------------------------------------------------------------------
 
-// arg1 = key
-// arg2 = data
-// arg3 = mark[31] : : fwd : retry
-// Bit 31 of arg3 causes an ID to be generated
-
+//! \brief Generic nearest-neighbour message injection command handler.
+//!
+//! ```
+//! arg1 = key
+//! arg2 = data
+//! arg3 = mark[31] : : fwd : retry
+//! Bit 31 of arg3 causes an ID to be generated
+//! ```
+//! \param[in] msg: SCP message
+//! \return zero; this command never has any payload in its response
 uint cmd_nnp(sdp_msg_t *msg)
 {
     ff_nn_send(msg->arg1, msg->arg2, msg->arg3, msg->arg3 & BIT_31);
@@ -54,13 +58,17 @@ uint cmd_nnp(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-// arg1 = srce_fwd : srce_rty : 00 : ID
-// arg2 = 00 : blk_num : word_cnt : 00
-// arg3 = load_addr
-// buf -> load data
-
+//! \brief Flood fill data command handler.
+//!
+//! ```
+//! msg->arg1 = srce_fwd : srce_rty : 00 : ID
+//! msg->arg2 = 00 : blk_num : word_cnt : 00
+//! msg->arg3 = load_addr
+//! msg->buf -> load data
+//! ```
+//! \param[in] msg: SCP message
+//! \return zero; this command never has any payload in its response
 // !! Multiply delay by some factor (2?) to avoid overload
-
 uint cmd_ffd(sdp_msg_t *msg)
 {
     uint fwd_rty = msg->arg1 >> 16;
@@ -92,10 +100,17 @@ uint cmd_ffd(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-// arg1 = flags[11:8] : timeout : command : dest_port : tag
-// arg2 = dest_addr : port
-// arg3 = IP
-
+//! \brief IPTag manipulation command handler.
+//!
+//! ```
+//! arg1 = flags[11:8] : timeout : command : dest_port : tag
+//! arg2 = dest_addr : port
+//! arg3 = IP
+//! ```
+//! \param[in,out] msg: SCP message; will be updated with response code and
+//!     payload
+//! \param[in] srce_ip: Source IP address (needed in some modes)
+//! \return the length of the response payload
 uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
 {
     uint op = (msg->arg1 >> 16) & 255;
@@ -191,6 +206,10 @@ uint cmd_iptag(sdp_msg_t *msg, uint srce_ip)
 
 //-------------------------------------------------------------------------
 
+//! \brief Version command handler
+//! \param[in,out] msg: SCP message; will be updated with response code and
+//!     payload
+//! \return the length of the response payload
 uint cmd_ver(sdp_msg_t *msg)
 {
     // Report P2P address of 255,255 until boot completes (as an indication
@@ -212,10 +231,13 @@ uint cmd_ver(sdp_msg_t *msg)
 
 //-------------------------------------------------------------------------
 
+//! \brief Link read command handler
 // arg1=addr
 // arg2=len
 // arg3=link_num
 
+//! \param[in,out] msg: SCP message, will be updated with result + payload
+//! \return The length of the payload of \p msg
 uint cmd_link_read(sdp_msg_t *msg)
 {
     uint len = msg->arg2;
@@ -247,10 +269,13 @@ uint cmd_link_read(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+//! \brief Link write command handler
 // arg1=addr
 // arg2=len
 // arg3=link_num
 
+//! \param[in,out] msg: SCP message, will be updated with result
+//! \return Zero; no payload
 uint cmd_link_write(sdp_msg_t *msg)
 {
     uint len = msg->arg2;
@@ -282,7 +307,9 @@ uint cmd_link_write(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Application start command handler
+//! \param[in] msg: SCP message
+//! \return Zero; no payload
 uint cmd_as(sdp_msg_t *msg)
 {
     proc_start_app(msg->arg1, msg->arg2);
@@ -293,7 +320,9 @@ uint cmd_as(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Application reset command handler
+//! \param[in,out] msg: SCP message, will be updated with result
+//! \return Zero; no payload
 uint cmd_ar(sdp_msg_t *msg)
 {
     uint id_op_mask = msg->arg1;
@@ -311,6 +340,7 @@ uint cmd_ar(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+//! \brief Router control command handler
 // arg1 = (count << 16) + (app_id << 8) + op
 
 // op = 0 - initialise
@@ -319,6 +349,8 @@ uint cmd_ar(sdp_msg_t *msg)
 // op = 3 - set/get Fixed Route register (arg2 = route)
 //          if bit 31 of arg1 set then return FR reg else set it
 
+//! \param[in,out] msg: SCP message, will be updated with result + payload
+//! \return The length of the payload of \p msg
 uint cmd_rtr(sdp_msg_t *msg)
 {
     uint op = msg->arg1 & 255;
@@ -353,37 +385,41 @@ uint cmd_rtr(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-// Get information about this chip. Intended to support a host probing the
-// machine for its basic information.
-//
-// No input arguments expected.
-//
-// The response will contain arg1-3 as desribed below with an additional data
-// payload indicating the application states of all cores.
-// * arg1:
-//   * Bits  4:0  - The number of working cores (including the monitor)
-//   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
-//                  Chip ID in system controller, 0 otherwise. This check is
-//                  performed on demand.
-//   * Bits 24:14 - The number of routing table entries in the
-//                  largest free block.
-//   * Bit 25     - 1 if Ethernet is up, 0 otherwise.
-//   * Bits 31:26 - Undefined
-// * arg2: The size (in bytes) of the largest free block in the SDRAM heap
-// * arg3: The size (in bytes) of the largest free block in the SysRAM heap
-//
-// The data payload consists of (in order):
-// * an 18-byte block which gives the cpu_state_e of each application core with
-//   byte 0 containing core 0's state and so-on.
-// * a short giving the P2P address of the closest chip with an active Ethernet.
-//   Note that this is the chip to which SDP packets will be sent to from this
-//   chip when they contain a destination address indicating that they should be
-//   sent over Ethernet.
-// * a 4-byte block containing the IPv4 address of the Ethernet connection on
-//   this chip, made up of the 4 segments of the IPv4 address, each between
-//   0 and 255.  This might equate to an address of 0.0.0.0 if this chip is not
-//   physically connected to the Ethernet port of a board.
-
+//! \brief General chip information command handler
+//!
+//! Get information about this chip. Intended to support a host probing the
+//! machine for its basic information.
+//!
+//! No input arguments expected.
+//!
+//! The response will contain arg1-3 as desribed below with an additional data
+//! payload indicating the application states of all cores.
+//! * arg1:
+//!   * Bits  4:0  - The number of working cores (including the monitor)
+//!   * Bits 13:8  - A bitmap of links, 1 if responding correctly to PEEK of
+//!                  Chip ID in system controller, 0 otherwise. This check is
+//!                  performed on demand.
+//!   * Bits 24:14 - The number of routing table entries in the
+//!                  largest free block.
+//!   * Bit 25     - 1 if Ethernet is up, 0 otherwise.
+//!   * Bits 31:26 - Undefined
+//! * arg2: The size (in bytes) of the largest free block in the SDRAM heap
+//! * arg3: The size (in bytes) of the largest free block in the SysRAM heap
+//!
+//! The data payload consists of (in order):
+//! * an 18-byte block which gives the cpu_state_e of each application core with
+//!   byte 0 containing core 0's state and so-on.
+//! * a short giving the P2P address of the closest chip with an active Ethernet.
+//!   Note that this is the chip to which SDP packets will be sent to from this
+//!   chip when they contain a destination address indicating that they should be
+//!   sent over Ethernet.
+//! * a 4-byte block containing the IPv4 address of the Ethernet connection on
+//!   this chip, made up of the 4 segments of the IPv4 address, each between
+//!   0 and 255.  This might equate to an address of 0.0.0.0 if this chip is not
+//!   physically connected to the Ethernet port of a board.
+//!
+//! \param[in,out] msg: SCP message, will be updated with result + payload
+//! \return The length of the payload of \p msg
 uint cmd_info(sdp_msg_t *msg)
 {
     // Get number of working CPUs
@@ -445,17 +481,27 @@ extern level_t levels[4];
 extern uint pkt_tx(uint tcr, uint data, uint key);
 extern void return_msg(sdp_msg_t *msg, uint rc);
 
-#define MODE_OR         0
-#define MODE_AND        1
-#define MODE_SUM        2
-#define MODE_3          3
+//! State "counting" coalescing mode
+enum state_coalesce_mode {
+    MODE_OR =       0,  //!< Combine using bitwise OR (any in state?)
+    MODE_AND =      1,  //!< Combine using bitwise AND (all in state?)
+    MODE_SUM =      2,  //!< Combine using ADD
+    MODE_3 =        3   //!< unused
+};
 
-#define APP_RET         0
-#define APP_STAT        1
-#define APP_SIG         2
-#define APP_3           3
+//! Operation to use for P2P_LEVEL messages
+enum send_reg_ctrl {
+    APP_RET =       0,  //!< This is a RETURN (from APP_STAT)
+    APP_STAT =      1,  //!< This is a request for statistics/count
+    APP_SIG =       2,  //!< This is a request to signal cores
+    APP_3 =         3   //!< unused
+};
 
-void p2p_send_reg(uint ctrl, uint addr, uint data)
+//! \brief Send a P2P packet encoding a value sent in response.
+//! \param[in] ctrl: The packet control data (::send_reg_ctrl << 22)
+//! \param[in] addr: The packet target address (::ushort)
+//! \param[in] data: The packet payload information
+static void p2p_send_reg(uint ctrl, uint addr, uint data)
 {
     data |= ctrl;
     data |= chksum_32(data);
@@ -464,8 +510,10 @@ void p2p_send_reg(uint ctrl, uint addr, uint data)
     (void) pkt_tx(PKT_P2P_PL, data, addr);
 }
 
-
-void proc_ret_msg(uint arg1, uint level)
+//! \brief Timer callback, used to finish cmd_sig() call for state counting.
+//! \param[in,out] arg1: SDP message
+//! \param[in] level: Which counter are we reporting the value of?
+static void proc_ret_msg(uint arg1, uint level)
 {
     sdp_msg_t *msg = (sdp_msg_t *) arg1;
     msg->arg1 = levels[level].result;
@@ -482,11 +530,26 @@ void proc_ret_msg(uint arg1, uint level)
     levels[level].result = 0;
 }
 
+//! \brief Callback for proc_send(), gathering the results from sending and
+//!     passing them on to our parent SCAMP.
+//! \param[in] level: Which level are we processing at
+//! \param[in] mode: What mode were we operating in
+static void proc_gather(uint level, uint mode)
+{
+    //  uint rcvd = levels[level].rcvd;
+    uint srce = levels[level].parent;
+    uint d = (mode << 20) + ((level - 1) << 26) + levels[level].result;
 
-void proc_gather(uint level, uint mode);
+    p2p_send_reg(APP_RET << 22, srce, d);
 
+    //NB: clear result just in case
+    levels[level].result = 0;
+}
 
-void proc_send(uint data, uint mask)
+//! \brief Callback for p2p_region(), distributing requests to other SCAMPs
+//! \param[in] data: The description of exactly what is to be done
+//! \param[in] mask: Which bits are relevant
+static void proc_send(uint data, uint mask)
 {
     uint level = (data >> 26) & 3;
     uint mode = (data >> 20) & 3;
@@ -517,21 +580,12 @@ void proc_send(uint data, uint mask)
     }
 }
 
-
-void proc_gather(uint level, uint mode)
-{
-    //  uint rcvd = levels[level].rcvd;
-    uint srce = levels[level].parent;
-    uint d = (mode << 20) + ((level - 1) << 26) + levels[level].result;
-
-    p2p_send_reg(APP_RET << 22, srce, d);
-
-    //NB: clear result just in case
-    levels[level].result = 0;
-}
-
-
-void proc_process(uint data, uint srce)
+//! \brief Callback for p2p_region() when statistics are being collected,
+//!     used so that low-priority processing does not block a high-priority
+//!     interrupt.
+//! \param[in] data: The description of exactly what is to be calculated
+//! \param[in] srce: Where the data came from
+static void proc_process(uint data, uint srce)
 {
     uint mode = (data >> 20) & 3;
     uint app_id = data & 255;
@@ -575,9 +629,9 @@ void proc_process(uint data, uint srce)
     p2p_send_reg(APP_RET << 22, srce, d);
 }
 
-
-// Handler for P2P Region packets
-
+//! \brief Handler for P2P Region packets (those with type ::P2P_LEVEL)
+//! \param[in] data: The payload from the packet
+//! \param[in] srce: The sender address (lower 16 bits) from the packet
 void p2p_region(uint data, uint srce)
 {
     uint t = chksum_32(data);
@@ -634,19 +688,29 @@ void p2p_region(uint data, uint srce)
     p2p_send_reg(APP_RET << 22, srce, d);
 }
 
+//! The types of messages to use to send signals
+enum signal_type {
+    SIG_TYPE_MC = 0,    //!< Use multicast packets (standard signals)
+    SIG_TYPE_P2P = 1,   //!< Use P2P packets (state counting)
+    SIG_TYPE_NN = 2     //!< Use nearest neighbour packets (flood machine)
+};
 
+//! \brief Signal command handler.
+//! \param[in,out] msg: SCP message; will be updated with response code and
+//!     payload
+//! \return the length of the response payload
 uint cmd_sig(sdp_msg_t *msg)
 {
     uint type = msg->arg1;
     uint data = msg->arg2;
 
-    if (type == 0) {
+    if (type == SIG_TYPE_MC) {
         if (p2p_addr != sv->p2p_root) {
             msg->cmd_rc = RC_ARG;
             return 0;
         }
         pkt_tx(PKT_MC_PL, data, SCAMP_MC_SIGNAL_KEY);
-    } else if (type == 1) {
+    } else if (type == SIG_TYPE_P2P) {
         uint mask = msg->arg3;
 
         if (mask == 0) {
@@ -670,7 +734,7 @@ uint cmd_sig(sdp_msg_t *msg)
             msg->cmd_rc = RC_ROUTE;
             return 0;
         }
-    } else if (type == 2) {
+    } else if (type == SIG_TYPE_NN) {
         ff_nn_send((NN_CMD_SIG0 << 24) + 0x3f0000,
                 (5 << 28) + data, 0x3f00, 1);
     } else {
@@ -683,6 +747,7 @@ uint cmd_sig(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
+//! \brief Resource allocation command handler
 // arg1 = (app_id << 8) + op
 
 // op 0 - allocate SDRAM - arg2 = size, arg3 = tag
@@ -694,6 +759,8 @@ uint cmd_sig(sdp_msg_t *msg)
 // op 6 - return free bytes in SDRAM heap & largest block size
 // op 7 - return block point by AppID and Tag
 
+//! \param[in,out] msg: SCP message, will be updated with result + payload
+//! \return The length of the payload of \p msg
 uint cmd_alloc(sdp_msg_t *msg)
 {
     uint op = msg->arg1 & 255;
@@ -748,9 +815,10 @@ uint cmd_alloc(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Core remap command handler
 // May want to check all cores are idle?
-
+//! \param[in,out] msg: SCP message, will be updated with result
+//! \return Always zero; result never has a payload
 uint cmd_remap(sdp_msg_t *msg)
 {
     uint core = msg->arg1;
@@ -783,7 +851,32 @@ uint cmd_remap(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief General debugging and control command handler
+//! \details Delegates to:
+//! * cmd_ver()
+//! * sark_cmd_read()
+//! * sark_cmd_write()
+//! * sark_cmd_fill()
+//! * sark_led_set()
+//! * cmd_srom()
+//! * cmd_link_read()
+//! * cmd_link_write()
+//! * cmd_ffd()
+//! * cmd_iptag()
+//! * cmd_nnp()
+//! * cmd_as()
+//! * cmd_ar()
+//! * cmd_remap()
+//! * cmd_alloc()
+//! * cmd_sig()
+//! * cmd_rtr()
+//! * cmd_info()
+//!
+//! based on the sdp_msg_t::cmd_rc contents.
+//! \param[in,out] msg: The SCP message. Will be updated with response.
+//! \param[in] srce_ip: Source IP address. Only used for cmd_iptag()
+//! \return the length of the _content_ in the response message. 0 means
+//!     there's just a header
 uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
 {
     uint len = msg->length;

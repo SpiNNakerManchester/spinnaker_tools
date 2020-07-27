@@ -1,12 +1,12 @@
 //------------------------------------------------------------------------------
-//
-// scamp-del.c      SC&MP monitor delegation routines
-//
-// Copyright (C)    The University of Manchester - 2017, 2018
-//
-// Author           Luis Plana, APT Group, School of Computer Science
-// Email            luis.plana@manchester.ac.uk
-//
+//! \file
+//! \brief     SC&MP monitor delegation routines
+//!
+//! \copyright &copy; The University of Manchester - 2017-2019
+//!
+//! \author    Luis Plana, APT Group, School of Computer Science
+//! Email:     luis.plana@manchester.ac.uk
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -33,7 +33,7 @@
 
 //------------------------------------------------------------------------------
 
-
+//! Copy executable image from SDRAM to ITCM and boot it
 void img_cp_exe (void) {
     typedef void (*boot_img_t)(void);
     boot_img_t boot_img = (boot_img_t) ITCM_BASE;

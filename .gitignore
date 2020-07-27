@@ -18,3 +18,5 @@
 *.tab
 *.sv
 **/build
+html
+/doxybuild

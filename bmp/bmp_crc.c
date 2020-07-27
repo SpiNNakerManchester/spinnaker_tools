@@ -1,8 +1,9 @@
 //------------------------------------------------------------------------------
 //
-// bmp_crc.c        CRC32 routines for BMP LPC1768
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_crc.c
+//! \brief          CRC32 routines for BMP LPC1768
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -30,7 +31,7 @@
 #include <stdio.h>
 #endif
 
-
+//! CRC constants, precomputed from CRC polynomial
 const uint32_t crc_table[] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
     0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
@@ -78,9 +79,12 @@ const uint32_t crc_table[] = {
 };
 
 
-// Compute CRC32 for a buffer of given length. Argument "crc" can
-// be 0xffffffff to start checking or result of a previous call.
-// The final result needs to be inverted to produce valid CRC32.
+//! \brief Compute CRC32 for a buffer of given length.
+//! \param[in] buf: the data to compute the CRC of
+//! \param[in] len: number of bytes in \p buf
+//! \param[in] crc: can be 0xffffffff to start checking, or result of a
+//!     previous call.
+//! \return The final result needs to be inverted to produce valid CRC32.
 
 uint32_t crc32(void *buf, uint32_t len, uint32_t crc)
 {
@@ -93,6 +97,10 @@ uint32_t crc32(void *buf, uint32_t len, uint32_t crc)
 }
 
 
+//! \brief Compute the CRC of a buffer
+//! \param[in] buf: the data to compute the CRC of
+//! \param[in] len: number of bytes in \p buf
+//! \return The CRC of the buffer
 uint32_t crc32_chk(void *buf, uint32_t len)
 {
     uint8_t *buffer = (uint8_t *) buf;
@@ -105,9 +113,10 @@ uint32_t crc32_chk(void *buf, uint32_t len)
 }
 
 
-// Compute and insert CRC32 of a buffer where the CRC is placed in
-// the last 4 bytes
-
+//! \brief Compute and insert CRC32 of a buffer where the CRC is placed in
+//!     the last 4 bytes
+//! \param[in] buf: the data to compute the CRC of
+//! \param[in] len: number of bytes in \p buf
 void crc32_buf(void *buf, uint32_t len)
 {
     uint8_t *buffer = (uint8_t *) buf;
