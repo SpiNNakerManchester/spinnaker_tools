@@ -596,7 +596,7 @@ void spin1_callback_off(uint event_id)
 */
 static void deschedule(uint event_id)
 {
-    uint cpsr = spin1_irq_disable();
+    uint cpsr = spin1_int_disable();
 
     task_queue_t *tq = &task_queue[callback[event_id].priority-1];
 
@@ -1102,7 +1102,7 @@ void spin1_flush_rx_packet_queue(void)
 //!     consumer
 void spin1_flush_tx_packet_queue(void)
 {
-    uint cpsr = spin1_irq_disable();
+    uint cpsr = spin1_int_disable();
 
     tx_packet_queue.start = tx_packet_queue.end;
 
@@ -1117,7 +1117,7 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
     // TX_nof_full flag instead -- much more efficient!
 
     uint rc = SUCCESS;
-    uint cpsr = spin1_irq_disable();
+    uint cpsr = spin1_int_disable();
 
     /* clear sticky TX full bit and check TX state */
     cc[CC_TCR] = TX_TCR_MCDEFAULT;
@@ -1414,7 +1414,7 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
     uchar result = SUCCESS;
 
     /* disable interrupts for atomic access to task queues */
-    uint cpsr = spin1_irq_disable();
+    uint cpsr = spin1_int_disable();
 
     task_queue_t *tq = &task_queue[priority-1];
 
