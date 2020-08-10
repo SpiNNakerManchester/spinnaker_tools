@@ -4,6 +4,7 @@
 **/*.conf
 **/*.fig
 **/*.eps
+**/*.tag
 
 **/build/**
 
