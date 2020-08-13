@@ -408,7 +408,7 @@ SPIN1_INLINE uint spin1_int_disable(void)
 // Implemented in sark_alib.s; needs to be in ARM mode, not THUMB
 extern void spin1_mode_restore(uint cpsr);
 #else
-SPIN1_INLINE void spin1_mode_restore(uint cpsr)
+SPIN1_INLINE void spin1_mode_restore(uint sr)
 {
     spin1_store_barrier();
 
@@ -416,10 +416,10 @@ SPIN1_INLINE void spin1_mode_restore(uint cpsr)
     asm volatile (
     "msr	cpsr_c, %[cpsr]"
     :
-    : [cpsr] "r" (cpsr)
+    : [cpsr] "r" (sr)
     :);
 #else
-    __asm { msr cpsr_c, cpsr }
+    __asm { msr cpsr_c, sr }
 #endif
 }
 #endif
