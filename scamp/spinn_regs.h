@@ -15,6 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \file
+//! \brief Miscellaneous test registers
+//! \deprecated This file seems to be be unused.
+
 #ifndef SPINN_REGS_H
 #define SPINN_REGS_H
 

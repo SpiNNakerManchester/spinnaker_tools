@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// sark_event.c     Event handling routines for SARK
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Event handling routines for SARK
+//!
+//! \copyright &copy; The University of Manchester - 2009-2013
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -36,7 +35,7 @@ extern int_handler irq_events[];
 extern int_handler queue_events[];
 extern int_handler null_events[];
 
-
+//! Mapping from ::event_type_e to ::spinnaker_interrupt_numbers_e
 static const uchar vic_bit[] = {
     TIMER1_INT,         // Timer 1
     CC_MC_INT,          // MC pkt
@@ -46,9 +45,19 @@ static const uchar vic_bit[] = {
     DMA_DONE_INT        // DMA done
 };
 
+//! Event failure codes, for event_data_t::rc bitmap
+enum efail_code {
+    EFAIL_FIQ,          //!< Failed to register as FIQ
+    EFAIL_IRQ,          //!< Failed to register interrupt
+    EFAIL_QUEUE,        //!< Event could not be enqueued
+    EFAIL_ALLOC,        //!< Event queue could not be allocated
+    EFAIL_NEW           //!< Event queue was exhausted
+};
 
-enum efail_code {EFAIL_FIQ, EFAIL_IRQ, EFAIL_QUEUE, EFAIL_ALLOC, EFAIL_NEW};
-
+//! \brief How to encode a failure code to go in an event (as events can have
+//!     multiple failures).
+//! \param[in] x: The failure code, see ::efail_code
+//! \return the encoded failure
 #define EFAIL(x) (1 << (x))
 
 
@@ -314,10 +323,13 @@ void event_stop(uint rc)
 
 //------------------------------------------------------------------------------
 
-// Adds an event to a list of events which can (all) be executed
-// at some later time. Later events are queued at the tail of the queue.
-// This is the core of the implementation of event_queue and event_queue_proc
-
+//! \brief Adds an event to a list of events which can (all) be executed
+//! at some later time. Later events are queued at the tail of the queue.
+//!
+//! This is the core of the implementation of event_queue() and
+//! event_queue_proc()
+//! \param e: The event to enqueue
+//! \param priority: The priority of the event
 static void enqueue_event(event_t *e, event_priority priority)
 {
     proc_queue_t *queue = &event.proc_queue[priority];
@@ -370,10 +382,10 @@ uint event_queue_proc(event_proc proc, uint arg1, uint arg2,
 
 //------------------------------------------------------------------------------
 
-// Execute a list of events (in the order in which they were added
-// to the list). Events are returned to the free queue after execution.
+// free an event that is no longer in use.
+// The freed event MUST NOT have been scheduled.
 
-static void event_free(event_t *e)
+void event_free(event_t *e)
 {
     // free event if not reused
     if (e->reuse == 0) {
@@ -387,6 +399,11 @@ static void event_free(event_t *e)
     }
 }
 
+//! \brief Safely get the contents of a queue and reset that queue so it can
+//!     receive more events.
+//! \param[in] queue: The queue to have its contents removed.
+//! \return the list of events that were in the queue; NULL if there are no
+//!     events.
 static inline event_t *get_queue_contents(proc_queue_t *queue)
 {
     uint cpsr = cpu_int_disable();
@@ -395,6 +412,12 @@ static inline event_t *get_queue_contents(proc_queue_t *queue)
     cpu_int_restore(cpsr);
     return e;
 }
+
+
+//------------------------------------------------------------------------------
+
+// Execute a list of events (in the order in which they were added
+// to the list). Events are returned to the free queue after execution.
 
 void event_run(uint restart)
 {
@@ -423,6 +446,10 @@ void event_run(uint restart)
     }
 }
 
+//! \brief Safely removes a single event from the head of the given queue.
+//! \param[in] queue: the queue to take an event from.
+//! \return The event that was at the queue head, or NULL if the queue was
+//!     empty.
 static inline event_t *take_one_event_from_queue(proc_queue_t *queue) {
     uint cpsr = cpu_int_disable();  // Interrupts off to manipulate queue
     event_t* e = queue->proc_head;  // Get head of queue
@@ -434,6 +461,15 @@ static inline event_t *take_one_event_from_queue(proc_queue_t *queue) {
     return e;
 }
 
+//! \brief Execute a list of events (in the order in which they were added
+//! to the list). Events are returned to the free queue after execution.
+//!
+//! This differs from event_run() in that it only considers one event at a
+//! time, whereas event_run() processes one priority level of events in one
+//! go. This affects when incoming higher-priority events get run.
+//!
+//! \param[in] restart: Whether to start back at priority zero after
+//!     processing an event.
 void event_run2(uint restart)
 {
     event_priority priority = PRIO_0;

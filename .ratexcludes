@@ -4,6 +4,7 @@
 **/*.conf
 **/*.fig
 **/*.eps
+**/*.tag
 
 **/build/**
 
@@ -12,3 +13,5 @@
 **/bmp/core_*
 **/bmp/lpc*
 **/tools/board.info
+
+**/.nojekyll

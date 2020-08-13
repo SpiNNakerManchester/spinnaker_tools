@@ -1,12 +1,13 @@
+//! \dir
+//! \brief Spinnaker Application Runtime Kernel
 //------------------------------------------------------------------------------
-//
-// sark_base.c      SARK - Spinnaker Application Runtime Kernel
-//
-// Copyright (C)    The University of Manchester - 2010-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
+//! \file      sark_base.c
+//! \brief     SARK - Spinnaker Application Runtime Kernel
+//!
+//! \copyright &copy; The University of Manchester - 2010-2013
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -29,34 +30,45 @@
 
 #include <sark.h>
 
+#ifndef DOXYGEN
+#define WEAK __attribute__((weak))
+#endif
+
 #ifdef SARK_API
 
 #include "spin1_api.h"
 #include "spin1_api_params.h"
 
-cback_t __attribute__((weak)) callback[NUM_EVENTS];
+// OVERRIDDEN BY SPIN1_API
+cback_t WEAK callback[NUM_EVENTS];
 
-void __attribute__((weak)) schedule_sysmode(uchar event_id,
-                                            uint arg0, uint arg1) {}
+// OVERRIDDEN BY SPIN1_API
+void WEAK schedule_sysmode(uchar event_id, uint arg0, uint arg1) {}
 
 #endif
 
 //------------------------------------------------------------------------------
 
+//! Our "application" identifier string
 #define SARK_ID_STR             "SARK/SpiNNaker"
 
 sark_data_t sark;
 
+//! \brief Interrupt handler for messages from SCAMP.
 INT_HANDLER sark_int_han(void);
+//! \brief Interrupt handler for messages from SCAMP. (FIQ)
 INT_HANDLER sark_fiq_han(void);
 
 //------------------------------------------------------------------------------
 
-// Simple RTE handler. Regs and state have been saved before we get
-// here and if we return we do "cpu_shutdown". Can be replaced by
-// user-provided alternative.
-
-void __attribute__((weak)) rte_handler(uint code)
+//! \brief Simple RTE handler.
+//!
+//! Regs and state have been saved before we get
+//! here and if we return we do "cpu_shutdown". Can be replaced by
+//! user-provided alternative.
+//!
+//! \param[in] code: The error code
+void WEAK rte_handler(uint code)
 {
     sv->led_period = 8;
 }
@@ -383,11 +395,15 @@ void sark_shmsg_free(sdp_msg_t *msg)
 
 
 #ifdef __GNUC__
-typedef void (*constructor_t)(void);
-extern constructor_t __init_array_start;
-extern constructor_t __init_array_end;
 void sark_call_cpp_constructors(void)
 {
+    // The real type of C++ load-time constructors
+    typedef void (*constructor_t)(void);
+    // Special GCC magic: start of array of constructors
+    extern constructor_t __init_array_start;
+    // Special GCC magic: end of array of constructors
+    extern constructor_t __init_array_end;
+
     // Loop through any C++ constructors that may be present and call them
     for (constructor_t *p = &__init_array_start; p < &__init_array_end; p++) {
         (*p)();
@@ -402,18 +418,19 @@ void sark_call_cpp_constructors(void)
 
 //------------------------------------------------------------------------------
 
-// "sark_init" sets up SARK stacks and some internal data structures.
-// This is a weak declaration so that it may be replaced with another
-// routine though not many systems will want to do this.
-
-// "sark_config" (also weak - see sark_alib.s) can be used to preconfigure
-// some parameters which are used here.
-
-// Argument "stack" is the top of the SVC stack
-// Return value is the mode (CPSR) which will be entered on return
-// NB - arrive in SVC mode - must leave in same mode!
-
-uint __attribute__((weak)) sark_init(uint *stack)
+//! \brief This sets up SARK stacks and some internal data structures.
+//!
+//! This is a weak declaration so that it may be replaced with another
+//! routine though not many systems will want to do this.
+//!
+//! "sark_config" (also weak --- see sark_alib.s) can be used to preconfigure
+//! some parameters which are used here.
+//!
+//! \note arrive in SVC mode --- must leave in same mode!
+//!
+//! \param[in] stack: the top of the SVC stack
+//! \return the mode (CPSR) which will be entered on return
+uint WEAK sark_init(uint *stack)
 {
     // Set up 4 stacks
 
@@ -491,15 +508,17 @@ uint __attribute__((weak)) sark_init(uint *stack)
     return MODE_SYS;
 }
 
-
-void __attribute__((weak)) sark_pre_main(void)
+//! \brief Basic setup before calling c_main().
+//! \details Can be replaced by user code by name override.
+void WEAK sark_pre_main(void)
 {
     sark_call_cpp_constructors();
     sark_cpu_state(CPU_STATE_SARK);
 }
 
-
-void __attribute__((weak)) sark_post_main(void)
+//! \brief Basic teardown after calling c_main().
+//! \details Can be replaced by user code by name override.
+void WEAK sark_post_main(void)
 {
     sark_cpu_state(CPU_STATE_EXIT);
 }
@@ -512,47 +531,41 @@ void __attribute__((weak)) sark_post_main(void)
 
 uint sark_msg_send(sdp_msg_t *msg, uint timeout)
 {
-    sdp_msg_t *shm_msg = sark_shmsg_get();
 
-    if (shm_msg == NULL) {
-        return 0;
-    }
-
-    sark_msg_cpy(shm_msg, msg);
-
-    sark.vcpu->mbox_mp_msg = shm_msg;
-    sark.vcpu->mbox_mp_cmd = SHM_MSG;
-
-    uint cpsr = sark_lock_get(LOCK_MBOX);
-
-    uint t = sv->mbox_flags;
-
-    sv->mbox_flags = t | (1 << sark.virt_cpu);
-
-    if (t == 0) {
-        sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
-    }
-
-    sark_lock_free(cpsr, LOCK_MBOX);
-
+    // Wait for the box to be idle if it isn't already
     // Timeout using bottom 32 bits of clock_ms!
-
     volatile uint *ms = (uint *) &sv->clock_ms;
     uint start = *ms;
-
     while (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
         if (*ms - start > timeout) {
             break;
         }
     }
 
+    // If the mailbox is still not free, exit
     if (sark.vcpu->mbox_mp_cmd != SHM_IDLE) {
-        // message sending failed - free mailbox,
-        // flag it as IDLE and return error code
-        sark.vcpu->mbox_mp_cmd = SHM_IDLE;
-        sark_shmsg_free(shm_msg);
         return 0;
     }
+
+    // Get a message to send
+    sdp_msg_t *shm_msg = sark_shmsg_get();
+    if (shm_msg == NULL) {
+        return 0;
+    }
+
+    // Send the message
+    sark_msg_cpy(shm_msg, msg);
+    sark.vcpu->mbox_mp_msg = shm_msg;
+    sark.vcpu->mbox_mp_cmd = SHM_MSG;
+
+    // Signal SCAMP that the message is ready to be read
+    uint cpsr = sark_lock_get(LOCK_MBOX);
+    uint t = sv->mbox_flags;
+    sv->mbox_flags = t | (1 << sark.virt_cpu);
+    if (t == 0) {
+        sc[SC_SET_IRQ] = SC_CODE + (1 << sv->v2p_map[0]);
+    }
+    sark_lock_free(cpsr, LOCK_MBOX);
 
     sark.msg_sent++;
     return 1;
@@ -664,7 +677,15 @@ uint sark_cmd_fill(sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Basic SCP message handler.
+//!
+//! SARK only supports a subset of messages. Will delegate to:
+//! * sark_cmd_ver()
+//! * sark_cmd_read()
+//! * sark_cmd_write()
+//! * sark_cmd_fill()
+//! \param[in,out] msg: The SCP message
+//! \return the size of the result message payload, in bytes
 static uint sark_debug(sdp_msg_t *msg)
 {
     uint len = msg->length;
@@ -691,7 +712,9 @@ static uint sark_debug(sdp_msg_t *msg)
     return 0;
 }
 
-
+//! \brief Swap SDP headers around so that a reply goes back to the sender of
+//!     the request that it is a reply for.
+//! \param[in,out] msg: The SDP message
 static void swap_hdr(sdp_msg_t *msg)
 {
     uint dest_port = msg->dest_port;
@@ -720,12 +743,20 @@ void sark_wait(void)
 
 //------------------------------------------------------------------------------
 
-
-// Interrupt handler for CPU interrupt from monitor processor
-// Entry and exit are via wrapper code "sark_int_han" in "sark_alib.s"
-// This handler executes in System mode with interrupts enabled.
-
-
+//! \brief Handles messages from SCAMP
+//!
+//! Interrupt handler for CPU interrupt from monitor processor.
+//! Entry and exit are via wrapper code sark_int_han() in "sark_alib.s"
+//! This handler executes in System mode with interrupts enabled.
+//!
+//! Handles watchdog timer responses, signals, SDP message reception.
+//! Delegates to:
+//! * event_pause()
+//! * event_stop()
+//! * sark_debug()
+//!
+//! \param[in] pc: Where the CPU was executing when the interrupt happened.
+//!     Used for watchdog reporting.
 void sark_int(void *pc)
 {
     sc[SC_CLR_IRQ] = SC_CODE + (1 << sark.phys_cpu);    // Ack the interrupt

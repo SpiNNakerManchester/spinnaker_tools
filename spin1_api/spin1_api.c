@@ -15,6 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//! \dir
+//! \brief SpiNNaker Higher-Level Runtime Foundation
+//! \file
+//! \brief The SpiNNaker API runtime environment
 #include <sark.h>
 
 #include <spin1_api.h>
@@ -25,28 +29,53 @@
 /* simulation control */
 // ---------------------
 
-uchar leadAp;                           // lead appl. core has special functions
+uchar leadAp;                       //!< lead appl. core has special functions
 
-static volatile uint run;               // controls simulation start/exit
-static volatile uint paused;            // indicates when paused
-static volatile uint resume_sync;       // controls re-synchronisation
-uint ticks;                             // number of elapsed timer periods
-static uint timer_tick;                 // timer tick period
-static uint timer_phase;                // additional phase on starting the timer
+static volatile uint run;           //!< controls simulation start/exit
+static volatile uint paused;        //!< indicates when paused
+static volatile uint resume_sync;   //!< controls re-synchronisation
+uint ticks;                         //!< number of elapsed timer periods
+uint timer_tick;                    //!< timer tick period
+uint timer_tick_clocks;             //!< timer tick period in clock cycles
+int drift;                          //!< drift in clock cycles per timer tick
+int drift_sign;                     //!< sign of the drift
+int drift_accum;                    //!< accumulation of drifts
+int time_to_next_drift_update;      //!< timer ticks until drift needs to be updated
+static uint timer_phase;            //!< additional phase on starting the timer
 
-// default fiq handler -- restored after simulation
-isr_t old_vector;
-uint old_select;
-uint old_enable;
+//! Default FIQ handler. Restored after simulation
+static isr_t old_vector;
+//! Default FIQ select. Restored after simulation
+static uint old_select;
+//! Default interrupt enable. Restored after simulation
+static uint old_enable;
 
-int fiq_event = -1;
-int mc_pkt_prio = -2;
-int fr_pkt_prio = -2;
+//! \brief Which event is to be handled by the FIQ.
+//! \details Used to enforce that only one type of basic interrupt handler
+//!     can use the FIQ. Special cased for packet received handlers, where
+//!     the with- and without-payload variants are actually using the same
+//!     interrupt handler.
+//!
+//!     We usually expect the FIQ to be used for multicast packets, as they
+//!     have the most stringent reception performance requirements in
+//!     practice.
+static int fiq_event = -1;
+//! \brief Sanity check state for multicast packet handlers.
+//! \details Used to enforce that both the without- and with-payload versions
+//!     of the handlers use the same basic interrupt handler. The `-2` means
+//!     "not yet assigned".
+static int mc_pkt_prio = -2;
+//! \brief Sanity check state for fixed-route packet handlers.
+//! \details Used to enforce that both the without- and with-payload versions
+//!     of the handlers use the same basic interrupt handler. The `-2` means
+//!     "not yet assigned".
+static int fr_pkt_prio = -2;
 
 
 // ---------------
 /* dma transfer */
 // ---------------
+//! The pending DMA transfers.
 dma_queue_t dma_queue;
 // ---------------
 
@@ -54,25 +83,36 @@ dma_queue_t dma_queue;
 // -----------------
 /* communications */
 // -----------------
+//! The pending SpiNNaker packets to transmit.
 tx_packet_queue_t tx_packet_queue;
 // -----------------
 
+// --------------
+/* user events */
+// --------------
+//! \brief The pending user event callbacks to call.
+//! \details Registered by spin1_trigger_user_event()
+user_event_queue_t user_event_queue;
+// --------------
 
 // -----------------------
 /* scheduler/dispatcher */
 // -----------------------
+//! The queue of scheduled tasks.
 static task_queue_t task_queue[NUM_PRIORITIES-1];  // priority <= 0 is non-queueable
+//! The registered callbacks for each event type.
 cback_t callback[NUM_EVENTS];
-uchar user_pending = FALSE;
-uint user_arg0;
-uint user_arg1;
 
 
 // -----------------------------------------
 // Configure API debug info (Send to IO_BUF)
 // -----------------------------------------
 
+//! API information will be reported via #IO_BUF
 #define IO_API IO_BUF
+//! \brief Delay between API I/O messages.
+//! \param us: Time (in &mu;s) to delay
+//! \details Does nothing
 #define io_delay(us)
 // Uncomment next two for IO_STD
 // #define io_delay(us) sark_delay_us (us)
@@ -98,37 +138,35 @@ extern INT_HANDLER cc_tx_empty_isr(void);
 extern INT_HANDLER dma_done_isr(void);
 extern INT_HANDLER dma_error_isr(void);
 extern INT_HANDLER timer1_isr(void);
-extern INT_HANDLER sys_controller_isr(void);
 extern INT_HANDLER soft_int_isr(void);
 extern INT_HANDLER cc_rx_ready_fiqsr(void);
 extern INT_HANDLER cc_fr_ready_fiqsr(void);
 extern INT_HANDLER dma_done_fiqsr(void);
 extern INT_HANDLER timer1_fiqsr(void);
 extern INT_HANDLER soft_int_fiqsr(void);
+//! \brief Interrupt handler for messages from SCAMP.
 extern INT_HANDLER sark_int_han(void);
 
 // ----------------------------
 /* intercore synchronisation */
 // ----------------------------
 
+//! \brief Wait for interrupt.
+//! \details Puts the CPU to sleep until an interrupt occurs.
 extern void spin1_wfi(void);
+//! \brief Enable interrupts. Alias for cpu_int_enable()
+//! \return the old value of the CPSR
 uint spin1_int_enable(void);
 
 // ------------------------------------------------------------------------
 // hardware support functions
 // ------------------------------------------------------------------------
-/****f* spin1_api.c/configure_communications_controller
+/*! \brief Configures the communications controller.
 *
-* SUMMARY
 *  This function configures the communications controller by clearing out
 *  any pending packets from the RX buffer and clearing sticky error bits.
-*
-* SYNOPSIS
-*  void configure_communications_controller()
-*
-* SOURCE
 */
-void configure_communications_controller()
+static void configure_communications_controller(void)
 {
     // initialize transmitter control to send MC packets
     cc[CC_TCR] = 0x00000000;
@@ -139,19 +177,13 @@ void configure_communications_controller()
 /*
 *******/
 
-/****f* spin1_api.c/configure_dma_controller
+/*! \brief Configures the DMA controller.
 *
-* SUMMARY
 *  This function configures the DMA controller by aborting any previously-
 *  queued or currently-executing transfers and clearing any corresponding
 *  interrupts then enabling all interrupts sources.
-*
-* SYNOPSIS
-*  void configure_dma_controller()
-*
-* SOURCE
 */
-void configure_dma_controller()
+static void configure_dma_controller(void)
 {
     dma[DMA_CTRL] = 0x3f; // Abort pending and active transfers
     dma[DMA_CTRL] = 0x0d; // clear possible transfer done and restart
@@ -173,50 +205,64 @@ void configure_dma_controller()
 /*
 *******/
 
-/****f* spin1_api.c/configure_timer1
+/*! \brief Configures Timer 1.
 *
-* SUMMARY
-*  This function configures timer 1 to raise an interrupt with a pediod
+*  This function configures timer 1 to raise an interrupt with a period
 *  specified by `time'. Firstly, timer 1 is disabled and any pending
 *  interrupts are cleared. Then timer 1 load and background load
 *  registers are loaded with the core clock frequency (set by the monitor and
 *  recorded in system RAM MHz) multiplied by `time' and finally timer 1 is
 *  loaded with the configuration below.
 *
+*  ```
 *    [0]   One-shot/wrapping     Wrapping
 *    [1]   Timer size            32 bit
 *    [3:2] Input clock divide    1
 *    [5]   IRQ enable            Enabled
 *    [6]   Mode                  Periodic
 *    [7]   Timer enable          Disabled
+*  ```
 *
-* SYNOPSIS
-*  void configure_timer1(uint time, uint phase)
-*
-* INPUTS
-*  uint time: timer period in microseconds, 0 = timer disabled
-*  uint phase: timer offset in microseconds
-*
-* SOURCE
+*  \param[in] time: timer period in microseconds, 0 = timer disabled
+*  \param[in] phase: timer offset in microseconds
 */
-void configure_timer1(uint time, uint phase)
+static void configure_timer1(uint time, uint phase)
 {
+    // Work out the drift per timer tick
+    drift = time * sv->clock_drift;
+
+    // Keep the drift positive as the maths is then easier
+    drift_sign = 1;
+    if (drift < 0) {
+        drift = -drift;
+        drift_sign = -1;
+    }
+
+    // Each timer tick we add on the integer number of clock cycles accumulated
+    // and subtract this from the accumulator.
+    drift_accum = drift;
+    int drift_int = drift_accum & DRIFT_INT_MASK;
+    drift_accum -= drift_int;
+    drift_int = (drift_int >> DRIFT_FP_BITS) * drift_sign;
+    time_to_next_drift_update = TIME_BETWEEN_SYNC_US;
+
     // do not enable yet!
+    timer_tick_clocks = sv->cpu_clk * time;
     tc[T1_CONTROL] = 0;
     tc[T1_INT_CLR] = 1;
-    tc[T1_LOAD] = sv->cpu_clk * (time + phase);
-    tc[T1_BG_LOAD] = sv->cpu_clk * time;
+    tc[T1_LOAD] = timer_tick_clocks + (sv->cpu_clk * phase) + drift_int;
+    tc[T1_BG_LOAD] = timer_tick_clocks + drift_int;
 }
 /*
 *******/
 
 #ifndef VIC_ENABLE_VECTOR
+//! Enable flag for VIC vector control (see #VIC_CNTL)
 #define VIC_ENABLE_VECTOR (0x20)
 #endif //VIC_ENABLE_VECTOR
 
-/****f* spin1_api.c/configure_vic
+/*! \brief Configures the VIC.
 *
-* SUMMARY
 *  This function configures the Vectored Interrupt Controller. Firstly, all
 *  interrupts are disabled and then the addresses of the interrupt service
 *  routines are placed in the VIC vector address registers and the
@@ -227,12 +273,9 @@ void configure_timer1(uint time, uint phase)
 *  priorities by simply switching around the order in which they are set (a
 *  simple copy+paste operation). Finally, the interrupt sources are enabled.
 *
-* SYNOPSIS
-*  void configure_vic(uint enable_timer)
-*
-* SOURCE
+*  \param[in] enable_timer: True if the timer interrupt should be enabled.
 */
-void configure_vic(uint enable_timer)
+static void configure_vic(uint enable_timer)
 {
     uint fiq_select = 0;
     uint int_select = ((1 << TIMER1_INT)   |
@@ -329,7 +372,7 @@ void configure_vic(uint enable_timer)
 *******/
 
 
-void spin1_pause()
+void spin1_pause(void)
 {
     vic[VIC_DISABLE] = (1 << TIMER1_INT);
     configure_timer1(timer_tick, timer_phase);
@@ -337,8 +380,8 @@ void spin1_pause()
     paused = 1;
 }
 
-
-void resume()
+//! Resumes simulating by enabling the main timer.
+static void resume(void)
 {
     if (resume_sync == 1) {
         resume_sync = 0;
@@ -365,8 +408,10 @@ void spin1_resume(sync_bool sync)
     }
 }
 
-
-uint resume_wait()
+//! \brief Determines if we are waiting for SYNC flip
+//! \return true if we are waiting, false if not
+//! \internal Referred to by FEC/simulation.c; must not be static
+uint resume_wait(void)
 {
     uint bit = 1 << sark.virt_cpu;
 
@@ -380,15 +425,14 @@ uint resume_wait()
 // ------------------------------------------------------------------------
 // scheduler/dispatcher functions
 // ------------------------------------------------------------------------
-/****f* spin1_api.c/dispatch
+/*! \brief Main simulation event dispatch loop.
 *
-* SUMMARY
 *  This function executes callbacks which are scheduled in response to events.
 *  Callbacks are completed firstly in order of priority and secondly in the
 *  order in which they were enqueued.
 *
 *  The dispatcher is the sole consumer of the scheduler queues and so can
-*  safely run with interrupts enabled. Note that deschedule(uint event_id)
+*  safely run with interrupts enabled. Note that deschedule()
 *  modifies the scheduler queues which naturally influences the callbacks
 *  that are dispatched by this function but not in such a way as to allow the
 *  dispatcher to move the processor into an invalid state such as calling a
@@ -397,8 +441,8 @@ uint resume_wait()
 *  Upon emptying the scheduling queues the dispatcher goes into wait for
 *  interrupt mode.
 *
-*  Potential hazard: It is possible that an event will occur -and result in
-*  a callback being scheduled- AFTER the last check on the scheduler queues
+*  Potential hazard: It is possible that an event will occur _and result in
+*  a callback being scheduled_ AFTER the last check on the scheduler queues
 *  and BEFORE the wait for interrupt call. In this case, the scheduled
 *  callback would not be handled until the next event occurs and causes the
 *  wait for interrupt call to return.
@@ -406,13 +450,8 @@ uint resume_wait()
 *  This hazard is avoided by calling wait for interrupt with interrupts
 *  disabled! Any interrupt will still wake up the core and then
 *  interrupts are enabled, allowing the core to respond to it.
-*
-* SYNOPSIS
-*  void dispatch()
-*
-* SOURCE
 */
-void dispatch()
+static void dispatch(void)
 {
     uint i;
     uint cpsr;
@@ -495,25 +534,6 @@ void dispatch()
 // ------------------------------------------------------------------------
 // simulation control and event management functions
 // ------------------------------------------------------------------------
-/****f* spin1_api.c/spin1_callback_on
-*
-* SUMMARY
-*  This function sets the given callback to be scheduled on occurrence of the
-*  specified event. The priority argument dictates the order in which
-*  callbacks are executed by the scheduler.
-*
-* SYNOPSIS
-*  void spin1_callback_on(uchar event_id, callback_t cback, int priority)
-*
-* INPUTS
-*  uint event_id: event for which callback should be enabled
-*  callback_t cback: callback function
-*  int priority:   0 = non-queueable callback (associated to irq)
-*                > 0 = queueable callback
-*                < 0 = preeminent callback (associated to fiq)
-*
-* SOURCE
-*/
 void spin1_callback_on(uint event_id, callback_t cback, int priority)
 {
     // set up the callback
@@ -550,23 +570,6 @@ void spin1_callback_on(uint event_id, callback_t cback, int priority)
         }
     }
 }
-/*
-*******/
-
-
-/****f* spin1_api.c/spin1_callback_off
-*
-* SUMMARY
-*  This function disables the callback for the specified event.
-*
-* SYNOPSIS
-*  void spin1_callback_off(uint event_id)
-*
-* INPUTS
-*  uint event_id: event for which callback should be disabled
-*
-* SOURCE
-*/
 
 void spin1_callback_off(uint event_id)
 {
@@ -576,32 +579,24 @@ void spin1_callback_off(uint event_id)
         fiq_event = -1;
     }
 }
-/*
-*******/
 
-
-/****f* spin1_api.c/deschedule
+/*! \brief Deschedules all callbacks for an event.
 *
-* SUMMARY
 *  This function deschedules all callbacks corresponding to the given event
 *  ID. One use for this function is to effectively discard all received
 *  packets which are yet to be processed by calling
-*  deschedule(MC_PACKET_RECEIVED). Note that this function cannot guarantee that
-*  all callbacks pertaining to the given event ID will be descheduled: once a
-*  callback has been prepared for execution by the dispatcher it is immune to
-*  descheduling and will be executed upon return to the dispatcher.
+*  `deschedule(MC_PACKET_RECEIVED)`.
 *
-* SYNOPSIS
-*  void deschedule(uint event_id)
+*  \note this function cannot guarantee
+*  that all callbacks pertaining to the given event ID will be descheduled:
+*  once a callback has been prepared for execution by the dispatcher it is
+*  immune to descheduling and will be executed upon return to the dispatcher.
 *
-* INPUTS
-*  uint event_id: event ID of the callbacks to be descheduled
-*
-* SOURCE
+*  \param[in] event_id: event ID of the callbacks to be descheduled
 */
-void deschedule(uint event_id)
+static void deschedule(uint event_id)
 {
-    uint cpsr = spin1_irq_disable();
+    uint cpsr = spin1_int_disable();
 
     task_queue_t *tq = &task_queue[callback[event_id].priority-1];
 
@@ -617,21 +612,7 @@ void deschedule(uint event_id)
 *******/
 
 
-/****f* spin1_api.c/spin1_get_simulation_time
-*
-* SUMMARY
-*  This function returns the number of timer periods which have elapsed since
-*  the beginning of the simulation.
-*
-* SYNOPSIS
-*  uint spin1_get_simulation_time()
-*
-* OUTPUTS
-*  Timer ticks since beginning of simulation.
-*
-* SOURCE
-*/
-uint spin1_get_simulation_time()
+uint spin1_get_simulation_time(void)
 {
     return ticks;
 }
@@ -695,18 +676,12 @@ void spin1_set_timer_tick_and_phase(uint time, uint phase)
 *******/
 
 
-/****f* spin1_api.c/clean_up
+/*! \brief Post-exit cleanup.
 *
-* SUMMARY
 *  This function is called after simulation exits to configure
 *  hardware for idle operation. It cleans up interrupt lines.
-*
-* SYNOPSIS
-*  void clean_up ()
-*
-* SOURCE
 */
-void clean_up()
+static void clean_up(void)
 {
     uint cpsr = spin1_int_disable();
 
@@ -729,22 +704,12 @@ void clean_up()
 
     spin1_mode_restore(cpsr);
 }
-/*
-*******/
 
-
-/****f* spin1_api.c/report_debug
+/*! \brief Report debugging diagnostic information.
 *
-* SUMMARY
-*  This function reports warnings if requested
-*  at compile time
-*
-* SYNOPSIS
-*  void report_debug ()
-*
-* SOURCE
+*  This function reports provenance if requested at compile time.
 */
-void report_debug()
+static void report_debug(void)
 {
 #if API_DEBUG == TRUE
     if (leadAp) {       // Only the leader appl. core reports router data
@@ -773,21 +738,12 @@ void report_debug()
     io_delay(API_PRINT_DELAY);
 #endif // API_DEBUG == TRUE
 }
-/*
-*******/
 
-/****f* spin1_api.c/report_warns
+/*! \brief Report debugging warnings.
 *
-* SUMMARY
-*  This function reports warnings if requested
-*  at compile time
-*
-* SYNOPSIS
-*  void report_warns ()
-*
-* SOURCE
+*  This function reports warnings if requested at compile time
 */
-void report_warns()
+static void report_warns(void)
 {
 #if API_WARN == TRUE        // report warnings
     if (diagnostics.warnings & TASK_QUEUE_FULL) {
@@ -815,8 +771,6 @@ void report_warns()
 #endif // USE_WRITE_BUFFER == TRUE
 #endif // API_WARN == TRUE
 }
-/*
-*******/
 
 
 void spin1_rte(rte_code code)
@@ -830,12 +784,18 @@ void spin1_rte(rte_code code)
 #else
     register uint lr __asm("lr");
 #endif // __GNUC__
-    sv_vcpu->lr = lr;
+    sv_vcpu->lr = lr;        // Report the link register (calling address)
     sv_vcpu->rt_code = code;
     sv->led_period = 8;
 }
 
-uint start(sync_bool sync, uint start_paused)
+//! \brief Begins a simulation by enabling the timer (if called for) and
+//!     beginning the dispatcher loop.
+//!     Only returns once told to exit (with spin1_exit()).
+//! \param[in] sync: Whether to synchronise with other cores
+//! \param[in] start_paused: Whether to start in a paused state
+//! \return the exit code
+static uint start(sync_bool sync, uint start_paused)
 {
     paused = start_paused;
     if (paused) {
@@ -918,21 +878,6 @@ uint start(sync_bool sync, uint start_paused)
 
     return diagnostics.exit_code;
 }
-/*
-*******/
-
-
-/****f* spin1_api.c/spin1_start
-*
-* SUMMARY
-*  This function begins a simulation by enabling the timer (if called for) and
-*  beginning the dispatcher loop.
-*
-* SYNOPSIS
-*  void spin1_start (sync_bool_t sync)
-*
-* SOURCE
-*/
 
 uint spin1_start(sync_bool sync)
 {
@@ -1016,6 +961,75 @@ uint spin1_dma_transfer(uint tag, void *system_address, void *tcm_address,
 /*
 *******/
 
+/****f* spin1_api.c/spin1_dma_flush
+*
+* SUMMARY
+*  This function:
+*    flushes the hardware queue in the DMA controller,
+*    aborts any ongoing transfer in the DMA controller,
+*    clears any pending DMA_COMPLETE interrupts in the DMA controller and
+*    purges any queued DMA_COMPLETE callbacks in the callback queues.
+*    flushes the software DMA queue,
+*
+* SYNOPSIS
+*  void spin1_dma_flush(void);
+*
+ SOURCE
+*/
+void spin1_dma_flush(void)
+{
+    // flush the hardware queue in the DMA controller,
+    // abort any ongoing transfer in the DMA controller,
+    // and clear any pending DMA_COMPLETE interrupts in the DMA controller
+    dma[DMA_CTRL] = 0x1f;
+    dma[DMA_CTRL] = 0x0d;
+
+    // purge any queued DMA_COMPLETE callbacks in the callback queues
+    if (callback[DMA_TRANSFER_DONE].priority > 0) {
+        task_queue_t *tq = &task_queue[callback[DMA_TRANSFER_DONE].priority-1];
+
+        // check only if the queue is not empty
+        uint cpsr = spin1_int_disable();
+        if (tq->end != tq->start) {
+            callback_t cb = callback[DMA_TRANSFER_DONE].cback;
+            uint mtp = tq->start;
+            uint end = tq->end;
+
+            // find first queued DMA_COMPLETE callback
+            while ((mtp != end) && (tq->queue[mtp].cback != cb)) {
+                mtp = (mtp + 1) % TASK_QUEUE_SIZE;
+            }
+
+            // if found, remove it and move up the rest of the queue
+            if (mtp != end) {
+                uint mfp = (mtp + 1) % TASK_QUEUE_SIZE;
+                while (mfp != end) {
+                    // jump over other queued DMA_COMPLETE callbacks
+                    if (tq->queue[mfp].cback != cb) {
+                        tq->queue[mtp].cback = tq->queue[mfp].cback;
+                        tq->queue[mtp].arg0  = tq->queue[mfp].arg0;
+                        tq->queue[mtp].arg1  = tq->queue[mfp].arg1;
+                        mtp = (mtp + 1) % TASK_QUEUE_SIZE;
+                    }
+                    mfp = (mfp + 1) % TASK_QUEUE_SIZE;
+                }
+
+                // update queue end pointer
+                tq->end = mtp;
+            }
+        }
+        spin1_mode_restore(cpsr);
+    }
+
+    // and flush the software DMA transfer queue
+    uint cpsr = spin1_int_disable();
+    dma_queue.start = 0;
+    dma_queue.end   = 0;
+    spin1_mode_restore(cpsr);
+}
+/*
+*******/
+
 
 /****f* spin1_api.c/spin1_memcpy
 *
@@ -1059,7 +1073,9 @@ void spin1_memcpy(void *dst, void const *src, uint len)
 *
 * SOURCE
 */
-void spin1_flush_rx_packet_queue()
+//! \details
+//!     Works by calling deschedule() for each queue.
+void spin1_flush_rx_packet_queue(void)
 {
     deschedule(MC_PACKET_RECEIVED);
     deschedule(MCPL_PACKET_RECEIVED);
@@ -1081,9 +1097,12 @@ void spin1_flush_rx_packet_queue()
 *
 * SOURCE
 */
-void spin1_flush_tx_packet_queue()
+//! \details
+//!     Works by adjusting the queue pointers to make it appear empty to the
+//!     consumer
+void spin1_flush_tx_packet_queue(void)
 {
-    uint cpsr = spin1_irq_disable();
+    uint cpsr = spin1_int_disable();
 
     tx_packet_queue.start = tx_packet_queue.end;
 
@@ -1098,10 +1117,11 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
     // TX_nof_full flag instead -- much more efficient!
 
     uint rc = SUCCESS;
-    uint cpsr = spin1_irq_disable();
+    uint cpsr = spin1_int_disable();
 
     /* clear sticky TX full bit and check TX state */
     cc[CC_TCR] = TX_TCR_MCDEFAULT;
+    (void) cc[CC_TCR];  // needed to avoid a RAW hazard accessing CC_TCR
 
     if (cc[CC_TCR] & TX_FULL_MASK) {
         if ((tx_packet_queue.end + 1) % TX_PACKET_QUEUE_SIZE
@@ -1232,6 +1252,9 @@ uint spin1_get_chip_id(void)
 /*
 *******/
 
+#if 0
+//## This routine has been removed - use "rtr_alloc", "rtr_mc_set" instead
+
 /****f* spin1_api.c/spin1_set_mc_table_entry
 *
 * SUMMARY
@@ -1250,9 +1273,6 @@ uint spin1_get_chip_id(void)
 * SOURCE
 */
 
-//## This routine has been removed - use "rtr_alloc", "rtr_mc_set" instead
-
-#if 0
 uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 {
     if (entry >= APP_MC_ENTRIES) { // top priority entries reserved for the system
@@ -1285,9 +1305,8 @@ uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 *******/
 
 
-/****f* spin1_api.c/schedule_sysmode
+/*! \brief Schedule a callback (called with interrupts disabled)
 *
-* SUMMARY
 *  This function places a callback into the scheduling queue corresponding
 *  to its priority, which is set at configuration time by on_callback(...).
 *
@@ -1298,15 +1317,11 @@ uint spin1_set_mc_table_entry(uint entry, uint key, uint mask, uint route)
 *  that the function is only called by interrupt service routines responding
 *  to events, and these ISRs execute with interrupts disabled.
 *
-* SYNOPSIS
-*  void schedule_sysmode(uchar event_id, uint arg0, uint arg1)
+* \note Also called from sark_base.c and sark_alib.s via weak linking.
 *
-* INPUTS
-*  uchar event_id: ID of the event triggering a callback
-*  uint arg0: argument to be passed to the callback
-*  uint arg1: argument to be passed to the callback
-*
-* SOURCE
+* \param[in] event_id: ID of the event triggering a callback
+* \param[in] arg0: argument to be passed to the callback
+* \param[in] arg1: argument to be passed to the callback
 */
 void schedule_sysmode(uchar event_id, uint arg0, uint arg1)
 {
@@ -1361,7 +1376,7 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
     uchar result = SUCCESS;
 
     /* disable interrupts for atomic access to task queues */
-    uint cpsr = spin1_irq_disable();
+    uint cpsr = spin1_int_disable();
 
     task_queue_t *tq = &task_queue[priority-1];
 
@@ -1392,9 +1407,16 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
 /****f* spin1_api.c/spin1_trigger_user_event
 *
 * SUMMARY
-*  This function triggers a USER EVENT, i.e., a software interrupt.
-*  The function returns FAILURE if a previous trigger attempt
-*  is still pending.
+*  This function triggers a USER EVENT i.e. a software interrupt.
+*  If a previous trigger event is still pending or executing, the event will
+*  be queued until that callback completes.
+*  The function returns FAILURE if the queue of user events to be called is
+*  already full.
+*
+*  NOTE: The callback handler should be able to cope with the fact that a
+*  second call to the function may result in no work to do should a callback
+*  be queued whilst the first is still running and the first deals with
+*  "pending tasks".
 *
 * SYNOPSIS
 *  __irq void spin1_trigger_user_event(uint arg0, uint arg1)
@@ -1410,39 +1432,37 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
 */
 uint spin1_trigger_user_event(uint arg0, uint arg1)
 {
-    if (!user_pending) {
-        /* remember callback arguments */
-        user_arg0 = arg0;
-        user_arg1 = arg1;
-        user_pending = TRUE;
+    uint cpsr = spin1_int_disable();
 
-        /* trigger software interrupt in the VIC */
-        vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
+    uint new_end = (user_event_queue.end + 1) % USER_EVENT_QUEUE_SIZE;
 
-        return (SUCCESS);
-    } else {
+    if (new_end == user_event_queue.start) {
+#if (API_DIAGNOSTICS == TRUE)
+        diagnostics.user_event_queue_full++;
+#endif // (API_DIAGNOSTICS == TRUE)
+        spin1_mode_restore(cpsr);
         return (FAILURE);
     }
+
+    user_event_queue.queue[user_event_queue.end].arg0 = arg0;
+    user_event_queue.queue[user_event_queue.end].arg1 = arg1;
+
+    // Trigger a user event (doesn't matter if already set)
+    vic[VIC_SOFT_SET] = (1 << SOFTWARE_INT);
+
+    user_event_queue.end = new_end;
+    spin1_mode_restore(cpsr);
+    return (SUCCESS);
 }
 /*
 *******/
 
 
-// ------------------------------------------------------------------------
-// rts initialization function
-// called before the application program starts!
-// ------------------------------------------------------------------------
-/****f* spin1_api.c/rts_init
+/*! \brief Runtime initialisation; called before the application program starts!
 *
-* SUMMARY
 *  This function is a stub for the run-time system.
-*  initializes peripherals in the way the RTS
+*  It initialises peripherals in the way the RTS
 *  is expected to do
-*
-* SYNOPSIS
-*  void sark_pre_main (void)
-*
-* SOURCE
 */
 void sark_pre_main(void)
 {
@@ -1453,24 +1473,11 @@ void sark_pre_main(void)
 
     leadAp = (sark_app_lead() == sark.virt_cpu);
 }
-/*
-*******/
 
-
-// ------------------------------------------------------------------------
-// rts cleanup function
-// called after the application program finishes!
-// ------------------------------------------------------------------------
-/****f* spin1_api.c/rts_cleanup
+/*! \brief Runtime cleanup, called after the application program finishes!
 *
-* SUMMARY
 *  This function is a stub for the run-time system.
-*  makes sure that application returns cleanly to the RTS.
-*
-* SYNOPSIS
-*  void sark_post_main (void)
-*
-* SOURCE
+*  It makes sure that application returns cleanly to the RTS.
 */
 void sark_post_main(void)
 {

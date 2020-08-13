@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_i2c.c        I2C peripheral handling for BC&MP
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_i2c.c
+//! \brief          I<sup>2</sup>C peripheral handling for BC&MP
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -34,26 +35,29 @@
 
 //------------------------------------------------------------------------------
 
-#define I2C_EE          0xa0    // 24LC08
-#define I2C_LCD         0x78    // ST7036
-#define I2C_TS          0x90    // LM75B
+#define I2C_EE          0xa0    //!< I<sup>2</sup>C address of 24LC08 (EEPROM)
+#define I2C_LCD         0x78    //!< I<sup>2</sup>C address of ST7036 (LCD)
+#define I2C_TS          0x90    //!< I<sup>2</sup>C base address of LM75B (temp sensors)
 
-#define LCD_SIZE        32      // LCD character buffer
+#define LCD_SIZE        32      //!< Size of LCD character buffer
 
+//! Buffer for gathering a line to write to the LCD
 static uint8_t lcd_buf[LCD_SIZE];
+//! Write position within ::lcd_buf
 static uint32_t lcd_ptr;
 
+//! Whether the LCD is active; if not, nothing should be sent to the LCD
 bool lcd_active;
 
 //------------------------------------------------------------------------------
 
-// Set up I2C0 and I2C2 - 25MHz PCLK
+//! \brief Set up I2C0 and I2C2 - 25MHz PCLK
+//! \internal
+//! Use I2SCLH = I2SCLL = 125 for 100 kHz
+//! Use I2SCLH = I2SCLL = 62  for 200 kHz
+//! Use I2SCLH = I2SCLL = 31  for 400 kHz
 
-// Use I2SCLH = I2SCLL = 125 for 100 kHz
-// Use I2SCLH = I2SCLL = 62  for 200 kHz
-// Use I2SCLH = I2SCLL = 31  for 400 kHz
-
-void configure_i2c()
+void configure_i2c(void)
 {
     clock_div(CLKPWR_PCLKSEL_I2C0, CLKPWR_PCLKSEL_CCLK_DIV_4);
     clock_div(CLKPWR_PCLKSEL_I2C2, CLKPWR_PCLKSEL_CCLK_DIV_4);
@@ -68,14 +72,20 @@ void configure_i2c()
 
 //------------------------------------------------------------------------------
 
-static void wait_i2c(LPC_I2C_TypeDef *i2c)
+//! \brief Wait for I<sup>2</sup>C to be ready
+//! \param[in] i2c: Which I<sup>2</sup>C port to wait for
+static void wait_i2c(LPC_I2C_TypeDef *restrict i2c)
 {
     while ((i2c->I2CONSET & 0x08) == 0) {
         continue;
     }
 }
 
-uint32_t i2c_poll(LPC_I2C_TypeDef *i2c, uint32_t ctrl)
+//! \brief Poll an I<sup>2</sup>C port
+//! \param[in] i2c: Which I<sup>2</sup>C port to poll
+//! \param[in] ctrl: Control byte
+//! \return True if ACK received
+uint32_t i2c_poll(LPC_I2C_TypeDef *restrict i2c, uint32_t ctrl)
 {
     i2c->I2CONSET = 0x20;               // Send START
     wait_i2c(i2c);
@@ -95,10 +105,17 @@ uint32_t i2c_poll(LPC_I2C_TypeDef *i2c, uint32_t ctrl)
     return status == 0x18;              // Return 1 if ACK received
 }
 
-uint32_t i2c_send(LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
-        uint32_t length, void *buf)
+//! \brief Send a buffer over I<sup>2</sup>C
+//! \param[in] i2c: Which I<sup>2</sup>C port to send via
+//! \param[in] ctrl: Control word
+//! \param[in] addr: Destination address
+//! \param[in] length: Number of bytes to write
+//! \param[in] buf: Buffer of data to write
+//! \return true if data was written
+uint32_t i2c_send(LPC_I2C_TypeDef *restrict i2c, uint32_t ctrl, uint32_t addr,
+        uint32_t length, const void *buf)
 {
-    uint8_t *data = (uint8_t *) buf;
+    const uint8_t *data = (const uint8_t *) buf;
 
     i2c->I2CONSET = 0x20;               // Send START
     wait_i2c(i2c);
@@ -138,8 +155,15 @@ uint32_t i2c_send(LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
     return 1;
 }
 
-uint32_t i2c_receive(LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
-        uint32_t length, void *buf)
+//! \brief Receive a buffer over I<sup>2</sup>C
+//! \param[in] i2c: Which I<sup>2</sup>C port to receive via
+//! \param[in] ctrl: Control word
+//! \param[in] addr: Source address
+//! \param[in] length: Number of bytes to receive
+//! \param[in] buf: Buffer of data to receive into
+//! \return true if data was received
+uint32_t i2c_receive(LPC_I2C_TypeDef *restrict i2c, uint32_t ctrl,
+	uint32_t addr, uint32_t length, void *buf)
 {
     uint8_t *data = (uint8_t *) buf;
 
@@ -187,7 +211,11 @@ uint32_t i2c_receive(LPC_I2C_TypeDef *i2c, uint32_t ctrl, uint32_t addr,
 
 //------------------------------------------------------------------------------
 
-int16_t read_ts(LPC_I2C_TypeDef *i2c, uint32_t addr)
+//! \brief Read temperature sensor
+//! \param[in] i2c: Which I<sup>2</sup>C port to use
+//! \param[in] addr: What address to read. (Controls which sensor to read)
+//! \return The temperature sensor value
+int16_t read_ts(LPC_I2C_TypeDef *restrict i2c, uint32_t addr)
 {
     uint8_t buf[4];
 
@@ -199,6 +227,11 @@ int16_t read_ts(LPC_I2C_TypeDef *i2c, uint32_t addr)
     return (buf[0] << 8) + buf[1];
 }
 
+//! \brief Read from EEPROM
+//! \param[in] addr: Address to read from
+//! \param[in] count: Number of bytes to read
+//! \param[in] buf: Buffer to read into
+//! \return True if the read succeeded
 uint32_t read_ee(uint32_t addr, uint32_t count, void *buf)
 {
     uint32_t ctrl = I2C_EE + ((addr >> 7) & 6);         // 24lc08 code
@@ -212,7 +245,12 @@ uint32_t read_ee(uint32_t addr, uint32_t count, void *buf)
     return 1;
 }
 
-uint32_t write_ee(uint32_t addr, uint32_t count, void *buf)
+//! \brief Write to EEPROM
+//! \param[in] addr: Address to write to
+//! \param[in] count: Number of bytes to write
+//! \param[in] buf: Buffer to write from
+//! \return True if the write succeeded
+uint32_t write_ee(uint32_t addr, uint32_t count, const void *buf)
 {
     uint32_t ctrl = I2C_EE + ((addr >> 7) & 6);         // 24lc08 code
 
@@ -227,6 +265,7 @@ uint32_t write_ee(uint32_t addr, uint32_t count, void *buf)
 
 //------------------------------------------------------------------------------
 
+//! LCD initialisation descriptor
 static const uint8_t lcd_init[] = {
     0x38,       // 8 bit, 2 lines, not dbl ht, IS=00
     0x00,       // Data follows (RS=0)
@@ -239,6 +278,7 @@ static const uint8_t lcd_init[] = {
     0x01        // Clear and home
 };
 
+//! Configure the LCD
 void configure_lcd(void)
 {
     lcd_active = i2c_send(LPC_I2C0, I2C_LCD, 0x80,
@@ -246,6 +286,7 @@ void configure_lcd(void)
     delay_us(1000);
 }
 
+//! Flush any pending data (i.e., a line of text) to the LCD
 static void lcd_flush(void)
 {
     if (lcd_ptr) {
@@ -254,6 +295,8 @@ static void lcd_flush(void)
     }
 }
 
+//! \brief Write a control byte to the LCD
+//! \param[in] c: Control byte to write
 void lcd_ctrl(uint32_t c)
 {
     uint8_t buf[4];
@@ -263,7 +306,8 @@ void lcd_ctrl(uint32_t c)
     i2c_send(LPC_I2C0, I2C_LCD, 0x00, 1, buf);
 }
 
-
+//! \brief Write a character to the LCD. _Buffers._
+//! \param[in] c: The character to write
 void lcd_putc(uint32_t c)
 {
     if (c != '\n') {

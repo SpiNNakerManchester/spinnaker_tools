@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// spinn_net.c      Ethernet/IP support routines for Spinnaker
-//
-// Copyright (C)    The University of Manchester - 2009, 2010
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Ethernet/IP support routines for Spinnaker
+//!
+//! \copyright &copy; The University of Manchester - 2009, 2010
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -42,18 +41,31 @@ extern iptag_t tag_table[];
 
 const uchar bc_mac[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 const uchar zero_mac[] = {0, 0, 0, 0, 0, 0};
-const uchar zero_ip[] = {0, 0, 0, 0};
 
+//! Max size of ARP cache
 #define MAX_ARP_ENTRIES 5
-static struct arp_entry {
-    uchar mac[6];
-    uchar ip[4];
-    struct arp_entry *next;
-} arp_entries[MAX_ARP_ENTRIES];
+
+//! \brief An ARP cache entry.
+//!
+//! This remembers what MAC address to send an ethernet packet to in order to
+//! deliver an IP packet to a particular address. That MAC address might be
+//! the address of a router, not the target machine.
+struct arp_entry {
+    uchar mac[6];               //!< The MAC address.
+    uchar ip[4];                //!< The IP address.
+    struct arp_entry *next;     //!< Next entry in use.
+};
+
+//! The ARP cache
+static struct arp_entry arp_entries[MAX_ARP_ENTRIES];
+
+//! Which is the next ARP cache entry to allocate (or evict and reuse)
 static uint next_arp_entry = MAX_ARP_ENTRIES;
 
 #ifdef LOCK_ETH
 
+//! \brief Acquire lock
+//! \param[in] lock: Whch lock to acquire
 static void lock_get(uint lock)
 {
     while (sc[SC_TAS0 + lock] & BIT_31) {
@@ -61,6 +73,8 @@ static void lock_get(uint lock)
     }
 }
 
+//! \brief Release lock
+//! \param[in] lock: Whch lock to release
 static void lock_free(uint lock)
 {
     (void) sc[SC_TAC0 + lock];
@@ -68,12 +82,9 @@ static void lock_free(uint lock)
 
 #endif // LOCK_ETH
 
-
-void eth_discard(void) __attribute__((always_inline));
-
-void eth_discard(void)
+//! Clear the ethernet receive buffer.
+static void inline eth_discard(void)
 {
-    static volatile uint * const er = (uint *) ETH_REGS;
     er[ETH_RX_CMD] = (uint) er;
 }
 
@@ -115,7 +126,7 @@ uint ipsum(uchar *d, uint len, uint sum) // Use shorts for speed??
 void copy_mac(const uchar *f, uchar *t)
 {
     ushort *ts = (ushort*) t;
-    ushort *fs = (ushort*) f;
+    const ushort *fs = (const ushort*) f;
 
     ts[0] = fs[0];
     ts[1] = fs[1];
@@ -125,16 +136,16 @@ void copy_mac(const uchar *f, uchar *t)
 void copy_ip(const uchar *f, uchar *t)
 {
     ushort *ts = (ushort*) t;
-    ushort *fs = (ushort*) f;
+    const ushort *fs = (const ushort*) f;
 
     ts[0] = fs[0];
     ts[1] = fs[1];
 }
 
-uint cmp_ip(uchar *a, uchar *b)
+uint cmp_ip(const uchar *a, const uchar *b)
 {
-    ushort *as = (ushort*) a;
-    ushort *bs = (ushort*) b;
+    const ushort *as = (const ushort*) a;
+    const ushort *bs = (const ushort*) b;
 
     return (as[0] == bs[0]) && (as[1] == bs[1]);
 }

@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// sark_hw.c        Spinnaker hardware/peripheral support routines
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Spinnaker hardware/peripheral support routines
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -30,7 +29,10 @@
 
 //------------------------------------------------------------------------------
 
+//! The interrupt handler that does absolutely nothing at all.
 extern void null_int_han(void);
+
+//! Used to indicate that the VIC has not been configured. Triggers an RTE.
 extern void vic_error(void);
 
 
@@ -114,8 +116,11 @@ void led_init(void)
 }
 #endif
 
-
-static uint get4(uint *word, uint index)
+//! \brief Extracts value from packed array of 4-bit unsigned integers.
+//! \param[in] word: The array
+//! \param[in] index: The index, as if the array isn't packed.
+//! \return the value, in range 0&ndash;15
+static uint get4(const uint *word, uint index)
 {
     uint w = index / 8;
     uint i = index & 7;
@@ -175,7 +180,9 @@ void sark_led_set(uint leds)
 // Config = 0x00018012
 // Refresh period 7.8us
 
-const ushort pl340_data[] = {
+//! PL340 SDRAM controller configuration data.
+// Deep deep hardware magic!
+static const ushort pl340_data[] = {
     0x0006,     // [0]  MC_CASL CAS latency =3
     0x0001,     // [1]  MC_DQSS T_dqss
     0x0002,     // [2]  MC_MRD  T_mrd
@@ -246,7 +253,6 @@ uint pl340_init(uint mem_clk)
 
 // Initialise router multicast tables to empty state
 
-
 uint rtr_mc_clear(uint start, uint count)
 {
     if (start + count > MC_TABLE_SIZE) {
@@ -263,7 +269,6 @@ uint rtr_mc_clear(uint start, uint count)
 
     return 1;
 }
-
 
 void rtr_mc_init(uint start)
 {
@@ -287,7 +292,6 @@ void rtr_mc_init(uint start)
     // Clear out extra entry in copy
     router[MC_TABLE_SIZE].route = 0xff000000;
 }
-
 
 // Load router MC table from a table in memory. The "next" field is
 // used to hold the entry number to be loaded and the "free" field (of
@@ -445,7 +449,23 @@ uint rtr_p2p_get(uint entry)
     return (data >> offset) & P2P_BMASK;
 }
 
-
+//! \brief Default router diagnostic configuration.
+//!
+//! Counter 0: local multicast packets \n
+//! Counter 1: non-local multicast packets \n
+//! Counter 2: local peer-to-peer packets \n
+//! Counter 3: non-local peer-to-peer packets \n
+//! Counter 4: local nearest-neighbour packets \n
+//! Counter 5: non-local nearest-neighbour packets \n
+//! Counter 6: local fixed-route packets \n
+//! Counter 7: non-local fixed-route packets \n
+//! Counter 8: dumped multicast packets \n
+//! Counter 9: dumped peer-to-peer packets \n
+//! Counter 10: dumped nearest-neighbour packets \n
+//! Counter 11: dumped fixed-route packets \n
+//!
+//! Counters 12&ndash;15 are turned off by default and are fully available
+//! for users.
 static const uint dgf_init[] = {
     0x01fe7cf1,         // 0  local MC packets
     0x01febcf1,         // 1  non-local MC packets

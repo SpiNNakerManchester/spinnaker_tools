@@ -688,7 +688,7 @@ The dispatcher provides a number of services to the application programmer:
 \rowcolors {1}{ blue!25 }{ blue!25 }
 \begin{tabularx}{\textwidth}{| l X |}
 \hline
-\textbf{notes:} & $\bullet$ FAILURE indicates a trigger attempt before a previous one has been serviced. \\%
+\textbf{notes:} & $\bullet$ FAILURE indicates that the trigger event queue is full. \\%
  & $\bullet$ arg0 and arg1 will be passed as arguments to the registered callback. \\%
  & $\bullet$ function arguments are not validated. \\%
 \hline
@@ -732,6 +732,36 @@ The dispatcher provides a number of services to the application programmer:
  & $\bullet$ may cause DMA error or DMA timeout events. \\%
 \hline
 \end{tabularx}
+\end{center}
+
+
+\begin{center}
+	\renewcommand{\arraystretch}{1.2}
+	\begin{tabularx}{\textwidth}{| p{55mm} l X |}
+		\hline
+		\multicolumn{3}{| r |}{Abort ongoing and flush pending DMA transfers} \\%
+		\hline
+		\hline
+		\rowcolor[gray]{.75}
+		\textbf{function} & arguments & description \\%
+		\hline
+		\textbf{void spin1\_dma\_flush} & void & no arguments \\%
+		\hline
+		\hline
+		\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
+		\hline
+	\end{tabularx}
+	\rowcolors {1}{ blue!25 }{ blue!25 }
+	\begin{tabularx}{\textwidth}{| l X |}
+		\hline
+		\textbf{notes:} & $\bullet$ queued DMA\_COMPLETE callbacks in the callback queues are purged. \\%
+		& $\bullet$ the software DMA transfer request queue is flushed. \\%
+		& $\bullet$ the transfer request queue in the DMA controller is flushed. \\%
+		& $\bullet$ ongoing transfers in the DMA controller are aborted. \\%
+		& $\bullet$ pending DMA\_COMPLETE interrupts in the DMA controller are cleared. \\%
+		& $\bullet$ \textbf{WARNING:} threads waiting for a DMA\_COMPLETE event will \textbf{deadlock}. \\%
+		\hline
+	\end{tabularx}
 \end{center}
 
 
@@ -819,10 +849,10 @@ The dispatcher provides a number of services to the application programmer:
 \rowcolor[gray]{.75}
 \textbf{function} & arguments & description \\%
 \hline
-{\small \textbf{uint spin1\_flush\_tx\_packet\_queue}} & void & no arguments \\%
+{\small \textbf{void spin1\_flush\_tx\_packet\_queue}} & void & no arguments \\%
 \hline
 \hline
-\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{SUCCESS (=1) / FAILURE (=0)} \\%
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
 \hline
 \end{tabularx}
 \rowcolors {1}{ blue!25 }{ blue!25 }
@@ -836,7 +866,7 @@ The dispatcher provides a number of services to the application programmer:
 
 \begin{center}
 \renewcommand{\arraystretch}{1.2}
-\begin{tabularx}{\textwidth}{| p{57mm} l X |}
+\begin{tabularx}{\textwidth}{| p{57.5mm} l X |}
 \hline
 \multicolumn{3}{| r |}{Flush software incoming multicast packet queue} \\%
 \hline
@@ -844,16 +874,17 @@ The dispatcher provides a number of services to the application programmer:
 \rowcolor[gray]{.75}
 \textbf{function} & arguments & description \\%
 \hline
-{\small \textbf{uint spin1\_flush\_rx\_packet\_queue}} & void & no arguments \\%
+{\small \textbf{void spin1\_flush\_rx\_packet\_queue}} & void & no arguments \\%
 \hline
 \hline
-\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{SUCCESS (=1) / FAILURE (=0)} \\%
+\multicolumn{1}{| r }{\textbf{returns:}} & \multicolumn{2}{ l |}{no return value} \\%
 \hline
 \end{tabularx}
 \rowcolors {1}{ blue!25 }{ blue!25 }
 \begin{tabularx}{\textwidth}{| l X |}
 \hline
 \textbf{notes:} & $\bullet$ queued packets are thrown away. \\%
+ & $\bullet$ \textbf{DO NOT USE} if packet received event priority $<=$ 0. \\%
 \hline
 \end{tabularx}
 \end{center}

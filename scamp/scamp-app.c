@@ -1,12 +1,11 @@
 //------------------------------------------------------------------------------
-//
-// scamp-app.c      Application support for SC&MP
-//
-// Copyright (C)    The University of Manchester - 2009-2012
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Application support for SC&MP
+//!
+//! \copyright &copy; The University of Manchester - 2009-2012
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
 /*
@@ -34,8 +33,11 @@
 //------------------------------------------------------------------------------
 
 
-// Enable/disable clocks to a set of cores specified by a bit mask
-
+//! \brief Enable/disable clocks to a set of cores specified by a bit mask
+//! \param[in] phys_mask: Which _physical_ cores to enable or disable the
+//!     clock for.
+//! \param[in] enable: True to switch on the clock for the cores, false to
+//!     switch the clock off for them.
 void clock_ap(uint phys_mask, uint enable)
 {
     uint state = sc[SC_CPU_DIS];
@@ -50,9 +52,10 @@ void clock_ap(uint phys_mask, uint enable)
 }
 
 
-// Soft reset a set of cores specified by a bit mask. Clocks for those
-// cores are enabled.
-
+//! \brief Soft reset a set of cores specified by a bit mask.
+//!
+//! Clocks for those cores are enabled.
+//! \param[in] virt_mask: Which (virtual) cores to soft reset
 void reset_ap(uint virt_mask)
 {
     uint phys_mask = v2p_mask(virt_mask);
@@ -64,11 +67,12 @@ void reset_ap(uint virt_mask)
 }
 
 
-// Boot APs. Assumes the "boot_aplx" image has been placed at 0x7f00 and
-// the default "sark" image at 0x7000. Copies "boot_aplx" to start of
-// SysRAM and the default image to SDRAM. Then starts the default
-// app on all cores.
-
+//! \brief Boot APs.
+//!
+//! Assumes the "boot_aplx" image has been placed at 0x7f00 and
+//! the default "sark" image at 0x7000. Copies "boot_aplx" to start of
+//! SysRAM and the default image to SDRAM. Then starts the default
+//! app on all cores.
 void boot_ap(void)
 {
     uint virt_mask = (1 << num_cpus) - 2;
@@ -80,9 +84,12 @@ void boot_ap(void)
 }
 
 
-// Send a signal to a set of cores
-
-void signal_sark(uint cmd, uint data, uint virt_mask, uint phys_mask)
+//! \brief Send a signal to a set of cores
+//! \param[in] cmd: The ::shm_cmd_e to use (probably ::SHM_SIGNAL)
+//! \param[in] data: The signal to send, from ::signal_e
+//! \param[in] virt_mask: Which virtual cores to signal
+//! \param[in] phys_mask: Which physical cores to signal
+static void signal_sark(uint cmd, uint data, uint virt_mask, uint phys_mask)
 {
     for (uint cpu = 1; cpu < num_cpus; cpu++) {
         if (virt_mask & (1 << cpu)) {
@@ -96,8 +103,10 @@ void signal_sark(uint cmd, uint data, uint virt_mask, uint phys_mask)
 }
 
 
-// Update some status variables for a set of cores
-
+//! \brief Update some status variables for a set of cores
+//! \param[in] virt_mask: Which cores to update for
+//! \param[in] state: The state to mark them as being in
+//! \param[in] app_id: The ID of the application on those cores
 void set_cpu_info(uint virt_mask, uint state, uint app_id)
 {
     for (uint cpu = 1; cpu < num_cpus; cpu++) {
@@ -116,21 +125,18 @@ void set_cpu_info(uint virt_mask, uint state, uint app_id)
 //------------------------------------------------------------------------------
 
 
-// Find the position of the least significant bit in a word
-
-uint find_lead(uint mask)
+//! \brief Find the position of the least significant bit in a word.
+//! \details Used to find the lead application processor.
+//! \param[in] mask: The word mask to look in. Assumed to be non-zero.
+//! \return The bit index of the least significant set bit
+static inline uint find_lead(uint mask)
 {
-    uint count = 0;
-
-    while ((mask != 0) && ((mask & (1 << count)) == 0)) {
-        count++;
-    }
-
-    return count;
+    return __builtin_ffs(mask);
 }
 
-// Start an application on a set of cores
-
+//! \brief Start an application on a set of cores
+//! \param[in] aplx_addr: Where the APLX has been loaded in SDRAM
+//! \param[in] id_op_mask: AppID, and flags to pass to APLX loader
 void proc_start_app(uint aplx_addr, uint id_op_mask)
 {
     uint virt_mask = id_op_mask & 0x0003ffff;
@@ -165,8 +171,8 @@ void proc_start_app(uint aplx_addr, uint id_op_mask)
 }
 
 
-// Clean up shared data belonging to a given AppID
-
+//! \brief Clean up shared data belonging to a given AppID
+//! \param[in] app_id: The AppID to clean up
 void clean_app_id(uint app_id)
 {
     app_data_t *app = sv->app_data + app_id;
@@ -186,8 +192,9 @@ void clean_app_id(uint app_id)
 }
 
 
-// Initialise a set of core so that they run the default application
-
+//! \brief Initialise a set of cores so that they run the default application
+//! \param[in] virt_mask: Which virtual cores to power up
+//! \param[in] phys_mask: Which physical cores to power up
 void proc_init_cores(uint virt_mask, uint phys_mask)
 {
     clock_ap(phys_mask, 0);
@@ -198,9 +205,12 @@ void proc_init_cores(uint virt_mask, uint phys_mask)
 }
 
 
-// Stop an application on a set of cores and free up any global resources
-// associated with the application
-
+//! \brief Stop an application on a set of cores and free up any global
+//!     resources associated with the application
+//! \param[in] app_id_and_virt_mask: What AppID to stop, and which virtual
+//!     cores to stop
+//! \param[in] app_mask_and_phys_mask: Mask to select which AppIDs to stop,
+//!     and which physical cores to stop
 void proc_stop_app(uint app_id_and_virt_mask, uint app_mask_and_phys_mask)
 {
     uint app_id = app_id_and_virt_mask >> 24;
@@ -221,8 +231,9 @@ void proc_stop_app(uint app_id_and_virt_mask, uint app_mask_and_phys_mask)
 }
 
 
-// Powerdown a set of cores
-
+//! \brief Power down a set of cores
+//! \param[in] virt_mask: Which virtual cores to power down
+//! \param[in] phys_mask: Which physical cores to power down
 void proc_power_down(uint virt_mask, uint phys_mask)
 {
     clock_ap(phys_mask, 0);
@@ -230,9 +241,14 @@ void proc_power_down(uint virt_mask, uint phys_mask)
 }
 
 
-// Signal cores running a range of applications identified by an AppID
-// and a mask
-
+//! \brief Signal cores running a range of applications identified by an AppID
+//!     and a mask
+//! \param[in] data: What signal, cores and app ID
+//! \details Delegates to:
+//! * proc_init_cores() for ::SIG_INIT
+//! * proc_power_down() for ::SIG_PWRDN
+//! * proc_stop_app() for ::SIG_STOP
+//! * signal_sark() for most other signals
 void signal_app(uint data)
 {
     uint sig = (data >> 16) & 15;
@@ -241,6 +257,7 @@ void signal_app(uint data)
 
     uint virt_mask = 0;
     uint phys_mask = 0;
+    uint cpsr;
 
     for (uint i = 1; i < num_cpus; i++) {
         uint b = (core_app[i] & app_mask) == app_id;
@@ -263,13 +280,23 @@ void signal_app(uint data)
         break;
 
     case SIG_SYNC0:
+        // wait to align signal arrival with farthest chip
+        // do not allow interrupts to extend the delay!
+        cpsr = cpu_int_disable();
+        sark_delay_us(sv->sync_alignment);
         sc[SC_CLRFLAG] = virt_mask;
         sc[SC_SET_IRQ] = SC_CODE + phys_mask;
+        cpu_int_restore(cpsr);
         break;
 
     case SIG_SYNC1:
+        // wait to align signal arrival with farthest chip
+        // do not allow interrupts to extend the delay!
+        cpsr = cpu_int_disable();
+        sark_delay_us(sv->sync_alignment);
         sc[SC_SETFLAG] = virt_mask;
         sc[SC_SET_IRQ] = SC_CODE + phys_mask;
+        cpu_int_restore(cpsr);
         break;
 
     case SIG_TIMER:

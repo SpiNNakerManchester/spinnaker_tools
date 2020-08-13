@@ -1,5 +1,7 @@
-SpiNNaker Low-Level Software Tools - Release 3.2.4
-==================================================
+SpiNNaker Low-Level Software Tools
+==================================
+[<small>Automated Documentation Build</small>](http://spinnakermanchester.github.io/spinnaker_tools/)
+
 
 Installation and Setup
 ----------------------
