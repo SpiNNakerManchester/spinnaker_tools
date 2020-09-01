@@ -30,8 +30,8 @@
 
 //------------------------------------------------------------------------------
 
-// This currently sends an image of 28kB at most.
-// Images up to 32kB are possible.
+// These settings handle a boot image of size BLOCK_COUNT * BYTE_COUNT bytes
+// Image sizes < 32kB are possible.
 
 //! The address of the buffer used for booting cores
 #define BOOT_BUF (DTCM_BASE + 0x8000)
