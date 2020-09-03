@@ -126,7 +126,7 @@ __asm void eth_rx_int(void)
         mrs     lr, spsr                ;; Get SPSR_irq to LR
         stmfd   sp!, {r12, lr}          ;; Save SPSR & r12
 
-        msr     cpsr_c, #0x1f           ;; Go to SYS mode, interrupts enabled
+        msr     cpsr_c, #MODE_SYS       ;; Go to SYS mode, interrupts enabled
 
         stmfd   sp!, {r1-r3, lr}        ;; Save working regs and LR_sys
 
@@ -134,7 +134,7 @@ __asm void eth_rx_int(void)
 
         ldmfd   sp!, {r1-r3, lr}        ;; Restore working regs & LR_sys
 
-        msr     cpsr_c, #0x12+0x80      ;; Back to IRQ mode, IRQ disabled
+        msr     cpsr_c, #MODE_IRQ+IMASK_IRQ ;; Back to IRQ mode, IRQ disabled
 
         mov     r12, #VIC_BASE          ;; Tell VIC we are done
         str     r12, [r12, #VIC_VADDR * 4]

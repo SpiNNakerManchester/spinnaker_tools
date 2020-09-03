@@ -1133,24 +1133,19 @@ enum {
 //! \brief Bits in the ARM Current Program Status Register
 //! \details
 //! 	https://www.keil.com/pack/doc/CMSIS/Core_A/html/group__CMSIS__CPSR.html
-enum {
-    // Mode bits: [4:0]
-    MODE_USER =     0x10, //!< User mode
-    MODE_FIQ =      0x11, //!< Fast interrupt mode
-    MODE_IRQ =      0x12, //!< Interrupt mode
-    MODE_SVC =      0x13, //!< Supervisor mode
-    MODE_ABT =      0x17, //!< Abort mode
-    MODE_UND =      0x1b, //!< Undefined mode
-    MODE_SYS =      0x1f, //!< System mode
+#define MODE_USER       0x10  //!< User mode
+#define MODE_FIQ        0x11  //!< Fast interrupt mode
+#define MODE_IRQ        0x12  //!< Interrupt mode
+#define MODE_SVC        0x13  //!< Supervisor mode
+#define MODE_ABT        0x17  //!< Abort mode
+#define MODE_UND        0x1b  //!< Undefined mode
+#define MODE_SYS        0x1f  //!< System mode
 
-    // Thumb bit: [5]
-    THUMB_BIT =     0x20, //!< Thumb instruction mode
+#define THUMB_BIT       0x20  //!< Thumb instruction mode flag
 
-    // Interrupt control: [7:6]
-    IMASK_IRQ =     0x80, //!< Mask: IRQ enabled
-    IMASK_FIQ =     0x40, //!< Mask: FIQ enabled
-    IMASK_ALL =     0xc0  //!< Mask: All interrupts enabled
-};
+#define IMASK_IRQ       0x80  //!< Mask: IRQ enabled
+#define IMASK_FIQ       0x40  //!< Mask: FIQ enabled
+#define IMASK_ALL       0xc0  //!< Mask: All interrupts enabled
 //! \}
 
 //------------------------------------------------------------------------------
