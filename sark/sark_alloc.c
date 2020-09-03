@@ -63,7 +63,7 @@ void *sark_xalloc(heap_t *heap, uint size, uint tag, uint flag)
 
     size = ((size + 3) & ~3) + sizeof(block_t);
 
-    uint cpsr;
+    uint cpsr = 0;
 
     if (flag & ALLOC_LOCK) {
         cpsr = sark_lock_get(LOCK_HEAP);
@@ -145,7 +145,7 @@ void sark_xfree(heap_t *heap, void *ptr, uint flag)
         rt_error(RTE_NULL);
     }
 
-    uint cpsr;
+    uint cpsr = 0;
 
     if (flag & ALLOC_LOCK) {
         cpsr = sark_lock_get(LOCK_HEAP);
@@ -247,7 +247,7 @@ uint sark_heap_max(heap_t *heap, uint flag)
 {
     block_t *p = heap->free;
     uint max = 0;
-    uint cpsr;
+    uint cpsr = 0;
 
     if (flag & ALLOC_LOCK) {
         cpsr = sark_lock_get(LOCK_HEAP);

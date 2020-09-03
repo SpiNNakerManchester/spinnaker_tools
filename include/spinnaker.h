@@ -1101,7 +1101,8 @@ enum {
 // On-chip SDRAM
 //! Bits in #GPIO_PORT, also on-chip SDRAM
 enum {
-    SDRAM_TQ =      (1 << 31),
+    // Out of range, so shouldn't be used
+    // SDRAM_TQ =      (1 << 31),
     SDRAM_DPD =     (1 << 30),
     SDRAM_HERE =    (1 << 29),
 

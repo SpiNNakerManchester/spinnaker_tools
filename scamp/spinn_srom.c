@@ -38,10 +38,11 @@ enum spinn_srom_commands {
     SROM_RDSR =     (0x05U << 24),
     SROM_WRSR =     (0x01U << 24),
     SROM_PE =       (0x42U << 24),
-    SROM_SE =       (0xd8U << 24),
-    SROM_CE =       (0xc7U << 24),
-    SROM_RDID =     (0xabU << 24),
-    SROM_DPD =      (0xb9U << 24)
+    // Out of range so shouldn't be used
+    // SROM_SE =       (0xd8U << 24),
+    // SROM_CE =       (0xc7U << 24),
+    // SROM_RDID =     (0xabU << 24),
+    // SROM_DPD =      (0xb9U << 24)
 };
 
 //! Flag bits within the SCP message

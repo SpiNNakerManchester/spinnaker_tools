@@ -21,6 +21,7 @@
 
 #include <spin1_api.h>
 #include <spin1_api_params.h>
+#include <scamp_spin1_sync.h>
 
 //! \brief Wrapper for schedule_sysmode() that handles interrupts
 //! \param[in] event_id: ID of the event triggering a callback
