@@ -43,13 +43,19 @@ pipeline {
             steps {
                 
                 // Build with armcc
-                sh 'make -C $SPINN_DIRS GNU=0'
+                catchError {
+                    sh 'make -C $SPINN_DIRS GNU=0'
+                }
                 
                 // Build SCAMP with armcc
-                sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/scamp GNU=0'
+                catchError {
+                    sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/scamp GNU=0'
+                }
                 
                 // Build BMPC with armcc
-                sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/bmpc GNU=0'
+                catchError {
+                    sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/bmpc GNU=0'
+                }
             }
         }
         
