@@ -475,11 +475,13 @@ uint cmd_info(sdp_msg_t *msg)
     uint word = p2p_root >> P2P_LOG_EPW;
     uint offset = P2P_BPE * (p2p_root & P2P_EMASK);
     uint p2p_root_data = rtr_p2p[word];
-    uint link_root = (p2p_root_data >> offset) & 0x7;
+    ushort link_root = (p2p_root_data >> offset) & 0x7;
+    // We only need the first byte of the data as the second will always be 0
     *(buf++) = link_root;
+    *(buf++) = 0;
 
     // Returned packet size
-    return 12 + 18 + 2 + 4 + 4;
+    return 12 + 18 + 2 + 4 + 2;
 }
 
 //------------------------------------------------------------------------------
