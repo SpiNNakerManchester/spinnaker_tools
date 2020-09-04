@@ -41,6 +41,8 @@ pipeline {
                 PATH = "${workspace}/spinnaker_tools/tools:$PATH"
             }
             steps {
+                sh 'echo $PATH'
+            
                 // Build with armcc
                 sh 'make -C $SPINN_DIRS GNU=0'
                 
