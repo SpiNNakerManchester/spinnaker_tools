@@ -30,6 +30,7 @@ pipeline {
     stages {
         stage('Clean and Checkout') {
             steps {
+                echo "PATH is: $PATH"
                 sh 'rm -rf ${WORKSPACE}/*'
                 sh 'rm -rf ${WORKSPACE}/.[a-zA-Z0-9]*'
                 dir('spinnaker_tools') {
