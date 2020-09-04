@@ -38,6 +38,7 @@ pipeline {
         stage('Build') {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
+                WORKSPACE = "${workspace}"
             }
             steps {
                 
@@ -45,10 +46,10 @@ pipeline {
                 sh 'make -C $SPINN_DIRS GNU=0'
                 
                 // Build SCAMP with armcc
-                sh 'PATH="${workspace}/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/scamp GNU=0'
+                sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/scamp GNU=0'
                 
                 // Build BMPC with armcc
-                sh 'PATH="${workspace}/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/bmpc GNU=0'
+                sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/bmpc GNU=0'
             }
         }
         
