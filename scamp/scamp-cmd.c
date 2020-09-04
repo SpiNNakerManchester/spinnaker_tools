@@ -477,6 +477,7 @@ uint cmd_info(sdp_msg_t *msg)
     uint p2p_root_data = rtr_p2p[word];
     ushort link_root = (p2p_root_data >> offset) & 0x7;
     // We only need the first byte of the data as the second will always be 0
+    // (We use a short here because the packet length has to be even)
     *(buf++) = link_root;
     *(buf++) = 0;
 
