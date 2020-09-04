@@ -22,7 +22,7 @@ pipeline {
         }
     }
     environment {
-        PATH = "${workspace}/spinnaker_tools/tools:$PATH"
+        
     }
     options {
         skipDefaultCheckout true
@@ -44,16 +44,15 @@ pipeline {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
             }
             steps {
-                echo "PATH is: $PATH"
                 
                 // Build with armcc
                 sh 'make -C $SPINN_DIRS GNU=0'
                 
                 // Build SCAMP with armcc
-                sh 'make -C $SPINN_DIRS/scamp GNU=0'
+                sh 'PATH="${workspace}/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/scamp GNU=0'
                 
                 // Build BMPC with armcc
-                sh 'make -C $SPINN_DIRS/bmpc GNU=0'
+                sh 'PATH="${workspace}/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/bmpc GNU=0'
             }
         }
         
