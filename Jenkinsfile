@@ -21,6 +21,9 @@ pipeline {
             args '--privileged'
         }
     }
+    environment {
+        PATH = "${workspace}/spinnaker_tools/tools:$PATH"
+    }
     options {
         skipDefaultCheckout true
     }
@@ -38,11 +41,11 @@ pipeline {
         stage('Build') {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
-                PATH = "${workspace}/spinnaker_tools/tools:$PATH"
             }
             steps {
-                sh 'echo $PATH'
             
+                sh 'echo $PATH'
+                
                 // Build with armcc
                 sh 'make -C $SPINN_DIRS GNU=0'
                 
