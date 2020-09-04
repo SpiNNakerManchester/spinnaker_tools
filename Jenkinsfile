@@ -52,9 +52,9 @@ pipeline {
                     sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/scamp GNU=0'
                 }
                 
-                // Build BMPC with armcc
+                // Build BMP with armcc
                 catchError {
-                    sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/bmpc GNU=0'
+                    sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/bmp'
                 }
             }
         }
