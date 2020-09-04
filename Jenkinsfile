@@ -39,6 +39,7 @@ pipeline {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
                 WORKSPACE = "${workspace}"
+                PERL5LIB = "${workspace}/spinnaker_tools:$PERL5LIB"
             }
             steps {
                 
