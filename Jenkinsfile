@@ -21,10 +21,6 @@ pipeline {
             args '--privileged'
         }
     }
-    environment {
-        // This is where 'pip install --user' puts things
-        PATH = "$HOME/.local/bin:$PATH"
-    }
     options {
         skipDefaultCheckout true
     }
@@ -42,6 +38,7 @@ pipeline {
         stage('Build') {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
+                PATH = "${workspace}/spinnaker_tools/tools:$PATH"
             }
             steps {
                 // Build with armcc
