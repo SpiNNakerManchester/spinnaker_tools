@@ -1740,7 +1740,7 @@ void chk_bl_del(void)
             // start boot image DMA to SDRAM for delegate,
             dma[DMA_ADRS] = (uint) SDRAM_BASE;
             dma[DMA_ADRT] = (uint) DTCM_BASE + 0x00008000;
-            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | 0x7100;
+            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | BOOT_IMAGE_SIZE;
 
             // take blacklisted cores out of the application pool
             sc[SC_CLR_OK] = bl_cores;

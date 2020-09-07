@@ -1300,7 +1300,7 @@ void nn_cmd_biff(uint x, uint y, uint data)
             // start boot image DMA to SDRAM for delegate,
             dma[DMA_ADRS] = (uint) SDRAM_BASE;
             dma[DMA_ADRT] = (uint) boot_img;
-            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | 0x7100;
+            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | BOOT_IMAGE_SIZE;
 
             // don't kill a blacklisted monitor just yet,
             dead_cores &= ~(1 << sark.phys_cpu);
