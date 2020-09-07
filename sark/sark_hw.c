@@ -405,7 +405,7 @@ uint rtr_fr_get(void)
 
 // Initialise router point-to-point tables (every entry set to 6)
 
-void rtr_p2p_init()
+void rtr_p2p_init(void)
 {
     for (uint i = 0; i < P2P_TABLE_SIZE; i++) {
         rtr_p2p[i] = P2P_INIT;
