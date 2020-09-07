@@ -1098,8 +1098,7 @@ enum {
     SERIAL_OE =     (SERIAL_NCS + SERIAL_CLK + SERIAL_SI)
 };
 
-// On-chip SDRAM
-//! Bits in #GPIO_PORT, also on-chip SDRAM
+//! The top bit of an unsigned integer
 #define TOP_BIT 0x80000000
 #ifndef __GNUC__
 // Don't warn out-of-int-range on armcc; uint is used anyway according to:
@@ -1109,6 +1108,8 @@ enum {
 #pragma push
 #pragma diag_suppress 66
 #endif
+// On-chip SDRAM
+//! Bits in #GPIO_PORT, also on-chip SDRAM
 enum {
     SDRAM_TQ =      TOP_BIT,
     SDRAM_DPD =     (1 << 30),
