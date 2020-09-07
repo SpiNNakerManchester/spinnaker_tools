@@ -8215,8 +8215,8 @@
       <type>sdp_msg_t *</type>
       <name>sark_shmsg_get</name>
       <anchorfile>sark__base_8c.html</anchorfile>
-      <anchor>a0ffdc1c05d62fca38816de3129da816b</anchor>
-      <arglist>()</arglist>
+      <anchor>a1bdfaf0e7bfe553bcafc6d04bf321bf1</anchor>
+      <arglist>(void)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -8690,8 +8690,8 @@
       <type>void</type>
       <name>rtr_p2p_init</name>
       <anchorfile>sark__hw_8c.html</anchorfile>
-      <anchor>a471b7bfc110421e939b90dbb97e98a5b</anchor>
-      <arglist>()</arglist>
+      <anchor>a74ab37d7c02d8246d2b0fdc7670ce5fa</anchor>
+      <arglist>(void)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -13961,8 +13961,8 @@
       <type>uint</type>
       <name>spin1_start_paused</name>
       <anchorfile>spin1__api_8c.html</anchorfile>
-      <anchor>aa5c759d323713a48253ef146341151b9</anchor>
-      <arglist>()</arglist>
+      <anchor>af41b39641c2de615ac5e006cf915202f</anchor>
+      <arglist>(void)</arglist>
     </member>
     <member kind="function">
       <type>uint</type>
