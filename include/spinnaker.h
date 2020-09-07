@@ -1100,9 +1100,17 @@ enum {
 
 // On-chip SDRAM
 //! Bits in #GPIO_PORT, also on-chip SDRAM
+#define TOP_BIT 0x80000000
+#ifndef __GNUC__
+// Don't warn out-of-int-range on armcc; uint is used anyway according to:
+// https://developer.arm.com/documentation/dui0491/c/
+// c-and-c---implementation-details/
+// structures--unions--enumerations--and-bitfields?lang=en
+#pragma push
+#pragma diag_suppress 66
+#endif
 enum {
-    // Out of range, so shouldn't be used
-    // SDRAM_TQ =      (1 << 31),
+    SDRAM_TQ =      TOP_BIT,
     SDRAM_DPD =     (1 << 30),
     SDRAM_HERE =    (1 << 29),
 
@@ -1111,6 +1119,10 @@ enum {
     JTAG_TDI =      (1 << 25),
     JTAG_TCK =      (1 << 24)
 };
+#ifndef __GNUC__
+// Undo suppression of warning
+#pragma pop
+#endif
 
 //! Bits in #SC_MISC_CTRL
 enum {
