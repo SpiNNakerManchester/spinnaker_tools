@@ -87,24 +87,27 @@ INT_HANDLER pkt_tx_int(void) // SPIN2 - optimise for register order??
 
 //! Ethernet packet received handler. Delegates to eth_receive()
 #ifdef __GNUC__
-#define STR(x) #x
-#define XSTR(s) STR(s)
 void eth_rx_int(void)
 {
     asm volatile (
     "   .arm \n\
         .global eth_receive \n\
+        .equ    MODE_SYS, 0x1f \n\
+        .equ    MODE_IRQ, 0x12 \n\
+        .equ    IMASK_IRQ, 0x80 \n\
+        .equ    VIC_BASE, 0x1f000000 \n\
+        .equ    VIC_VADDR, 0x30 \n\
         sub     lr, lr, #4 \n\
         stmfd   sp!, {r0, lr} \n\
         mrs     lr, spsr \n\
         stmfd   sp!, {r12, lr} \n\
-        msr     cpsr_c, #" XSTR(MODE_SYS) " \n\
+        msr     cpsr_c, #MODE_SYS \n\
         stmfd   sp!, {r1-r3, lr} \n\
         bl      eth_receive \n\
         ldmfd   sp!, {r1-r3, lr} \n\
-        msr     cpsr_c, #" XSTR(MODE_IRQ+IMASK_IRQ) " \n\
-        mov     r12, #" XSTR(VIC_BASE) " \n\
-        str     r12, [r12, #" XSTR(VIC_VADDR) "] \n\
+        msr     cpsr_c, #MODE_IRQ+IMASK_IRQ \n\
+        mov     r12, #VIC_BASE \n\
+        str     r12, [r12, #VIC_VADDR] \n\
         ldmfd   sp!, {r12, lr} \n\
         msr     spsr_cxsf, lr \n\
         ldmfd   sp!, {r0, pc}^ \n\
