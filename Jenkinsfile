@@ -76,7 +76,7 @@ pipeline {
             }
             steps {
                 // Boot a 3-board machine
-                sh 'spalloc 3 -c hwtests/board_tests/boot-bt {}'
+                sh 'spalloc 3 --owner Jenkins -c "hwtests/board_tests/boot-bt {}"'
             }
         }
     }
