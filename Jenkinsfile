@@ -48,7 +48,7 @@ pipeline {
             }
         }
         
-        stage('Build') {
+        stage('ARMCC Build and Test') {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
                 WORKSPACE = "${workspace}"
@@ -56,15 +56,14 @@ pipeline {
             }
             steps {
                 
-                // Build with armcc
+                // Build base and SCAMP with armcc
                 catchError {
                     sh 'make GNU=0 -C $SPINN_DIRS'
-                }
-                
-                // Build SCAMP with armcc
-                catchError {
                     sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make GNU=0 -C $SPINN_DIRS/scamp'
                     sh 'make GNU=0 -C $SPINN_DIRS/scamp install'
+                    
+                    // Boot a 3-board machine
+                    sh 'spalloc 3 -c hwtests/board_tests/boot-bt {}'
                 }
                 
                 // Build BMP with armcc
@@ -74,13 +73,23 @@ pipeline {
             }
         }
         
-        stage('Boot') {
+        stage('GCC Build and Test') {
             environment {
+                SPINN_DIRS = "${workspace}/spinnaker_tools"
+                WORKSPACE = "${workspace}"
                 PERL5LIB = "${workspace}/spinnaker_tools/tools:$PERL5LIB"
             }
             steps {
+                
+                // Build base and SCAMP with gcc
+                sh 'make GNU=1 -C $SPINN_DIRS'
+                sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make GNU=1 -C $SPINN_DIRS/scamp'
+                sh 'make GNU=1 -C $SPINN_DIRS/scamp install'
+                
                 // Boot a 3-board machine
                 sh 'spalloc 3 -c hwtests/board_tests/boot-bt {}'
+                
+                // Cannot build BMP with gcc so far
             }
         }
     }
