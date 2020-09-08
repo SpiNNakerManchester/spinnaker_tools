@@ -41,6 +41,10 @@ pipeline {
                 dir('hwtests') {
                     git branch:'master', credentialsId: '98413a50-3a5d-4ca9-b672-5bfc168f01a5', url:'https://github.com/SpiNNakerManchester/SpiNNaker_hardware_tests'
                 }
+                sh 'mkdir ~/.config'
+                sh 'echo "[spalloc]" > ~/.config/spalloc'
+                sh 'echo "hostname = spinnaker.cs.man.ac.uk" >> ~/.config/spalloc'
+                sh 'echo "owner = Jenkins" >> ~/.config/spalloc'
             }
         }
         
@@ -76,7 +80,7 @@ pipeline {
             }
             steps {
                 // Boot a 3-board machine
-                sh 'spalloc 3 --owner Jenkins -c "hwtests/board_tests/boot-bt {}"'
+                sh 'spalloc 3 -c "hwtests/board_tests/boot-bt {}"'
             }
         }
     }
