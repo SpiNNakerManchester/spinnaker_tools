@@ -38,7 +38,7 @@ pipeline {
         stage('Setup') {
             steps {
                 sh 'pip install spalloc'
-                sh 'git clone https://github.com/SpiNNakerManchester/SpiNNaker_hardware_tests hwtests'
+                gitAskPass('98413a50-3a5d-4ca9-b672-5bfc168f01a5', 'git clone https://github.com/SpiNNakerManchester/SpiNNaker_hardware_tests hwtests')
             }
         }
         
