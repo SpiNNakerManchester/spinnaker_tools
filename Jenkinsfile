@@ -35,6 +35,13 @@ pipeline {
             }
         }
         
+        stage('Setup') {
+            steps {
+                sh 'pip install spalloc'
+                sh 'git clone https://github.com/SpiNNakerManchester/SpiNNaker_hardware_tests hwtests'
+            }
+        }
+        
         stage('Build') {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
@@ -45,12 +52,13 @@ pipeline {
                 
                 // Build with armcc
                 catchError {
-                    sh 'make -C $SPINN_DIRS GNU=0'
+                    sh 'make GNU=0 -C $SPINN_DIRS'
                 }
                 
                 // Build SCAMP with armcc
                 catchError {
-                    sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/scamp GNU=0'
+                    sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make GNU=0 -C $SPINN_DIRS/scamp'
+                    sh 'make GNU=0 -C $SPINN_DIRS/scamp install'
                 }
                 
                 // Build BMP with armcc
@@ -60,6 +68,15 @@ pipeline {
             }
         }
         
+        stage('Boot') {
+            environment {
+                PERL5LIB = "${workspace}/spinnaker_tools/tools:$PERL5LIB"
+            }
+            steps {
+                // Boot a 3-board machine
+                sh 'spalloc 3 -c hwtests/board_tests/boot-bt {}'
+            }
+        }
     }
     post {
         always {
