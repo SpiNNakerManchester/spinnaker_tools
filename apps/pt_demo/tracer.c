@@ -1372,7 +1372,7 @@ void sdp_packet_callback(uint msg, uint port)
 }
 
 
-void load_mc_routing_tables()
+void load_mc_routing_tables(void)
 {
     if (sark_core_id() != sark_app_lead()) {
         return;
@@ -1410,7 +1410,7 @@ void timer_callback(uint time, uint none)
 }
 
 
-void c_main()
+void c_main(void)
 {
     io_printf(IO_BUF, "Started tracer\n");
 

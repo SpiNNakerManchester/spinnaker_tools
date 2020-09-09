@@ -103,7 +103,7 @@ void flip_led(uint ticks, uint null)
 
 // Main program just sets up callbacks and then starts the API
 
-void c_main()
+void c_main(void)
 {
     io_printf(IO_STD, ">> sdping\n");
 
