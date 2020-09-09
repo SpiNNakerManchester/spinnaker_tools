@@ -30,19 +30,8 @@
 
 //------------------------------------------------------------------------------
 
-// These settings handle a boot image of size BLOCK_COUNT * BYTE_COUNT bytes
-// Image sizes < 32kB are possible.
-
 //! The address of the buffer used for booting cores
 #define BOOT_BUF (DTCM_BASE + 0x8000)
-
-// BLOCK_COUNT * BYTE_COUNT must be < 32kB
-//! The number of blocks in the image to boot
-#define BLOCK_COUNT     31      // From 1-256
-//! The number of words in a block (1kB)
-#define WORD_COUNT      256     // From 1-256
-//! The number of bytes in a block
-#define BYTE_COUNT      (WORD_COUNT * sizeof(uint))
 
 //! \brief Flood fill phases, used in nearest neighbour packets.
 //! \details

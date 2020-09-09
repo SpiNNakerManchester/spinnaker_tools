@@ -23,6 +23,7 @@
 
 #include <spin1_api.h>
 #include <spin1_api_params.h>
+#include <scamp_spin1_sync.h>
 
 
 // ---------------------
@@ -774,18 +775,19 @@ static void report_warns(void)
 }
 
 
+#ifdef __GNUC__
+    register uint _lr asm("lr");
+#else
+    register uint _lr __asm("lr");
+#endif // __GNUC__
+
 void spin1_rte(rte_code code)
 {
     // Don't actually shutdown, just set the CPU into an RTE code and
     // stop the timer
     clean_up();
     sark_cpu_state(CPU_STATE_RTE);
-#ifdef __GNUC__
-    register uint lr asm("lr");
-#else
-    register uint lr __asm("lr");
-#endif // __GNUC__
-    sv_vcpu->lr = lr;        // Report the link register (calling address)
+    sv_vcpu->lr = _lr;        // Report the link register (calling address)
     sv_vcpu->rt_code = code;
     sv->led_period = 8;
 }

@@ -4,6 +4,18 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.4.1 - Bug fixing
+
+Bug fixes:
+
+* ALL: Documentation fixes
+
+* ALL: Reduce warnings when compiling with armcc
+
+* SCAMP: Allow building and booting with gcc compiler
+
+#-------------------------------------------------------------------------------
+
 Version 3.4.0 - New features
 
 New Features:
