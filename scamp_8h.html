@@ -128,6 +128,23 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp_8h.html#ac01ccdb8c08824c4c840e85fabb7563e">SCAMP_MC_SIGNAL_KEY</a>&#160;&#160;&#160;0xffff5555</td></tr>
 <tr class="memdesc:ac01ccdb8c08824c4c840e85fabb7563e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The key used for signal packets. <br /></td></tr>
 <tr class="separator:ac01ccdb8c08824c4c840e85fabb7563e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader">SCAMP boot image constants</div></td></tr>
+<tr class="memitem:a8b7771bbb0e029e9200b3a7ec9816204"><td class="memItemLeft" align="right" valign="top"><a id="a8b7771bbb0e029e9200b3a7ec9816204"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp_8h.html#a8b7771bbb0e029e9200b3a7ec9816204">BLOCK_COUNT</a>&#160;&#160;&#160;31</td></tr>
+<tr class="memdesc:a8b7771bbb0e029e9200b3a7ec9816204"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of blocks in the image to boot. <br /></td></tr>
+<tr class="separator:a8b7771bbb0e029e9200b3a7ec9816204"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a73994c0f34d7160878e5307f221f60"><td class="memItemLeft" align="right" valign="top"><a id="a1a73994c0f34d7160878e5307f221f60"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp_8h.html#a1a73994c0f34d7160878e5307f221f60">WORD_COUNT</a>&#160;&#160;&#160;256</td></tr>
+<tr class="memdesc:a1a73994c0f34d7160878e5307f221f60"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of words in a block (1kB) <br /></td></tr>
+<tr class="separator:a1a73994c0f34d7160878e5307f221f60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0427aee3a6302a998cd907c06e73470"><td class="memItemLeft" align="right" valign="top"><a id="af0427aee3a6302a998cd907c06e73470"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp_8h.html#af0427aee3a6302a998cd907c06e73470">BYTE_COUNT</a>&#160;&#160;&#160;(<a class="el" href="scamp_8h.html#a1a73994c0f34d7160878e5307f221f60">WORD_COUNT</a> * sizeof(<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>))</td></tr>
+<tr class="memdesc:af0427aee3a6302a998cd907c06e73470"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of bytes in a block. <br /></td></tr>
+<tr class="separator:af0427aee3a6302a998cd907c06e73470"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4787ac9327243fabb5ec15ea2f80d9a0"><td class="memItemLeft" align="right" valign="top"><a id="a4787ac9327243fabb5ec15ea2f80d9a0"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp_8h.html#a4787ac9327243fabb5ec15ea2f80d9a0">BOOT_IMAGE_SIZE</a>&#160;&#160;&#160;(<a class="el" href="scamp_8h.html#a8b7771bbb0e029e9200b3a7ec9816204">BLOCK_COUNT</a> * <a class="el" href="scamp_8h.html#af0427aee3a6302a998cd907c06e73470">BYTE_COUNT</a>)</td></tr>
+<tr class="memdesc:a4787ac9327243fabb5ec15ea2f80d9a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">The maximum boot image size. <br /></td></tr>
+<tr class="separator:a4787ac9327243fabb5ec15ea2f80d9a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">sync0/sync1 arrival alignment</div></td></tr>
 <tr class="memitem:acb9f8fcbb74c4d411b39ed05ed24ae0b"><td class="memItemLeft" align="right" valign="top"><a id="acb9f8fcbb74c4d411b39ed05ed24ae0b"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp_8h.html#acb9f8fcbb74c4d411b39ed05ed24ae0b">NODE_DLY_NS</a>&#160;&#160;&#160;500</td></tr>
@@ -2253,7 +2270,7 @@ valid[16]</td>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Sep 7 2020 11:37:44 for spinnaker_tools by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Sep 9 2020 10:29:58 for spinnaker_tools by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.17
 </small></address>

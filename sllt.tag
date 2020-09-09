@@ -63,13 +63,6 @@
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>DRIFT_FP_BITS</name>
-      <anchorfile>sark_8h.html</anchorfile>
-      <anchor>af6d5213655f175c14ba2790e41636998</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
       <name>ntohs</name>
       <anchorfile>sark_8h.html</anchorfile>
       <anchor>ae886ad5b9af398395184d1bf093481c6</anchor>
@@ -4764,6 +4757,83 @@
       <anchor>a784356be8d9e0ecfdb3e33f0845ea2e0</anchor>
       <arglist></arglist>
     </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MODE_USER</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>a9e3cdd5c5fb80a5739fa689c09f997a7</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MODE_FIQ</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>a2d95aed11b5420eb0d67884b39e984f4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MODE_IRQ</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>ae3e562974dac9a93ece87414925c8c7e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MODE_SVC</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>a9266f9bd89f1bccd0b3b5e8825ab654c</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MODE_ABT</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>a75f8757e1d238418b64ef59fc09e5e94</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MODE_UND</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>aade1410afb684e0540924f289ba68f23</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MODE_SYS</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>ac5fe4951d03afe9d7e282e754b655f7e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>THUMB_BIT</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>afd8f65e0d3bba35e4ec0b099c2bcbb44</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>IMASK_IRQ</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>aa87e465adff61c2e2ab45ace3d20ca4e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>IMASK_FIQ</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>aeeee93b904be3a58723a61716075340e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>IMASK_ALL</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>afb04c134e59281a4687411af657d2d5c</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="typedef">
       <type>unsigned char</type>
       <name>uchar</name>
@@ -4850,72 +4920,6 @@
       <name>PKT_FR_PL</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
       <anchor>a0411cd49bb5b71852cecd93bcbf0ca2da181eca3e130f31d7715df73aa490c40c</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_USER</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da06c431ef2d3daa0430be10958afb75da</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_FIQ</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da114f4eed33e46c8994d1c28ea790ae69</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_IRQ</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da6ff5fe07fb1563cee773d932bb66d9b7</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_SVC</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035dad0b02e29561c3d3e1c2c919fb8baa17a</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_ABT</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da8e00eb0cfd59615610dad83576fd9b88</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_UND</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da4bbdb4bae4a828a4b4aa215c8b15eed5</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_SYS</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da95c07e9c2a9c843253f581f48bc70ca6</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>THUMB_BIT</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da89adbfdc54cc129969d9f5548591791c</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>IMASK_IRQ</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da7cbbe57602f7b9b553b4c1cc1176449f</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>IMASK_FIQ</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035daa17c00a68be8237a1d6bb5e09536e3f6</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>IMASK_ALL</name>
-      <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da6da99f10f55eb1260a00e5e4d71628d9</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable" static="yes">
@@ -7846,6 +7850,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>TOP_BIT</name>
+      <anchorfile>spinnaker_8h.html</anchorfile>
+      <anchor>a374a89ea463741f80c7e7b9978664bc9</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>LED_0</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
       <anchor>aa94efefdb04d44c846c163f108d52ae9</anchor>
@@ -7869,70 +7880,81 @@
       <anchor>a385c44f6fb256e5716a2302a5b940388a984fab6c48baa00cb5b17e7988097ba8</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>MODE_USER</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da06c431ef2d3daa0430be10958afb75da</anchor>
+      <anchor>a9e3cdd5c5fb80a5739fa689c09f997a7</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>MODE_FIQ</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da114f4eed33e46c8994d1c28ea790ae69</anchor>
+      <anchor>a2d95aed11b5420eb0d67884b39e984f4</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>MODE_IRQ</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da6ff5fe07fb1563cee773d932bb66d9b7</anchor>
+      <anchor>ae3e562974dac9a93ece87414925c8c7e</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>MODE_SVC</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035dad0b02e29561c3d3e1c2c919fb8baa17a</anchor>
+      <anchor>a9266f9bd89f1bccd0b3b5e8825ab654c</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>MODE_ABT</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da8e00eb0cfd59615610dad83576fd9b88</anchor>
+      <anchor>a75f8757e1d238418b64ef59fc09e5e94</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>MODE_UND</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da4bbdb4bae4a828a4b4aa215c8b15eed5</anchor>
+      <anchor>aade1410afb684e0540924f289ba68f23</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>MODE_SYS</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da95c07e9c2a9c843253f581f48bc70ca6</anchor>
+      <anchor>ac5fe4951d03afe9d7e282e754b655f7e</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>THUMB_BIT</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da89adbfdc54cc129969d9f5548591791c</anchor>
+      <anchor>afd8f65e0d3bba35e4ec0b099c2bcbb44</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>IMASK_IRQ</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da7cbbe57602f7b9b553b4c1cc1176449f</anchor>
+      <anchor>aa87e465adff61c2e2ab45ace3d20ca4e</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>IMASK_FIQ</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035daa17c00a68be8237a1d6bb5e09536e3f6</anchor>
+      <anchor>aeeee93b904be3a58723a61716075340e</anchor>
       <arglist></arglist>
     </member>
-    <member kind="enumvalue">
+    <member kind="define">
+      <type>#define</type>
       <name>IMASK_ALL</name>
       <anchorfile>spinnaker_8h.html</anchorfile>
-      <anchor>abc5c98fcc1211af2b80116dd6e0a035da6da99f10f55eb1260a00e5e4d71628d9</anchor>
+      <anchor>afb04c134e59281a4687411af657d2d5c</anchor>
       <arglist></arglist>
     </member>
   </compound>
@@ -9918,27 +9940,6 @@
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>BLOCK_COUNT</name>
-      <anchorfile>scamp-boot_8c.html</anchorfile>
-      <anchor>a8b7771bbb0e029e9200b3a7ec9816204</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
-      <name>WORD_COUNT</name>
-      <anchorfile>scamp-boot_8c.html</anchorfile>
-      <anchor>a1a73994c0f34d7160878e5307f221f60</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
-      <name>BYTE_COUNT</name>
-      <anchorfile>scamp-boot_8c.html</anchorfile>
-      <anchor>af0427aee3a6302a998cd907c06e73470</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
       <name>FF_TARGET_MONITOR</name>
       <anchorfile>scamp-boot_8c.html</anchorfile>
       <anchor>a63d1434de905261ac191ccb6a75b65d5</anchor>
@@ -11558,6 +11559,34 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>BLOCK_COUNT</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a8b7771bbb0e029e9200b3a7ec9816204</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>WORD_COUNT</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a1a73994c0f34d7160878e5307f221f60</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>BYTE_COUNT</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>af0427aee3a6302a998cd907c06e73470</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>BOOT_IMAGE_SIZE</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a4787ac9327243fabb5ec15ea2f80d9a0</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>NODE_DLY_NS</name>
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>acb9f8fcbb74c4d411b39ed05ed24ae0b</anchor>
@@ -12075,6 +12104,34 @@
       <name>SCAMP_MC_SIGNAL_KEY</name>
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>ac01ccdb8c08824c4c840e85fabb7563e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>BLOCK_COUNT</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a8b7771bbb0e029e9200b3a7ec9816204</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>WORD_COUNT</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a1a73994c0f34d7160878e5307f221f60</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>BYTE_COUNT</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>af0427aee3a6302a998cd907c06e73470</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>BOOT_IMAGE_SIZE</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a4787ac9327243fabb5ec15ea2f80d9a0</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
