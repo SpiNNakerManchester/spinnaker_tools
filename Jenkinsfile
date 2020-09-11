@@ -63,7 +63,7 @@ pipeline {
                     sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make GNU=0 -C $SPINN_DIRS/scamp'
                     sh 'make GNU=0 -C $SPINN_DIRS/scamp install'
                     
-                    // Boot a 3-board machine
+                    // Boot a SpiNN-5 board
                     sh 'spalloc -c hwtests/board_tests/boot-bt {}'
                 }
                 
@@ -88,7 +88,7 @@ pipeline {
                 sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make GNU=1 -C $SPINN_DIRS/scamp'
                 sh 'make GNU=1 -C $SPINN_DIRS/scamp install'
                 
-                // Boot a 3-board machine
+                // Boot a SpiNN-5 board
                 sh 'spalloc -c hwtests/board_tests/boot-bt {}'
                 
                 // Cannot build BMP with gcc so far
