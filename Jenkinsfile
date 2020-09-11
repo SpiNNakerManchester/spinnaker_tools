@@ -51,6 +51,7 @@ pipeline {
         stage('ARMCC Build and Test') {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
+                SPINN_PATH = "${workspace}/hwtests/board_tests"
                 WORKSPACE = "${workspace}"
                 PERL5LIB = "${workspace}/spinnaker_tools/tools:$PERL5LIB"
             }
