@@ -131,7 +131,13 @@ void set_cpu_info(uint virt_mask, uint state, uint app_id)
 //! \return The bit index of the least significant set bit
 static inline uint find_lead(uint mask)
 {
-    return __builtin_ffs(mask);
+    uint count = 0;
+
+    while ((mask != 0) && ((mask & (1 << count)) == 0)) {
+        count++;
+    }
+
+    return count;
 }
 
 //! \brief Start an application on a set of cores

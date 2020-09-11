@@ -28,6 +28,7 @@
 #include "spinnaker.h"
 #include "sark.h"
 #include "scamp.h"
+#include <scamp_spin1_sync.h>
 
 //! Multicast packet handler uses the FIQ VIC slot
 #define MC_SLOT SLOT_FIQ
@@ -133,7 +134,7 @@ __asm void eth_rx_int(void)
 
         ldmfd   sp!, {r1-r3, lr}        ;; Restore working regs & LR_sys
 
-        msr     cpsr_c, #MODE_IRQ+IMASK_IRQ ; Back to IRQ mode, IRQ disabled
+        msr     cpsr_c, #MODE_IRQ+IMASK_IRQ ;; Back to IRQ mode, IRQ disabled
 
         mov     r12, #VIC_BASE          ;; Tell VIC we are done
         str     r12, [r12, #VIC_VADDR * 4]

@@ -471,8 +471,18 @@ uint cmd_info(sdp_msg_t *msg)
     *(buf++) = sv->ip_addr[2];
     *(buf++) = sv->ip_addr[3];
 
+    // Add the link followed to get to root as this is used in signalling
+    uint word = p2p_root >> P2P_LOG_EPW;
+    uint offset = P2P_BPE * (p2p_root & P2P_EMASK);
+    uint p2p_root_data = rtr_p2p[word];
+    ushort link_root = (p2p_root_data >> offset) & 0x7;
+    // We only need the first byte of the data as the second will always be 0
+    // (We use a short here because the packet length has to be even)
+    *(buf++) = link_root;
+    *(buf++) = 0;
+
     // Returned packet size
-    return 12 + 18 + 2 + 4;
+    return 12 + 18 + 2 + 4 + 2;
 }
 
 //------------------------------------------------------------------------------
