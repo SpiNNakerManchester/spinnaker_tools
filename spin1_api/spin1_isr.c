@@ -21,6 +21,7 @@
 
 #include <spin1_api.h>
 #include <spin1_api_params.h>
+#include <scamp_spin1_sync.h>
 
 //! \brief Wrapper for schedule_sysmode() that handles interrupts
 //! \param[in] event_id: ID of the event triggering a callback
@@ -257,10 +258,11 @@ INT_HANDLER cc_tx_empty_isr(void)
     while (tx_packet_queue.start != tx_packet_queue.end
             && ~cc[CC_TCR] & 0x40000000) {
         // Dequeue packet
+        packet_t *packet = &tx_packet_queue.queue[tx_packet_queue.start];
 
-        uint key = tx_packet_queue.queue[tx_packet_queue.start].key;
-        uint data = tx_packet_queue.queue[tx_packet_queue.start].data;
-        uint TCR = tx_packet_queue.queue[tx_packet_queue.start].TCR;
+        uint key = packet->key;
+        uint data = packet->data;
+        uint TCR = packet->TCR;
 
         tx_packet_queue.start = (tx_packet_queue.start + 1) % TX_PACKET_QUEUE_SIZE;
 
@@ -306,8 +308,9 @@ INT_HANDLER dma_done_isr(void)
 
     // Prepare data for callback before triggering a new DMA transfer
 
-    uint completed_id  = dma_queue.queue[dma_queue.start].id;
-    uint completed_tag = dma_queue.queue[dma_queue.start].tag;
+    copy_t *entry = &dma_queue.queue[dma_queue.start];
+    uint completed_id  = entry->id;
+    uint completed_tag = entry->tag;
 
     //TODO: can schedule up to 2 transfers if DMA free
     // Update queue pointer and trigger new transfer if queue not empty
@@ -315,9 +318,10 @@ INT_HANDLER dma_done_isr(void)
     dma_queue.start = (dma_queue.start + 1) % DMA_QUEUE_SIZE;
 
     if (dma_queue.start != dma_queue.end) {
-        uint *system_address = dma_queue.queue[dma_queue.start].system_address;
-        uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
-        uint  description = dma_queue.queue[dma_queue.start].description;
+        entry = &dma_queue.queue[dma_queue.start];
+        uint *system_address = entry->system_address;
+        uint *tcm_address = entry->tcm_address;
+        uint description = entry->description;
 
         dma[DMA_ADRS] = (uint) system_address;
         dma[DMA_ADRT] = (uint) tcm_address;
@@ -355,8 +359,9 @@ INT_HANDLER dma_done_fiqsr(void)
 
     // Prepare data for callback before triggering a new DMA transfer
 
-    uint completed_id  = dma_queue.queue[dma_queue.start].id;
-    uint completed_tag = dma_queue.queue[dma_queue.start].tag;
+    copy_t *entry = &dma_queue.queue[dma_queue.start];
+    uint completed_id  = entry->id;
+    uint completed_tag = entry->tag;
 
     //TODO: can schedule up to 2 transfers if DMA free
 
@@ -365,9 +370,10 @@ INT_HANDLER dma_done_fiqsr(void)
     dma_queue.start = (dma_queue.start + 1) % DMA_QUEUE_SIZE;
 
     if (dma_queue.start != dma_queue.end) {
-        uint *system_address = dma_queue.queue[dma_queue.start].system_address;
-        uint *tcm_address = dma_queue.queue[dma_queue.start].tcm_address;
-        uint  description = dma_queue.queue[dma_queue.start].description;
+        entry = &dma_queue.queue[dma_queue.start];
+        uint *system_address = entry->system_address;
+        uint *tcm_address = entry->tcm_address;
+        uint description = entry->description;
 
         dma[DMA_ADRS] = (uint) system_address;
         dma[DMA_ADRT] = (uint) tcm_address;

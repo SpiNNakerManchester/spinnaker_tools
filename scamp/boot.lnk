@@ -1,6 +1,6 @@
 
 /*
-// sark.lnk	    GNU linker script for SARK/SpiNNaker applications
+// boot.lnk	    GNU linker script for scamp/boot_aplx.s build
 //
 // Copyright (C)    The University of Manchester - 2011-2013
 //
