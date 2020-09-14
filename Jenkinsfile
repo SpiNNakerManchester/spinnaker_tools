@@ -34,7 +34,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Setup') {
             steps {
                 sh 'pip install spalloc'
@@ -47,7 +47,7 @@ pipeline {
                 sh 'echo "owner = Jenkins" >> ~/.config/spalloc'
             }
         }
-        
+
         stage('ARMCC Build and Test') {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
@@ -56,24 +56,24 @@ pipeline {
                 PERL5LIB = "${workspace}/spinnaker_tools/tools:$PERL5LIB"
             }
             steps {
-                
+
                 // Build base and SCAMP with armcc
                 catchError {
                     sh 'make GNU=0 -C $SPINN_DIRS'
                     sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make GNU=0 -C $SPINN_DIRS/scamp'
                     sh 'make GNU=0 -C $SPINN_DIRS/scamp install'
-                    
+
                     // Boot a SpiNN-5 board
                     sh 'spalloc -c hwtests/board_tests/boot-bt {}'
                 }
-                
+
                 // Build BMP with armcc
                 catchError {
                     sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make -C $SPINN_DIRS/bmp'
                 }
             }
         }
-        
+
         stage('GCC Build and Test') {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
@@ -82,15 +82,15 @@ pipeline {
                 PERL5LIB = "${workspace}/spinnaker_tools/tools:$PERL5LIB"
             }
             steps {
-                
+
                 // Build base and SCAMP with gcc
                 sh 'make GNU=1 -C $SPINN_DIRS'
                 sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make GNU=1 -C $SPINN_DIRS/scamp'
                 sh 'make GNU=1 -C $SPINN_DIRS/scamp install'
-                
+
                 // Boot a SpiNN-5 board
                 sh 'spalloc -c hwtests/board_tests/boot-bt {}'
-                
+
                 // Cannot build BMP with gcc so far
             }
         }

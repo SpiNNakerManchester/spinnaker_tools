@@ -15,6 +15,7 @@
 
 APP := scamp-3
 override THUMB := 1
+override SCAMP := 1
 include ../make/spinnaker_tools.mk
 
 SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
@@ -118,9 +119,9 @@ tar:
 	scamp/spinn_srom.c scamp/spinn_net.c scamp/scamp-app.c \
 	scamp/scamp-p2p.c scamp/scamp-nn.c scamp/scamp-cmd.c \
 	scamp/scamp-boot.c scamp/scamp-isr.c scamp/scamp-del.c scamp/spinn_phy.h \
-	scamp/scamp.h scamp/spinn_net.h scamp/spinn_srom.h scamp/spinn_regs.h \
+	scamp/scamp.h scamp/spinn_net.h scamp/spinn_regs.h \
 	scamp/boot_aplx.s scamp/$(APP).c scamp/$(APP).sct scamp/sark.c \
-	scamp/Makefile scamp/mkpad scamp/mksv
+	scamp/Makefile scamp/mkpad scamp/mksv scamp/$(APP).lnk scamp/boot.lnk
 
 clean:
 	$(RM) -r $(BUILD_DIR)* $(APP).boot
