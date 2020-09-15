@@ -1195,46 +1195,6 @@ uint spin1_send_packet(uint key, uint data, uint TCR)
 *******/
 
 
-/*! \brief Enables standard interrupts.
-*
-*  This function clears the I bit in the CPSR in order to enable IRQ
-*  interrupts to the processor.
-*
-*  \return state of the CPSR before the interrupt enable
-*/
-#ifdef THUMB
-extern uint spin1_irq_enable(void);
-#elif defined(__GNUC__)
-__inline uint spin1_irq_enable(void)
-{
-    uint old_val, new_val;
-
-    asm volatile (
-    "mrs        %[old_val], cpsr \n\
-     bic        %[new_val], %[old_val], #0x80 \n\
-     msr        cpsr_c, %[new_val] \n"
-     : [old_val] "=r" (old_val), [new_val] "=r" (new_val)
-     :
-     : );
-
-    return old_val;
-}
-#else
-__forceinline uint spin1_irq_enable(void)
-{
-    uint old_val, new_val;
-
-    __asm { mrs old_val, cpsr }
-    __asm { bic new_val, old_val, 0x80 }
-    __asm { msr cpsr_c, new_val }
-
-    return old_val;
-}
-#endif
-/*
-*******/
-
-
 /****f* spin1_api.c/spin1_get_id
 *
 * SUMMARY
