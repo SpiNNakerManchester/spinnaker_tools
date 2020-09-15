@@ -14065,13 +14065,6 @@
     </member>
     <member kind="function">
       <type>uint</type>
-      <name>spin1_irq_enable</name>
-      <anchorfile>spin1__api_8c.html</anchorfile>
-      <anchor>a39b5615f44bfdae6216b20f9f77e431a</anchor>
-      <arglist>(void)</arglist>
-    </member>
-    <member kind="function">
-      <type>uint</type>
       <name>spin1_get_id</name>
       <anchorfile>spin1__api_8c.html</anchorfile>
       <anchor>a337ee4169620e7a86f8a81b81bb4f510</anchor>
