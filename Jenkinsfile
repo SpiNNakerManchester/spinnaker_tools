@@ -59,6 +59,9 @@ pipeline {
 
                 // Build base and SCAMP with armcc
                 catchError {
+                    // show compiler version
+                    sh 'armcc --vsn'
+
                     sh 'make GNU=0 -C $SPINN_DIRS'
                     sh 'PATH="$WORKSPACE/spinnaker_tools/tools:$PATH" make GNU=0 -C $SPINN_DIRS/scamp'
                     sh 'make GNU=0 -C $SPINN_DIRS/scamp install'
@@ -82,6 +85,9 @@ pipeline {
                 PERL5LIB = "${workspace}/spinnaker_tools/tools:$PERL5LIB"
             }
             steps {
+
+                // show compiler version
+                sh 'arm-none-eabi-gcc --version'
 
                 // Build base and SCAMP with gcc
                 sh 'make GNU=1 -C $SPINN_DIRS'
