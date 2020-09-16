@@ -46,7 +46,7 @@ stack_top       dcd     DTCM_BASE + (DTCM_SIZE / 2)
 
 ; When booting via bootROM, APLX table ends up
 ; in DTCM, 128 bytes above start of image
-aplx_args       dcd     DTCM_BASE + (DTCM_SIZE / 2) + 0x80      ; Address of APLX table
+aplx_args       dcd     DTCM_BASE + (DTCM_SIZE / 2) + 128       ; Address of APLX table
                 dcd     0                       ; Arg passed in r0 (app_id)
 
 aplx_svc        msr     cpsr_c, #IMASK_ALL+MODE_SVC
