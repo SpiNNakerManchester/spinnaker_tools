@@ -11,16 +11,16 @@ Installation and Setup
 
     Search for the string "EDIT HERE" to find the two edit points.
 
-    The version of the GNU tools that was used to test this release is
+    The version of the GNU tools used to test this release is
 
-        gcc version 4.9.3 20150529 (release) [ARM/embedded-4_9-branch revision 227977]
+        arm-none-eabi-gcc 9.2.1 20191025 (release) [ARM/arm-9-branch revision 277599]
 
     This (and more recent versions) can be downloaded from
     [this web site](https://launchpad.net/gcc-arm-embedded).
 
-    The version of the ARM tools that was used to test this release is
+    The version of the ARM tools used to test this release is
 
-        ARM C/C++ Compiler, RVCT4.0 [Build 400]
+        ARM C/C++ Compiler, 4.1 [Build 894]
 
  2. Source the setup file in the directory in which it lives
 
@@ -29,15 +29,8 @@ Installation and Setup
  3. Build SARK and spin1_api for ARM or GNU tools
     (you will probably only want to do one of these)
 
-        make GNU=0	        # If you are using ARM tools
-        make        		# If you are using GNU tools
-
-    Note that you may see some compiler warnings during these builds.
-
-        ARM: Warning: A1581W: Added 2 bytes of padding at address ...
-        ARM: Warning: C3017W: cpsr may be used before being set
-
-    These are harmless and can be ignored.
+        make GNU=0       # If you are using ARM tools
+        make             # If you are using GNU tools
 
 Use of the Tools
 ----------------
@@ -213,5 +206,5 @@ Additional Resources
     may not be installed by default on your machine. This can be
     installed as follows
 
-        sudo apt-get install perl-tk		# Ubuntu, etc
-        sudo yum     install perl-Tk		# Fedora, etc
+        sudo apt-get install perl-tk                # Ubuntu, etc
+        sudo yum     install perl-Tk                # Fedora, etc
