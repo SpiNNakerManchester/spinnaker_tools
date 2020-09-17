@@ -40,14 +40,14 @@ aplx_start      adr     sp, stack_top           ; Set up stack
                 ldm     r0, {r0-r1, r4-r5}      ; Get address & args
                 blx     proc_aplx               ; Go to loader
 
-; place stack in bottom half of DTCM
-; to avoid conflict with boot image
-stack_top       dcd     DTCM_BASE + (DTCM_SIZE / 2)
+; When booting via bootROM, APLX table ends up in DTCM 128 bytes above
+; start of image
 
-; When booting via bootROM, APLX table ends up
-; in DTCM, 128 bytes above start of image
 aplx_args       dcd     DTCM_BASE + (DTCM_SIZE / 2) + 128       ; Address of APLX table
                 dcd     0                       ; Arg passed in r0 (app_id)
+
+; place stack in bottom half of DTCM to avoid conflict with boot image
+stack_top       dcd     DTCM_BASE + (DTCM_SIZE / 2)
 
 aplx_svc        msr     cpsr_c, #IMASK_ALL+MODE_SVC
                 bx      lr

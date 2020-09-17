@@ -11,14 +11,14 @@ Installation and Setup
 
     Search for the string "EDIT HERE" to find the two edit points.
 
-    The version of the GNU tools used to test this release is
+    The version of the GNU tools that was used to test this release is
 
-        arm-none-eabi-gcc 9.2.1 20191025 (release) [ARM/arm-9-branch revision 277599]
+        gcc 9.2.1 20191025 (release) [ARM/arm-9-branch revision 277599]
 
     This (and more recent versions) can be downloaded from
     [this web site](https://launchpad.net/gcc-arm-embedded).
 
-    The version of the ARM tools used to test this release is
+    The version of the ARM tools that was used to test this release is
 
         ARM C/C++ Compiler, 4.1 [Build 894]
 
@@ -29,8 +29,8 @@ Installation and Setup
  3. Build SARK and spin1_api for ARM or GNU tools
     (you will probably only want to do one of these)
 
-        make GNU=0       # If you are using ARM tools
-        make             # If you are using GNU tools
+        make GNU=0	        # If you are using ARM tools
+        make        		# If you are using GNU tools
 
 Use of the Tools
 ----------------
