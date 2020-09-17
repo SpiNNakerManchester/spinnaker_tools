@@ -35,8 +35,8 @@
 
                 entry
 
-aplx_start      adr     sp, stack_top           ; Set up stack
-                adr     r0, aplx_args           ; APLX block in DTCM
+aplx_start      adr     r0, aplx_args           ; APLX block in DTCM
+                add     sp, r0, #-128           ; Set up stack below boot image
                 ldm     r0, {r0-r1, r4-r5}      ; Get address & args
                 blx     proc_aplx               ; Go to loader
 
@@ -45,9 +45,6 @@ aplx_start      adr     sp, stack_top           ; Set up stack
 
 aplx_args       dcd     DTCM_BASE + (DTCM_SIZE / 2) + 128       ; Address of APLX table
                 dcd     0                       ; Arg passed in r0 (app_id)
-
-; place stack in bottom half of DTCM to avoid conflict with boot image
-stack_top       dcd     DTCM_BASE + (DTCM_SIZE / 2)
 
 aplx_svc        msr     cpsr_c, #IMASK_ALL+MODE_SVC
                 bx      lr
