@@ -206,5 +206,5 @@ Additional Resources
     may not be installed by default on your machine. This can be
     installed as follows
 
-        sudo apt-get install perl-tk                # Ubuntu, etc
-        sudo yum     install perl-Tk                # Fedora, etc
+        sudo apt-get install perl-tk		# Ubuntu, etc
+        sudo yum     install perl-Tk		# Fedora, etc
