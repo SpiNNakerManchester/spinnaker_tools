@@ -1,19 +1,35 @@
 //------------------------------------------------------------------------------
-//
-// sark_timer.c     Timer routines for SARK
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Timer routines for SARK
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <sark.h>
 
 //------------------------------------------------------------------------------
 
-event_t cancelled;  // placeholder for events cancelled @ timer_queue head
+static event_t cancelled;  //!< placeholder for events cancelled @ timer_queue head
 
 //------------------------------------------------------------------------------
 
@@ -225,7 +241,7 @@ void timer_cancel_init(void)
 //------------------------------------------------------------------------------
 
 
-// Interrupt handler for the timer which is handling timers.
+//! Interrupt handler for the timer which is handling timers.
 
 void timer2_int(void)
 {

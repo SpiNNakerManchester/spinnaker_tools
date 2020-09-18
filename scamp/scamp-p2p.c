@@ -1,13 +1,29 @@
 //------------------------------------------------------------------------------
-//
-// scamp-p2p.c      P2P packet handling for SC&MP
-//
-// Copyright (C)    The University of Manchester - 2009-2011
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     P2P packet handling for SC&MP
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 
 #include "spinnaker.h"
@@ -16,22 +32,25 @@
 
 #include "spinn_net.h"
 
+#define P2P_NUM_STR 8   //!< Number of streams
 
-#define STATS
+//! Possible states in P2P protocol: transmitter side
+enum p2p_tx_state {
+    TX_IDLE = 0,
+    TX_OPEN_REQ = 1,
+    TX_OPEN = 2,
+    TX_RETRY = 3,
+    TX_CLOSE = 4
+};
 
-#define P2P_NUM_STR 8   // Number of streams
+//! Possible states in P2P protocol: receiver side
+enum p2p_rx_state {
+    RX_IDLE = 0,
+    RX_OPEN = 1,
+    RX_CLOSE_REQ = 2
+};
 
-#define TX_IDLE 0
-#define TX_OPEN_REQ 1
-#define TX_OPEN 2
-#define TX_RETRY 3
-#define TX_CLOSE 4
-
-#define RX_IDLE 0
-#define RX_OPEN 1
-#define RX_CLOSE_REQ 2
-
-
+//! P2P channel state structure: receiver
 typedef struct rx_desc {
     uchar state;
     uchar seq_len;
@@ -51,11 +70,11 @@ typedef struct rx_desc {
     uchar *limit;
     sdp_msg_t *msg;
 
-    event_t* event;
+    event_t* event;     //!< pre-allocated reused event
     uint event_id;
 } rx_desc_t;
 
-
+//! P2P channel state structure: transmitter
 typedef struct tx_desc {
     uchar seq_len;
     uchar seq;
@@ -78,67 +97,74 @@ typedef struct tx_desc {
     uchar *base;
     uchar *limit;
 
-    event_t *event;
+    event_t *event;     //!< pre-allocated reused event
     uint event_id;
 } tx_desc_t;
 
 //------------------------------------------------------------------------------
 
+//! Transmitter state descriptor. Transmission is a foreground task
 tx_desc_t tx_desc;
 
+//! Receiver state descriptors. Reception is a background task
 rx_desc_t rx_desc_table[P2P_NUM_STR];
 
+//! Indices into ::p2p_stats
+enum p2p_stats_indices {
+    DATA_TO = 0,        //!< Timeouts waiting for data
+    ACK_TO = 1,         //!< Timeouts waiting for acknowledgements
+    OPEN_TO = 2,        //!< Timeouts during channel open (request)
+    CLOSE_TO = 3,       //!< Timeouts during channel close
 
-#ifdef STATS
+    P2P_SENDS = 4,      //!< Number of sends
+    P2P_OPENS = 5,      //!< Number of opens
+    P2P_BUSY1 = 6,      //!< Number of times busy due to no more streams
+    P2P_BUSY2 = 7,      //!< Number of times busy due to no more SDP buffers
 
-#define DATA_TO 0
-#define ACK_TO 1
-#define OPEN_TO 2
-#define CLOSE_TO 3
+    P2P_REJECTS = 8,    //!< Number of times message was rejected
+    TCOUNT = 9,         //!< Most recent value of tx_desc_t::tcount
+    OPEN_DUP = 10,      //!< Number of times a channel was already open
+    TX_FAIL = 11,       //!< Number of transmission failures
+    OPEN_EVENT = 12,    //!< Timeouts during open (timeout handler)
 
-#define P2P_SENDS 4
-#define P2P_OPENS 5
-#define P2P_BUSY1 6
-#define P2P_BUSY2 7
+    P2P_OPEN_N = 16     //!< Base for array of counters for tracking channel usage
+};
 
-#define P2P_REJECTS 8
-#define TCOUNT 9
-#define OPEN_DUP 10
-#define TX_FAIL 11
-#define OPEN_EVENT 12
-
-#define P2P_OPEN_N 16
-
+//! Peer-to-peer statistics table
 uint p2p_stats[32];
 
-#endif
+//------------------------------------------------------------------------------
+
+//! Number of retries for an open request
+const uint open_req_retry = 16;
+//! Number of retries for an open acknowledge
+const uint open_ack_retry = 4;
+//! Number of retries for a data acknowledge
+const uint data_ack_retry = 4;
+//! Number of retries for a close request
+const uint close_req_retry = 4;
+
+//! Timeout on open acknowledge, in &mu;s
+const uint open_ack_time = 250;
+//! Timeout on data acknowledge, in &mu;s
+const uint data_ack_time = 3000;
+//! Timeout on data, in &mu;s
+const uint data_time = 500;
+//! Timeout on close acknowledge, in &mu;s
+const uint close_ack_time = 250;
+
 
 //------------------------------------------------------------------------------
 
-
-uint open_req_retry = 16;
-uint open_ack_retry = 4;
-uint data_ack_retry = 4;
-uint close_req_retry = 4;
-
-uint open_ack_time = 250;
-uint data_ack_time = 3000;
-uint data_time = 500;
-uint close_ack_time = 250;
-
-
-//------------------------------------------------------------------------------
-
-/*
- initialise TX and RX descriptors
-*/
+//! initialise TX and RX descriptors
 
 void desc_init(void)
 {
     tx_desc_t *tdesc = &tx_desc;
 
     // initialise TX descriptor reusable event
-    event_t* e = event_new((event_proc) NULL, 0, 0);
+    // proc_byte_set used as default (to avoid compiler warning)
+    event_t* e = event_new(proc_byte_set, 0, 0);
     tdesc->event = e;
     tdesc->event_id = e->ID;
     e->ID = 0;                          // mark event as inactive
@@ -147,8 +173,9 @@ void desc_init(void)
     rx_desc_t *rdesc = rx_desc_table;
 
     // initialise RX descriptor reusable events
+    // proc_byte_set used as default (to avoid compiler warning)
     for (uint i = 0; i < P2P_NUM_STR; i++) {
-        e = event_new((event_proc) NULL, 0, 0);
+        e = event_new(proc_byte_set, 0, 0);
         rdesc->event = e;
         rdesc->event_id = e->ID;
         e->ID = 0;                      // mark event as inactive
@@ -205,44 +232,45 @@ p2p_send_pkt
 
 #else // !ASM
 
-void p2p_send_data(uint data, uint addr)
+//! \brief Send a P2P data packet. Delegates to pkt_tx()
+//! \param[in] data: Payload of the message
+//! \param[in] addr: Where to send to
+static void p2p_send_data(uint data, uint addr)
 {
-#ifdef STATS
     uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_DATA << 16));
     if (r == 0) {
         p2p_stats[TX_FAIL]++;
     }
-#else // !STATS
-    (void) pkt_tx(PKT_P2P_PL, data, addr + (P2P_DATA << 16));
-#endif // STATS
 }
 
-void p2p_send_ctl(uint ctrl, uint addr, uint data)
+//! \brief Send a P2P control packet. Delegates to pkt_tx()
+//! \param[in] ctrl: What message to send
+//! \param[in] addr: Where to send to
+//! \param[in] data: Payload of the message
+static void p2p_send_ctl(uint ctrl, uint addr, uint data)
 {
     data |= ctrl;
     data |= chksum_32(data);
-#ifdef STATS
     uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
     if (r == 0) {
         p2p_stats[TX_FAIL]++;
     }
-#else // !STATS
-    (void) pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
-#endif // STATS
 }
 
 #endif // ASM
 
 
-// Received ACK from receiver. Cancel ack timeout and update tx_desc
-
-/*      +-------+-----+-+---+-+---------+---------------+---------------+
-        |       |     | |   |P|         |                               |
-  Data  |  Sum  | 001 |1| 00|H|   TID   |           Ack mask            |
-  Ack   |       |     | |   |A|         |                               |
-        +-------+-----+-+---+-+---------+---------------+---------------+
-*/
-
+//! \brief Received ACK from receiver. Cancel ack timeout and update tx_desc
+//!
+//! ```
+//!      +-------+-----+-+---+-+---------+---------------+---------------+
+//!      |       |     | |   |P|         |                               |
+//! Data |  Sum  | 001 |1| 00|H|   TID   |           Ack mask            |
+//! Ack  |       |     | |   |A|         |                               |
+//!      +-------+-----+-+---+-+---------+---------------+---------------+
+//! ```
+//! \param[in] data: The payload from the packet
+//! \param[in] srce: The sender address (lower 16 bits) from the packet
 void p2p_data_ack(uint data, uint srce)
 {
     uint tid = (data >> 16) & 31;
@@ -263,9 +291,12 @@ void p2p_data_ack(uint data, uint srce)
 }
 
 
-// Received CLOSE_REQ from receiver. If TX_OPEN then tidy up tx_desc.
-// In any case, send a CLOSE_ACK back to receiver.
-
+//! \brief Received CLOSE_REQ from receiver.
+//!
+//! If TX_OPEN then tidy up tx_desc.
+//! In any case, send a CLOSE_ACK back to receiver.
+//! \param[in] data: The payload from the packet
+//! \param[in] srce: The sender address (lower 16 bits) from the packet
 void p2p_close_req(uint data, uint srce)
 {
     uint tid = (data >> 16) & 31;
@@ -283,16 +314,16 @@ void p2p_close_req(uint data, uint srce)
 }
 
 
-// Timed out waiting for data ACK from receiver. This suggests that the
-// receiver has died so close the connection.
-
+//! \brief Timed out waiting for data ACK from receiver.
+//!
+//! This suggests that the receiver has died so close the connection.
+//! \param[out] txd: Transmit descriptor
+//! \param[in] a2: ignored
 void p2p_ack_timeout(uint txd, uint a2)
 {
     tx_desc_t *desc = (tx_desc_t *) txd;
 
-#ifdef STATS
     p2p_stats[ACK_TO]++;
-#endif
 
     desc->mask = 0; // Force exit
     desc->done = 1;
@@ -308,16 +339,21 @@ void p2p_ack_timeout(uint txd, uint a2)
 */
 
 
+//! \brief Timeout handler during channel opening phase
+//! \param[out] a: pointer to transmit descriptor
+//! \param[in] b: code to write to tx_desc_t::ack on timeout
 void p2p_open_timeout(uint a, uint b)
 {
     tx_desc_t *desc = (tx_desc_t *) a;
     desc->ack = b;
-#ifdef STATS
     p2p_stats[OPEN_EVENT]++;
-#endif
 }
 
-
+//! \brief Send an SDP message to another SCAMP instance
+//! \param[in] addr: the P2P address of the SCAMP to send to
+//! \param[in] msg: the message to send, presumably for either the target
+//!     SCAMP or a core that that SCAMP can deliver to
+//! \return result code saying whether message sending was successful
 uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 {
     uchar *buf = (uchar *) &msg->length;        // Point to len/sum
@@ -351,9 +387,7 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
     desc->tcount = open_req_retry;
     desc->rc = RC_P2P_NOREPLY;
 
-#ifdef STATS
     p2p_stats[P2P_SENDS]++;
-#endif
 
     event_t *e = desc->event;                   // pre-allocated reused event
 
@@ -376,10 +410,8 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
             break;
         }
 
-#ifdef STATS
         p2p_stats[OPEN_TO]++;
         p2p_stats[TCOUNT] = desc->tcount;
-#endif
 
         if (desc->tcount == 0) {
             return desc->rc;
@@ -452,17 +484,16 @@ uint p2p_send_msg(uint addr, sdp_msg_t *msg)
 //------------------------------------------------------------------------------
 
 
-// Timed out waiting for "seq_len" data packets. Send P2P_DATA_ACK
-// with current mask and restart timeout.
-
+//! \brief Timed out waiting for "seq_len" data packets. Send P2P_DATA_ACK
+//!     with current mask and restart timeout.
+//! \param[in,out] rxd: channel receiver descriptor
+//! \param[in] a2: ignored
 void p2p_data_timeout(uint rxd, uint a2)
 {
     rx_desc_t *desc = (rx_desc_t *) rxd;
 
     if (desc->state == RX_OPEN) {
-#ifdef STATS
         p2p_stats[DATA_TO]++;
-#endif
 
         if (desc->tcount == 0) {
             sark_msg_free(desc->msg);
@@ -487,10 +518,12 @@ void p2p_data_timeout(uint rxd, uint a2)
 }
 
 
-// Received OPEN_ACK packet. If RX_BUSY do nothing so that timeout
-// will expire (and we keep trying). Otherwise update tx_desc and
-// cancel timeout.
-
+//! \brief Received OPEN_ACK packet.
+//!
+//! If RX_BUSY do nothing so that timeout will expire (and we keep trying).
+//! Otherwise update tx_desc and cancel timeout.
+//! \param[in] data: The payload from the packet
+//! \param[in] srce: The sender address (lower 16 bits) from the packet
 void p2p_open_ack(uint data, uint srce)
 {
     uint tid = (data >> 16) & 31;
@@ -522,6 +555,9 @@ void p2p_open_ack(uint data, uint srce)
         +-------+-----+-+-----+---------+---------------+---------------+
 */
 
+//! \brief Another SCAMP has asked for an open channel
+//! \param[in] data: The payload from the packet
+//! \param[in] addr: The sender address (lower 16 bits) from the packet
 void p2p_open_req(uint data, uint addr)
 {
     uint len = (data >> 8) & 0xffff; // Real length from SDP hdr on...
@@ -532,9 +568,7 @@ void p2p_open_req(uint data, uint addr)
 
     if (len > (SDP_BUF_SIZE + 8 + 16) || seq_len > 16) { //const
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_REJECT);
-#ifdef STATS
         p2p_stats[P2P_REJECTS]++;
-#endif
         return;
     }
 
@@ -547,9 +581,7 @@ void p2p_open_req(uint data, uint addr)
         if (desc->state == RX_OPEN && desc->srce == addr
                 && desc->tid == tid) {                  // Already open
             timer_cancel(desc->event, desc->event_id);  // p2p_data_timeout
-#ifdef STATS
             p2p_stats[OPEN_DUP]++;
-#endif
             p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + (i << 22) + RC_OK);
 
             desc->tcount = open_ack_retry;
@@ -574,9 +606,7 @@ void p2p_open_req(uint data, uint addr)
 
     if (rid == P2P_NUM_STR) {           // No free streams - send busy
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
-#ifdef STATS
         p2p_stats[P2P_BUSY1]++;
-#endif
         return;
     }
 
@@ -585,9 +615,7 @@ void p2p_open_req(uint data, uint addr)
     sdp_msg_t *msg = sark_msg_get();
     if (msg == NULL) {
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
-#ifdef STATS
         p2p_stats[P2P_BUSY2]++;
-#endif
         return;
     }
 
@@ -614,10 +642,8 @@ void p2p_open_req(uint data, uint addr)
 
     desc->tcount = open_ack_retry;
 
-#ifdef STATS
     p2p_stats[P2P_OPEN_N + rid]++;
     p2p_stats[P2P_OPENS]++;
-#endif
 
     event_t* e = desc->event;           // pre-allocated reused event
 
@@ -630,17 +656,17 @@ void p2p_open_req(uint data, uint addr)
 }
 
 
-// Timed out waiting for CLOSE_ACK. Repeat P2P_CLOSE_REQ a few times
-// then give up
-// State should be RX_CLOSE_REQ
-
+//! \brief Timed out waiting for CLOSE_ACK. Repeat P2P_CLOSE_REQ a few times
+//!     then give up.
+//!
+//! State should be RX_CLOSE_REQ
+//! \param[in,out] rxd: Receive descriptor
+//! \param[in] rid: Receiver ID
 void p2p_close_timeout(uint rxd, uint rid)
 {
     rx_desc_t *desc = (rx_desc_t *) rxd;
 
-#ifdef STATS
     p2p_stats[CLOSE_TO]++;
-#endif
 
     if (desc->tcount == 0) {
         sark_msg_free(desc->msg);
@@ -663,7 +689,9 @@ void p2p_close_timeout(uint rxd, uint rid)
     timer_schedule(e, close_ack_time);
 }
 
-
+//! \brief Received an acknowledge that a channel has been closed
+//! \param[in] data: The payload from the packet
+//! \param[in] srce: The sender address (lower 16 bits) from the packet
 void p2p_close_ack(uint data, uint srce)
 {
     uint rid = (data >> 21) & 7; //##
@@ -680,7 +708,11 @@ void p2p_close_ack(uint data, uint srce)
     }
 }
 
-// May write 1 or 2 bytes beyond end of buffer (buffer has pad word)
+//! \brief Receive data on channel
+//!
+//! May write 1 or 2 bytes beyond end of buffer (buffer has pad word)
+//! \param[in] data: The payload from the packet
+//! \param[in] addr: The sender address (lower 16 bits) from the packet
 // Could write further if error in "seq" field? - check!
 // Rearrange base/limit to write at -1, -2, -3  then can
 // save if ptr < limit
@@ -802,6 +834,17 @@ __asm void p2p_rcv_pkt(uint data, uint addr)
         bx      lr                      ;// None of the above
 }
 #else
+//! \brief Received P2P control packet
+//!
+//! Delegates to:
+//! * p2p_open_req()
+//! * p2p_open_ack()
+//! * p2p_data_ack()
+//! * p2p_close_req()
+//! * p2p_close_ack()
+//!
+//! \param[in] data: The payload from the packet
+//! \param[in] addr: The sender address (lower 16 bits) from the packet
 void p2p_rcv_ctrl(uint data, uint addr)
 {
     uint t = chksum_32(data);

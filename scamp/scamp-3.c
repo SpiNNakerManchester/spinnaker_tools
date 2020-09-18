@@ -1,13 +1,31 @@
+//! \dir
+//! \brief Spinnaker Control & Monitor Program
 //------------------------------------------------------------------------------
-//
-// scamp.c          SC&MP - Spinnaker Control & Monitor Program
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
+//! \file
+//! \brief     SC&MP - Spinnaker Control & Monitor Program
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 
 //------------------------------------------------------------------------------
@@ -74,62 +92,85 @@
 
 // VARS
 
+//! Number of operational CPUs
 uint num_cpus;
+//! Which application CPU to ping next in soft_wdog()
 uint ping_cpu = 1;
 
+//! Virtual-core-ID to physical-core-ID map
 uchar v2p_map[MAX_CPUS];
 
+//! Our P2P address
 uint p2p_addr = 0;
+//! Dimensions of the P2P-addressable area
 uint p2p_dims = 0;
+//! The address of the P2P root
 uint p2p_root = 0;
+//! Whether the P2P system is operational or still needs to be initialised
 uint p2p_up = 0;
 
+//! Counter used to decide when to send an LTPC packet
 uint ltpc_timer;
 
-uint link_en = 0x3f;    // Bitmap of enabled links
+uint link_en = 0x3f;    //!< Bitmap of enabled links
 
-srom_data_t srom;       // Copy of SROM struct
+srom_data_t srom;       //!< Copy of SROM struct
 
+//! Packet transmit queue
 pkt_queue_t tx_pkt_queue;
 
+//! Watchdog counters
 uchar watchdog[20]; // !! const - needs to be multiple of 4?
 
+//! Table of all IPTags
 iptag_t tag_table[TAG_TABLE_SIZE];
 
-uint tag_tto = 9;       // 2.56s = 10ms * (1 << (9-1))
+//! \brief IPTag timeout (logarithmic)
+uint tag_tto = 9;       //!< 2.56s = 10ms * (1 << (9-1))
 
 //------------------------------------------------------------------------------
 
 // Network initialisation state variables
 
-// The network initialisation process phase currently in progress
+//! The network initialisation process phase currently in progress
 volatile enum netinit_phase_e netinit_phase;
 
-// The Ethernet initialisation process phase currently in progress
+//! The Ethernet initialisation process phase currently in progress
 volatile enum ethinit_phase_e ethinit_phase;
 
-// Number of 10ms ticks ellapsed since the last P2PC_NEW arrived
+//! Number of 10ms ticks ellapsed since the last P2PC_NEW arrived
 volatile uint ticks_since_last_p2pc_new;
-// Number of 10ms ticks ellapsed since the last P2PC_DIMS arrived
+//! Number of 10ms ticks ellapsed since the last P2PC_DIMS arrived
 volatile uint ticks_since_last_p2pc_dims;
 
-// During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address. Note
-// that this value may be negative and may be much larger than realistic
-// machines as the first P2P address assigned may be the result of a packet
-// taking a very spirally route.
+//! \name P2P Address Guess
+//! \{
+//! During NETINIT_PHASE_P2P_ADDR, the current best guess of P2P address.
+//!
+//! \note this value may be negative and may be much larger than realistic
+//! machines as the first P2P address assigned may be the result of a packet
+//! taking a very spirally route.
+
+//! \brief X coordinate of the current best guess of P2P address
 volatile int p2p_addr_guess_x;
+//! \brief Y coordinate of the current best guess of P2P address
 volatile int p2p_addr_guess_y;
+//! \}
 
-// During NETINIT_PHASE_P2P_DIMS, records the current best guess of the systems
-// dimensions.
-volatile int p2p_min_x;
-volatile int p2p_max_x;
-volatile int p2p_min_y;
-volatile int p2p_max_y;
+//! \name P2P Dimension Guess
+//! \{
+//! During NETINIT_PHASE_P2P_DIMS, records the current best guess of the
+//! system's dimensions.
 
-// A bitmap giving the coordinates of all P2P coordinates which have been seen
-// mentioned in a P2PC_NEW message. A 2D array of bits whose *bit* indexes are
-// ((bx<<9) | by) where bx and by are x + 256 and y + 256 respectively.
+volatile int p2p_min_x; //!< Estimated minimum X size
+volatile int p2p_max_x; //!< Estimated maximum X size
+volatile int p2p_min_y; //!< Estimated minimum Y size
+volatile int p2p_max_y; //!< Estimated maximum Y size
+//! \}
+
+//! A bitmap giving the coordinates of all P2P coordinates which have been seen
+//! mentioned in a P2PC_NEW message. A 2D array of bits whose *bit* indexes are
+//! `((bx<<9) | by)` where `bx` and `by` are `x + 256` and `y + 256` respectively.
 uchar *p2p_addr_table = NULL;
 
 
@@ -137,36 +178,39 @@ uchar *p2p_addr_table = NULL;
 
 // LED control status variables/definitions
 
-// The current system load, the LED brightness smoothly will track this value.
-// 0 = idle, 255 = saturated.
+//! \brief The current system load.
+//! \details The LED brightness smoothly will track this value (when in
+//!     load-tracking mode).
+//!     0 = idle, 255 = saturated.
 volatile uchar load = 0;
 
-// Interval between flashing the LEDs when displaying load to indicate chip
-// liveness in 10ms units
+//! Interval between flashing the LEDs when displaying load to indicate chip
+//! liveness in 10ms units
 #define LIVENESS_FLASH_INTERVAL 256
 
-// Spacing between flashing adjacent chips when indicating liveness in 10ms
-// units
+//! Spacing between flashing adjacent chips when indicating liveness in 10ms
+//! units
 #define LIVENESS_FLASH_SPACING 5
 
-// The number of fractional bits to use for the internal representation of the
-// load. The more bits, the longer the displayed load will take to catch up
-// with the actual load.
+//! The number of fractional bits to use for the internal representation of the
+//! load. The more bits, the longer the displayed load will take to catch up
+//! with the actual load.
 #define LOAD_FRAC_BITS 1
 
-// The number of bits to use for the PWM generator. The larger this is, the
-// greater the resolution of the brightness but the more flicker-y it will
-// look.
+//! The number of bits to use for the PWM generator. The larger this is, the
+//! greater the resolution of the brightness but the more flicker-y it will
+//! look.
 #define PWM_BITS 4
 
-// The actual, displayed load value (fixed point). This value tracks the 'load'
-// value above, transitioning smoothly towards it over time.
+//! \brief The actual, displayed load value (fixed point).
+//! \details This value tracks the ::load value above, transitioning smoothly
+//!     towards it over time.
 volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 
 //------------------------------------------------------------------------------
 
-
-void iptag_timer()
+//! Update timeouts in IPTags.
+void iptag_timer(void)
 {
     iptag_t *tag = tag_table;
 
@@ -181,8 +225,9 @@ void iptag_timer()
     }
 }
 
-
-uint iptag_new()
+//! \brief Find a free IPTag
+//! \return The ID of the IPTag, or #TAG_NONE if all tags are in use
+uint iptag_new(void)
 {
     for (uint i = FIRST_POOL_TAG; i <= LAST_POOL_TAG; i++) {
         if (tag_table[i].flags == 0) {
@@ -193,6 +238,13 @@ uint iptag_new()
     return TAG_NONE;
 }
 
+//! \brief Get and initialise a transient IPTag, used for later handling
+//!     replies to a request.
+//! \param[in] ip: IP address of the requesting host
+//! \param[in] mac: MAC address that the ethernet packet came from
+//! \param[in] port: UDP port of the requesting host's socket
+//! \param[in] timeout: log<sub>2</sub> of how long the tag should last for
+//! \return The IPTag ID
 uint transient_tag(uchar *ip, uchar *mac, uint port, uint timeout)
 {
     uint tag = iptag_new();
@@ -216,12 +268,15 @@ uint transient_tag(uchar *ip, uchar *mac, uint port, uint timeout)
 
 //------------------------------------------------------------------------------
 
-void queue_init()
+//! Initialise the packet transmission queue
+void queue_init(void)
 {
     tx_pkt_queue.insert = 1;
 }
 
-
+//! \brief Write a byte at a location
+//! \param[in] a1: The location to write
+//! \param[in] a2: The byte to write there
 void proc_byte_set(uint a1, uint a2)
 {
     * (uchar *) a1 = a2;
@@ -230,7 +285,12 @@ void proc_byte_set(uint a1, uint a2)
 
 void proc_route_msg(uint arg1, uint arg2);
 
-
+//! \brief Adds a message to SCAMP's master message queue, to be processed by
+//! 	::proc_route_msg().
+//! \note This _silently_ drops messages if the queue is full.
+//! \param[in] msg: The message to dispatch.
+//!     _Transfers ownership of the message._
+//! \param[in] srce_ip: Source IP address (if meaningful).
 void msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
 {
     if (event_queue_proc(proc_route_msg, (uint) msg, srce_ip, PRIO_0) == 0) {
@@ -246,6 +306,11 @@ void msg_queue_insert(sdp_msg_t *msg, uint srce_ip)
 #pragma push
 #pragma arm
 
+//! \brief Add a SpiNNaker message to the queue of messages to send.
+//! \param[in] tcr: Control word
+//! \param[in] data: Payload word
+//! \param[in] key: Key word
+//! \return True if the packet was correctly enqueued
 uint pkt_tx(uint tcr, uint data, uint key)
 {
     pkt_queue_t *txq = &tx_pkt_queue;
@@ -278,7 +343,8 @@ uint pkt_tx(uint tcr, uint data, uint key)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Initialise the primary timer to count down
+//! \param[in] count: What value should be counted down from.
 static void timer1_init(uint count)
 {
     tc[T1_CONTROL] = 0x000000e2;        // En, Per, IntEn, Pre=1, 32bit, Wrap
@@ -288,14 +354,18 @@ static void timer1_init(uint count)
 
 //------------------------------------------------------------------------------
 
-
-__inline void eth_discard()
+//! \brief Release the currently received Ethernet packet's buffer.
+//! \details After calling this, the received packet is unsafe to access!
+__inline void eth_discard(void)
 {
     volatile uint *er = (uint *) ETH_REGS;
     er[ETH_RX_CMD] = (uint) er;
 }
 
-
+//! \brief Handle a received UDP packet.
+//! \param[in] rx_pkt: The UDP packet, including the IP header.
+//!     _Note that this pointer is only half-word aligned!_
+//! \param[in] rx_len: The length of the packet in \p rx_pkt
 void udp_pkt(uchar *rx_pkt, uint rx_len)
 {
     ip_hdr_t *ip_hdr = (ip_hdr_t *) (rx_pkt + IP_HDR_OFFSET);
@@ -342,13 +412,13 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
             tag = msg->tag = transient_tag(ip_hdr->srce, rx_pkt+6, udp_srce, tag_tto);
         }
 
-        eth_discard();
-
         if ((flags & SDPF_REPLY) == 0 ||
                 (tag < TAG_TABLE_SIZE && tag_table[tag].flags != 0)) {
             arp_add(rx_pkt+6, ip_hdr->srce);
+            eth_discard();
             msg_queue_insert(msg, srce_ip);
         } else {
+            eth_discard();
             sark_msg_free(msg);
         }
     } else {                            // Reverse IPTag...
@@ -402,8 +472,13 @@ void udp_pkt(uchar *rx_pkt, uint rx_len)
     }
 }
 
-
-void eth_receive()
+//! \brief Receive and handle all pending ethernet packets.
+//!
+//! Delegates the handling of received messages to:
+//! * udp_pkt()
+//! * icmp_pkt()
+//! * arp_pkt()
+void eth_receive(void)
 {
     while (1) {
         uint count = (er[ETH_STATUS] >> 1) & 63;
@@ -439,7 +514,12 @@ void eth_receive()
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Send an SDP message to the outside world via ethernet using an
+//!     IPTag to say where to go.
+//! \details Should only be invoked on cores with an ethernet connection
+//! \param[in] tag: The tag, contains information about the message
+//!     destination (IP address, UDP port, MAC address, etc.)
+//! \param[in] msg: The SDP message to send
 void eth_send_msg(uint tag, sdp_msg_t *msg)
 {
     iptag_t *iptag = tag_table + tag;
@@ -507,13 +587,12 @@ void eth_send_msg(uint tag, sdp_msg_t *msg)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Ping an application core to see if it is alive.
+//! \param[in] dest: The destination virtual core ID
+//! \return a return code
 uint shm_ping(uint dest)
 {
     vcpu_t *vcpu = sv_vcpu + dest;
-    vcpu->mbox_ap_cmd = SHM_NOP;
-    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
-
     volatile uchar flag = 0;
     event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
     if (e == NULL) {
@@ -521,6 +600,8 @@ uint shm_ping(uint dest)
         return 1;
     }
 
+    vcpu->mbox_ap_cmd = SHM_NOP;
+    sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
     uint id = e->ID;
     timer_schedule(e, 1000); // !! const??
 
@@ -537,48 +618,61 @@ uint shm_ping(uint dest)
     return 1;
 }
 
-
+//! \brief Send an SDP message to an application core
+//! \param[in] dest: The destination virtual core ID
+//! \param[in] msg: The message to send.
+//! \return a return code
 uint shm_send_msg(uint dest, sdp_msg_t *msg) // Send msg AP
 {
     vcpu_t *vcpu = sv_vcpu + dest;
 
+    // Wait for the box to be idle
+    if (vcpu->mbox_ap_cmd != SHM_IDLE) {
+        volatile uchar flag = 0;
+
+        // If we can't get an event, fail
+        event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
+        if (e == NULL) {
+            sw_error(SW_OPT);
+            return RC_BUF;          // !! not the right RC
+        }
+
+        // Set up a timer to wait
+        uint id = e->ID;
+        timer_schedule(e, 1000);    // !! const??
+
+        // Wait for the box to be idle, or a timeout
+        while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
+            continue;
+        }
+
+        // Return error if timed out
+        if (flag != 0) {
+            return RC_TIMEOUT;
+        }
+
+        // Cancel the timer if not timed out
+        timer_cancel(e, id);
+    }
+
+    // Get a message to do the sending
     sdp_msg_t *shm_msg = sark_shmsg_get();
     if (shm_msg == NULL) {
         return RC_BUF;
     }
 
+    // Send the message
     sark_msg_cpy(shm_msg, msg);
-
     vcpu->mbox_ap_msg = shm_msg;
     vcpu->mbox_ap_cmd = SHM_MSG;
-
     sc[SC_SET_IRQ] = SC_CODE + (1 << v2p_map[dest]);
 
-    volatile uchar flag = 0;
-    event_t *e = event_new(proc_byte_set, (uint) &flag, 2);
-    if (e == NULL) {
-        sw_error(SW_OPT);
-        sark_shmsg_free(shm_msg);
-        return RC_BUF;          // !! not the right RC
-    }
-
-    uint id = e->ID;
-    timer_schedule(e, 1000);    // !! const??
-
-    while (vcpu->mbox_ap_cmd != SHM_IDLE && flag == 0) {
-        continue;
-    }
-
-    if (flag != 0) {
-        sark_shmsg_free(shm_msg);
-        return RC_TIMEOUT;
-    }
-
-    timer_cancel(e, id);
     return RC_OK;
 }
 
-
+//! \brief Swap source and destination in an SDP message. This allows us to
+//!     use a message (buffer) as its own reply.
+//! \param[in,out] msg: The message to modify.
 void swap_sdp_hdr(sdp_msg_t *msg)
 {
     uint dest_port = msg->dest_port;
@@ -591,7 +685,10 @@ void swap_sdp_hdr(sdp_msg_t *msg)
     msg->srce_addr = dest_addr;
 }
 
-
+//! \brief Adds a result message to the main message queue.
+//! \param[in] msg: The SCP message holding the reply.
+//!     _Ownership transferred by this call._
+//! \param[in] rc: The return code.
 void return_msg(sdp_msg_t *msg, uint rc) // Zero "rc" skips updating cmd_hdr
 {
     uint f = msg->flags;
@@ -611,7 +708,9 @@ void return_msg(sdp_msg_t *msg, uint rc) // Zero "rc" skips updating cmd_hdr
     }
 }
 
-
+//! \brief Main message dispatcher.
+//! \param[in] arg1: SDP message. _This function will free this message!_
+//! \param[in] srce_ip: Source IP address for message (where known).
 void proc_route_msg(uint arg1, uint srce_ip)
 {
     sdp_msg_t *msg = (sdp_msg_t *) arg1;
@@ -695,9 +794,9 @@ void proc_route_msg(uint arg1, uint srce_ip)
 //------------------------------------------------------------------------------
 
 
-// Build virtual/physical CPU maps. Caller is monitor processor and
-// passes its physical CPU.
-
+//! \brief Build virtual/physical CPU maps.
+//! \details Caller is monitor processor and passes its physical CPU.
+//! \param[in] phys_cpu: What our physical CPU number is.
 void assign_virt_cpu(uint phys_cpu)
 {
     for (uint phys = 0; phys < MAX_CPUS; phys++) {
@@ -742,13 +841,15 @@ void assign_virt_cpu(uint phys_cpu)
 
 //------------------------------------------------------------------------------
 
-// Disables a specified core and recomputes the virtual core map accordingly.
-// This command has a number of dangerous effects:
-// * All application cores are rebooted (so that the new virtual core map takes
-//   effect)
-// * If the core to be disabled includes the monitor then the monitor is
-//   disabled without being remapped rendering the chip non-communicative.
-
+//! \brief Disables a specified core and recomputes the virtual core map
+//!     accordingly.
+//!
+//! This command has a number of dangerous effects:
+//! * All application cores are rebooted (so that the new virtual core map
+//!   takes effect)
+//! * If the core to be disabled includes the monitor then the monitor is
+//!   disabled without being remapped rendering the chip non-communicative.
+//! \param[in] phys_cores: Bitmap of which cores to remap.
 void remap_phys_cores(uint phys_cores)
 {
     sc[SC_CLR_OK] = phys_cores;
@@ -767,7 +868,9 @@ void remap_phys_cores(uint phys_cores)
 
 //------------------------------------------------------------------------------
 
-
+//! \brief Determine the size of RAM
+//! \param[in] mem: The start of the memory. Will be written to.
+//! \return The estimated number of bytes that may be written to at that point
 uint ram_size(void *mem)
 {
     volatile uint *ram = (uint *) mem;
@@ -802,11 +905,11 @@ uint ram_size(void *mem)
 
 //------------------------------------------------------------------------------
 
-
+//! Reset vectors
 const uint rst_init[] = {0x45206e49, 0x79726576, 0x65724420, 0x48206d61,
                          0x20656d6f, 0x65482061, 0x61747261, 0x00656863};
 
-
+//! Get board information from SROM
 void get_board_info(void)
 {
     sdp_msg_t msg;
@@ -826,7 +929,7 @@ void get_board_info(void)
     }
 }
 
-
+//! Initialise the System Variables area
 void sv_init(void)
 {
     sark_word_cpy(sv_vectors, rst_init, SV_VSIZE);      // Copy Reset vectors
@@ -870,7 +973,7 @@ void sv_init(void)
     }
 }
 
-
+//! Initialise SDRAM (controller and critical pointers into it)
 void sdram_init(void)
 {
     // Initialise PL340
@@ -925,7 +1028,7 @@ void sdram_init(void)
     sark_word_set(sv->app_data, 0, 256 * sizeof(app_data_t));
 }
 
-
+//! Initialise the SARK PRNG
 void random_init(void)
 {
     /* Now done from SDRAM...
@@ -953,7 +1056,9 @@ void random_init(void)
 
 //------------------------------------------------------------------------------
 
-// Update the 'load' variable with an estimate of the system's load
+//! \brief Update the 'load' variable with an estimate of the system's load
+//! \param arg1: unused
+//! \param arg2: unused
 void update_load(uint arg1, uint arg2)
 {
     uint num_working = 0;
@@ -990,8 +1095,10 @@ void update_load(uint arg1, uint arg2)
 
 //------------------------------------------------------------------------------
 
-// "proc_1hz" is put on the event queue every second
-
+//! \brief Regular 1Hz timer callback, put on the event queue every second.
+//! \details It handles network physical state monitoring.
+//! \param a1: unused
+//! \param a2: unused
 void proc_1hz(uint a1, uint a2)
 {
     if (srom.flags & SRF_ETH) {
@@ -1016,7 +1123,9 @@ void proc_1hz(uint a1, uint a2)
     }
 }
 
-
+//! \brief Software watchdog check
+//! \param[in] max: Number of pings of a CPU (without reply) when that CPU
+//!     should be marked as watchdogged.
 void soft_wdog(uint max)
 {
     vcpu_t *vcpu = sv_vcpu + ping_cpu;
@@ -1046,7 +1155,7 @@ void soft_wdog(uint max)
 // functionality, e.g. P2P tables and addresses
 
 
-// Initialise inter-chip link state bitmap
+//! Initialise inter-chip link state bitmap
 void init_link_en(void)
 {
     uint timeout = sv->peek_time;
@@ -1066,8 +1175,43 @@ void init_link_en(void)
     sv->link_en = link_en;
 }
 
-// Start the higher-level network initialisation process. Must be called only
-// once, before the nearest neighbour interrupt handler is enabled.
+//! Disable links that have been disabled by neighbours
+void disable_unidirectional_links(void)
+{
+    uint timeout = sv->peek_time;
+    uint remote_link_en;
+    uint remote_addr = (uint) &(sv->link_en) & 0xfffffffc;  // word aligned
+    uint remote_offs = (uint) &(sv->link_en) & 0x00000003;  // byte offset
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        if (link_en & (1 << link)) {
+            uint rc = link_read_word(remote_addr, link,
+                    &remote_link_en, timeout);
+            remote_link_en = remote_link_en >> (remote_offs * 8);
+
+            // check opposite link in neighbour
+            uint rl = link + 3;
+            if (rl >= NUM_LINKS)
+            {
+                rl -= NUM_LINKS;
+            }
+
+            // disable link if its opposite was disabled
+            // by the corresponding neighbouring chip
+            if ((rc != RC_OK) ||
+                ((remote_link_en & (1 << rl)) == 0)
+               ){
+              link_en &= ~(1 << link);
+            }
+        }
+    }
+
+    sv->link_en = link_en;
+}
+
+//! \brief Start the higher-level network initialisation process.
+//!
+//! Must be called only once, before the nearest neighbour interrupt handler
+//! is enabled.
 void netinit_start(void)
 {
     sv->netinit_phase = netinit_phase = NETINIT_PHASE_P2P_ADDR;
@@ -1096,8 +1240,9 @@ void netinit_start(void)
     ticks_since_last_p2pc_dims = 0;
 }
 
-// Sets up a broadcast MC route by constructing a spanning tree of the  P2P
-// routes constructed routing back to chip used to boot the machine (p2p_root).
+//! \brief Sets up a broadcast MC route by constructing a spanning tree of the
+//! P2P routes constructed routing back to chip used to boot the machine
+//! (see ::p2p_root).
 void compute_st(void)
 {
     // Work out the position of the p2p_root in the P2P routing table.
@@ -1136,13 +1281,23 @@ void compute_st(void)
         }
     }
 
-    rtr_mc_set(0, 0xffff5555, 0xffffffff, route);
+    rtr_mc_set(0, SCAMP_MC_ROUTING_KEY, SCAMP_MC_ROUTING_MASK, route);
 }
 
 
 //------------------------------------------------------------------------------
 
-// "proc_100hz" is put on the event queue every 10ms
+//! \brief Regular 100Hz timer callback, put on the event queue every 10ms.
+//!
+//! Handles:
+//! 1. Discovery of the machine.
+//! 2. Initialisation of the P2P network.
+//! 3. LED state update (liveness monitoring)
+//! 4. IPTag timeouts
+//! 5. Watchdog ping
+//! 6. LTPC
+//! \param a1: unused
+//! \param a2: unused
 void proc_100hz(uint a1, uint a2)
 {
     // Counter used to time how long we've been in certain netinit states.
@@ -1270,7 +1425,16 @@ void proc_100hz(uint a1, uint a2)
 
                 level_config();
                 compute_st();
+                disable_unidirectional_links();
                 sv->p2p_up = p2p_up = 1;
+
+                // estimate sync0/1 delay (us) from (0, 0)
+                uint nodes = (hop_table[0] & 0x00ffffff) + 1;
+                uint ttr   = ((NODE_DLY_NS * nodes) +
+                              (BRD_DLY_NS * (nodes >> 3))) >> 10;
+
+                // estimate delay to farthest possible chip
+                sv->sync_alignment = TOP_DLY_US - ttr;
 
                 if (srom.flags & SRF_ETH) {
                     uint s = phy_read(PHY_STATUS);
@@ -1346,9 +1510,11 @@ void proc_100hz(uint a1, uint a2)
 
 //------------------------------------------------------------------------------
 
-// "proc_1khz" is put on the event queue every millisecond and is used to PWM
-// the LEDs
-
+//! \brief Regular 1kHz timer callback, put on the event queue every
+//!     millisecond.
+//! \details Used to PWM the LEDs.
+//! \param a1: unused
+//! \param a2: unused
 void proc_1khz(uint a1, uint a2)
 {
     // Display status on LED0 except when booting
@@ -1395,8 +1561,9 @@ void proc_1khz(uint a1, uint a2)
 
 //------------------------------------------------------------------------------
 
-// Initialise PLLs
-
+//! \brief Get the PLL multiplier for a frequency
+//! \param[in] freq: The desired frequency (in MHz)
+//! \return the PLL multiplier to ues
 static uint pll_mult(uint freq)
 {
     uint f = 0;
@@ -1415,17 +1582,18 @@ static uint pll_mult(uint freq)
 }
 
 
-// cpu_freq - CPU clock frequency in MHz
-// mem_freq - SDRAM clock frequency in MHz
-// sys_div - system bus clock divider (range 1..4)
-// rtr_div - router clock divider (range 1..4)
-//
-// Note that system bus is clocked at (cpu_freq * 2 / sys_div)
-// and router at (cpu_freq * 2 / rtr_div)
-//
-// To run CPUs at 200, SDRAM at 130, system bus and router at 133
-//
-void pll_init()
+//! \brief Initialise PLLs
+//! \internal
+//! cpu_freq - CPU clock frequency in MHz
+//! mem_freq - SDRAM clock frequency in MHz
+//! sys_div - system bus clock divider (range 1..4)
+//! rtr_div - router clock divider (range 1..4)
+//!
+//! Note that system bus is clocked at (cpu_freq * 2 / sys_div)
+//! and router at (cpu_freq * 2 / rtr_div)
+//!
+//! To run CPUs at 200, SDRAM at 130, system bus and router at 133
+void pll_init(void)
 {
     sark.cpu_clk = 10;                  // Set for delay_us
     sc[SC_CLKMUX] = 0;                  // Switch to 10MHz everywhere
@@ -1455,7 +1623,8 @@ void pll_init()
 
 //------------------------------------------------------------------------------
 
-void eth_setup()
+//! Set up the ethernet (if present)
+void eth_setup(void)
 {
     if (srom.flags & SRF_ETH) {                 // Ethernet present (possibly)
         eth_init(srom.mac_addr);
@@ -1486,7 +1655,7 @@ void eth_setup()
 
 //------------------------------------------------------------------------------
 
-
+//! Initialise JTAG support
 void jtag_init(void)
 {
     sc[GPIO_CLR] = JTAG_NTRST;          // Ensure NTRST is low
@@ -1495,7 +1664,7 @@ void jtag_init(void)
     sc[SC_MISC_CTRL] &= ~JTAG_INT;      // Drive JTAG externally
 }
 
-
+//! Initialise SARK
 void sark_config(void)
 {
     sark_vec->num_msgs = 32;            // Allocate 32 SDP messages
@@ -1504,8 +1673,8 @@ void sark_config(void)
     sark_vec->app_flags &= ~(1 << APP_FLAG_WAIT); // Don't wait in SARK start-up
 }
 
-
-void delegate()
+//! Delegate acting as a monitor to another core
+void delegate(void)
 {
     // choose delegate
     uint del      = NUM_CPUS - 1;         // potential delegate
@@ -1517,7 +1686,7 @@ void delegate()
     }
 
     // copy img_cp_exe to system RAM for delegate,
-    sark_word_cpy (sysram, (void *) img_cp_exe, 128);
+    sark_word_cpy(sysram, (void *) img_cp_exe, 128);
 
     // let system controller know of new monitor,
     sc[SC_MON_ID] = SC_CODE + del;
@@ -1542,7 +1711,7 @@ void delegate()
     }
 }
 
-
+//! Check for problems in blacklist and delegate if necessary
 void chk_bl_del(void)
 {
     // get board blacklist,
@@ -1571,7 +1740,7 @@ void chk_bl_del(void)
             // start boot image DMA to SDRAM for delegate,
             dma[DMA_ADRS] = (uint) SDRAM_BASE;
             dma[DMA_ADRT] = (uint) DTCM_BASE + 0x00008000;
-            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | 0x7100;
+            dma[DMA_DESC] = 1 << 24 | 4 << 21 | 1 << 19 | BOOT_IMAGE_SIZE;
 
             // take blacklisted cores out of the application pool
             sc[SC_CLR_OK] = bl_cores;
@@ -1594,7 +1763,7 @@ void chk_bl_del(void)
     }
 }
 
-
+//! Main entry point
 void c_main(void)
 {
     sark.cpu_clk = 160;                 // BootROM uses 160 MHz

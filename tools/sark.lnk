@@ -8,6 +8,22 @@
 //
 // Email            temples@cs.man.ac.uk
 //
+
+// Copyright (c) 2011-2019 The University of Manchester
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 */
 
 
@@ -30,7 +46,7 @@ SECTIONS
     APLX_ENTRY = 16;
 
     . = ITCM_BASE;
-    
+
     RO_DATA :
     {
           * (_alib_reset);
@@ -50,7 +66,7 @@ SECTIONS
       Attempt to deal with .ARM.exdix* sections. Ideally we probably
       want to throw these away but for now they go into the RO binary
       See also "objcopy" lines in make file...
-    */     
+    */
 
     EX_DATA :
     {
@@ -58,7 +74,7 @@ SECTIONS
     } > ITCM
 
     RO_LENGTH = . - ITCM_BASE;
-    
+
     . = DTCM_BASE;
 
     RW_DATA  :

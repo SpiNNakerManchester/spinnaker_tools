@@ -4,6 +4,23 @@
 // August 2012
 // ----------------------------------------------------------------------------
 
+/*
+ * Copyright (c) 2012-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #define API     // Undef to use SARK event library
 
 #include <sark.h>
@@ -1355,7 +1372,7 @@ void sdp_packet_callback(uint msg, uint port)
 }
 
 
-void load_mc_routing_tables()
+void load_mc_routing_tables(void)
 {
     if (sark_core_id() != sark_app_lead()) {
         return;
@@ -1393,7 +1410,7 @@ void timer_callback(uint time, uint none)
 }
 
 
-void c_main()
+void c_main(void)
 {
     io_printf(IO_BUF, "Started tracer\n");
 

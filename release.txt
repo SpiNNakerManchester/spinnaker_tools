@@ -4,6 +4,73 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.4.1 - Bug fixing
+
+Bug fixes:
+
+* ALL: Documentation fixes
+
+* ALL: Reduce warnings when compiling with armcc
+
+* SCAMP: Allow building and booting with gcc compiler
+
+#-------------------------------------------------------------------------------
+
+Version 3.4.0 - New features
+
+New Features:
+
+* Spin1 API: a user event queue is implemented so that new user
+  events can be triggered while a previous one is being serviced.
+
+* SCAMP/SARK: Timers on different boards are synchronised through
+  periodic drift corrections.
+
+* SCAMP/SARK: signals sync0 and sync1 are phase-aligned across
+  all cores in the machine.
+
+#-------------------------------------------------------------------------------
+
+
+Version 3.3.0 - Bug fixing and new feature
+
+New Feature:
+
+* Spin1 API: new function spin1_dma_flush clears hardware and software
+  DMA queues and aborts any ongoing DMA transfers.
+
+
+Bug fixes:
+
+* SCAMP/SARK: removes a potential SDP loophole in which both sender
+  and receiver could free a shared-buffer SDP message at the same time.
+
+* SCAMP/SARK: fixes a hazard by allocating events before accessing
+  shared resources.
+
+* Spin1 API: removes a read-after-write hazard in the comms controller.
+
+#-------------------------------------------------------------------------------
+
+
+Version 3.2.5 - Bug fixing
+
+Bug fixes:
+
+* SCAMP: chips disable an outgoing link when the incoming link has
+  been disabled by the corresponding neighbour during boot.
+
+* SCAMP: removes an incorrect Ethernet buffer access after it has
+  been released.
+
+* SCAMP: Modifies event management to avoid a scenario where a monitor
+  runs out of events and fails to timeout communications.
+
+* Adds citation and manifest files.
+
+#-------------------------------------------------------------------------------
+
+
 Version 3.2.4 - Bug fixing
 
 Bug fix:
@@ -62,7 +129,7 @@ Bug Fixes:
 * All code has been reformatted to a more consistent style
 
 * SCAMP: Fixes to SDP handling that should make it more effective when using
-  windowing of code 
+  windowing of code
 
 #-------------------------------------------------------------------------------
 
@@ -77,9 +144,9 @@ New Features:
   be instantiated with a phase offset
 
 * SARK: New function sark_io_buf_reset clears the IO_BUF buffer and frees any
-  buffers allocated for the calling core 
+  buffers allocated for the calling core
 
- 
+
 Bug Fixes:
 
 * tools/ybug: rtr_diag command now prints unsigned values rather than signed
@@ -94,7 +161,7 @@ Bug Fixes:
 
 * SCAMP: Fix to reduce the number of false-positive timeouts received when using
   SDP over Ethernet
-  
+
 * SCAMP: Fix the flood-fill mechanism
 
 * General: Make fixed to work with ARM compiler on Windows
@@ -113,7 +180,7 @@ boot.
 #-------------------------------------------------------------------------------
 
 
-Version 3.0.0 - Merging of changes made on a different branch of the tools 
+Version 3.0.0 - Merging of changes made on a different branch of the tools
 (Breaking change due to version checking bug in previous releases.)
 
 Packaging/build changes:
@@ -123,16 +190,16 @@ Packaging/build changes:
 
 * A Makefile.common file has been created to contain common build directives.
 
-* By default, intermediate files for ARM builds are made in build/arm and for 
+* By default, intermediate files for ARM builds are made in build/arm and for
   GNU builds are made in build/gnu.  Folders are created automatically.
-  
+
 * mkaplx now expects a .nm file rather than a .elf file.  Rules for building
   the nm file are in Makefile.common.
-  
-* sark and spin1_api have a Makefile each instead of make.gnu and make.arm.  
+
+* sark and spin1_api have a Makefile each instead of make.gnu and make.arm.
   Users can specify which of ARM or GNU is required by using GNU=0 or GNU=1
   respectively.
-  
+
 * A top level Makefile is included to build both sark and spin1_api.
 
 * SC&MP can be built with GNU tools.
@@ -151,7 +218,7 @@ SCP Command Changes:
   the nearest Ethernet to the chip, and the IP address currently assigned to the
   chip.  Note that the IP address can be set even if the Ethernet is not
   connected.  The default IP address is 0.0.0.0.
-  
+
 Spin1 API Changes:
 
 * Diagnostics are now stored directly in the diagnostics data structure,
@@ -161,24 +228,24 @@ Spin1 API Changes:
   timer callback over-ran, and the maximum number of queued timer callbacks
   at any time during the simulation (i.e. how far behind this core got at
   worst).
-  
-* Added the ability to pause and resume simulations through spin1_pause and 
-  spin1_resume.  During pause, a simulation can still communicate using SDP; 
-  only the timer tick is currently disabled.  Simulations can be resumed 
+
+* Added the ability to pause and resume simulations through spin1_pause and
+  spin1_resume.  During pause, a simulation can still communicate using SDP;
+  only the timer tick is currently disabled.  Simulations can be resumed
   synchronously or asynchronously as per spin1_start.
 
 * Added the ability to start a simulation in paused mode i.e. to start all the
   interrupt handling except the timer tick.  Simulations started paused are
   done so asynchronously - spin1_resume is expected to be used when
   synchronisation is required.
-  
+
 ybug changes:
 
 * ybug no longer needs CRC32 to be installed to work.
 
 * It is no longer necessary to set SPINN_PATH.  Instead, boot files will be
   searched for in the tools/boot folder by default.
-  
+
 Bug Fixes:
 
 * Some fixes have been made to the booting process in SC&MP. Specifically
@@ -334,14 +401,14 @@ Routines to deal with fixed route packets added to SARK and spin1_api.
 SARK gets two routines to set and get the fixed routing register in
 the router
 
-	void rtr_fr_set (uint route);   // Sets route (using virtual cores)
-	uint rtr_fr_get (void);		// Gets route (actually a copy of)
+  void rtr_fr_set (uint route);   // Sets route (using virtual cores)
+  uint rtr_fr_get (void);		// Gets route (actually a copy of)
 
 spin1_api gets two new events FR_PACKET_RECEIVED, FRPL_PACKET_RECEIVED
 and adds a routine to send a FR packet (which has similar args to the
 MC packet send routine).
 
-	uint spin1_send_fr_packet (uint key, uint data, uint load);
+  uint spin1_send_fr_packet (uint key, uint data, uint load);
 
 #-------------------------------------------------------------------------------
 
@@ -362,8 +429,8 @@ parameters are needed to set this up
 Port number   the UDP port in incoming packets
 P2P address   of the destination chip. A 16 bit value.
 Core port     on the destination chip. An 8 bit value with core number
-     	      in the lower 5 bits and "port" number in the upper 3. The
-	      port should not normally be zero
+             in the lower 5 bits and "port" number in the upper 3. The
+        port should not normally be zero
 
 When a UDP packet is received, the IPTag table is searched to see if
 a reverse IPTag exists for the given port number. If it does and the
@@ -422,18 +489,18 @@ bits) with X coordinate in the high byte and Y coordinate in the low
 byte.
 
 sv->eth_addr    P2P address of 'nearest' Ethernet chip. If you make your
-		own SDP packets to send to the outside world via
-		Ethernet you should set the "dest_addr" field to this
-		value.
+    own SDP packets to send to the outside world via
+    Ethernet you should set the "dest_addr" field to this
+    value.
 
 sv->dbg_addr    Initialised to be the same as "sv->eth_addr". This is
-		used by "io_printf" (to IO_STD) to send printing to a
-		host. You can set it (eg to (0,0)) to change the route
-		that "io_printf" uses.
+    used by "io_printf" (to IO_STD) to send printing to a
+    host. You can set it (eg to (0,0)) to change the route
+    that "io_printf" uses.
 
 sv->board_addr  The address of this chip relative to the bottom
-		left chip on this board (ie goes up to (7,7) on a
-		48-chip board.
+    left chip on this board (ie goes up to (7,7) on a
+    48-chip board.
 
 Note that, after booting in "ybug", the default IPTag for Tubotron output
 will only be set on the root chip (0,0). IPTags for other Ethernet-attached

@@ -1,4 +1,19 @@
-dist: xenial
+# Copyright (c) 2017-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+dist: focal
 language: c
 
 addons:
@@ -8,6 +23,14 @@ addons:
       - gcc-arm-none-eabi
       - libnewlib-arm-none-eabi
       - freeglut3-dev
+      - openjdk-8-jre-headless
+      - ant
+      - doxygen
+jobs:
+  include:
+    - name: Build
+      env:
+        - DEPLOY_DIR=$PWD/doxybuild/deploy
 
 install:
   - export SPINN_DIRS=$PWD
@@ -20,6 +43,7 @@ before_script:
   - git clone https://github.com/SpiNNakerManchester/SupportScripts.git support
   # Work around ludicrous Travis bug
   - python support/travis_blocking_stdout.py
+  - support/rat.sh download
 
 script:
   - make
@@ -36,3 +60,24 @@ script:
   - support/run-vera.sh apps -P max-line-length=200
   - support/run-vera.sh bmp  -P max-line-length=200 --profile spinnaker-asm.tcl
   - support/run-vera.sh include -P max-line-length=200 -P max-file-length=3000
+  # Copyright check
+  - support/rat.sh run
+  # Documentation build
+  - make doxygen
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  keep_history: true
+  # Inject magic environment variable from Travis Job Configuration page
+  token: $GITHUB_TOKEN
+  local_dir: $DEPLOY_DIR
+  on:
+    # Only enable deployment of any branch if we actually have supplied a token
+    # Which branches to deploy is then controlled through Travis config page
+    # We also limit deployment to the named branches; others are not to be 
+    # deployed by policy anyway.
+    branch:
+      - doxygen
+      - master
+    condition: -n "$GITHUB_TOKEN"

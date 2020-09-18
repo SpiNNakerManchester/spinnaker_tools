@@ -1,42 +1,65 @@
 //------------------------------------------------------------------------------
 //
-// bmp_event.c      Event handling routines for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_event.c
+//! \brief          Event handling routines for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2012-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "lpc17xx.h"
 #include "bmp.h"
 
 //------------------------------------------------------------------------------
 
-static event_t *event_list;     // List of free events
-static event_t *event_queue;    // List of active events
+static event_t *event_list;     //!< List of free events
+static event_t *event_queue;    //!< List of active events
 
-static event_t *proc_head;      // List of queued "proc" events
-static event_t *proc_tail;      // and tail of that list
+static event_t *proc_head;      //!< List of queued "proc" events
+static event_t *proc_tail;      //!< and tail of that list
 
-static uint32_t event_id;       // Makes unique ID for active events
-static uint32_t event_count;    // Number of events currently in use
-static uint32_t event_max;      // Maximum number ever used
+static uint32_t event_id;       //!< Makes unique ID for active events
+static uint32_t event_count;    //!< Number of events currently in use
+static uint32_t event_max;      //!< Maximum number ever used
 
-#define NUM_EVENTS 16
+#define NUM_EVENTS 16           //!< Number of events available for use
 
+//! Storage for events
 static event_t events[NUM_EVENTS];
 
 //------------------------------------------------------------------------------
 
-
-void proc_set_byte(uint32_t addr, uint32_t data)
+//! \brief Set a _byte_ at an address
+//! \param[in] addr: The address to write at.
+//! \param[in] data: The value to write there.
+void event_set_byte(uint32_t addr, uint32_t data)
 {
     * (uint8_t *) addr = data;
 }
 
 
+//! \brief Initialise the event processing system.
+//! \param[in] priority: Priority to use for the driving timer interrupt
 void event_init(uint32_t priority)
 {
     event_t *e = event_list = events;
@@ -53,10 +76,11 @@ void event_init(uint32_t priority)
 }
 
 
-// Adds an event to a list of events which can (all) be executed at some
-// later time. The order of execution is the same as that of addition to
-// the list.
-
+//! \brief Adds an event to a list of events which can (all) be executed at
+//! some later time.
+//!
+//! The order of execution is the same as that of addition to the list.
+//! \param[in] e: The event to add.
 void proc_queue_add(event_t *e)
 {
     uint32_t cpsr = cpu_int_off();
@@ -67,15 +91,16 @@ void proc_queue_add(event_t *e)
         proc_tail->next = e;
         proc_tail = e;
     }
-    
+
     cpu_int_restore(cpsr);
 }
 
 
-// Execute a list of events (in the order in which they were added to the
-// list). Events are returned to the free queue after execution.
-
-void proc_queue_run()
+//! \brief Execute a list of events (in the order in which they were added to
+//! the list).
+//!
+//! Events are returned to the free queue after execution.
+void proc_queue_run(void)
 {
     uint32_t cpsr = cpu_int_off();
 
@@ -103,8 +128,10 @@ void proc_queue_run()
 }
 
 
-// Interrupt handler for the timer which is handling events.
-
+//! \brief Interrupt handler for the timer which is handling events.
+//!
+//! Events added to the queue while this interrupt is processing will not be
+//! processed until the _next_ time this interrupt is called.
 void TIMER3_IRQHandler(void)
 {
     LPC_TIM3->IR = 1;                   // Clear MR0 interrupt
@@ -155,14 +182,17 @@ void TIMER3_IRQHandler(void)
 }
 
 
-// Cancel an event that was previously scheduled. The ID that was
-// allocated when the event was created must be given in case the
-// event has already executed and possibly been recycled.
-
-// It is potentially quite difficult to cancel an event at the head
-// of the event queue so in this case the "proc" is made NULL and
-// the event left to terminate on the timer interrupt.
-
+//! \brief Cancel an event that was previously scheduled.
+//!
+//! The ID that was allocated when the event was created must be given in
+//! case the event has already executed and possibly been recycled.
+//!
+//! It is potentially quite difficult to cancel an event at the head
+//! of the event queue so in this case the "proc" is made NULL and
+//! the event left to terminate on the timer interrupt.
+//!
+//! \param[in] e: The event to cancel.
+//! \param[in] ID: The ID that the event is expected to have.
 void event_cancel(event_t *e, uint32_t ID)
 {
     uint32_t cpsr = cpu_int_off();
@@ -201,10 +231,15 @@ void event_cancel(event_t *e, uint32_t ID)
 }
 
 
-// Allocate a new event from the free queue and intialise "proc",
-// "arg1" and "arg2" fields. The "ID", "next" and "time" fields are also
-// set.
-
+//! \brief Allocates a new event.
+//!
+//! Allocates a new event from the free queue and intialise "proc",
+//! "arg1" and "arg2" fields. The "ID", "next" and "time" fields are also
+//! set.
+//! \param[in] proc: The event handler
+//! \param[in] arg1: First argument to pass to \p proc when event fires
+//! \param[in] arg2: Second argument to pass to \p proc when event fires
+//! \return The allocated event, or `NULL` if no event can be allocated
 event_t* event_new(event_proc proc, uint32_t arg1, uint32_t arg2)
 {
     uint32_t cpsr = cpu_int_off();
@@ -238,7 +273,10 @@ event_t* event_new(event_proc proc, uint32_t arg1, uint32_t arg2)
     return e;
 }
 
-
+//! \brief Schedules an event to occur some time in the future.
+//! \param[in] e: The event to schedule
+//! \param[in] time: How many &mu;s in the future to schedule the event
+//!     firing at
 void event_schedule(event_t *e, uint32_t time)
 {
     time *= CCLK / 1000000;     // Convert us to timer ticks

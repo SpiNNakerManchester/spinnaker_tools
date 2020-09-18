@@ -4,12 +4,27 @@
 ##
 ## mkhdr   	    Simplistic script to convert C header files to ARM assembly
 ##
-## Copyright (C)    The University of Manchester - 2009, 2010, 2011
+## Copyright (C)    The University of Manchester - 2009, 2010, 2011, 2020
 ##
 ## Author           Steve Temple, APT Group, School of Computer Science
 ## Email            temples@cs.man.ac.uk
 ##
 ##------------------------------------------------------------------------------
+
+# Copyright (c) 2009-2020 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 # This program reads a C language .h file and converts it to an ARM
@@ -35,64 +50,76 @@
 #
 # Unrecognised lines are omitted from the output and multiple blank
 # lines are compressed.
-
+#
+# Values in enum declarations are also supported, but only in a limited
+# fashion; if default enumeration is used, it must only be used for the
+# leading prefix of values in the enumeration. The enumeration must start
+# at the beginning of the line. Any typedef of the enumeration must be
+# separate (it will be ignored). Enums must finish with '};' on a line on
+# its own.
 
 use strict;
 use warnings;
 
 
 my $blank = 0;
-my $time = localtime (time ());
+my $in_enum = 0;
+my $enum_count;
+my $time = localtime(time());
 
 printf ";\n; Auto-generated from \"%s\" - $time\n;\n", $ARGV[0] || "<STDIN>";
 
 
-while (<>)
-{
+while (<>) {
     chomp;
     s/^\s+|\s+$//g;
     s/\/\//;/;
+    s/!<//;
 
-    if (/^$/)
-    {
-	print "\n" unless $blank;
-	$blank = 1;
-	next;
+    if (/^$/) {
+		print "\n" unless $blank;
+		$blank = 1;
+		next;
     }
 
     $blank = 0;
 
-    if (/^;/)
-    {
-	print "$_\n";
-    }
-    elsif (/^#define\s+(\w+)\s+(.+)/)
-    {
-	my ($name, $val) = ($1, $2);
-	my $rest = '';
+    if (/^;!?(.*)/) {
+		print ";$1\n";
+    } elsif (/^#define\s+(\w+)\s+(.+)/) {
+	 	my ($name, $val) = ($1, $2);
+		my $rest = '';
 
-	($val, $rest) = ($2, $3) if $val =~ /^(INT|BYTE)_AT\((.+?)\)(.*)/;
-	printf "%-15s equ     $val$rest\n", $name;
-    }
-    elsif (/^#ifdef\s+(\w+)/)
-    {
-	printf "%-15s if      :def: $1\n", '';
-    }
-    elsif (/^#ifndef\s+(\w+)/)
-    {
-	printf "%-15s if      :lnot: :def: $1\n", '';
-    }
-    elsif (/^#else$/)
-    {
-	printf "%-15s else\n", '';
-    }
-    elsif (/^#endif$/)
-    {
-	printf "%-15s endif\n", '';
-    }
-    else
-    {
-	$blank = 1;
+		if ($val !~ /^__/) {
+			($val, $rest) = ($2, $3) if $val =~ /^(INT|BYTE)_AT\((.+?)\)(.*)/;
+			printf "%-15s equ     $val$rest\n", $name;
+		}
+    } elsif (/^#ifdef\s+(\w+)/) {
+		printf "%-15s if      :def: $1\n", '';
+    } elsif (/^#ifndef\s+(\w+)/) {
+		printf "%-15s if      :lnot: :def: $1\n", '';
+    } elsif (/^#else$/) {
+		printf "%-15s else\n", '';
+    } elsif (/^#endif$/) {
+		printf "%-15s endif\n", '';
+    } elsif (!$in_enum && /^enum .*\{/) {
+    	$in_enum = 1;
+    	$enum_count = 0;
+    } elsif ($in_enum) {
+	    if (/^(\w+)\s*=\s*([^,;]+),?\s*(;.*)?/) {
+	    	my ($name, $val, $comment) = ($1, $2, $3);
+    		$comment = "" unless defined $comment;
+	    	printf "%-15s equ     $val\t$comment\n", $name;
+	    } elsif (/^(\w+),?\s*(;.*)?/) {
+	    	my ($name, $comment) = ($1, $2);
+    		$comment = "" unless defined $comment;
+	    	printf "%-15s equ     $enum_count\t$comment\n", $name;
+	    	$enum_count++;
+	    } elsif (/^\}/) {
+	    	$in_enum = 0;
+	    }
+    } else {
+		$blank = 1;
     }
 }
 

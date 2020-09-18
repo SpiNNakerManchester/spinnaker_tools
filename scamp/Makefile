@@ -1,5 +1,21 @@
+# Copyright (c) 2017-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 APP := scamp-3
 override THUMB := 1
+override SCAMP := 1
 include ../make/spinnaker_tools.mk
 
 SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
@@ -103,9 +119,9 @@ tar:
 	scamp/spinn_srom.c scamp/spinn_net.c scamp/scamp-app.c \
 	scamp/scamp-p2p.c scamp/scamp-nn.c scamp/scamp-cmd.c \
 	scamp/scamp-boot.c scamp/scamp-isr.c scamp/scamp-del.c scamp/spinn_phy.h \
-	scamp/scamp.h scamp/spinn_net.h scamp/spinn_srom.h scamp/spinn_regs.h \
+	scamp/scamp.h scamp/spinn_net.h scamp/spinn_regs.h \
 	scamp/boot_aplx.s scamp/$(APP).c scamp/$(APP).sct scamp/sark.c \
-	scamp/Makefile scamp/mkpad scamp/mksv
+	scamp/Makefile scamp/mkpad scamp/mksv scamp/$(APP).lnk scamp/boot.lnk
 
 clean:
 	$(RM) -r $(BUILD_DIR)* $(APP).boot

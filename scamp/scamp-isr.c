@@ -1,19 +1,36 @@
 //------------------------------------------------------------------------------
-//
-// scamp-isr.c      SC&MP interrupt routines
-//
-// Copyright (C)    The University of Manchester - 2009, 2010
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     SC&MP interrupt routines
+//!
+//! \copyright &copy; The University of Manchester - 2009, 2010
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "spinnaker.h"
 #include "sark.h"
 #include "scamp.h"
+#include <scamp_spin1_sync.h>
 
-
+//! Multicast packet handler uses the FIQ VIC slot
 #define MC_SLOT SLOT_FIQ
 
 
@@ -40,12 +57,12 @@ extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 extern uchar v2p_map[MAX_CPUS];
 extern uint num_cpus;
 
-static uint centi_ms;   // Counts 0 to 9 in ms
+static uint centi_ms;   //!< Counts 0 to 9 in ms
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER pkt_tx_int() // SPIN2 - optimise for register order??
+//! Packet transmit ready handler
+INT_HANDLER pkt_tx_int(void) // SPIN2 - optimise for register order??
 {
     pkt_queue_t *txq = &tx_pkt_queue;
     txq->remove = (txq->remove + 1) % PKT_QUEUE_SIZE;
@@ -69,12 +86,12 @@ INT_HANDLER pkt_tx_int() // SPIN2 - optimise for register order??
 
 //------------------------------------------------------------------------------
 
-
+//! Ethernet packet received handler. Delegates to eth_receive()
 #ifdef __GNUC__
 void eth_rx_int(void)
 {
-  asm volatile (
-  "     .arm \n\
+    asm volatile (
+    "   .arm \n\
         .global eth_receive \n\
         .equ    MODE_SYS, 0x1f \n\
         .equ    MODE_IRQ, 0x12 \n\
@@ -95,7 +112,7 @@ void eth_rx_int(void)
         ldmfd   sp!, {r12, lr} \n\
         msr     spsr_cxsf, lr \n\
         ldmfd   sp!, {r0, pc}^ \n\
-  " :::);
+    " :::);
 }
 #else
 __asm void eth_rx_int(void)
@@ -118,7 +135,7 @@ __asm void eth_rx_int(void)
 
         ldmfd   sp!, {r1-r3, lr}        ;; Restore working regs & LR_sys
 
-        msr     cpsr_c, #MODE_IRQ+IMASK_IRQ ; Back to IRQ mode, IRQ disabled
+        msr     cpsr_c, #MODE_IRQ+IMASK_IRQ ;; Back to IRQ mode, IRQ disabled
 
         mov     r12, #VIC_BASE          ;; Tell VIC we are done
         str     r12, [r12, #VIC_VADDR * 4]
@@ -132,17 +149,79 @@ __asm void eth_rx_int(void)
 
 
 //------------------------------------------------------------------------------
+//! \brief Maximum difference between timers over 2 seconds in clock ticks.
+//! \details Experiments have shown maximum difference is about 1ms over 160
+//! 	seconds which is 6.25us over 1 second, which is 2500 clock ticks at
+//! 	200Mhz.  This is multiplied by 2 as drift could be in either
+//! 	direction.  Further experiments show that slightly higher values are
+//! 	encountered, so 10000 is used.
+#define MAX_DIFF 10000
 
+//! Number of samples to keep to get an average
+#define N_ITEMS 16
+//! Samples used when synchronising time
+static int samples[N_ITEMS];
+//! Sum to make moving average easy
+static int sum = 0;
+//! Ticks recorded last time
+static int last_ticks = 0;
+//! Number of samples recorded
+static uint n_samples = 0;
+//! Position of next sample
+static uint sample_pos = 0;
+//! Beacon id recorded last time to detect missed packets
+static int last_beacon = 0;
 
-INT_HANDLER pkt_mc_int()
+//! Multicast packet received handler. Delegates to signal_app()
+INT_HANDLER pkt_mc_int(void)
 {
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
 
     // Checksum ??
 
-    if (key == 0xffff5555) {
+    if (key == SCAMP_MC_SIGNAL_KEY) {
         signal_app(data);
+    } else if (key == SCAMP_MC_TIME_SYNC_KEY && netinit_phase == NETINIT_PHASE_DONE) {
+        // Timer synchronisation - only do once netinit phase is complete to
+        // avoid clashing with other network traffic.
+        int ticks = tc[T1_COUNT];
+        if (n_samples == 0) {
+            // If there are no samples, take one now, but don't do anything else
+            last_ticks = ticks;
+            last_beacon = data;
+            n_samples++;
+        } else {
+            // Note maximum difference over 2 seconds is quite big but
+            // once divided into per-us value, it will be small again.
+            // We need a 64-bit int to represent the value before division
+            // but this will fit in a 32-bit value once divided.
+            int diff = last_ticks - ticks;
+            int n_beacons = data - last_beacon;
+            last_ticks = ticks;
+            last_beacon = data;
+            // Note, we store ticks even if out of range; this should help when
+            // things are moving but going to converge again on a different
+            // value.  This might mean that we ignore more than one value if
+            // there is a lot of jitter, but this is OK.
+            if ((diff <= MAX_DIFF) && (diff >= -MAX_DIFF) && (n_beacons > 0)) {
+                // Enough samples now, so do the difference
+                int scaled_diff = (diff << DRIFT_FP_BITS)
+                        / (n_beacons * TIME_BETWEEN_SYNC_US);
+                sum = (sum - samples[sample_pos]) + scaled_diff;
+                samples[sample_pos] = scaled_diff;
+                sample_pos = (sample_pos + 1) % N_ITEMS;
+                n_samples++;
+                // Just use the actual value until there are enough to average;
+                // using the average early on tends to lead to odd values, so
+                // this seems to work better in experiments
+                if (n_samples >= N_ITEMS) {
+                    sv->clock_drift = sum / N_ITEMS;
+                } else {
+                    sv->clock_drift = scaled_diff;
+                }
+            }
+        }
     }
 
 #if MC_SLOT != SLOT_FIQ
@@ -150,8 +229,13 @@ INT_HANDLER pkt_mc_int()
 #endif
 }
 
-
-INT_HANDLER pkt_nn_int()
+//! \brief Nearest-neighbour packet received handler
+//!
+//! Delegates to one of:
+//! * nn_rcv_pkt()
+//! * peek_ack_pkt()
+//! * poke_ack_pkt()
+INT_HANDLER pkt_nn_int(void)
 {
     uint ctrl = cc[CC_RSR];
     uint data = cc[CC_RXDATA];
@@ -175,8 +259,13 @@ INT_HANDLER pkt_nn_int()
     vic[VIC_VADDR] = (uint) vic;
 }
 
-
-INT_HANDLER pkt_p2p_int()
+//! \brief Peer-to-peer packet received handler
+//!
+//! Delegates to one of:
+//! * p2p_region()
+//! * p2p_rcv_data()
+//! * p2p_rcv_ctrl()
+INT_HANDLER pkt_p2p_int(void)
 {
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
@@ -199,16 +288,40 @@ INT_HANDLER pkt_p2p_int()
 
 //------------------------------------------------------------------------------
 
+//! Time beacon counter
+static uint n_beacons_sent = 0;
+//! Inter-synchronisation time, in microseconds
+static uint time_to_next_sync = TIME_BETWEEN_SYNC_US;
 
-INT_HANDLER ms_timer_int()
+//! \brief Millisecond timer interrupt handler
+//!
+//! Delegates (with appropriate frequency) to:
+//! * proc_1khz()
+//! * proc_100hz()
+//! * proc_1hz()
+INT_HANDLER ms_timer_int(void)
 {
     tc[T1_INT_CLR] = (uint) tc;         // Clear interrupt
 
+    // Send the sync signal if appropriate
+    if ((sv->p2p_root == sv->p2p_addr)
+            && (netinit_phase == NETINIT_PHASE_DONE)) {
+        if (time_to_next_sync == 0) {
+            pkt_tx(PKT_MC_PL, n_beacons_sent, SCAMP_MC_TIME_SYNC_KEY);
+            n_beacons_sent++;
+            time_to_next_sync = TIME_BETWEEN_SYNC_US;
+        }
+        // Take of 1000us per timer tick, assuming the timer is in ms
+        time_to_next_sync -= 1000;
+    }
+
     sv->clock_ms++;
     uint ms = sv->time_ms + 1;
+    uint unix_time = sv->unix_time;
     if (ms == 1000) {
         ms = 0;
-        sv->unix_time++;
+        unix_time++;
+        sv->unix_time = unix_time;
 
         if (!event_queue_proc(proc_1hz, 0, 0, PRIO_2)) { // !!const
             sw_error(SW_OPT);
@@ -243,11 +356,13 @@ INT_HANDLER ms_timer_int()
 
 //------------------------------------------------------------------------------
 
+//! Round robin counter for ap_int()
+static uint next_box;
 
-uint next_box;
 extern void local_wait_done(uint cpu_id, uint state);
 
-INT_HANDLER ap_int()
+//! Application (local core) message available handler
+INT_HANDLER ap_int(void)
 {
     do {
         next_box++;
@@ -273,12 +388,14 @@ INT_HANDLER ap_int()
 
         if (msg != NULL) {
             sark_msg_cpy(msg, shm_msg);
+            sark_shmsg_free(shm_msg);
             vcpu->mbox_mp_cmd = SHM_IDLE;
             msg_queue_insert(msg, 0);
-            sark_shmsg_free(shm_msg);
         } else {
-            // failed to get buffer - do *not* flag
-            // mailbox as IDLE to cause sender timeout
+            // If we didn't get a message, we are just going to have to throw
+            // this one away...
+            sark_shmsg_free(shm_msg);
+            vcpu->mbox_mp_cmd = SHM_IDLE;
             sw_error(SW_OPT);
         }
     } else if (cmd == SHM_WAIT) {
@@ -300,7 +417,7 @@ INT_HANDLER ap_int()
 
 extern INT_HANDLER timer2_int_han(void);
 
-
+//! Initialise the VIC
 void vic_setup(void)
 {
     tc[T2_CONTROL] = 0; // Disable timer2

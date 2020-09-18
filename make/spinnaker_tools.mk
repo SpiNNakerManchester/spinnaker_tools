@@ -1,3 +1,18 @@
+# Copyright (c) 2017-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # Common includes for making SpiNNaker binaries
 
 # Set to 1 for GNU tools, 0 for ARM
@@ -14,6 +29,9 @@ DEBUG := 1
 
 # Set to 1 if making a library (advanced!)
 LIB := 0
+
+# Set to 1 if building scamp (advanced!)
+SCAMP := 0
 
 # Prefix for GNU tool binaries
 GP := arm-none-eabi
@@ -43,6 +61,7 @@ SPINN_LIB_DIR = $(SPINN_DIRS)/lib
 SPINN_INC_DIR = $(SPINN_DIRS)/include
 SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
 SPINN_MAKE_LIB_DIR = $(SPINN_DIRS)/make
+SPINN_SCAMP_DIR = $(SPINN_DIRS)/scamp
 
 # ------------------------------------------------------------------------------
 # Tools
@@ -55,19 +74,26 @@ ifeq ($(GNU),1)
     CXX_NO_THUMB := $(GP)-gcc -c -mthumb-interwork -march=armv5te -std=c++11 -ffreestanding -I $(SPINN_INC_DIR) -fno-rtti -fno-exceptions
     CC_THUMB  := $(CC_NO_THUMB) -mthumb -DTHUMB
     CXX_THUMB := $(CXX_NO_THUMB) -mthumb -DTHUMB
-    
+
     OSPACE := -Os
     OTIME := -Ofast
     ALL_WARNINGS := -Wall -Wextra
-    
+
+    # scamp needs the stacks in a different address of DTCM
+    ifeq ($(SCAMP), 1)
+        LD_LNK := $(SPINN_SCAMP_DIR)/scamp-3.lnk
+    else
+        LD_LNK := $(SPINN_TOOLS_DIR)/sark.lnk
+    endif
+
     ifeq ($(LIB), 1)
         CFLAGS += -fdata-sections -ffunction-sections
         LD := $(GP)-ld -i
     else
-        LD := $(GP)-gcc -T$(SPINN_TOOLS_DIR)/sark.lnk -Wl,-e,cpu_reset -Wl,-static -ffreestanding -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
+        LD := $(GP)-gcc -T$(LD_LNK) -Wl,-e,cpu_reset -Wl,-static -ffreestanding -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
         LFLAGS += -L $(SPINN_LIB_DIR)
     endif
-    
+
     AR := $(GP)-ar -rcs
     OC := $(GP)-objcopy
     OD := $(GP)-objdump -dxt >
@@ -81,18 +107,18 @@ else
     CXX_NO_THUMB := armcc -c --cpp11 --cpu=5te --apcs interwork --min_array_alignment=4 -I $(SPINN_INC_DIR) --no_rtti --no_exceptions
     CC_THUMB := $(CC_NO_THUMB) --thumb -DTHUMB
     CXX_THUMB := $(CXX_NO_THUMB) --thumb -DTHUMB
-    
+
     OSPACE := -Ospace
     OTIME := -Otime
     ALL_WARNINGS :=
-    
+
     ifeq ($(LIB), 1)
         CFLAGS += --split_sections
         LD := armlink --partial
     else
         LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct --remove --entry cpu_reset
     endif
-    
+
     AR := armar -rsc
     OC := fromelf
     OD := fromelf -cds --output
@@ -139,6 +165,7 @@ $(BUILD_DIR)%.bin: $(BUILD_DIR)%.elf
 ifeq ($(GNU),1)
 	$(OC) -O binary -j RO_DATA -j EX_DATA $< $(BUILD_DIR)RO_DATA.bin
 	$(OC) -O binary -j RW_DATA $< $(BUILD_DIR)RW_DATA.bin
+	ls -l $(BUILD_DIR)RO_DATA.bin
 	$(SPINN_TOOLS_DIR)/mkbin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin > $@
 	$(RM) $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin
 else
@@ -152,7 +179,7 @@ $(BUILD_DIR)%.elf: $(OBJECTS) $(BUILD_DIR)%_build.o
 	# spinnaker_tools.mk elf
 	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
 	$(OD) $(BUILD_DIR)$*.txt $@
-	
+
 # Build sark_build.o
 $(BUILD_DIR)%_build.c:
 	$(MKDIR) $(BUILD_DIR)
@@ -162,7 +189,7 @@ $(BUILD_DIR)%.o: %.c
 	# spinnaker_tools.mk c
 	$(MKDIR) $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $<
-	
+
 $(BUILD_DIR)%.o: %.cpp
 	# spinnaker_tools.mk cpp
 	$(MKDIR) $(BUILD_DIR)

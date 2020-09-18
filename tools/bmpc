@@ -11,6 +11,21 @@
 ##
 ##------------------------------------------------------------------------------
 
+# Copyright (c) 2012-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 use strict;
 use warnings;
@@ -129,7 +144,7 @@ sub update_flash_data
 	print "Data saved in \"/tmp/bmp-data-flash\"...\n";
     }
 
-    return 0;	
+    return 0;
 }
 
 
@@ -859,7 +874,7 @@ sub cmd_flash_write
 
     return "bad args" if $ac != 2;
     return "can't read \"$file\"" unless -r $file;
- 
+
     ($addr, $update) = (0x70000, 1) if $opt eq "update";
 
     return "bad address" unless defined $addr;
@@ -917,7 +932,7 @@ sub board_info
 	    {
 		($link, $core) = (0x3f, 0x3ffff);
 	    }
-	    
+
 	    die "bad line ($.) \"$_\"" if $rest;
 
 	    my $word = ($x << 27) + ($y << 24) + ($link << 18) + $core;
@@ -944,7 +959,7 @@ sub cmd_board_info
     my $file = $cli->{arg_v}->[0];
 
     return "bad args" if $ac != 1;
- 
+
     eval
     {
 	my $buffer = board_info ($file);
@@ -1190,7 +1205,7 @@ sub cmd_sf_ip
 		       data => $pack);
 
 	print "Reading data\n";
-    
+
 	my $read = $bmp->scp_cmd ($CMD_BMP_SF,
 				  arg1 => $addr,
 				  arg2 => $len,
@@ -1679,7 +1694,7 @@ sub cmd_fstat
 	    $regs[$reg],
 	    sprintf ($fmt[$reg], $data->[0]->[$reg]),
 	    sprintf ($fmt[$reg], $data->[1]->[$reg]),
-	    sprintf ($fmt[$reg], $data->[2]->[$reg]); 
+	    sprintf ($fmt[$reg], $data->[2]->[$reg]);
     }
 
     return "";
@@ -1895,7 +1910,7 @@ sub cmd_cmd
 	my @data = @{$cli->{arg_x}}[4..$ac-1];
 	$data = pack "C*", @data;
     }
-    
+
     return "bad args" if $ac < 1;
 
     eval

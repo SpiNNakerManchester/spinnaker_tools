@@ -1,13 +1,29 @@
 //------------------------------------------------------------------------------
-//
-// sark_event.c     Event handling routines for SARK
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Event handling routines for SARK
+//!
+//! \copyright &copy; The University of Manchester - 2009-2013
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <sark.h>
 
@@ -19,7 +35,7 @@ extern int_handler irq_events[];
 extern int_handler queue_events[];
 extern int_handler null_events[];
 
-
+//! Mapping from ::event_type_e to ::spinnaker_interrupt_numbers_e
 static const uchar vic_bit[] = {
     TIMER1_INT,         // Timer 1
     CC_MC_INT,          // MC pkt
@@ -29,9 +45,19 @@ static const uchar vic_bit[] = {
     DMA_DONE_INT        // DMA done
 };
 
+//! Event failure codes, for event_data_t::rc bitmap
+enum efail_code {
+    EFAIL_FIQ,          //!< Failed to register as FIQ
+    EFAIL_IRQ,          //!< Failed to register interrupt
+    EFAIL_QUEUE,        //!< Event could not be enqueued
+    EFAIL_ALLOC,        //!< Event queue could not be allocated
+    EFAIL_NEW           //!< Event queue was exhausted
+};
 
-enum efail_code {EFAIL_FIQ, EFAIL_IRQ, EFAIL_QUEUE, EFAIL_ALLOC, EFAIL_NEW};
-
+//! \brief How to encode a failure code to go in an event (as events can have
+//!     multiple failures).
+//! \param[in] x: The failure code, see ::efail_code
+//! \return the encoded failure
 #define EFAIL(x) (1 << (x))
 
 
@@ -297,16 +323,16 @@ void event_stop(uint rc)
 
 //------------------------------------------------------------------------------
 
-// Adds an event to a list of events which can (all) be executed
-// at some later time. Later events are queued at the tail of the queue.
-
-uint event_queue(event_t *e, event_priority priority)
+//! \brief Adds an event to a list of events which can (all) be executed
+//! at some later time. Later events are queued at the tail of the queue.
+//!
+//! This is the core of the implementation of event_queue() and
+//! event_queue_proc()
+//! \param e: The event to enqueue
+//! \param priority: The priority of the event
+static void enqueue_event(event_t *e, event_priority priority)
 {
-    if (priority > PRIO_MAX) {
-        return 0;
-    }
-
-    proc_queue_t *queue = event.proc_queue + priority;
+    proc_queue_t *queue = &event.proc_queue[priority];
 
     uint cpsr = cpu_int_disable();
 
@@ -318,7 +344,18 @@ uint event_queue(event_t *e, event_priority priority)
     }
 
     cpu_int_restore(cpsr);
+}
 
+// Adds an event to a list of events which can (all) be executed
+// at some later time. Later events are queued at the tail of the queue.
+
+uint event_queue(event_t *e, event_priority priority)
+{
+    if (priority > PRIO_MAX) {
+        return 0;
+    }
+
+    enqueue_event(e, priority);
     return 1;
 }
 
@@ -330,12 +367,50 @@ uint event_queue(event_t *e, event_priority priority)
 uint event_queue_proc(event_proc proc, uint arg1, uint arg2,
                       event_priority priority)
 {
+    if (priority > PRIO_MAX) {
+        return 0;
+    }
     event_t *e = event_new(proc, arg1, arg2);
     if (e == NULL) {
         return 0;
     }
 
-    return event_queue(e, priority);
+    enqueue_event(e, priority);
+    return 1;
+}
+
+
+//------------------------------------------------------------------------------
+
+// free an event that is no longer in use.
+// The freed event MUST NOT have been scheduled.
+
+void event_free(event_t *e)
+{
+    // free event if not reused
+    if (e->reuse == 0) {
+        uint cpsr = cpu_int_disable();
+
+        e->next = event.free;   // Return to free queue
+        event.free = e;
+        event.count--;
+
+        cpu_int_restore(cpsr);
+    }
+}
+
+//! \brief Safely get the contents of a queue and reset that queue so it can
+//!     receive more events.
+//! \param[in] queue: The queue to have its contents removed.
+//! \return the list of events that were in the queue; NULL if there are no
+//!     events.
+static inline event_t *get_queue_contents(proc_queue_t *queue)
+{
+    uint cpsr = cpu_int_disable();
+    event_t* e = queue->proc_head;  // Get list of events and
+    queue->proc_head = NULL;        // update list head
+    cpu_int_restore(cpsr);
+    return e;
 }
 
 
@@ -349,15 +424,8 @@ void event_run(uint restart)
     uint priority = PRIO_0;
 
     while (priority <= PRIO_MAX && event.state == EVENT_RUN) {
-        proc_queue_t *queue = event.proc_queue + priority;
-
-        uint cpsr = cpu_int_disable();
-
-        event_t* e = queue->proc_head;  // Get list of events and
-        queue->proc_head = NULL;        // update list head
-
-        cpu_int_restore(cpsr);
-
+        proc_queue_t *queue = &event.proc_queue[priority];
+        event_t* e = get_queue_contents(queue);  // Get list of events
         event_t *x = e;                 // Non-NULL if any events run
 
         while (e != NULL) {
@@ -365,20 +433,8 @@ void event_run(uint restart)
 
             // mark event as inactive - do it here in case 'proc' reuses it
             e->ID = 0;
-
             e->proc(e->arg1, e->arg2);  // No need to check for NULL here
-
-            // free event if not reused
-            if (e->reuse == 0) {
-                uint cpsr = cpu_int_disable();
-
-                e->next = event.free;   // Return to free queue
-                event.free = e;
-                event.count--;
-
-                cpu_int_restore(cpsr);
-            }
-
+            event_free(e);
             e = next;
         }
 
@@ -390,43 +446,48 @@ void event_run(uint restart)
     }
 }
 
+//! \brief Safely removes a single event from the head of the given queue.
+//! \param[in] queue: the queue to take an event from.
+//! \return The event that was at the queue head, or NULL if the queue was
+//!     empty.
+static inline event_t *take_one_event_from_queue(proc_queue_t *queue) {
+    uint cpsr = cpu_int_disable();  // Interrupts off to manipulate queue
+    event_t* e = queue->proc_head;  // Get head of queue
+    if (e != NULL) {
+	queue->proc_head = e->next; // Remove from queue
+	e->next = NULL;             // Value here is irrelevant to caller
+    }
+    cpu_int_restore(cpsr);
+    return e;
+}
 
+//! \brief Execute a list of events (in the order in which they were added
+//! to the list). Events are returned to the free queue after execution.
+//!
+//! This differs from event_run() in that it only considers one event at a
+//! time, whereas event_run() processes one priority level of events in one
+//! go. This affects when incoming higher-priority events get run.
+//!
+//! \param[in] restart: Whether to start back at priority zero after
+//!     processing an event.
 void event_run2(uint restart)
 {
     event_priority priority = PRIO_0;
 
     while (priority <= PRIO_MAX && event.state == EVENT_RUN) {
-        proc_queue_t *queue = event.proc_queue + priority;
+        proc_queue_t *queue = &event.proc_queue[priority];
 
-        uint cpsr = cpu_int_disable();  // Interrupts off to manipulate queue
-
-        event_t* e = queue->proc_head;  // Get head of queue
+        event_t* e = take_one_event_from_queue(queue);  // Get head of queue
 
         if (e == NULL) {                // If no item on queue...
-            cpu_int_restore(cpsr);
             priority++;
             continue;
         }
 
-        queue->proc_head = e->next;     // Remove from queue
-
-        cpu_int_restore(cpsr);          // Interrupts on again
-
         // mark event as inactive - do it here in case 'proc' reuses it
         e->ID = 0;
-
         e->proc(e->arg1, e->arg2);      // Execute the "proc"
-
-        // free event if not reused
-        if (e->reuse == 0) {
-            cpsr = cpu_int_disable();   // Return to free queue
-
-            e->next = event.free;
-            event.free = e;
-            event.count--;
-
-            cpu_int_restore(cpsr);
-        }
+        event_free(e);
 
         if (restart) {                  // Back to priority 0 if anything
             priority = PRIO_0;          // executed

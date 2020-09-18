@@ -1,13 +1,19 @@
-//------------------------------------------------------------------------------
-//
-// bmp_ssp.c        SSP peripheral handling for BC&MP
-//
-// Copyright (C)    The University of Manchester - 2012-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            steven.temple@manchester.ac.uk
-//
-//------------------------------------------------------------------------------
+/*
+ * Copyright (c) 2012-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 
 #include "lpc17xx.h"
@@ -18,27 +24,39 @@
 
 //------------------------------------------------------------------------------
 
-// SSP1 is connected to the FPGAs and is used to load their bitmaps. It
-// can also be used to communicate with the FPGAs when the FPGA code supports
-// this function.
-
-// SSP0 is connected to a serial Flash device which currently holds two areas
-// of data. The area at 0 is the SpiNNaker IP address block which is read by
-// the root chip when it is reset. A buffer and software multiplexer dual-port
-// the serial Flash. It can currently only be written by the BMP.
-// The second area holds the FPGA bitmap and starts at 0x10000. This is loaded
-// whenever power is applied to the FPGAs
+//! \file bmp_ssp.c
+//! \brief          Synchronous Serial Port (SSP) peripheral handling for BC&MP
+//!
+//! \copyright      &copy; The University of Manchester - 2012-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
+//! \details
+//! SSP1 is connected to the FPGAs and is used to load their bitmaps. It
+//! can also be used to communicate with the FPGAs when the FPGA code supports
+//! this function.
+//!
+//! SSP0 is connected to a serial Flash device which currently holds two areas
+//! of data. The area at 0 is the SpiNNaker IP address block which is read by
+//! the root chip when it is reset. A buffer and software multiplexer dual-port
+//! the serial Flash. It can currently only be written by the BMP.
+//! The second area holds the FPGA bitmap and starts at 0x10000. This is loaded
+//! whenever power is applied to the FPGAs
 
 //------------------------------------------------------------------------------
 
-static void delay(uint32_t n)           // 30ns per loop?
+//! \brief Simple delay (~30ns per loop?)
+//! \param[in] n: Number of times to loop
+static void delay(uint32_t n)
 {
     while (n--) {
         continue;
     }
 }
 
-void ssp1_copy(uint32_t count, uint8_t *buf)
+//! \brief Copy buffer to FPGAs
+//! \param[in] count: Number of bytes in \p buf to copy
+//! \param[in] buf: Buffer containing data to copy
+void ssp1_copy(uint32_t count, const uint8_t *buf)
 {
     while (count--) {
         while ((LPC_SSP1->SR & 2) == 0) {// Loop while full
@@ -51,6 +69,12 @@ void ssp1_copy(uint32_t count, uint8_t *buf)
 
 //------------------------------------------------------------------------------
 
+//! \brief Read or write an FPGA
+//! \param[in] addr: Where on the FPGA to access
+//! \param[in] fpga: Which FPGA to access
+//! \param[in,out] buf: Buffer; contains word to write to FPGA, or is
+//!     location to put word read from FPGA
+//! \param[in] dir: Reading (::FPGA_READ) or writing (::FPGA_WRITE)
 void fpga_word(uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
 {
     // Assert select
@@ -126,6 +150,8 @@ void fpga_word(uint32_t addr, uint32_t fpga, uint32_t *buf, uint32_t dir)
 
 //------------------------------------------------------------------------------
 
+//! \brief Send word to Serial Flash
+//! \param[in] d: Word to send
 static void ssp0_send(uint32_t d)
 {
     while ((LPC_SSP0->SR & 2) == 0) {   // Loop while full
@@ -134,7 +160,12 @@ static void ssp0_send(uint32_t d)
     LPC_SSP0->DR = d;
 }
 
-void ssp0_write(uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
+//! \brief Write buffer to Serial Flash
+//! \param[in] cmd: Command for SSP0
+//! \param[in] addr: Where to write to
+//! \param[in] len: How many bytes to write
+//! \param[in] buf: Buffer of bytes to write
+void ssp0_write(uint32_t cmd, uint32_t addr, uint32_t len, const uint8_t *buf)
 {
     LPC_GPIO0->FIOCLR = SF_NCS;         // Assert NCS
 
@@ -172,6 +203,11 @@ void ssp0_write(uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
     LPC_GPIO0->FIOSET = SF_NCS;         // Deassert NCS
 }
 
+//! \brief Read buffer from Serial Flash
+//! \param[in] cmd: Command for SSP0
+//! \param[in] addr: Where to read from
+//! \param[in] len: How many bytes to read
+//! \param[out] buf: Buffer to receive read bytes
 void ssp0_read(uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
 {
     LPC_GPIO0->FIOCLR = SF_NCS;         // Assert NCS
@@ -208,8 +244,9 @@ void ssp0_read(uint32_t cmd, uint32_t addr, uint32_t len, uint8_t *buf)
 
 //------------------------------------------------------------------------------
 
-// Copy from Serial Flash on SSP0 to FPGA(s) on SSP1
-
+//! \brief Copy from Serial Flash on SSP0 to FPGA(s) on SSP1
+//! \param[in] addr: Address of data to move (same address used for all)
+//! \param[in] len: Length of data to move
 void ssp0_copy(uint32_t addr, uint32_t len)
 {
     LPC_GPIO0->FIOCLR = SF_NCS;         // Assert NCS
@@ -244,7 +281,11 @@ void ssp0_copy(uint32_t addr, uint32_t len)
 
 //------------------------------------------------------------------------------
 
-void sf_write(uint32_t addr, uint32_t len, uint8_t *buf)
+//! \brief Write to flash
+//! \param[in] addr: Where to write to
+//! \param[in] len: How many bytes to write
+//! \param[in] buf: The data to write
+void sf_write(uint32_t addr, uint32_t len, const uint8_t *buf)
 {
     uint8_t status[4];
 
@@ -270,11 +311,19 @@ void sf_write(uint32_t addr, uint32_t len, uint8_t *buf)
     }
 }
 
+//! \brief Read from flash
+//! \param[in] addr: Where to read from
+//! \param[in] len: How many bytes to read
+//! \param[out] buf: The buffer receiving the data
 void sf_read(uint32_t addr, uint32_t len, uint8_t *buf)
 {
     ssp0_read(0x03, addr, len, buf);
 }
 
+//! \brief Compute CRC of data on flash
+//! \param[in] addr: Where the data is
+//! \param[in] len: The length of the data
+//! \return CRC of the data
 uint32_t sf_crc32(uint32_t addr, uint32_t len)
 {
     uint8_t *buf = (uint8_t *) flash_buf;
@@ -293,10 +342,11 @@ uint32_t sf_crc32(uint32_t addr, uint32_t len)
 
 //------------------------------------------------------------------------------
 
-#define SSP0_CLK   25000000     // 25 MHz
-#define SSP1_CLK_H 25000000     // 25 MHz
-#define SSP1_CLK_L  5000000     //  5 MHz
+#define SSP0_CLK   25000000     //!< SSP0 clock: 25 MHz
+#define SSP1_CLK_H 25000000     //!< SSP1 clock: 25 MHz (fast)
+#define SSP1_CLK_L  5000000     //!< SSP1 clock: 5 MHz (slow)
 
+//! Configure SSP1 to be slow
 void ssp1_slow(void)
 {
     LPC_SSP1->CR1 &= ~SSP_CR1_SSP_EN;
@@ -306,7 +356,7 @@ void ssp1_slow(void)
     LPC_SSP1->CR1 |= SSP_CR1_SSP_EN;
 }
 
-
+//! Configure SSP1 to be fast
 void ssp1_fast(void)
 {
     LPC_SSP1->CR1 &= ~SSP_CR1_SSP_EN;
@@ -318,6 +368,7 @@ void ssp1_fast(void)
 
 //------------------------------------------------------------------------------
 
+//! Configure SSP (serial flash, FPGAs)
 void configure_ssp(void)
 {
     // SSP0 - Serial Flash

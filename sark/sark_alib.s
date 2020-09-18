@@ -10,6 +10,23 @@
 ;;
 ;;------------------------------------------------------------------------------
 
+;;
+;; Copyright (c) 2010-2019 The University of Manchester
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;;
+
 		get	spinnaker.s
 		get	sark.s
 
@@ -30,7 +47,7 @@
 
 		import	||Image$$DTCM$$ZI$$Base||	; Base/length of DTCM
 		import	||Image$$DTCM$$ZI$$Length||	; ZI data
-	
+
 		import	||Image$$DTCM$$ZI$$Limit||	; ZI limit (heap base)
 
 		import	||Image$$STACK$$ZI$$Limit||	; Stack top
@@ -94,7 +111,7 @@ stack_top	dcd	||Image$$STACK$$ZI$$Limit||
 	endif
 
 stack_fill	dcd	DEAD_WORD		; 54 Stack fill word
-	
+
 num_msgs	dcb	NUM_SDP_MSGS		; 58 Number of SDP message bufs
 sark_slot	dcb	SARK_SLOT		; 59 VIC slot for int handler
 num_events	dcb	INIT_EVENTS		; 5a Number of initial events
@@ -143,9 +160,9 @@ reset_entry	adr	r1, reset_vec		; Point to sark_vec
 		bl	sark_wait     		; Wait for go signal
 
 		bl	sark_pre_main		; Runtime system init
-	
+
 		bl 	c_main			; C main procedure
-	
+
 		bl	sark_post_main		; RTS clean-up
 
 		bl	cpu_sleep		; Finally sleep...
@@ -772,7 +789,9 @@ delay1        	sub      r0, #1			; Loop takes 4 clocks
 
 		endp
 
- ;------------------------------------------------------------------------------
+    align 4
+
+;------------------------------------------------------------------------------
 
  		area 	alib_chksum, readonly, code
 		code32
@@ -853,7 +872,7 @@ sark_div10	proc
 
  		area 	alib_sark_int, readonly, code
 		code32
-	
+
 		export	sark_int_han
 		import	sark_int
 
@@ -890,7 +909,7 @@ null_int_han	proc
 		subs	pc, lr, #4
 
 		endp
-	
+
 ;------------------------------------------------------------------------------
 
 ; void schedule (uchar event_id, uint arg0, uint arg1)
@@ -902,7 +921,7 @@ null_int_han	proc
        		import	schedule_sysmode [weak]
 
 schedule	proc
-		
+
 		push	{r12, lr}		; save r12 and lr_irq
 
 		mrs	r12, cpsr		; Go to SYS mode
@@ -1050,8 +1069,8 @@ aplx_rcopy	add	r2, r4			; Copy relative
 		sub	r2, #APLX_ENTRY_SIZE	; Reduce by table entry size
 
 aplx_copy	ldm	r2!, {r0, r5-r7}	; Copy absolute
-		stm	r1!, {r0, r5-r7}	; r1 -> to   
-		ldm	r2!, {r0, r5-r7}	; r2 -> from 
+		stm	r1!, {r0, r5-r7}	; r1 -> to
+		ldm	r2!, {r0, r5-r7}	; r2 -> from
 		stm	r1!, {r0, r5-r7}	; r3 = length
 		sub	r3, #32
 		bhi	aplx_copy

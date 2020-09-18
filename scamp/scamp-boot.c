@@ -1,42 +1,54 @@
 //------------------------------------------------------------------------------
-//
-// scamp-boot.c     BootROM support for SC&MP
-//
-// Copyright (C)    The University of Manchester - 2009-2012
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     BootROM support for SC&MP
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
 
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "sark.h"
 #include "scamp.h"
 
-
 //------------------------------------------------------------------------------
 
-// This currently sends an image of 28kB at most.
-// Images up to 32kB are possible.
-
+//! The address of the buffer used for booting cores
 #define BOOT_BUF (DTCM_BASE + 0x8000)
 
-// BLOCK_COUNT * BYTE_COUNT must be < 32kB
-#define BLOCK_COUNT     31      // From 1-256
-#define WORD_COUNT      256     // From 1-256
-#define BYTE_COUNT      (WORD_COUNT * sizeof(uint))
+//! \brief Flood fill phases, used in nearest neighbour packets.
+//! \details
+//! 	Note that these also set the low 8&ndash;16 bits of the control word.
+enum boot_phases {
+    FF_START_PHASE_1 =          0x01000003, //!< Start
+    FF_BLOCK_START_PHASE_1 =    0x02000003, //!< Block start
+    FF_BLOCK_DATA_PHASE_1 =     0x03000003, //!< Block data
+    FF_BLOCK_END_PHASE_1 =      0x04000003, //!< Block end
+    FF_CONTROL_PHASE_1 =        0x05000103  //!< Finish
+};
 
-
-#define FF_START_PHASE_1                0x01000003
-#define FF_BLOCK_START_PHASE_1          0x02000003
-#define FF_BLOCK_DATA_PHASE_1           0x03000003
-#define FF_BLOCK_END_PHASE_1            0x04000003
-#define FF_CONTROL_PHASE_1              0x05000103
-
+//! Target monitor ID for flood-filled boot packets.
 #define FF_TARGET_MONITOR               0x0
 
-
-const uint crc_table[] = {
+//! Support table for crc32()
+static const uint crc_table[] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
     0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
     0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -82,8 +94,11 @@ const uint crc_table[] = {
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-
-uint crc32(uchar *buf, uint len)
+//! \brief Compute a CRC
+//! \param[in] buf: Buffer to compute the CRC of
+//! \param[in] len: Length of buffer, in bytes
+//! \return The CRC
+static uint crc32(const uchar *buf, uint len)
 {
     uint crc = 0xffffffff;
 
@@ -93,7 +108,9 @@ uint crc32(uchar *buf, uint len)
     return crc ^ 0xffffffff;
 }
 
-
+//! \brief Send NN packet
+//! \param[in] key: Key of packet
+//! \param[in] data: Data of packet
 void nn_tx(uint key, uint data)
 {
     key |= chksum_64(key, data);
@@ -111,7 +128,8 @@ void nn_tx(uint key, uint data)
     sark_delay_us(sv->boot_delay);      // ST - 05jul12 - allow time to propagate...
 }
 
-
+//! \brief Boot SCAMP on chips using the bootROM protocols
+//! \param[in] hw_ver: Hardware version
 void boot_nn(uint hw_ver)
 {
     uint * const image = (uint *) BOOT_BUF;

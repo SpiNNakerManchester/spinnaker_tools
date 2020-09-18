@@ -1,13 +1,29 @@
 //------------------------------------------------------------------------------
-//
-// sark_alloc.c     Memory management routines for SARK
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file      sark_alloc.c
+//! \brief     Memory management routines for SARK
+//!
+//! \copyright &copy; The University of Manchester - 2009-2013
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <sark.h>
 
@@ -47,7 +63,7 @@ void *sark_xalloc(heap_t *heap, uint size, uint tag, uint flag)
 
     size = ((size + 3) & ~3) + sizeof(block_t);
 
-    uint cpsr;
+    uint cpsr = 0;
 
     if (flag & ALLOC_LOCK) {
         cpsr = sark_lock_get(LOCK_HEAP);
@@ -129,7 +145,7 @@ void sark_xfree(heap_t *heap, void *ptr, uint flag)
         rt_error(RTE_NULL);
     }
 
-    uint cpsr;
+    uint cpsr = 0;
 
     if (flag & ALLOC_LOCK) {
         cpsr = sark_lock_get(LOCK_HEAP);
@@ -231,7 +247,7 @@ uint sark_heap_max(heap_t *heap, uint flag)
 {
     block_t *p = heap->free;
     uint max = 0;
-    uint cpsr;
+    uint cpsr = 0;
 
     if (flag & ALLOC_LOCK) {
         cpsr = sark_lock_get(LOCK_HEAP);
@@ -408,11 +424,13 @@ void rtr_free(uint entry, uint clear)
 
 //------------------------------------------------------------------------------
 
+//! \brief Mask used to pick out whether a block is allocated and allocated
+//! to a particular application instance.
+#define FREE_MASK 0xe0ff
+
 // Free all allocated blocks in the router which are tagged with the
 // given "app_id". Argument clear causes the relevant router registers
 // to be re-initialised. Returns number of blocks freed.
-
-#define FREE_MASK 0xe0ff
 
 uint rtr_free_id(uint app_id, uint clear)
 {

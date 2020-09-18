@@ -1,56 +1,75 @@
 //------------------------------------------------------------------------------
-//
-// spinn_srom.c     Serial ROM interface routines for Spinnaker
-//
-// Copyright (C)    The University of Manchester - 2009, 2010
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Serial ROM interface routines for Spinnaker
+//!
+//! \copyright &copy; The University of Manchester - 2009, 2010
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
 //------------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 
 #include "spinnaker.h"
 #include "sark.h"
 
-// Serial ROM command codes
+//! Serial ROM command codes
+enum spinn_srom_commands {
+    SROM_READ =     (0x03U << 24),
+    SROM_WRITE =    (0x02U << 24),
+    SROM_WREN =     (0x06U << 24),
+    SROM_WRDI =     (0x04U << 24),
+    SROM_RDSR =     (0x05U << 24),
+    SROM_WRSR =     (0x01U << 24),
+    SROM_PE =       (0x42U << 24),
+    SROM_SE =       (0xd8U << 24),
+    SROM_CE =       (0xc7U << 24),
+    SROM_RDID =     (0xabU << 24),
+    SROM_DPD =      (0xb9U << 24)
+};
 
-#define SROM_READ       (0x03U << 24)
-#define SROM_WRITE      (0x02U << 24)
-#define SROM_WREN       (0x06U << 24)
-#define SROM_WRDI       (0x04U << 24)
-#define SROM_RDSR       (0x05U << 24)
-#define SROM_WRSR       (0x01U << 24)
-#define SROM_PE         (0x42U << 24)
-#define SROM_SE         (0xd8U << 24)
-#define SROM_CE         (0xc7U << 24)
-#define SROM_RDID       (0xabU << 24)
-#define SROM_DPD        (0xb9U << 24)
-
-#define WAIT 0x40
-#define WREN 0x80
-#define WRITE 0x100
-
+//! Flag bits within the SCP message
+enum spinn_srom_scp_flag_bits {
+    WAIT = 0x40,
+    WREN = 0x80,
+    WRITE = 0x100
+};
 
 //------------------------------------------------------------------------------
 
-
-static void ncs_low()
+//! Set the NCS line low
+static void ncs_low(void)
 {
     sc[GPIO_CLR] = SERIAL_NCS;
     sark_delay_us(1);
 }
 
-
-static void ncs_high()
+//! Set the NCS line high
+static void ncs_high(void)
 {
     sark_delay_us(1);
     sc[GPIO_SET] = SERIAL_NCS;
     sark_delay_us(1);
 }
 
-
-static void clock()
+//! Cycle the clock line on the SROM
+static void clock(void)
 {
     sark_delay_us(1);
     sc[GPIO_SET] = SERIAL_CLK;
@@ -58,7 +77,9 @@ static void clock()
     sc[GPIO_CLR] = SERIAL_CLK;
 }
 
-
+//! \brief Send data to the SROM
+//! \param[in] v: Value to send, in top \p n bits
+//! \param[in] n: Number of bits to send
 static void send(uint v, uint n)
 {
     do {
@@ -77,8 +98,9 @@ static void send(uint v, uint n)
     sc[GPIO_CLR] = SERIAL_SI;
 }
 
-
-static uint read8()
+//! \brief Read a byte from the SROM (must have been requested)
+//! \return The byte that was read.
+static uint read8(void)
 {
     uint r = 0;
     uint n = 8;

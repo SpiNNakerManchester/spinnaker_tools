@@ -1,13 +1,40 @@
 //------------------------------------------------------------------------------
-//
-// sark_isr.c       Interrupt handlers for SARK
-//
-// Copyright (C)    The University of Manchester - 2009-2013
-//
-// Author           Steve Temple, APT Group, School of Computer Science
-// Email            temples@cs.man.ac.uk
-//
+//! \file
+//! \brief     Interrupt handlers for SARK
+//!
+//! \copyright &copy; The University of Manchester - 2009-2019
+//!
+//! \author    Steve Temple, APT Group, School of Computer Science
+//!
+//! \details
+//! In general, for the classes of interrupt with in this code, the options
+//! for handling are:
+//!
+//! 1. to dump the interrupt (clear the hardware but otherwise do nothing
+//! 2. to process the interrupt as a fast interrupt, using the FIQ (a very
+//!    limited number of event types can use this at a time)
+//! 3. to process the interrupt immediately as a standard interrupt.
+//! 4. to clear the hardware rapidly and enqueue a user-level callback for
+//!    handling the results at a later point.
+//!
 //------------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2009-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <sark.h>
 
@@ -16,13 +43,13 @@
 
 extern void timer2_int(void);
 
-
+//! Interrupt handler for timer 2. Delegates to timer2_int()
 INT_HANDLER timer2_int_han(void)
 {
     timer2_int();
 }
 
-
+//! \details Just throws the packet away.
 INT_HANDLER sark_fiq_han(void)
 {
     (void) cc[CC_RXKEY];
@@ -31,8 +58,11 @@ INT_HANDLER sark_fiq_han(void)
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER txpkt_int_han()
+//! \brief SpiNNaker packet may be transmitted interrupt handler.
+//!
+//! Sends the next packet on the event_data_t::pkt_queue. Disables itself if
+//! no packet is waiting.
+INT_HANDLER txpkt_int_han(void)
 {
     event.pkt_remove = (event.pkt_remove + 1) & (event.pkt_size - 1);
 
@@ -58,8 +88,8 @@ INT_HANDLER txpkt_int_han()
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER user_null(void)
+//! Dump handler for user-requested interrupts.
+static INT_HANDLER user_null(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SOFTWARE_INT;
 
@@ -70,8 +100,8 @@ INT_HANDLER user_null(void)
     }
 }
 
-
-INT_HANDLER user_irq(void)
+//! Interrupt handler for user-requested interrupts.
+static INT_HANDLER user_irq(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SOFTWARE_INT;
 
@@ -83,8 +113,8 @@ INT_HANDLER user_irq(void)
     vic[VIC_VADDR] = (uint) vic;
 }
 
-
-INT_HANDLER user_fiq(void)
+//! FIQ handler for user-requested interrupts.
+static INT_HANDLER user_fiq(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SOFTWARE_INT;
 
@@ -94,8 +124,8 @@ INT_HANDLER user_fiq(void)
     proc(event.arg1, event.arg2);
 }
 
-
-INT_HANDLER user_queue(void)
+//! Queue handler for user-requested interrupts.
+static INT_HANDLER user_queue(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SOFTWARE_INT;
 
@@ -111,8 +141,8 @@ INT_HANDLER user_queue(void)
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER sdp_null(void)
+//! Dump handler for SDP reception interrupts.
+static INT_HANDLER sdp_null(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_MSG_INT;
 
@@ -123,7 +153,8 @@ INT_HANDLER sdp_null(void)
     }
 }
 
-INT_HANDLER sdp_irq(void)
+//! Interrupt handler for SDP reception interrupts.
+static INT_HANDLER sdp_irq(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_MSG_INT;
 
@@ -137,8 +168,8 @@ INT_HANDLER sdp_irq(void)
     vic[VIC_VADDR] = (uint) vic;
 }
 
-
-INT_HANDLER sdp_fiq(void)
+//! FIQ handler for SDP reception interrupts.
+static INT_HANDLER sdp_fiq(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_MSG_INT;
 
@@ -150,8 +181,8 @@ INT_HANDLER sdp_fiq(void)
     proc((uint) msg, port);
 }
 
-
-INT_HANDLER sdp_queue(void)
+//! Queue handler for SDP reception interrupts.
+static INT_HANDLER sdp_queue(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_MSG_INT;
 
@@ -169,8 +200,8 @@ INT_HANDLER sdp_queue(void)
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER rxpkt_null(void)
+//! Dump handler for SpiNNaker packet reception interrupts.
+static INT_HANDLER rxpkt_null(void)
 {
     uint key = cc[CC_RXKEY];
 
@@ -181,8 +212,8 @@ INT_HANDLER rxpkt_null(void)
     }
 }
 
-
-INT_HANDLER rxpkt_irq(void)
+//! Interrupt handler for SpiNNaker packet reception interrupts.
+static INT_HANDLER rxpkt_irq(void)
 {
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
@@ -194,8 +225,8 @@ INT_HANDLER rxpkt_irq(void)
     vic[VIC_VADDR] = (uint) vic;
 }
 
-
-INT_HANDLER rxpkt_fiq(void)
+//! FIQ handler for SpiNNaker packet reception interrupts.
+static INT_HANDLER rxpkt_fiq(void)
 {
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
@@ -205,8 +236,8 @@ INT_HANDLER rxpkt_fiq(void)
     proc(key, data);
 }
 
-
-INT_HANDLER rxpkt_queue(void)
+//! Queue handler for SpiNNaker packet reception interrupts.
+static INT_HANDLER rxpkt_queue(void)
 {
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
@@ -222,8 +253,8 @@ INT_HANDLER rxpkt_queue(void)
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER timer_null(void)
+//! Dump handler for timer 1 interrupts.
+static INT_HANDLER timer_null(void)
 {
     tc[T1_INT_CLR] = (uint) tc;
     vic[VIC_SOFT_CLR] = 1 << TIMER1_INT;
@@ -235,8 +266,8 @@ INT_HANDLER timer_null(void)
     }
 }
 
-
-INT_HANDLER timer_irq(void)
+//! Interrupt handler for timer 1 interrupts.
+static INT_HANDLER timer_irq(void)
 {
     tc[T1_INT_CLR] = (uint) tc;
     vic[VIC_SOFT_CLR] = 1 << TIMER1_INT;
@@ -250,8 +281,8 @@ INT_HANDLER timer_irq(void)
     vic[VIC_VADDR] = (uint) vic;
 }
 
-
-INT_HANDLER timer_fiq(void)
+//! FIQ handler for timer 1 interrupts.
+static INT_HANDLER timer_fiq(void)
 {
     tc[T1_INT_CLR] = (uint) tc;
     vic[VIC_SOFT_CLR] = 1 << TIMER1_INT;
@@ -263,8 +294,8 @@ INT_HANDLER timer_fiq(void)
     proc(event.ticks, 0);
 }
 
-
-INT_HANDLER timer_queue(void)
+//! Queue handler for timer 1 interrupts.
+static INT_HANDLER timer_queue(void)
 {
     tc[T1_INT_CLR] = (uint) tc;
     vic[VIC_SOFT_CLR] = 1 << TIMER1_INT;
@@ -282,8 +313,8 @@ INT_HANDLER timer_queue(void)
 
 //------------------------------------------------------------------------------
 
-
-INT_HANDLER sig_null(void)
+//! Dump handler for signals.
+static INT_HANDLER sig_null(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_SIG_INT;
 
@@ -294,8 +325,8 @@ INT_HANDLER sig_null(void)
     }
 }
 
-
-INT_HANDLER sig_irq(void)
+//! Interrupt handler for signals.
+static INT_HANDLER sig_irq(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_SIG_INT;
 
@@ -306,8 +337,8 @@ INT_HANDLER sig_irq(void)
     vic[VIC_VADDR] = (uint) vic;
 }
 
-
-INT_HANDLER sig_fiq(void)
+//! FIQ handler for signals.
+static INT_HANDLER sig_fiq(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_SIG_INT;
 
@@ -316,8 +347,8 @@ INT_HANDLER sig_fiq(void)
     proc(event.signal, 0);
 }
 
-
-INT_HANDLER sig_queue(void)
+//! Queue handler for signals.
+static INT_HANDLER sig_queue(void)
 {
     vic[VIC_SOFT_CLR] = 1 << SARK_SIG_INT;
 
@@ -332,7 +363,7 @@ INT_HANDLER sig_queue(void)
 
 //------------------------------------------------------------------------------
 
-
+//! FIQ interrupt handlers, indexed by ::event_type_e
 const int_handler fiq_events[] = {
     timer_fiq,
     rxpkt_fiq,
@@ -341,6 +372,7 @@ const int_handler fiq_events[] = {
     sig_fiq
 };
 
+//! Standard interrupt handlers, indexed by ::event_type_e
 const int_handler irq_events[] = {
     timer_irq,
     rxpkt_irq,
@@ -349,6 +381,7 @@ const int_handler irq_events[] = {
     sig_irq
 };
 
+//! Event queuers, indexed by ::event_type_e
 const int_handler queue_events[] = {
     timer_queue,
     rxpkt_queue,
@@ -357,6 +390,7 @@ const int_handler queue_events[] = {
     sig_queue
 };
 
+//! Null interrupt handlers, indexed by ::event_type_e
 const int_handler null_events[] = {
     timer_null,
     rxpkt_null,

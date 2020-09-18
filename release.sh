@@ -1,5 +1,20 @@
 #!/bin/sh
 
+# Copyright (c) 2017-2019 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # Build and package up a release of the SpiNNaker low-level tools. Builds SC&MP
 # and all documentation in a clean check-out of the repository and packages
 # a subset of build artefacts (e.g. PDFs and SC&MP binary).
@@ -11,7 +26,7 @@ fi
 cd "$SPINN_DIRS"
 
 # Version low-level tools version number
-VER=`grep SLLT_VER_STR include/version.h | cut -f3 | sed s/\"//g`
+VER=`grep SLLT_VER_STR include/version.h | awk '{ print $3 }' | sed s/\"//g`
 
 # Release name
 NAME=spinnaker_tools_$VER
@@ -26,7 +41,7 @@ if [ -n "$(git status --porcelain | grep -vx " M setup")" ]; then
   echo "WARNING: There are some uncommitted changes."
   git status --short
   echo "Press <return> to build anyway or Ctrl+C to stop."
-  read
+  read REPLY
 fi
 
 # Warn if we're not in the master branch
@@ -34,7 +49,7 @@ if [ -z "$(git branch | grep -x "* master")" ]; then
   echo "WARNING: Not in master branch."
   git branch
   echo "Press <return> to build anyway or Ctrl+C to stop."
-  read
+  read REPLY
 fi
 
 # Use a temporary working directory to produce the build

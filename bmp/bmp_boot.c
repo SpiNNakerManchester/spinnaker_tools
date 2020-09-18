@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //
-// bmp_boot.c       System bootstrap code for BMP LPC1768
-//
-// Copyright (C)    The University of Manchester - 2014-2015
-//
-// Author           Steve Temple, APT Group, School of Computer Science
+//! \file bmp_boot.c
+//! \brief          System bootstrap code for BMP LPC1768
+//!
+//! \copyright      &copy; The University of Manchester - 2014-2015
+//!
+//! \author         Steve Temple, APT Group, School of Computer Science
 // Email            steven.temple@manchester.ac.uk
 //
 //------------------------------------------------------------------------------
@@ -17,6 +18,23 @@
 //
 //------------------------------------------------------------------------------
 
+/*
+ * Copyright (c) 2014-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 
 #include "lpc17xx.h"
 #include "bmp.h"
@@ -24,36 +42,38 @@
 
 //------------------------------------------------------------------------------
 
-// Linker generated symbols
+#ifndef DOXYGEN
 
+// Linker generated symbols
 #define RO_LENGTH       Image$$BOOT$$RO$$Length
 #define STACK_LIMIT     Image$$STACK$$ZI$$Limit
+#endif
 
-extern uint32_t RO_LENGTH;      // Size of this boot image
-extern uint32_t STACK_LIMIT;    // Stack top
+extern uint32_t RO_LENGTH;      //!< Size of this boot image
+extern uint32_t STACK_LIMIT;    //!< Stack top
 
-// Fudge to force 4 byte alignment
+//! Fudge to force 4 byte alignment
+const uint32_t pad SECTION(".padding") = 0xdeaddead;
 
-const uint32_t pad __attribute__ ((section (".padding"))) = 0xdeaddead;
-
-// LED definitions
-
+//! LED definitions
 static const uint32_t led_bit[] = {LED_3, LED_4, LED_5, LED_6};
 
 
 //------------------------------------------------------------------------------
 
 
-// Curl up and die. The top LED is turned on (Red on Spin5) and the
-// code is put on the next 4 LEDs (Green on Spin5).
-
-// This is usually called from within code in this source file in which
-// case the WDT is inactive and "die" will never exit. When "flash_copy"
-// is called from the main code and the WDT is active then the WDT will
-// trigger after the WDT period.
-
-
-static void __attribute__((noreturn)) die(uint32_t code)
+//! \brief Curl up and die.
+//!
+//! The top LED is turned on (Red on Spin5) and the
+//! code is put on the next 4 LEDs (Green on Spin5).
+//!
+//! This is usually called from within code in this source file in which
+//! case the WDT is inactive and "die" will never exit. When "flash_copy"
+//! is called from the main code and the WDT is active then the WDT will
+//! trigger after the WDT period.
+//!
+//! \param[in] code: What to show on the LEDs for diagnostic purposes
+static void NORETURN die(uint32_t code)
 {
     __disable_irq();
 
@@ -77,9 +97,9 @@ static void __attribute__((noreturn)) die(uint32_t code)
 //------------------------------------------------------------------------------
 
 
-// Reset (boot) handler
+//! Reset (boot) handler
 
-void __attribute__((noreturn)) boot_proc(void)
+void NORETURN boot_proc(void)
 {
     // Set some LEDs (code for die(10))
     LPC_GPIO0->FIODIR = LED_MASK;
@@ -170,27 +190,31 @@ void __attribute__((noreturn)) boot_proc(void)
 
 // Self-contained flash copy code
 
-
-// Copy memory by words
-
-static void mem_copy(uint32_t *to, uint32_t *from, uint32_t n)
+//! \brief Copy memory by words
+//! \param[in] to: Where to copy to
+//! \param[in] from: Where to copy from
+//! \param[in] n: Number of _words_ to copy
+static void mem_copy(
+	uint32_t *restrict to, const uint32_t *restrict from, uint32_t n)
 {
     while (n--) {
         *to++ = *from++;
     }
 }
 
-
-// Refresh WDT
-
+//! Refresh watchdog timer
 static void refresh_wdt(void)
 {
     LPC_WDT->WDFEED = 0xaa;
     LPC_WDT->WDFEED = 0x55;
 }
 
-
-static void __attribute__ ((section (".flash_copy")))
+//! \brief Copy data into flash
+//! \param[in] to: Where to copy data to
+//! \param[in] from: Where to copy data from
+//! \param[in] size: Number of bytes to copy; should be multiple of 4kB
+//! \param arg4 ignored
+static void SECTION(".flash_copy")
 flash_copy(uint32_t to, uint32_t from, int32_t size, int32_t arg4)
 {
     uint32_t *flash_srce = (uint32_t *) from;
@@ -215,17 +239,14 @@ flash_copy(uint32_t to, uint32_t from, int32_t size, int32_t arg4)
     die(15);    // WDT should reset now...
 }
 
-
 //------------------------------------------------------------------------------
 
-
-// Cortex M3 vector table
-
-// This short one lives at the bottom of flash memory. It's only used for
-// booting. The checksum at word 7 needs to be computed and filled in by
-// someone. The "openocd" JTAG application can do this as can "sum.pl"
-
-static const boot_vec_t boot_data __attribute__ ((section (".boot_vec"))) = {
+//! \brief Cortex M3 vector table
+//!
+//! This short one lives at the bottom of flash memory. It's only used for
+//! booting. The checksum at word 7 needs to be computed and filled in by
+//! someone. The "openocd" JTAG application can do this as can "sum.pl"
+static const boot_vec_t boot_data SECTION(".boot_vec") = {
     &STACK_LIMIT,               // 0: Boot stack pointer
     boot_proc,                  // 1; Boot routine
     (proc4) flash_copy,         // 2: Flash copy routine

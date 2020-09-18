@@ -1,0 +1,17 @@
+**/*.ybug
+**/*.sct
+**/*.log
+**/*.conf
+**/*.fig
+**/*.eps
+**/*.tag
+
+**/build/**
+
+**/release.txt
+**/bmp/bmp_date
+**/bmp/core_*
+**/bmp/lpc*
+**/tools/board.info
+
+**/.nojekyll
