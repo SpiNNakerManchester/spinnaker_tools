@@ -16,6 +16,7 @@
 APP := scamp-3
 override THUMB := 1
 override SCAMP := 1
+override LD_FLAGS := --diag_suppress L6329W
 include ../make/spinnaker_tools.mk
 
 SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
@@ -48,13 +49,14 @@ install: $(APP).boot
 install-aplx: $(APP).aplx
 	$(MV) $(APP).aplx ../tools/boot/scamp.aplx
 
-# Build the SCAMP elf file - uses scatter file on ARM
-$(BUILD_DIR)$(APP).elf: $(OBJS) $(SARK_LIB) $(BUILD_DIR)$(APP)_build.o $(APP).sct
+# Build the SCAMP elf file - uses scamp-specific linker options
 ifeq ($(GNU),1)
+$(BUILD_DIR)$(APP).elf: $(OBJS) $(SARK_LIB) $(BUILD_DIR)$(APP)_build.o $(APP).lnk
 	$(GP)-gcc -T$(APP).lnk -Wl,-e,cpu_reset -Wl,-static -ffreestanding -fdata-sections \
 	-ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static \
 	$(OBJS) $(BUILD_DIR)$(APP)_build.o $(SARKLIB) -o $@
 else
+$(BUILD_DIR)$(APP).elf: $(OBJS) $(SARK_LIB) $(BUILD_DIR)$(APP)_build.o $(APP).sct
 	armlink --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
 	  $(BUILD_DIR)$(APP)_build.o --output $@
 endif
@@ -90,15 +92,15 @@ $(BUILD_DIR)%.gas: %.s
 	$(MKDIR) $(BUILD_DIR)
 	$(SPINN_TOOLS_DIR)/arm2gas $< > $@
 
-$(BUILD_DIR)boot_aplx.elf: $(BUILD_DIR)boot_aplx.gas $(BUILD_DIR)spinnaker.gas $(BUILD_DIR)sark.gas
+$(BUILD_DIR)boot_aplx.elf: $(BUILD_DIR)boot_aplx.gas $(BUILD_DIR)spinnaker.gas $(BUILD_DIR)sark.gas $(APP).lnk
 	$(MKDIR) $(BUILD_DIR)
 	$(AS) -I $(BUILD_DIR) -o $(BUILD_DIR)boot_aplx.o $<
-	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx -nostartfiles $(BUILD_DIR)boot_aplx.o -o $@
+	$(GP)-ld -T$(APP).lnk -static --no-gc-sections --use-blx -nostartfiles $(BUILD_DIR)boot_aplx.o -o $@
 
-$(BUILD_DIR)scamp_boot_aplx.elf: $(BUILD_DIR)boot_aplx.gas $(BUILD_DIR)spinnaker.gas $(BUILD_DIR)sark.gas
+$(BUILD_DIR)scamp_boot_aplx.elf: $(BUILD_DIR)boot_aplx.gas $(BUILD_DIR)spinnaker.gas $(BUILD_DIR)sark.gas $(APP).lnk
 	$(MKDIR) $(BUILD_DIR)
 	$(AS) --defsym SCAMP_BOOT_APLX=1 -I $(BUILD_DIR) -o $(BUILD_DIR)scamp_boot_aplx.o $<
-	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx -nostartfiles $(BUILD_DIR)scamp_boot_aplx.o -o $@
+	$(GP)-ld -T$(APP).lnk -static --no-gc-sections --use-blx -nostartfiles $(BUILD_DIR)scamp_boot_aplx.o -o $@
 else
 $(BUILD_DIR)boot_aplx.elf: boot_aplx.s $(BUILD_DIR)spinnaker.s $(BUILD_DIR)sark.s
 	$(MKDIR) $(BUILD_DIR)
@@ -132,7 +134,7 @@ tar:
 	scamp/scamp-boot.c scamp/scamp-isr.c scamp/scamp-del.c scamp/spinn_phy.h \
 	scamp/scamp.h scamp/spinn_net.h scamp/spinn_regs.h \
 	scamp/boot_aplx.s scamp/$(APP).c scamp/$(APP).sct scamp/sark.c \
-	scamp/Makefile scamp/mkpad scamp/mksv scamp/$(APP).lnk scamp/boot.lnk
+	scamp/Makefile scamp/mkpad scamp/mksv scamp/$(APP).lnk
 
 clean:
 	$(RM) -r $(BUILD_DIR)* $(APP).boot

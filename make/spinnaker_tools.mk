@@ -30,9 +30,6 @@ DEBUG := 1
 # Set to 1 if making a library (advanced!)
 LIB := 0
 
-# Set to 1 if building scamp (advanced!)
-SCAMP := 0
-
 # Prefix for GNU tool binaries
 GP := arm-none-eabi
 
@@ -104,16 +101,11 @@ else
     OTIME := -Otime
     ALL_WARNINGS :=
 
-    # suppress linker warning about empty RW sections when building scamp
-    ifeq ($(SCAMP), 1)
-        LD_FLAG := --diag_suppress L6329W
-    endif
-
     ifeq ($(LIB), 1)
         CFLAGS += --split_sections
         LD := armlink --partial
     else
-        LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct $(LD_FLAG) --remove --entry cpu_reset
+        LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct $(LD_FLAGS) --remove --entry cpu_reset
     endif
 
     AR := armar -rsc

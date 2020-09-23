@@ -115,7 +115,7 @@ aplx_exec	ldr	r0, [sp, #0] 		; Get arg to r0
 
 ; NOTE: this was added here to avoid disrupting
 ; hard-coded addresses elsewhere (e.g., mkaplx)
-	if  :def: SCAMP_BOOT_APLX
+	if :def: SCAMP_BOOT_APLX
 ; locate stack at top of bottom half of DTCM for SCAMP boot
 boot_stack_top	dcd	DTCM_BASE + (DTCM_SIZE / 2)
 	else

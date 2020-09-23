@@ -49,6 +49,7 @@ SECTIONS
 
     RO_DATA :
     {
+          * (boot_aplx);
           * (_alib_reset);
           * (alib_*);
           * (.text*);
