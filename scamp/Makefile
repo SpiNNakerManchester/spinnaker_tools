@@ -15,7 +15,6 @@
 
 APP := scamp-3
 override THUMB := 1
-override SCAMP := 1
 override LD_FLAGS := --diag_suppress L6329W
 include ../make/spinnaker_tools.mk
 
