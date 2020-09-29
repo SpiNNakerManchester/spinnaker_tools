@@ -373,7 +373,8 @@ enum shm_cmd_e {
     SHM_MSG,            //!< Passing SDP message
     SHM_NOP,            //!< Does nothing...
     SHM_SIGNAL,         //!< Signal application
-    SHM_CMD             //!< Command to MP
+    SHM_CMD,            //!< Command to MP
+    SHM_WAIT            //!< Response to WAIT
 };
 
 typedef enum shm_cmd_e shm_cmd; //!< Typedef for enum shm_cmd_e
@@ -447,6 +448,7 @@ enum sark_scp_command_codes {
     CMD_ALLOC = 28,             //!< Memory allocation
     CMD_RTR = 29,               //!< Router control
     CMD_INFO = 31,              //!< Get chip/core info
+    CMD_WAIT = 32,              //!< Wait for state
 
     // 48-63 reserved for BMP
 

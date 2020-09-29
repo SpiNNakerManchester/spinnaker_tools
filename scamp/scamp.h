@@ -256,7 +256,8 @@ enum scamp_nn_p2p_config_subcommands {
 enum scamp_p2p_type_codes {
     P2P_DATA =  0,      //!< Data message
     P2P_CTRL =  1,      //!< Control message
-    P2P_LEVEL = 2       //!< Used for CountState requests
+    P2P_LEVEL = 2,      //!< Used for CountState requests
+    P2P_WAIT =  3       //!< Used for state wait notifications
 };
 
 //! Distinguish data/control packets in SDP/P2P
@@ -493,6 +494,7 @@ extern void signal_app(uint data);
 extern void boot_ap(void);
 extern void clock_ap(uint virt_mask, uint enable);
 extern void reset_ap(uint virt_mask);
+extern uint send_wait(uint data);
 //! \}
 
 //! \name SCAMP peer-to-peer networking

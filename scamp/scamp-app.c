@@ -318,3 +318,20 @@ void signal_app(uint data)
         break;
     }
 }
+
+uint send_wait(uint data) {
+    uint wait_states = data & 0xFFFF;
+    uint app_id = (data >> 16) & 0xFF;
+
+    uint virt_mask = 0;
+    uint phys_mask = 0;
+
+    for (uint i = 1; i < num_cpus; i++) {
+        uint b = core_app[i] == app_id;
+        virt_mask |= b << i;
+        phys_mask |= b << v2p_map[i];
+    }
+
+    signal_sark(SHM_WAIT, wait_states, virt_mask, phys_mask);
+    return virt_mask;
+}
