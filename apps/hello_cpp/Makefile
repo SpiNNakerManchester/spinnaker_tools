@@ -14,4 +14,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 APP := hello_cpp
+CXXFLAGS += -Ofast
 include $(SPINN_DIRS)/make/app.make
