@@ -26,9 +26,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install make
-      run: sudo apt-get install make 
-    
     - name: Checkout
       uses: actions/checkout@v2
 
@@ -53,13 +50,7 @@ jobs:
         deps: https://bitbucket.org/verateam/vera/downloads/vera++-1.3.0.tar.gz    
   
     - name: Build C code
-      run: |
-        make
-        make -C scamp
-        make -C apps/hello
-        make -C apps/hello_cpp
-        make -C apps/life
-        make -C apps/pt_demo
+      run: make && make -C scamp && make -C apps/hello && make -C apps/hello_cpp && make -C apps/life && make -C apps/pt_demo
       env:
         SPINN_DIRS: $PWD
         SPINN_PATH: $SPINN_DIRS/tools/boot
