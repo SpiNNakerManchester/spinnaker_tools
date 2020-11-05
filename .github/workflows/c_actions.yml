@@ -61,7 +61,6 @@ jobs:
     
     - name: Build C code
       run: |
-        env
         make
         make -C scamp
         make -C apps/hello
