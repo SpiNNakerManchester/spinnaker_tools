@@ -76,10 +76,9 @@ jobs:
         support/run-vera.sh include -P max-line-length=200 -P max-file-length=3000
     
     - name: Run rat copyright enforcement
-     if: matrix.python-version == 3.6
-     run: |
-       support/rat.sh download
-       support/rat.sh run
+      run: |
+        support/rat.sh download
+        support/rat.sh run
        
     - name: Build documentation using doxygen
       run: |
