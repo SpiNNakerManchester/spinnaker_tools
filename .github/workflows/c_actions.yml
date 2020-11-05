@@ -35,28 +35,34 @@ jobs:
         repository: SpiNNakerManchester/SupportScripts
         path: support
         
-    - name: Set GITHUB_BRANCH
+    - name: Set environment variables
       # This step can not be merged with Checkout Spinnaker Dependencies
-      run: echo "GITHUB_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+      run: |
+        echo "GITHUB_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+        echo "SPINN_DIRS=$PWD" >> $GITHUB_ENV
+        echo "SPINN_PATH=$SPINN_DIRS/tools/boot" >> $GITHUB_ENV
+        echo "$SPINN_DIRS/tools" >> $GITHUB_PATH
+        echo "PERL5LIB=$SPINN_DIRS/tools" >> $GITHUB_ENV
+        echo "GCC_COLORS=error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32" >> $GITHUB_ENV
 
     - name: Install arm-none-eabi-gcc
-      uses: fiam/arm-none-eabi-gcc@v1.0.2
-      with:
-        release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
+      run: |
+        sudo apt-get install gcc-arm-none-eabi
+        which gcc-arm-none-eabi
     
     - name: Install Vera++
-      uses: teddyking/dependency-action@master
-      with:
-        deps: https://bitbucket.org/verateam/vera/downloads/vera++-1.3.0.tar.gz    
+      run: | 
+        sudo apt-get install vera++
+        which vera++
   
     - name: Build C code
-      run: make && make -C scamp && make -C apps/hello && make -C apps/hello_cpp && make -C apps/life && make -C apps/pt_demo
-      env:
-        SPINN_DIRS: $PWD
-        SPINN_PATH: $SPINN_DIRS/tools/boot
-        PATH: $SPINN_DIRS/tools:$PATH
-        PERL5LIB: $SPINN_DIRS/tools:$PERL5LIB
-        GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
+      run: |
+        make
+        make -C scamp
+        make -C apps/hello
+        make -C apps/hello_cpp
+        make -C apps/life
+        make -C apps/pt_demo
         
     - name: Lint C code using Vera++
       run: |
