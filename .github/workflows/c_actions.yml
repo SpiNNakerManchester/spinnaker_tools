@@ -1,0 +1,87 @@
+# Copyright (c) 2020 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This workflow will install Python dependencies, run tests, lint and rat with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: C Actions
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Checkout SupportScripts
+      uses: actions/checkout@v2
+      with:
+        repository: SpiNNakerManchester/SupportScripts
+        path: support
+
+    - name: Set environment variables
+      run: |
+        export SPINN_DIRS=$PWD
+        export SPINN_PATH=$SPINN_DIRS/tools/boot
+        export PATH=$SPINN_DIRS/tools:$PATH
+        export PERL5LIB=$SPINN_DIRS/tools:$PERL5LIB
+        export GCC_COLORS='error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32'
+        
+    - name: Set GITHUB_BRANCH
+      # This step can not be merged with Checkout Spinnaker Dependencies
+      run: echo "GITHUB_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+
+    - name: Install arm-none-eabi-gcc
+      uses: fiam/arm-none-eabi-gcc@v1
+      with:
+        release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
+    
+    - name: Install Vera++
+      uses: teddyking/dependency-action@master
+      with:
+        deps: https://bitbucket.org/verateam/vera/downloads/vera++-1.3.0.tar.gz    
+    
+    - name: Build C code
+      run: |
+        make
+        make -C scamp
+        make -C apps/hello
+        make -C apps/hello_cpp
+        make -C apps/life
+        make -C apps/pt_demo
+        
+    - name: Lint C code using Vera++
+      run: |
+        support/run-vera.sh sark
+        support/run-vera.sh scamp --profile spinnaker-asm.tcl
+        support/run-vera.sh spin1_api
+        support/run-vera.sh apps -P max-line-length=200
+        support/run-vera.sh bmp -P max-line-length=200 --profile spinnaker-asm.tcl
+        support/run-vera.sh include -P max-line-length=200 -P max-file-length=3000
+    
+    - name: Run rat copyright enforcement
+     if: matrix.python-version == 3.6
+     run: |
+       support/rat.sh download
+       support/rat.sh run
+       
+    - name: Build documentation using doxygen
+      run: |
+        make doxygen
+        
