@@ -35,16 +35,21 @@ jobs:
         repository: SpiNNakerManchester/SupportScripts
         path: support
         
-    - name: Set environment variables
+    - name: Set GITHUB_BRANCH
       # This step can not be merged with Checkout Spinnaker Dependencies
       run: |
         echo "GITHUB_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+        
+    - name: Set SPINN_DIRS
+      run: |
         echo "SPINN_DIRS=$PWD" >> $GITHUB_ENV
+        
+    - name: Set other C environment variables
+      run: |
         echo "SPINN_PATH=$SPINN_DIRS/tools/boot" >> $GITHUB_ENV
         echo "$SPINN_DIRS/tools" >> $GITHUB_PATH
         echo "PERL5LIB=$SPINN_DIRS/tools" >> $GITHUB_ENV
         echo "GCC_COLORS=error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32" >> $GITHUB_ENV
-        env
 
     - name: Install arm-none-eabi-gcc
       uses: fiam/arm-none-eabi-gcc@v1.0.2
