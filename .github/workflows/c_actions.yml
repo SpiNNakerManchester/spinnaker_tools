@@ -24,7 +24,6 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    shell: bash
 
     steps:
     - name: Install make
