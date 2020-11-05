@@ -24,8 +24,11 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    shell: bash
 
     steps:
+    - name: Install make
+      run: sudo apt-get install make 
     
     - name: Checkout
       uses: actions/checkout@v2
@@ -50,7 +53,6 @@ jobs:
       with:
         deps: https://bitbucket.org/verateam/vera/downloads/vera++-1.3.0.tar.gz    
   
-    - uses: actions/checkout@v2  
     - name: Build C code
       run: |
         make
