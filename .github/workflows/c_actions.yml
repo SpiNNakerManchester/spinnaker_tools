@@ -37,11 +37,11 @@ jobs:
 
     - name: Set environment variables
       run: |
-        echo "$PWD" >> $SPINN_DIRS
-        echo "$SPINN_DIRS/tools/boot" >> $SPINN_PATH
-        echo "$SPINN_DIRS/tools:$PATH" >> $PATH
-        echo "$SPINN_DIRS/tools:$PERL5LIB" >> $PERL5LIB
-        echo "error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32" >> $GCC_COLORS
+        echo "$PWD" >> SPINN_DIRS
+        echo "$SPINN_DIRS/tools/boot" >> SPINN_PATH
+        echo "$SPINN_DIRS/tools:$PATH" >> PATH
+        echo "$SPINN_DIRS/tools:$PERL5LIB" >> PERL5LIB
+        echo "error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32" >> GCC_COLORS
         
     - name: Set GITHUB_BRANCH
       # This step can not be merged with Checkout Spinnaker Dependencies
