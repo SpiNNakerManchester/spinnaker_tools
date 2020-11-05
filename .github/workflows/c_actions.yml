@@ -44,6 +44,7 @@ jobs:
         echo "$SPINN_DIRS/tools" >> $GITHUB_PATH
         echo "PERL5LIB=$SPINN_DIRS/tools" >> $GITHUB_ENV
         echo "GCC_COLORS=error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32" >> $GITHUB_ENV
+        env
 
     - name: Install arm-none-eabi-gcc
       uses: fiam/arm-none-eabi-gcc@v1.0.2
@@ -57,6 +58,7 @@ jobs:
   
     - name: Build C code
       run: |
+        env
         make
         make -C scamp
         make -C apps/hello
