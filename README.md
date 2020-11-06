@@ -1,3 +1,5 @@
+![C Actions](https://github.com/SpiNNakerManchester/spinnaker_tools/workflows/C%20Actions/badge.svg)
+
 SpiNNaker Low-Level Software Tools
 ==================================
 [<small>Automated Documentation Build</small>](http://spinnakermanchester.github.io/spinnaker_tools/)
