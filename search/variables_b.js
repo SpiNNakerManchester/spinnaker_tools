@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['largest_5fnumber_5fof_5fconcurrent_5ftimer_5ftic_5foverruns_2382',['largest_number_of_concurrent_timer_tic_overruns',['../spin1__api_8h.html#aa245077760802eb05d147daf90ea59ce',1,'diagnostics_t']]],
+  ['last_2383',['last',['../sark_8h.html#a3ac677fcc41d0791ef656b94e9038ba6',1,'heap_t']]],
+  ['last_5fbeacon_2384',['last_beacon',['../scamp-isr_8c.html#ae5df0fadd48c0d82df01a81dc4400a2f',1,'scamp-isr.c']]],
+  ['last_5fbiff_5fid_2385',['last_biff_id',['../sark_8h.html#a06d8851217652dba498d6f5d251f4a28',1,'sv_t']]],
+  ['last_5fffcs_2386',['last_ffcs',['../scamp-nn_8c.html#ab8a40817abe2179022891abcf3a9119e',1,'nn_desc_t']]],
+  ['last_5fid_2387',['last_id',['../sark_8h.html#ac1bca12de28d9f8b3d6bc48dc28f208a',1,'sv_t']]],
+  ['last_5fticks_2388',['last_ticks',['../scamp-isr_8c.html#aa057ab69e2a4242f35fcb898c45fa0a0',1,'scamp-isr.c']]],
+  ['lead_2389',['lead',['../sark_8h.html#a46dc77ad5c3450ef6e255dcd6ea0ff02',1,'app_data_t']]],
+  ['leadap_2390',['leadAp',['../spin1__api_8h.html#a8754c80284d361398ba776362765b92b',1,'leadAp():&#160;spin1_api.c'],['../spin1__api_8c.html#a8754c80284d361398ba776362765b92b',1,'leadAp():&#160;spin1_api.c']]],
+  ['led0_2391',['led0',['../sark_8h.html#aaffad241711be917de2d2c188a3a6239',1,'sv_t']]],
+  ['led1_2392',['led1',['../sark_8h.html#aedf38e2470b4ede659aaf89cd2bca94d',1,'sv_t']]],
+  ['led_5fperiod_2393',['led_period',['../sark_8h.html#a4db60f17164ed66e42fa9550f09c05a7',1,'sv_t']]],
+  ['length_2394',['length',['../sark_8h.html#aa1c885664fdc26ca85a2484e5d6eee4e',1,'sdp_msg_t::length()'],['../spinn__net_8h.html#af0337157bc324b9aeccf65dc5c9de3d0',1,'udp_hdr_t::length()'],['../spinn__net_8h.html#a20cc555bb4205fef5ca7af459f10219e',1,'ip_hdr_t::length()']]],
+  ['level_5faddr_2395',['level_addr',['../scamp_8h.html#aa823cf654c542ba8df4ca2ee6eab4c07',1,'level_t']]],
+  ['levels_2396',['levels',['../scamp-cmd_8c.html#ad415696ea03a6a1d98e2247335840836',1,'levels():&#160;scamp-nn.c'],['../scamp-nn_8c.html#ad415696ea03a6a1d98e2247335840836',1,'levels():&#160;scamp-nn.c']]],
+  ['link_2397',['link',['../scamp_8h.html#aba72d9ae41e95dd6b7796caa9b470cac',1,'pkt_buf_t']]],
+  ['link_5fen_2398',['link_en',['../sark_8h.html#a64d5f15b6016d754a38292388ca8e32e',1,'sv_t::link_en()'],['../scamp-3_8c.html#a1c6126739c93de2af3f25ef37b21872a',1,'link_en():&#160;scamp-3.c'],['../scamp_8h.html#a1c6126739c93de2af3f25ef37b21872a',1,'link_en():&#160;scamp-3.c']]],
+  ['load_2399',['load',['../scamp-nn_8c.html#a2952d5e0a0b026163c04c2a3d0c3932f',1,'nn_desc_t::load()'],['../scamp-3_8c.html#a436e9f1dd3c760793dc9949f822d5c55',1,'load():&#160;scamp-3.c']]],
+  ['load_5faddr_2400',['load_addr',['../scamp-nn_8c.html#a51c55d2237da0ce273a70bf7695cec6e',1,'nn_desc_t']]],
+  ['lock_2401',['lock',['../sark_8h.html#ac90b6cea01c0806d317e326f454c6c37',1,'sv_t']]],
+  ['lr_2402',['lr',['../sark_8h.html#a6df1fff824b44cf030634628db1ab2e5',1,'vcpu_t']]],
+  ['ltpc_5fperiod_2403',['ltpc_period',['../sark_8h.html#ac1c7fd92c85c509f14a251c939dde3f2',1,'sv_t']]],
+  ['ltpc_5ftimer_2404',['ltpc_timer',['../scamp-3_8c.html#aaa2cfc1437d2fb1728f771fba14937f2',1,'scamp-3.c']]],
+  ['lx_2405',['lx',['../scamp-nn_8c.html#a2f18f0dffc881ab4636b4bbb41282ce2',1,'scamp-nn.c']]],
+  ['ly_2406',['ly',['../scamp-nn_8c.html#ae809b3d65e10a0f3b7acc65086e938d1',1,'scamp-nn.c']]]
+];
