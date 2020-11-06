@@ -1,4 +1,4 @@
-![C Actions](https://github.com/SpiNNakerManchester/spinnaker_tools/workflows/C%20Actions/badge.svg)
+[![C Actions](https://github.com/SpiNNakerManchester/spinnaker_tools/workflows/C%20Actions/badge.svg)](https://github.com/SpiNNakerManchester/spinnaker_tools/actions?query=workflow%3A%22C+Actions%22)
 
 SpiNNaker Low-Level Software Tools
 ==================================
