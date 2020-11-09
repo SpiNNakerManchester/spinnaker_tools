@@ -46,13 +46,8 @@ jobs:
         echo "$SPINN_DIRS/tools" >> $GITHUB_PATH
         echo "PERL5LIB=$SPINN_DIRS/tools" >> $GITHUB_ENV
 
-    - name: Install arm-none-eabi-gcc
-      uses: fiam/arm-none-eabi-gcc@v1.0.2
-      with:
-        release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
-            
     - name: Install vera++, doxygen, freeglut and openjdk
-      run: sudo apt-get update && sudo apt-get install vera++ doxygen freeglut3-dev openjdk-8-jre-headless --fix-missing
+      run: sudo apt-get update && sudo apt-get install vera++ doxygen gcc-arm-none-eabi freeglut3-dev openjdk-8-jre-headless --fix-missing
     
     - name: Build C code
       run: |
