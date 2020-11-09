@@ -21,7 +21,7 @@
   The other is IO_BUF which goes to a memory buffer on the SpiNNaker
   chip and can be viewed with the "iobuf" command in "ybug"
 */
-#include <sark_cpp.h>
+#include <sark.h>
 
 extern "C" void c_main()
 {
