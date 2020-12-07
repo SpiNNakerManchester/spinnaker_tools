@@ -10449,6 +10449,27 @@
       <anchor>a29a76405e22ea60f225ac3ab05c71e9f</anchor>
       <arglist></arglist>
     </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>N_BEACONS_MASK</name>
+      <anchorfile>scamp-isr_8c.html</anchorfile>
+      <anchor>a31e86503cb241caa309f650fff968966</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>N_BEACONS_SHIFT</name>
+      <anchorfile>scamp-isr_8c.html</anchorfile>
+      <anchor>ac320d4424e76eea0ade76414872d2410</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>SOURCE_T1_COUNT_MASK</name>
+      <anchorfile>scamp-isr_8c.html</anchorfile>
+      <anchor>a2e04f7624350167be41f3d22e72d560f</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="function">
       <type>void</type>
       <name>p2p_region</name>
@@ -10632,10 +10653,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable" static="yes">
-      <type>static uint</type>
+      <type>static int</type>
       <name>n_samples</name>
       <anchorfile>scamp-isr_8c.html</anchorfile>
-      <anchor>a9caebf6e1c8e5a380ecec14faa8cc24c</anchor>
+      <anchor>a0aa1d80a7fddb8ff76eb4347b72d2b28</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable" static="yes">

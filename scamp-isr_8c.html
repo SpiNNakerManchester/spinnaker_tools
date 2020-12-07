@@ -103,6 +103,17 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-isr_8c.html#a29a76405e22ea60f225ac3ab05c71e9f">N_ITEMS</a>&#160;&#160;&#160;16</td></tr>
 <tr class="memdesc:a29a76405e22ea60f225ac3ab05c71e9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of samples to keep to get an average. <br /></td></tr>
 <tr class="separator:a29a76405e22ea60f225ac3ab05c71e9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31e86503cb241caa309f650fff968966"><td class="memItemLeft" align="right" valign="top"><a id="a31e86503cb241caa309f650fff968966"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-isr_8c.html#a31e86503cb241caa309f650fff968966">N_BEACONS_MASK</a>&#160;&#160;&#160;0xFFF</td></tr>
+<tr class="memdesc:a31e86503cb241caa309f650fff968966"><td class="mdescLeft">&#160;</td><td class="mdescRight">The mask of the n_beacons part of the message. <br /></td></tr>
+<tr class="separator:a31e86503cb241caa309f650fff968966"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac320d4424e76eea0ade76414872d2410"><td class="memItemLeft" align="right" valign="top"><a id="ac320d4424e76eea0ade76414872d2410"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-isr_8c.html#ac320d4424e76eea0ade76414872d2410">N_BEACONS_SHIFT</a>&#160;&#160;&#160;20</td></tr>
+<tr class="memdesc:ac320d4424e76eea0ade76414872d2410"><td class="mdescLeft">&#160;</td><td class="mdescRight">The shift of the n_beacons part of the message. <br /></td></tr>
+<tr class="separator:ac320d4424e76eea0ade76414872d2410"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e04f7624350167be41f3d22e72d560f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-isr_8c.html#a2e04f7624350167be41f3d22e72d560f">SOURCE_T1_COUNT_MASK</a>&#160;&#160;&#160;0xFFFFF</td></tr>
+<tr class="memdesc:a2e04f7624350167be41f3d22e72d560f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The mask of the source tc[T1_COUNT] part of the message.  <a href="scamp-isr_8c.html#a2e04f7624350167be41f3d22e72d560f">More...</a><br /></td></tr>
+<tr class="separator:a2e04f7624350167be41f3d22e72d560f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
@@ -200,10 +211,10 @@ static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href
 static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-isr_8c.html#aa057ab69e2a4242f35fcb898c45fa0a0">last_ticks</a> = 0</td></tr>
 <tr class="memdesc:aa057ab69e2a4242f35fcb898c45fa0a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ticks recorded last time. <br /></td></tr>
 <tr class="separator:aa057ab69e2a4242f35fcb898c45fa0a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9caebf6e1c8e5a380ecec14faa8cc24c"><td class="memItemLeft" align="right" valign="top"><a id="a9caebf6e1c8e5a380ecec14faa8cc24c"></a>
-static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-isr_8c.html#a9caebf6e1c8e5a380ecec14faa8cc24c">n_samples</a> = 0</td></tr>
-<tr class="memdesc:a9caebf6e1c8e5a380ecec14faa8cc24c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of samples recorded. <br /></td></tr>
-<tr class="separator:a9caebf6e1c8e5a380ecec14faa8cc24c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0aa1d80a7fddb8ff76eb4347b72d2b28"><td class="memItemLeft" align="right" valign="top"><a id="a0aa1d80a7fddb8ff76eb4347b72d2b28"></a>
+static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-isr_8c.html#a0aa1d80a7fddb8ff76eb4347b72d2b28">n_samples</a> = 0</td></tr>
+<tr class="memdesc:a0aa1d80a7fddb8ff76eb4347b72d2b28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of samples recorded. <br /></td></tr>
+<tr class="separator:a0aa1d80a7fddb8ff76eb4347b72d2b28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a191c7511b2a3210a258735cdad9238c0"><td class="memItemLeft" align="right" valign="top"><a id="a191c7511b2a3210a258735cdad9238c0"></a>
 static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-isr_8c.html#a191c7511b2a3210a258735cdad9238c0">sample_pos</a> = 0</td></tr>
 <tr class="memdesc:a191c7511b2a3210a258735cdad9238c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Position of next sample. <br /></td></tr>
@@ -244,6 +255,23 @@ static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">
 
 <p>Maximum difference between timers over 2 seconds in clock ticks. </p>
 <p>Experiments have shown maximum difference is about 1ms over 160 seconds which is 6.25us over 1 second, which is 2500 clock ticks at 200Mhz. This is multiplied by 2 as drift could be in either direction. Further experiments show that slightly higher values are encountered, so 10000 is used. </p>
+
+</div>
+</div>
+<a id="a2e04f7624350167be41f3d22e72d560f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e04f7624350167be41f3d22e72d560f">&#9670;&nbsp;</a></span>SOURCE_T1_COUNT_MASK</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SOURCE_T1_COUNT_MASK&#160;&#160;&#160;0xFFFFF</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The mask of the source tc[T1_COUNT] part of the message. </p>
+<p>The timer is set to 200,000 which fits in the bottom 20 bits. </p>
 
 </div>
 </div>
@@ -733,7 +761,7 @@ static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 10 2020 13:51:35 for spinnaker_tools by&#160;<a href="http://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.8.20
+Generated on Mon Dec 7 2020 13:49:18 for spinnaker_tools by&#160;<a href="http://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.8.20
 </small></address>
 </body>
 </html>
