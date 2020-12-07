@@ -155,9 +155,15 @@ __asm void eth_rx_int(void)
 //! 	direction.  Further experiments show that slightly higher values are
 //! 	encountered, so 10000 is used.
 #define MAX_DIFF 10000
-
 //! Number of samples to keep to get an average
 #define N_ITEMS 16
+//! The mask of the n_beacons part of the message
+#define N_BEACONS_MASK 0xFFF
+//! The shift of the n_beacons part of the message
+#define N_BEACONS_SHIFT 20
+//! \brief The mask of the source tc[T1_COUNT] part of the message.
+//! \details The timer is set to 200,000 which fits in the bottom 20 bits.
+#define SOURCE_T1_COUNT_MASK 0xFFFFF
 //! Samples used when synchronising time
 static int samples[N_ITEMS];
 //! Sum to make moving average easy
@@ -165,7 +171,7 @@ static int sum = 0;
 //! Ticks recorded last time
 static int last_ticks = 0;
 //! Number of samples recorded
-static uint n_samples = 0;
+static int n_samples = 0;
 //! Position of next sample
 static uint sample_pos = 0;
 //! Beacon id recorded last time to detect missed packets
@@ -185,28 +191,28 @@ INT_HANDLER pkt_mc_int(void)
         // Timer synchronisation - only do once netinit phase is complete to
         // avoid clashing with other network traffic.
         int ticks = tc[T1_COUNT];
+        uint beacon = (data >> N_BEACONS_SHIFT) & N_BEACONS_MASK;
+        uint source_ticks = data & SOURCE_T1_COUNT_MASK;
+        // Where are our ticks in relation to the source?
+        ticks = source_ticks - ticks;
+
         if (n_samples == 0) {
-            // If there are no samples, take one now, but don't do anything else
+            // If there are no samples, just record
             last_ticks = ticks;
-            last_beacon = data;
+            last_beacon = beacon;
             n_samples++;
         } else {
             // Note maximum difference over 2 seconds is quite big but
             // once divided into per-us value, it will be small again.
-            // We need a 64-bit int to represent the value before division
-            // but this will fit in a 32-bit value once divided.
             int diff = last_ticks - ticks;
-            int n_beacons = data - last_beacon;
+            uint n_beacons = beacon - last_beacon;
             last_ticks = ticks;
-            last_beacon = data;
-            // Note, we store ticks even if out of range; this should help when
-            // things are moving but going to converge again on a different
-            // value.  This might mean that we ignore more than one value if
-            // there is a lot of jitter, but this is OK.
-            if ((diff <= MAX_DIFF) && (diff >= -MAX_DIFF) && (n_beacons > 0)) {
+            last_beacon = beacon;
+            // Only look if the last beacon was received.  A noisy network where
+            // beacons go missing is likely to give false results anyway.
+            if ((diff <= MAX_DIFF) && (diff >= -MAX_DIFF) && (n_beacons == 1)) {
                 // Enough samples now, so do the difference
-                int scaled_diff = (diff << DRIFT_FP_BITS)
-                        / (n_beacons * TIME_BETWEEN_SYNC_US);
+                int scaled_diff = (diff * DRIFT_FP_FACTOR) / TIME_BETWEEN_SYNC_INT;
                 sum = (sum - samples[sample_pos]) + scaled_diff;
                 samples[sample_pos] = scaled_diff;
                 sample_pos = (sample_pos + 1) % N_ITEMS;
@@ -214,7 +220,7 @@ INT_HANDLER pkt_mc_int(void)
                 // Just use the actual value until there are enough to average;
                 // using the average early on tends to lead to odd values, so
                 // this seems to work better in experiments
-                if (n_samples >= N_ITEMS) {
+                if (n_samples > N_ITEMS) {
                     sv->clock_drift = sum / N_ITEMS;
                 } else {
                     sv->clock_drift = scaled_diff;
@@ -304,7 +310,9 @@ INT_HANDLER ms_timer_int(void)
     if ((sv->p2p_root == sv->p2p_addr)
             && (netinit_phase == NETINIT_PHASE_DONE)) {
         if (time_to_next_sync == 0) {
-            pkt_tx(PKT_MC_PL, n_beacons_sent, SCAMP_MC_TIME_SYNC_KEY);
+            uint data = (n_beacons_sent & N_BEACONS_MASK) << N_BEACONS_SHIFT;
+            data |= tc[T1_COUNT] & SOURCE_T1_COUNT_MASK;
+            pkt_tx(PKT_MC_PL, data, SCAMP_MC_TIME_SYNC_KEY);
             n_beacons_sent++;
             time_to_next_sync = TIME_BETWEEN_SYNC_US;
         }
