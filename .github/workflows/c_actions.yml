@@ -17,38 +17,22 @@
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: C Actions
-
 on: [push]
-
 jobs:
   build:
-
+    # Checks that need a compiler
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-
-    - name: Checkout SupportScripts
-      uses: actions/checkout@v2
-      with:
-        repository: SpiNNakerManchester/SupportScripts
-        path: support
-        
-    - name: Set SPINN_DIRS
+    - name: Install system dependencies
+      run: sudo apt-get -q install gcc-arm-none-eabi freeglut3-dev --fix-missing
+    - name: Set C environment variables
       run: |
-        echo "Set SPINN_DIRS to $PWD"
         echo "SPINN_DIRS=$PWD" >> $GITHUB_ENV
-        
-    - name: Set other C environment variables
-      run: |
-        echo "SPINN_PATH=$SPINN_DIRS/tools/boot" >> $GITHUB_ENV
-        echo "$SPINN_DIRS/tools" >> $GITHUB_PATH
-        echo "PERL5LIB=$SPINN_DIRS/tools" >> $GITHUB_ENV
-
-    - name: Install vera++, doxygen, freeglut and openjdk
-      run: sudo apt-get update && sudo apt-get install vera++ doxygen gcc-arm-none-eabi freeglut3-dev openjdk-8-jre-headless --fix-missing
-    
+        echo "SPINN_PATH=$PWD/tools/boot" >> $GITHUB_ENV
+        echo "PERL5LIB=$PWD/tools" >> $GITHUB_ENV
+        echo "$PWD/tools" >> $GITHUB_PATH
     - name: Build C code
       run: |
         make
@@ -58,22 +42,56 @@ jobs:
         make -C apps/life
         make -C apps/pt_demo
       env:
-        GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32" >> $GITHUB_ENV
-        
-    - name: Lint C code using Vera++
+        GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
+        CFLAGS: -fdiagnostics-color
+
+  verify:
+    # Checks that don't need to compile things
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Checkout SupportScripts
+      uses: actions/checkout@v2
+      with:
+        repository: SpiNNakerManchester/SupportScripts
+        path: support
+    - name: Set C environment variables
       run: |
-        support/run-vera.sh sark
-        support/run-vera.sh scamp --profile spinnaker-asm.tcl
-        support/run-vera.sh spin1_api
-        support/run-vera.sh apps -P max-line-length=200
-        support/run-vera.sh bmp -P max-line-length=200 --profile spinnaker-asm.tcl
-        support/run-vera.sh include -P max-line-length=200 -P max-file-length=3000
-    
+        echo "SPINN_DIRS=$PWD" >> $GITHUB_ENV
+        echo "SPINN_PATH=$PWD/tools/boot" >> $GITHUB_ENV
+        echo "PERL5LIB=$PWD/tools" >> $GITHUB_ENV
+        echo "$PWD/tools" >> $GITHUB_PATH
+    - name: "Lint sark code using Vera++"
+      uses: ./support/actions/vera
+      with:
+        base-dir: sark
+    - name: "Lint scamp code using Vera++"
+      uses: ./support/actions/vera
+      with:
+        base-dir: scamp
+        profile: spinnaker-asm
+    - name: "Lint spin1_api code using Vera++"
+      uses: ./support/actions/vera
+      with:
+        base-dir: spin1_api
+    - name: "Lint apps code using Vera++"
+      uses: ./support/actions/vera
+      with:
+        base-dir: apps
+        options: -P max-line-length=200
+    - name: "Lint bmp code using Vera++"
+      uses: ./support/actions/vera
+      with:
+        base-dir: bmp
+        profile: spinnaker-asm
+        options: -P max-line-length=200
+    - name: "Lint include code using Vera++"
+      uses: ./support/actions/vera
+      with:
+        base-dir: include
+        options: -P max-line-length=200 -P max-file-length=300
     - name: Run rat copyright enforcement
-      run: |
-        support/rat.sh download
-        support/rat.sh run
-       
+      uses: ./support/actions/check-copyrights
     - name: Build documentation using doxygen
-      run: |
-        make doxygen
+      run: make doxygen

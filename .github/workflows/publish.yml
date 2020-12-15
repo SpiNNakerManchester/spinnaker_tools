@@ -14,11 +14,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 name: Publish
-
 on:
   push:
     branches: [ master ]
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,9 +33,10 @@ jobs:
           working-directory: bmp
       - name: Combine documentation trees
         run: |
-          rm -rf doxybuild/deploy/bmp || true
-          cp -a doxybuild/tools/html/* doxybuild/deploy
-          cp -a doxybuild/bmp/html doxybuild/deploy/bmp
+          rm -rf deploy/bmp || true
+          cp -a tools/html/* deploy
+          cp -a bmp/html deploy/bmp
+        working-directory: doxybuild
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
