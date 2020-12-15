@@ -94,4 +94,6 @@ jobs:
     - name: Run rat copyright enforcement
       uses: ./support/actions/check-copyrights
     - name: Build documentation using doxygen
-      run: make doxygen
+      run: |
+        sudo apt-get -q install doxygen --fix-missing
+        make doxygen
