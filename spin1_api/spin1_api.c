@@ -1406,6 +1406,10 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
 /*
 *******/
 
+void spin1_enable_timer_schedule_proc(void) {
+    event_register_timer(TIMER2_PRIORITY);
+}
+
 
 /****f* spin1_api.c/spin1_trigger_user_event
 *

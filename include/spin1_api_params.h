@@ -174,14 +174,15 @@ enum spin1_api_multicast_entries {
 // -----------------------
 enum spin1_api_vic_priorties {
     SARK_PRIORITY =        0,   //!< Communication with SARK/SCAMP
-    TIMER1_PRIORITY =      1,   //!< Timer interrupt
-    DMA_DONE_PRIORITY =    2,   //!< DMA complete
-    RX_READY_PRIORITY =    3,   //!< Multicast message ready to receive
-    FR_READY_PRIORITY =    4,   //!< Fixed route message ready to receive
-    CC_TMT_PRIORITY =      5,   //!< Comms controller timeout
-    SOFT_INT_PRIORITY =    6,   //!< Software-driven interrupt
+    TIMER2_PRIORITY =      1,   //!< Timer 2 interrupt (events)
+    TIMER1_PRIORITY =      2,   //!< Timer interrupt
+    DMA_DONE_PRIORITY =    3,   //!< DMA complete
+    RX_READY_PRIORITY =    4,   //!< Multicast message ready to receive
+    FR_READY_PRIORITY =    5,   //!< Fixed route message ready to receive
+    CC_TMT_PRIORITY =      6,   //!< Comms controller timeout
+    SOFT_INT_PRIORITY =    7,   //!< Software-driven interrupt
 #if USE_WRITE_BUFFER == TRUE
-    DMA_ERR_PRIORITY =     7    //!< DMA error
+    DMA_ERR_PRIORITY =     8    //!< DMA error
 #endif
 };
 

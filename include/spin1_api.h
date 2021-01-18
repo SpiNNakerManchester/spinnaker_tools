@@ -158,6 +158,11 @@ static inline void spin1_delay_us(uint n) {
     sark_delay_us(n);
 }
 
+/*!
+* \brief This function enables the use of timer_schedule_proc
+*/
+void spin1_enable_timer_schedule_proc(void);
+
 // ------------------------------------------------------------------------
 
 
