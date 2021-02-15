@@ -1,3 +1,5 @@
+[![C Actions](https://github.com/SpiNNakerManchester/spinnaker_tools/workflows/C%20Actions/badge.svg?branch=master)](https://github.com/SpiNNakerManchester/spinnaker_tools/actions?query=workflow%3A%22C+Actions%22+branch%3Amaster)
+
 SpiNNaker Low-Level Software Tools
 ==================================
 [<small>Automated Documentation Build</small>](http://spinnakermanchester.github.io/spinnaker_tools/)
@@ -13,14 +15,14 @@ Installation and Setup
 
     The version of the GNU tools that was used to test this release is
 
-        gcc version 4.9.3 20150529 (release) [ARM/embedded-4_9-branch revision 227977]
+        gcc 9.2.1 20191025 (release) [ARM/arm-9-branch revision 277599]
 
     This (and more recent versions) can be downloaded from
     [this web site](https://launchpad.net/gcc-arm-embedded).
 
     The version of the ARM tools that was used to test this release is
 
-        ARM C/C++ Compiler, RVCT4.0 [Build 400]
+        ARM C/C++ Compiler, 4.1 [Build 894]
 
  2. Source the setup file in the directory in which it lives
 
@@ -31,13 +33,6 @@ Installation and Setup
 
         make GNU=0	        # If you are using ARM tools
         make        		# If you are using GNU tools
-
-    Note that you may see some compiler warnings during these builds.
-
-        ARM: Warning: A1581W: Added 2 bytes of padding at address ...
-        ARM: Warning: C3017W: cpsr may be used before being set
-
-    These are harmless and can be ignored.
 
 Use of the Tools
 ----------------

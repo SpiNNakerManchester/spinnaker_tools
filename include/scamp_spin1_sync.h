@@ -22,3 +22,6 @@
 #define DRIFT_FRAC_MASK ((1U << DRIFT_FP_BITS) - 1)
 #define DRIFT_ONE (1U << DRIFT_FP_BITS)
 #define TIME_BETWEEN_SYNC_US 2000000U // !< The time between sync signals in us
+//! For some calculations a signed int is better
+static const int DRIFT_FP_FACTOR = 1 << DRIFT_FP_BITS;
+static const int TIME_BETWEEN_SYNC_INT = TIME_BETWEEN_SYNC_US;

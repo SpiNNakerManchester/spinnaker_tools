@@ -1,0 +1,45 @@
+# Copyright (c) 2020 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+name: Publish
+on:
+  push:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Doxygen
+        uses: mattnotmitt/doxygen-action@v1.1.0
+        with:
+          working-directory: .
+      - name: Doxygen BMP
+        uses: mattnotmitt/doxygen-action@v1.1.0
+        with:
+          working-directory: bmp
+      - name: Combine documentation trees
+        run: |
+          rm -rf deploy/bmp || true
+          cp -a tools/html/* deploy
+          cp -a bmp/html deploy/bmp
+        working-directory: doxybuild
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: doxybuild/deploy
