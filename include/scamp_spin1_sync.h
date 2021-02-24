@@ -25,3 +25,4 @@
 //! For some calculations a signed int is better
 static const int DRIFT_FP_FACTOR = 1 << DRIFT_FP_BITS;
 static const int TIME_BETWEEN_SYNC_INT = TIME_BETWEEN_SYNC_US;
+static const int DRIFT_HALF = 1 << (DRIFT_FP_BITS - 1);
