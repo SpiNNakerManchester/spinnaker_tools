@@ -72,6 +72,18 @@ enum {
     FRPL_PACKET_RECEIVED = 7  //!< Fixed route packet with payload received
 };
 
+//! Match events above to their VIC interrupts.  Indices must match!
+static const uint VIC_EVENTS[] = {
+    (1 << CC_MC_INT),         //!< 0. Multicast packet received
+    (1 << DMA_DONE_INT),      //!< 1. DMA transfer complete
+    (1 << TIMER1_INT),        //!< 2. Regular timer tick
+    0,                        //!< 3. SDP message received; handled elsewhere
+    (1 << SOFTWARE_INT),      //!< 4. User-triggered interrupt
+    (1 << CC_MC_INT),         //!< 5. Mulitcast packet with payload received
+    (1 << CC_FR_INT),         //!< 6. Fixed route packet received
+    (1 << CC_FR_INT)          //!< 7. Fixed route packet with payload received
+};
+
 // ------------------------------------------------------------------------
 // DMA transfer parameters
 // ------------------------------------------------------------------------
