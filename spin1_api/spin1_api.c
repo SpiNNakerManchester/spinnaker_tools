@@ -51,11 +51,13 @@ static uint old_select;
 //! Default interrupt enable. Restored after simulation
 static uint old_enable;
 //! Interrupt select to be used based on user selections
-static uint user_int_select;
+static uint user_int_select = 0;
 //! All VIC interrupts that are handled by the API
 static const uint ALL_HANDLED_INTERRUPTS =
         ((1 << TIMER1_INT) | (1 << SOFTWARE_INT) | (1 << CC_MC_INT) |
          (1 << CC_FR_INT) | (1 << DMA_ERR_INT)  | (1 << DMA_DONE_INT));
+//! The highest priority selected
+static int highest_priority = -1;
 
 //! \brief Which event is to be handled by the FIQ.
 //! \details Used to enforce that only one type of basic interrupt handler
@@ -474,7 +476,7 @@ static void dispatch(void)
         // scheduler/dispatcher accesses to queues
         cpsr = spin1_int_disable();
 
-        while (run && i < (NUM_PRIORITIES-1)) {
+        while (run && i <= highest_priority) {
             tq = &task_queue[i];
 
             i++;  // prepare for next priority queue
@@ -579,6 +581,9 @@ void spin1_callback_on(uint event_id, callback_t cback, int priority)
     user_int_select |= VIC_EVENTS[event_id];
     if (run) {
         vic[VIC_ENABLE] = VIC_EVENTS[event_id];
+    }
+    if (priority > highest_priority) {
+        highest_priority = priority;
     }
 }
 
@@ -1409,6 +1414,9 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
     uint cpsr = spin1_int_disable();
 
     task_queue_t *tq = &task_queue[priority-1];
+    if (priority > highest_priority) {
+        highest_priority = priority;
+    }
 
     if ((tq->end + 1) % TASK_QUEUE_SIZE != tq->start) {
         tq->queue[tq->end].cback = cback;
