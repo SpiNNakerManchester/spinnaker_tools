@@ -289,8 +289,7 @@ static void configure_vic(uint enable_timer)
     uint fiq_select = 0;
 
     // disable the relevant interrupts while configuring the VIC
-
-    vic[VIC_DISABLE] = ALL_HANDLED_INTERRUPTS;
+    vic[VIC_DISABLE] = user_int_select;
 
     // remember default fiq handler
 
