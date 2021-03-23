@@ -155,6 +155,7 @@ extern INT_HANDLER timer1_fiqsr(void);
 extern INT_HANDLER soft_int_fiqsr(void);
 //! \brief Interrupt handler for messages from SCAMP.
 extern INT_HANDLER sark_int_han(void);
+extern INT_HANDLER sark_fiqsr(void);
 
 // ----------------------------
 /* intercore synchronisation */
@@ -322,6 +323,10 @@ static void configure_vic(uint enable_timer)
     case USER_EVENT:
         sark_vec->fiq_vec = soft_int_fiqsr;
         fiq_select = (1 << SOFTWARE_INT);
+        break;
+    case SDP_PACKET_RX:
+        sark_vec->fiq_vec = sark_fiqsr;
+        fiq_select = (1 << CPU_INT);
         break;
     }
 
