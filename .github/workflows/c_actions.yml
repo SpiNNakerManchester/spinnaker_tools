@@ -25,25 +25,42 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        repository: SpiNNakerManchester/SupportScripts
+        path: support
     - name: Install system dependencies
-      run: sudo apt-get -q install gcc-arm-none-eabi freeglut3-dev --fix-missing
+      uses: ./support/actions/apt-get-install
+      with:
+        packages: gcc-arm-none-eabi freeglut3-dev
     - name: Set C environment variables
       run: |
         echo "SPINN_DIRS=$PWD" >> $GITHUB_ENV
         echo "SPINN_PATH=$PWD/tools/boot" >> $GITHUB_ENV
         echo "PERL5LIB=$PWD/tools" >> $GITHUB_ENV
         echo "$PWD/tools" >> $GITHUB_PATH
-    - name: Build C code
-      run: |
-        make
-        make -C scamp
-        make -C apps/hello
-        make -C apps/hello_cpp
-        make -C apps/life
-        make -C apps/pt_demo
+    - name: Build SARK and SPIN1_API
+      run: make
       env:
         GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
-        CFLAGS: -fdiagnostics-color
+        CFLAGS: -fdiagnostics-color=always
+    - name: Build SCAMP
+      run: make
+      working-directory: scamp
+      env:
+        GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
+        CFLAGS: -fdiagnostics-color=always
+    - name: Build apps
+      run: |
+        make -C hello
+        make -C hello_cpp
+        make -C life
+        make -C pt_demo
+      working-directory: apps
+      env:
+        GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
+        CFLAGS: -fdiagnostics-color=always
 
   verify:
     # Checks that don't need to compile things
@@ -56,6 +73,10 @@ jobs:
       with:
         repository: SpiNNakerManchester/SupportScripts
         path: support
+    - name: Install system dependencies
+      uses: ./support/actions/apt-get-install
+      with:
+        packages: doxygen
     - name: Set C environment variables
       run: |
         echo "SPINN_DIRS=$PWD" >> $GITHUB_ENV
@@ -94,6 +115,4 @@ jobs:
     - name: Run rat copyright enforcement
       uses: ./support/actions/check-copyrights
     - name: Build documentation using doxygen
-      run: |
-        sudo apt-get -q install doxygen --fix-missing
-        make doxygen
+      run: make doxygen
