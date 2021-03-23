@@ -1016,7 +1016,6 @@ void spin1_dma_flush(void)
     // abort any ongoing transfer in the DMA controller,
     // and clear any pending DMA_COMPLETE interrupts in the DMA controller
     dma[DMA_CTRL] = 0x1f;
-    dma[DMA_CTRL] = 0x0d;
 
     // purge any queued DMA_COMPLETE callbacks in the callback queues
     if (callback[DMA_TRANSFER_DONE].priority > 0) {
@@ -1060,6 +1059,12 @@ void spin1_dma_flush(void)
     dma_queue.start = 0;
     dma_queue.end   = 0;
     spin1_mode_restore(cpsr);
+
+    // and finally make sure the DMA unit is reset fully
+    while (dma[DMA_STAT] & 0x1) {
+        continue;
+    }
+    dma[DMA_CTRL] = 0x0d;
 }
 /*
 *******/
