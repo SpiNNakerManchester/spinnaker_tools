@@ -121,7 +121,7 @@ else
         CFLAGS += --split_sections
         LD := armlink --partial
     else
-        LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct $(LD_FLAG) --remove --entry cpu_reset
+        LD = armlink --verbose --scatter=$(SPINN_TOOLS_DIR)/sark.sct $(LD_FLAG) --remove --entry cpu_reset
     endif
 
     AR := armar -rsc
