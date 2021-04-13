@@ -1,5 +1,3 @@
-This is the state of the tool at the time of the April 9th 2021 Python 1!6.0.0 release
-
 [![C Actions](https://github.com/SpiNNakerManchester/spinnaker_tools/workflows/C%20Actions/badge.svg?branch=master)](https://github.com/SpiNNakerManchester/spinnaker_tools/actions?query=workflow%3A%22C+Actions%22+branch%3Amaster)
 
 SpiNNaker Low-Level Software Tools
