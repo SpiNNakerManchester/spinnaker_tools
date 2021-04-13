@@ -53,7 +53,7 @@ $(BUILD_DIR)$(APP).elf: $(OBJS) $(SARK_LIB) $(BUILD_DIR)$(APP)_build.o $(APP).sc
 ifeq ($(GNU),1)
 	$(LD) $(OBJS) $(BUILD_DIR)$(APP)_build.o $(SARKLIB) -o $@
 else
-	armlink --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
+	armlink --verbose --scatter=$(APP).sct --remove --entry cpu_reset $(OBJS) $(SARKLIB) \
 	  $(BUILD_DIR)$(APP)_build.o --output $@
 endif
 
