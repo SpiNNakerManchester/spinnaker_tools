@@ -12,6 +12,8 @@ Bug fixes:
 
 * ALL: Reduce warnings when compiling with armcc
 
+* ALL: Fix issues with time synchronisation
+
 * SCAMP: Allow building and booting with gcc compiler
 
 #-------------------------------------------------------------------------------
