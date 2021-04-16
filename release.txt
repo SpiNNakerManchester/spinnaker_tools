@@ -4,6 +4,10 @@
 #
 #-------------------------------------------------------------------------------
 
+Version 3.4.2 - TBD.
+
+#-------------------------------------------------------------------------------
+
 Version 3.4.1 - Bug fixing
 
 Bug fixes:
@@ -11,6 +15,8 @@ Bug fixes:
 * ALL: Documentation fixes
 
 * ALL: Reduce warnings when compiling with armcc
+
+* ALL: Fix issues with time synchronisation
 
 * SCAMP: Allow building and booting with gcc compiler
 
