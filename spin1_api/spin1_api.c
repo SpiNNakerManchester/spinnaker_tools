@@ -298,8 +298,6 @@ static void configure_vic(uint enable_timer)
     old_select = vic[VIC_SELECT];
     old_enable = vic[VIC_ENABLE];
 
-    // configure irq based on user request
-
     // configure fiq -- if requested by user
     switch (fiq_event) {
     case MC_PACKET_RECEIVED:
