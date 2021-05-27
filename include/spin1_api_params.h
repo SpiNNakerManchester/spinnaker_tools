@@ -155,6 +155,8 @@ enum spin1_api_error_codes {
 // -----------------------
 //! callback queue parameters
 enum spin1_api_callback_queue_params {
+    N_TASK_QUEUES = 4,    //!< Number of priorities - 1 because priority 0 is
+                          //!< not queued
     NUM_PRIORITIES =  5,  //!< Number of priorities
     TASK_QUEUE_SIZE = 16  //!< Size of task queue
 };

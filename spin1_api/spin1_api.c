@@ -57,7 +57,7 @@ static const uint ALL_HANDLED_INTERRUPTS =
         ((1 << TIMER1_INT) | (1 << SOFTWARE_INT) | (1 << CC_MC_INT) |
          (1 << CC_FR_INT) | (1 << DMA_ERR_INT)  | (1 << DMA_DONE_INT));
 //! The highest priority selected
-static int highest_priority = -1;
+static uint highest_priority = 0;
 
 //! \brief Which event is to be handled by the FIQ.
 //! \details Used to enforce that only one type of basic interrupt handler
@@ -108,7 +108,7 @@ user_event_queue_t user_event_queue;
 /* scheduler/dispatcher */
 // -----------------------
 //! The queue of scheduled tasks.
-static task_queue_t task_queue[NUM_PRIORITIES-1];  // priority <= 0 is non-queueable
+static task_queue_t task_queue[N_TASK_QUEUES];
 //! \brief The registered callbacks for each event type.
 //! \warning SARK knows about this variable!
 cback_t callback[NUM_EVENTS];
@@ -478,7 +478,7 @@ static void dispatch(void)
         // scheduler/dispatcher accesses to queues
         cpsr = spin1_int_disable();
 
-        while (run && i <= highest_priority) {
+        while (run && i < highest_priority) {
             tq = &task_queue[i];
 
             i++;  // prepare for next priority queue
@@ -584,8 +584,11 @@ void spin1_callback_on(uint event_id, callback_t cback, int priority)
     if (run) {
         vic[VIC_ENABLE] = VIC_EVENTS[event_id];
     }
-    if (priority > highest_priority) {
-        highest_priority = priority;
+    if (priority > 0) {
+        uint p = (uint) priority;
+        if (p > highest_priority) {
+            highest_priority = priority;
+        }
     }
 }
 
