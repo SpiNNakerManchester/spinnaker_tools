@@ -227,7 +227,8 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a33401ad421a7aa22d725afe4dfc6d7e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">internal error/warning return codes <br /></td></tr>
 <tr class="separator:a33401ad421a7aa22d725afe4dfc6d7e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a072100a7c6c61e4af40fc14936d87089"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spin1__api__params_8h.html#a072100a7c6c61e4af40fc14936d87089">spin1_api_callback_queue_params</a> { <a class="el" href="spin1__api__params_8h.html#a072100a7c6c61e4af40fc14936d87089a67d35d8917ef5d8c7bc8730a936350f9">NUM_PRIORITIES</a> = 5
+<tr class="memitem:a072100a7c6c61e4af40fc14936d87089"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spin1__api__params_8h.html#a072100a7c6c61e4af40fc14936d87089">spin1_api_callback_queue_params</a> { <a class="el" href="spin1__api__params_8h.html#a072100a7c6c61e4af40fc14936d87089ad0b46897379b167ca58ae67d17571eeb">N_TASK_QUEUES</a> = 4
+, <a class="el" href="spin1__api__params_8h.html#a072100a7c6c61e4af40fc14936d87089a67d35d8917ef5d8c7bc8730a936350f9">NUM_PRIORITIES</a> = 5
 , <a class="el" href="spin1__api__params_8h.html#a072100a7c6c61e4af40fc14936d87089a88f1a37f81d0995ede33ec78b87456df">TASK_QUEUE_SIZE</a> = 16
  }</td></tr>
 <tr class="memdesc:a072100a7c6c61e4af40fc14936d87089"><td class="mdescLeft">&#160;</td><td class="mdescRight">callback queue parameters  <a href="spin1__api__params_8h.html#a072100a7c6c61e4af40fc14936d87089">More...</a><br /></td></tr>
@@ -239,14 +240,16 @@ Enumerations</h2></td></tr>
 <tr class="separator:a045642d971ae0a0fe08fefba8f50c1aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a92b8ccb34182a85d66f54854bf0dd3"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3">spin1_api_vic_priorties</a> { <br />
 &#160;&#160;<a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a7d8c0dc625f600c7e4979e9c9b0704f3">SARK_PRIORITY</a> = 0
-, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a6b991ef752f76c445d5b25519ded8a6b">TIMER1_PRIORITY</a> = 1
-, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a3fa68680e00066009a6de4e8c32fff90">DMA_DONE_PRIORITY</a> = 2
-, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a22fac208f09583f8cb2c9def080da318">RX_READY_PRIORITY</a> = 3
+, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3ae3857e3539185378a004696957177b33">TIMER2_PRIORITY</a> = 1
+, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a6b991ef752f76c445d5b25519ded8a6b">TIMER1_PRIORITY</a> = 2
+, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a3fa68680e00066009a6de4e8c32fff90">DMA_DONE_PRIORITY</a> = 3
 , <br />
-&#160;&#160;<a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3aa7901f8d528b74129c56f18c6e279db0">FR_READY_PRIORITY</a> = 4
-, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a25457f990e9b03a51bfc7c63d22dbfd5">CC_TMT_PRIORITY</a> = 5
-, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a392dc30d79acd01884cafdbafe1dfb89">SOFT_INT_PRIORITY</a> = 6
-, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a9d90bd4ab30fd8246c8399db33582f3b">DMA_ERR_PRIORITY</a> = 7
+&#160;&#160;<a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a22fac208f09583f8cb2c9def080da318">RX_READY_PRIORITY</a> = 4
+, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3aa7901f8d528b74129c56f18c6e279db0">FR_READY_PRIORITY</a> = 5
+, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a25457f990e9b03a51bfc7c63d22dbfd5">CC_TMT_PRIORITY</a> = 6
+, <a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a392dc30d79acd01884cafdbafe1dfb89">SOFT_INT_PRIORITY</a> = 7
+, <br />
+&#160;&#160;<a class="el" href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3a9d90bd4ab30fd8246c8399db33582f3b">DMA_ERR_PRIORITY</a> = 8
 <br />
  }</td></tr>
 <tr class="memdesc:a4a92b8ccb34182a85d66f54854bf0dd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">VIC priorities.  <a href="spin1__api__params_8h.html#a4a92b8ccb34182a85d66f54854bf0dd3">More...</a><br /></td></tr>
@@ -727,7 +730,9 @@ Array holding task descriptors. </td></tr>
 
 <p>callback queue parameters </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a072100a7c6c61e4af40fc14936d87089a67d35d8917ef5d8c7bc8730a936350f9"></a>NUM_PRIORITIES&#160;</td><td class="fielddoc"><p>Number of priorities. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a072100a7c6c61e4af40fc14936d87089ad0b46897379b167ca58ae67d17571eeb"></a>N_TASK_QUEUES&#160;</td><td class="fielddoc"><p>Number of priorities - 1 because priority 0 is not queued </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a072100a7c6c61e4af40fc14936d87089a67d35d8917ef5d8c7bc8730a936350f9"></a>NUM_PRIORITIES&#160;</td><td class="fielddoc"><p>Number of priorities. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a072100a7c6c61e4af40fc14936d87089a88f1a37f81d0995ede33ec78b87456df"></a>TASK_QUEUE_SIZE&#160;</td><td class="fielddoc"><p>Size of task queue. </p>
 </td></tr>
@@ -750,6 +755,8 @@ Array holding task descriptors. </td></tr>
 <p>VIC priorities. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a4a92b8ccb34182a85d66f54854bf0dd3a7d8c0dc625f600c7e4979e9c9b0704f3"></a>SARK_PRIORITY&#160;</td><td class="fielddoc"><p>Communication with SARK/SCAMP. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a4a92b8ccb34182a85d66f54854bf0dd3ae3857e3539185378a004696957177b33"></a>TIMER2_PRIORITY&#160;</td><td class="fielddoc"><p>Timer 2 interrupt (events) </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a4a92b8ccb34182a85d66f54854bf0dd3a6b991ef752f76c445d5b25519ded8a6b"></a>TIMER1_PRIORITY&#160;</td><td class="fielddoc"><p>Timer interrupt. </p>
 </td></tr>
@@ -799,7 +806,7 @@ Array holding task descriptors. </td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 16 2021 07:58:45 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
+Generated on Wed Jun 30 2021 08:44:18 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1
 </small></address>
 </body>
 </html>

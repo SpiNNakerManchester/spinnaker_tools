@@ -2791,6 +2791,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>spin1_enable_timer_schedule_proc</name>
+      <anchorfile>spin1__api_8h.html</anchorfile>
+      <anchor>acb8142bdc415675ed40e1f72a886cce0</anchor>
+      <arglist>(void)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>spin1_callback_on</name>
       <anchorfile>spin1__api_8h.html</anchorfile>
       <anchor>afc98f97be297e7077334cad216d32b57</anchor>
@@ -2970,6 +2977,13 @@
       <anchorfile>spin1__api_8h.html</anchorfile>
       <anchor>a30d7b4286fc359f61944e7d499016ba1</anchor>
       <arglist>(void)</arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static const uint</type>
+      <name>VIC_EVENTS</name>
+      <anchorfile>spin1__api_8h.html</anchorfile>
+      <anchor>ac0ad7ee00b7a4999f808c3222947fb91</anchor>
+      <arglist>[]</arglist>
     </member>
     <member kind="variable">
       <type>diagnostics_t</type>
@@ -3167,6 +3181,12 @@
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
+      <name>N_TASK_QUEUES</name>
+      <anchorfile>spin1__api__params_8h.html</anchorfile>
+      <anchor>a072100a7c6c61e4af40fc14936d87089ad0b46897379b167ca58ae67d17571eeb</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
       <name>NUM_PRIORITIES</name>
       <anchorfile>spin1__api__params_8h.html</anchorfile>
       <anchor>a072100a7c6c61e4af40fc14936d87089a67d35d8917ef5d8c7bc8730a936350f9</anchor>
@@ -3196,6 +3216,12 @@
       <name>SARK_PRIORITY</name>
       <anchorfile>spin1__api__params_8h.html</anchorfile>
       <anchor>a4a92b8ccb34182a85d66f54854bf0dd3a7d8c0dc625f600c7e4979e9c9b0704f3</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>TIMER2_PRIORITY</name>
+      <anchorfile>spin1__api__params_8h.html</anchorfile>
+      <anchor>a4a92b8ccb34182a85d66f54854bf0dd3ae3857e3539185378a004696957177b33</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
@@ -14120,6 +14146,13 @@
       <arglist>(callback_t cback, uint arg0, uint arg1, uint priority)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>spin1_enable_timer_schedule_proc</name>
+      <anchorfile>spin1__api_8c.html</anchorfile>
+      <anchor>acb8142bdc415675ed40e1f72a886cce0</anchor>
+      <arglist>(void)</arglist>
+    </member>
+    <member kind="function">
       <type>uint</type>
       <name>spin1_trigger_user_event</name>
       <anchorfile>spin1__api_8c.html</anchorfile>
@@ -14246,6 +14279,27 @@
       <arglist></arglist>
     </member>
     <member kind="variable" static="yes">
+      <type>static uint</type>
+      <name>user_int_select</name>
+      <anchorfile>spin1__api_8c.html</anchorfile>
+      <anchor>a1624253c1fa76274af9fc5375494fd90</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static const uint</type>
+      <name>ALL_HANDLED_INTERRUPTS</name>
+      <anchorfile>spin1__api_8c.html</anchorfile>
+      <anchor>a1801aea08daae95758c686a01ab6180a</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static uint</type>
+      <name>highest_priority</name>
+      <anchorfile>spin1__api_8c.html</anchorfile>
+      <anchor>ae15001a4b83047af6147ed60c53eee0d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
       <type>static int</type>
       <name>fiq_event</name>
       <anchorfile>spin1__api_8c.html</anchorfile>
@@ -14291,8 +14345,8 @@
       <type>static task_queue_t</type>
       <name>task_queue</name>
       <anchorfile>spin1__api_8c.html</anchorfile>
-      <anchor>abca9b61d23a2cd43b9e57cde749f2c03</anchor>
-      <arglist>[NUM_PRIORITIES-1]</arglist>
+      <anchor>a634494cd1841cd617b518701d366d718</anchor>
+      <arglist>[N_TASK_QUEUES]</arglist>
     </member>
     <member kind="variable">
       <type>cback_t</type>
@@ -14413,6 +14467,13 @@
       <anchorfile>spin1__isr_8c.html</anchorfile>
       <anchor>a21f0792ebbd3e885094356b9277e209b</anchor>
       <arglist>(void)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>sark_int</name>
+      <anchorfile>spin1__isr_8c.html</anchorfile>
+      <anchor>a11cb3c4dcaa6cfbd7a2a8923443647ac</anchor>
+      <arglist>(void *pc)</arglist>
     </member>
     <member kind="variable">
       <type>uint</type>
