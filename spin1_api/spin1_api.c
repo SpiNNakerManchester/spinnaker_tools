@@ -50,6 +50,14 @@ static isr_t old_vector;
 static uint old_select;
 //! Default interrupt enable. Restored after simulation
 static uint old_enable;
+//! Interrupt select to be used based on user selections
+static uint user_int_select = 0;
+//! All VIC interrupts that are handled by the API
+static const uint ALL_HANDLED_INTERRUPTS =
+        ((1 << TIMER1_INT) | (1 << SOFTWARE_INT) | (1 << CC_MC_INT) |
+         (1 << CC_FR_INT) | (1 << DMA_ERR_INT)  | (1 << DMA_DONE_INT));
+//! The highest priority selected
+static uint highest_priority = 0;
 
 //! \brief Which event is to be handled by the FIQ.
 //! \details Used to enforce that only one type of basic interrupt handler
@@ -100,7 +108,7 @@ user_event_queue_t user_event_queue;
 /* scheduler/dispatcher */
 // -----------------------
 //! The queue of scheduled tasks.
-static task_queue_t task_queue[NUM_PRIORITIES-1];  // priority <= 0 is non-queueable
+static task_queue_t task_queue[N_TASK_QUEUES];
 //! \brief The registered callbacks for each event type.
 //! \warning SARK knows about this variable!
 cback_t callback[NUM_EVENTS];
@@ -119,7 +127,6 @@ cback_t callback[NUM_EVENTS];
 // Uncomment next two for IO_STD
 // #define io_delay(us) sark_delay_us (us)
 // static uint my_chip;         // chip address in core_map coordinates
-
 
 // ----------------
 /* debug, warning and diagnostics support */
@@ -148,6 +155,7 @@ extern INT_HANDLER timer1_fiqsr(void);
 extern INT_HANDLER soft_int_fiqsr(void);
 //! \brief Interrupt handler for messages from SCAMP.
 extern INT_HANDLER sark_int_han(void);
+extern INT_HANDLER sark_fiqsr(void);
 
 // ----------------------------
 /* intercore synchronisation */
@@ -280,16 +288,9 @@ static void configure_timer1(uint time, uint phase)
 static void configure_vic(uint enable_timer)
 {
     uint fiq_select = 0;
-    uint int_select = ((1 << TIMER1_INT)   |
-            (1 << SOFTWARE_INT) |
-            (1 << CC_MC_INT) |
-            (1 << CC_FR_INT) |
-            (1 << DMA_ERR_INT)  |
-            (1 << DMA_DONE_INT));
 
     // disable the relevant interrupts while configuring the VIC
-
-    vic[VIC_DISABLE] = int_select;
+    vic[VIC_DISABLE] = user_int_select;
 
     // remember default fiq handler
 
@@ -320,6 +321,10 @@ static void configure_vic(uint enable_timer)
     case USER_EVENT:
         sark_vec->fiq_vec = soft_int_fiqsr;
         fiq_select = (1 << SOFTWARE_INT);
+        break;
+    case SDP_PACKET_RX:
+        sark_vec->fiq_vec = sark_fiqsr;
+        fiq_select = (1 << CPU_INT);
         break;
     }
 
@@ -359,15 +364,16 @@ static void configure_vic(uint enable_timer)
 
     vic[VIC_SELECT] = fiq_select;
 
+    uint int_select = user_int_select;
     if (!enable_timer) {
         int_select = int_select & ~(1 << TIMER1_INT);
     }
 
 #if USE_WRITE_BUFFER == TRUE
-    vic[VIC_ENABLE] = int_select;
+    // Enable the DMA error interrupt
+    vic[VIC_ENABLE] = int_select | (1 << DMA_ERR_INT);
 #else
-    // don't enable the dma error interrupt
-    vic[VIC_ENABLE] = int_select & ~(1 << DMA_ERR_INT);
+    vic[VIC_ENABLE] = int_select;
 #endif // USE_WRITE_BUFFER == TRUE
 }
 /*
@@ -391,7 +397,9 @@ static void resume(void)
     }
     paused = 0;
     sark_cpu_state(CPU_STATE_RUN);
-    vic[VIC_ENABLE] = (1 << TIMER1_INT);
+    if (callback[TIMER_TICK].cback != NULL) {
+        vic[VIC_ENABLE] = (1 << TIMER1_INT);
+    }
     tc[T1_CONTROL] = 0xe2;
 }
 
@@ -470,7 +478,7 @@ static void dispatch(void)
         // scheduler/dispatcher accesses to queues
         cpsr = spin1_int_disable();
 
-        while (run && i < (NUM_PRIORITIES-1)) {
+        while (run && i < highest_priority) {
             tq = &task_queue[i];
 
             i++;  // prepare for next priority queue
@@ -557,7 +565,6 @@ void spin1_callback_on(uint event_id, callback_t cback, int priority)
     }
 
     // Enforce same interrupt handler for both packet callbacks
-
     if (event_id == MC_PACKET_RECEIVED || event_id == MCPL_PACKET_RECEIVED) {
         if (mc_pkt_prio == -2) {
             mc_pkt_prio = priority;
@@ -571,6 +578,18 @@ void spin1_callback_on(uint event_id, callback_t cback, int priority)
             rt_error(RTE_API);
         }
     }
+
+    // Update which events we are to handle
+    user_int_select |= VIC_EVENTS[event_id];
+    if (run) {
+        vic[VIC_ENABLE] = VIC_EVENTS[event_id];
+    }
+    if (priority > 0) {
+        uint p = (uint) priority;
+        if (p > highest_priority) {
+            highest_priority = priority;
+        }
+    }
 }
 
 void spin1_callback_off(uint event_id)
@@ -579,6 +598,29 @@ void spin1_callback_off(uint event_id)
 
     if (callback[event_id].priority < 0) {
         fiq_event = -1;
+    }
+
+    // Updates which events we are to handle; note MC and FR have two which
+    // use same VIC handler, so only remove if needed
+    uint update_vic = 0;
+    if (event_id == MC_PACKET_RECEIVED || event_id == MCPL_PACKET_RECEIVED) {
+        if (callback[MC_PACKET_RECEIVED].cback == NULL
+                && callback[MCPL_PACKET_RECEIVED].cback == NULL) {
+            user_int_select &= ~VIC_EVENTS[event_id];
+            update_vic = 1;
+        }
+    } else if (event_id == FR_PACKET_RECEIVED || event_id == FRPL_PACKET_RECEIVED) {
+        if (callback[FR_PACKET_RECEIVED].cback == NULL
+                && callback[FRPL_PACKET_RECEIVED].cback == NULL) {
+            user_int_select &= ~VIC_EVENTS[event_id];
+            update_vic = 1;
+        }
+    } else {
+        user_int_select &= ~VIC_EVENTS[event_id];
+        update_vic = 1;
+    }
+    if (run && update_vic) {
+        vic[VIC_DISABLE] = VIC_EVENTS[event_id];
     }
 }
 
@@ -639,12 +681,7 @@ void spin1_exit(uint error)
 {
     // Disable API-enabled interrupts to allow simulation to exit,
 
-    vic[VIC_DISABLE] = (1 << CC_MC_INT)   |
-            (1 << CC_FR_INT)   |
-            (1 << TIMER1_INT)   |
-            (1 << SOFTWARE_INT) |
-            (1 << DMA_ERR_INT)  |
-            (1 << DMA_DONE_INT);
+    vic[VIC_DISABLE] = ALL_HANDLED_INTERRUPTS;
 
     // Report back the return code and exit the simulation
 
@@ -985,7 +1022,6 @@ void spin1_dma_flush(void)
     // abort any ongoing transfer in the DMA controller,
     // and clear any pending DMA_COMPLETE interrupts in the DMA controller
     dma[DMA_CTRL] = 0x1f;
-    dma[DMA_CTRL] = 0x0d;
 
     // purge any queued DMA_COMPLETE callbacks in the callback queues
     if (callback[DMA_TRANSFER_DONE].priority > 0) {
@@ -1029,6 +1065,12 @@ void spin1_dma_flush(void)
     dma_queue.start = 0;
     dma_queue.end   = 0;
     spin1_mode_restore(cpsr);
+
+    // and finally make sure the DMA unit is reset fully
+    while (dma[DMA_STAT] & 0x1) {
+        continue;
+    }
+    dma[DMA_CTRL] = 0x0d;
 }
 /*
 *******/
@@ -1382,6 +1424,9 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
     uint cpsr = spin1_int_disable();
 
     task_queue_t *tq = &task_queue[priority-1];
+    if (priority > highest_priority) {
+        highest_priority = priority;
+    }
 
     if ((tq->end + 1) % TASK_QUEUE_SIZE != tq->start) {
         tq->queue[tq->end].cback = cback;
@@ -1405,6 +1450,10 @@ uint spin1_schedule_callback(callback_t cback, uint arg0, uint arg1,
 }
 /*
 *******/
+
+void spin1_enable_timer_schedule_proc(void) {
+    event_register_timer(TIMER2_PRIORITY);
+}
 
 
 /****f* spin1_api.c/spin1_trigger_user_event
