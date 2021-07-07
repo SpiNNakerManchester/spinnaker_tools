@@ -30,9 +30,6 @@ DEBUG := 1
 # Set to 1 if making a library (advanced!)
 LIB := 0
 
-# Set to 1 if building scamp (advanced!)
-SCAMP := 0
-
 # Prefix for GNU tool binaries
 GP := arm-none-eabi
 
@@ -61,7 +58,6 @@ SPINN_LIB_DIR = $(SPINN_DIRS)/lib
 SPINN_INC_DIR = $(SPINN_DIRS)/include
 SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
 SPINN_MAKE_LIB_DIR = $(SPINN_DIRS)/make
-SPINN_SCAMP_DIR = $(SPINN_DIRS)/scamp
 
 # ------------------------------------------------------------------------------
 # Tools
@@ -79,18 +75,11 @@ ifeq ($(GNU),1)
     OTIME := -Ofast
     ALL_WARNINGS := -Wall -Wextra
 
-    # scamp needs the stacks in a different address of DTCM
-    ifeq ($(SCAMP), 1)
-        LD_LNK := $(SPINN_SCAMP_DIR)/scamp-3.lnk
-    else
-        LD_LNK := $(SPINN_TOOLS_DIR)/sark.lnk
-    endif
-
     ifeq ($(LIB), 1)
         CFLAGS += -fdata-sections -ffunction-sections
         LD := $(GP)-ld -i
     else
-        LD := $(GP)-gcc -T$(LD_LNK) -Wl,-e,cpu_reset -Wl,-static -ffreestanding -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
+        LD := $(GP)-gcc -T$(SPINN_TOOLS_DIR)/sark.lnk -Wl,-e,cpu_reset -Wl,-static -ffreestanding -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
         LFLAGS += -L $(SPINN_LIB_DIR)
     endif
 
@@ -112,16 +101,11 @@ else
     OTIME := -Otime
     ALL_WARNINGS :=
 
-    # suppress linker warning about empty RW sections when building scamp
-    ifeq ($(SCAMP), 1)
-        LD_FLAG := --diag_suppress L6329W
-    endif
-
     ifeq ($(LIB), 1)
         CFLAGS += --split_sections
         LD := armlink --partial
     else
-        LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct $(LD_FLAG) --remove --entry cpu_reset
+        LD = armlink --scatter=$(SPINN_TOOLS_DIR)/sark.sct $(LD_FLAGS) --remove --entry cpu_reset
     endif
 
     AR := armar -rsc

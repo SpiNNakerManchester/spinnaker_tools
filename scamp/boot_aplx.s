@@ -36,7 +36,7 @@
 
 		entry
 
-aplx_start	mov	sp, #DTCM_TOP		; Set up stack
+aplx_start	ldr	sp, boot_stack_top	; Set up stack
 		adr	r0, aplx_args		; APLX block in DTCM
 		ldm	r0, {r0-r1, r4-r5}	; Get address & args
 		blx	proc_aplx		; Go to loader
@@ -44,7 +44,7 @@ aplx_start	mov	sp, #DTCM_TOP		; Set up stack
 ; When booting via bootROM, APLX table ends up in DTCM 128 bytes above
 ; start of image
 
-aplx_args	dcd	DTCM_BASE + 0x8080	; Address of APLX table
+aplx_args	dcd	DTCM_BASE + (DTCM_SIZE / 2) + 128	; Address of APLX table
 		dcd	0			; Arg passed in r0 (app_id)
 
 aplx_svc	msr	cpsr_c, #IMASK_ALL+MODE_SVC
@@ -113,6 +113,18 @@ aplx_exec	ldr	r0, [sp, #0] 		; Get arg to r0
 		blx	r1			; Exec absolute
 		b	aplx_loader		; r1 = address
 
+; NOTE: this was added here to avoid disrupting
+; hard-coded addresses elsewhere (e.g., mkaplx)
+	if :def: SCAMP_BOOT_APLX
+; locate stack at top of bottom half of DTCM for SCAMP boot
+boot_stack_top	dcd	DTCM_BASE + (DTCM_SIZE / 2)
+	else
+; locate stack at top of DTCM for application boot
+boot_stack_top	dcd	DTCM_TOP
+	endif
+
+; make sure that the size of this code block is
+; 128 bytes to keep the scamp.boot build correct
 		align	128
 		code32
 aplx_end
