@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<tagfile doxygen_version="1.9.1">
+<tagfile doxygen_version="1.9.3">
   <compound kind="file">
     <name>sark.h</name>
     <path>/github/workspace/include/</path>
@@ -1449,7 +1449,7 @@
       <type>uint *</type>
       <name>cpu_get_sp</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>a22e95f32619aef5e01d518e529b70ce9</anchor>
+      <anchor>a02de80d4f044f0fec260a91cbb36365b</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
@@ -1666,7 +1666,7 @@
       <type>uint *</type>
       <name>cpu_init_mode</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>a01d9f9030e4539662cad6650b6694fb7</anchor>
+      <anchor>ad82183a5a53a4d54c972d0c62ab0b2df</anchor>
       <arglist>(uint *stack, uint mode, uint size)</arglist>
     </member>
     <member kind="function">
@@ -1708,14 +1708,14 @@
       <type>static char *</type>
       <name>sark_app_name</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>a4bef6fbe3bbf6c0b489a2435768d6703</anchor>
+      <anchor>a1417551f3e8951d13bff8d385bdfc01f</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
       <type>sdp_msg_t *</type>
       <name>sark_msg_get</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>ab3ab790eb60f2c24aa9b20fff884e64b</anchor>
+      <anchor>ab4ecc6d933675306cc68cd17ce5adbdb</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
@@ -1778,14 +1778,14 @@
       <type>void *</type>
       <name>sark_block_init</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>a05a451a1b870252451ae5661990db041</anchor>
+      <anchor>a4e609744735b5efb13b6a79909534f88</anchor>
       <arglist>(void *buf, uint size, uint count)</arglist>
     </member>
     <member kind="function">
       <type>void *</type>
       <name>sark_block_get</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>a93d1de5c5e2f2a1607c05eb6f024a183</anchor>
+      <anchor>a59970070c28bb7f4fa9280853fb9dec9</anchor>
       <arglist>(mem_block_t *root)</arglist>
     </member>
     <member kind="function">
@@ -1799,7 +1799,7 @@
       <type>sdp_msg_t *</type>
       <name>sark_shmsg_get</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>a1bdfaf0e7bfe553bcafc6d04bf321bf1</anchor>
+      <anchor>a2c16f538120c88408968d6a6f0b93d71</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
@@ -1841,7 +1841,7 @@
       <type>void *</type>
       <name>sark_alloc</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>a30d1e6e1b258fa76d6412827a1aa4f15</anchor>
+      <anchor>a21e2f666d19111987b8056468f3b9c80</anchor>
       <arglist>(uint count, uint size)</arglist>
     </member>
     <member kind="function">
@@ -1855,7 +1855,7 @@
       <type>void *</type>
       <name>sark_xalloc</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>a8d1f83786e86e8943b1e1a2d8fa68b85</anchor>
+      <anchor>a245d0436adeffc9d66feb2715abdc000</anchor>
       <arglist>(heap_t *heap, uint size, uint tag, uint flag)</arglist>
     </member>
     <member kind="function">
@@ -1883,7 +1883,7 @@
       <type>heap_t *</type>
       <name>sark_heap_init</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>ab76688949797930a80f58584467243c2</anchor>
+      <anchor>af7ecfbb84d87eb35e32ef30e5604c056</anchor>
       <arglist>(uint *base, uint *top)</arglist>
     </member>
     <member kind="function">
@@ -1925,7 +1925,7 @@
       <type>void *</type>
       <name>sark_tag_ptr</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>a226f6ac4ac38c44dce34a617ed1f1aa6</anchor>
+      <anchor>a9ab071722b9278c0e03e0b1d1b186557</anchor>
       <arglist>(uint tag, uint app_id)</arglist>
     </member>
     <member kind="function">
@@ -2072,7 +2072,7 @@
       <type>event_t *</type>
       <name>event_new</name>
       <anchorfile>sark_8h.html</anchorfile>
-      <anchor>ac3dc841f217092d14cd043929c4ef5a0</anchor>
+      <anchor>aa23f43825b16f28633f15bf1762b24ff</anchor>
       <arglist>(event_proc proc, uint arg1, uint arg2)</arglist>
     </member>
     <member kind="function">
@@ -2891,7 +2891,7 @@
       <type>static sdp_msg_t *</type>
       <name>spin1_msg_get</name>
       <anchorfile>spin1__api_8h.html</anchorfile>
-      <anchor>ad757eba539d1f3ca7f40c39e9126e655</anchor>
+      <anchor>a91c61bb5d72d32d3b20cbea61a896c88</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function" static="yes">
@@ -2954,7 +2954,7 @@
       <type>static void *</type>
       <name>spin1_malloc</name>
       <anchorfile>spin1__api_8h.html</anchorfile>
-      <anchor>affff3f0d4e0978c5695098d0016f3b66</anchor>
+      <anchor>a388eef3b9deb196a273647abef02c12c</anchor>
       <arglist>(uint bytes)</arglist>
     </member>
     <member kind="function" static="yes">
@@ -8019,14 +8019,14 @@
       <type>void *</type>
       <name>sark_xalloc</name>
       <anchorfile>sark__alloc_8c.html</anchorfile>
-      <anchor>a8d1f83786e86e8943b1e1a2d8fa68b85</anchor>
+      <anchor>a245d0436adeffc9d66feb2715abdc000</anchor>
       <arglist>(heap_t *heap, uint size, uint tag, uint flag)</arglist>
     </member>
     <member kind="function">
       <type>void *</type>
       <name>sark_alloc</name>
       <anchorfile>sark__alloc_8c.html</anchorfile>
-      <anchor>a30d1e6e1b258fa76d6412827a1aa4f15</anchor>
+      <anchor>a21e2f666d19111987b8056468f3b9c80</anchor>
       <arglist>(uint count, uint size)</arglist>
     </member>
     <member kind="function">
@@ -8061,7 +8061,7 @@
       <type>heap_t *</type>
       <name>sark_heap_init</name>
       <anchorfile>sark__alloc_8c.html</anchorfile>
-      <anchor>ab76688949797930a80f58584467243c2</anchor>
+      <anchor>af7ecfbb84d87eb35e32ef30e5604c056</anchor>
       <arglist>(uint *base, uint *top)</arglist>
     </member>
     <member kind="function">
@@ -8103,7 +8103,7 @@
       <type>void *</type>
       <name>sark_tag_ptr</name>
       <anchorfile>sark__alloc_8c.html</anchorfile>
-      <anchor>a226f6ac4ac38c44dce34a617ed1f1aa6</anchor>
+      <anchor>a9ab071722b9278c0e03e0b1d1b186557</anchor>
       <arglist>(uint tag, uint app_id)</arglist>
     </member>
   </compound>
@@ -8228,14 +8228,14 @@
       <type>void *</type>
       <name>sark_block_init</name>
       <anchorfile>sark__base_8c.html</anchorfile>
-      <anchor>afa47ca11c3ee85b99d9ab9be58e8e082</anchor>
+      <anchor>ae51ae7a1a5b1868cd2b0a19583c6009a</anchor>
       <arglist>(void *buf, uint count, uint size)</arglist>
     </member>
     <member kind="function">
       <type>sdp_msg_t *</type>
       <name>sark_msg_get</name>
       <anchorfile>sark__base_8c.html</anchorfile>
-      <anchor>ab3ab790eb60f2c24aa9b20fff884e64b</anchor>
+      <anchor>ab4ecc6d933675306cc68cd17ce5adbdb</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
@@ -8249,7 +8249,7 @@
       <type>void *</type>
       <name>sark_block_get</name>
       <anchorfile>sark__base_8c.html</anchorfile>
-      <anchor>a93d1de5c5e2f2a1607c05eb6f024a183</anchor>
+      <anchor>a59970070c28bb7f4fa9280853fb9dec9</anchor>
       <arglist>(mem_block_t *root)</arglist>
     </member>
     <member kind="function">
@@ -8263,7 +8263,7 @@
       <type>sdp_msg_t *</type>
       <name>sark_shmsg_get</name>
       <anchorfile>sark__base_8c.html</anchorfile>
-      <anchor>a1bdfaf0e7bfe553bcafc6d04bf321bf1</anchor>
+      <anchor>a2c16f538120c88408968d6a6f0b93d71</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
@@ -8536,7 +8536,7 @@
       <type>static event_t *</type>
       <name>get_queue_contents</name>
       <anchorfile>sark__event_8c.html</anchorfile>
-      <anchor>a995b81ab23ec1ff4b6442f6656fec157</anchor>
+      <anchor>a6bc0a0fa4ed194144eb8960184b054c6</anchor>
       <arglist>(proc_queue_t *queue)</arglist>
     </member>
     <member kind="function">
@@ -8550,14 +8550,14 @@
       <type>static event_t *</type>
       <name>take_one_event_from_queue</name>
       <anchorfile>sark__event_8c.html</anchorfile>
-      <anchor>a9548bdb6b6a0f0a21daa68350693f5d5</anchor>
+      <anchor>a7556c94bea37ef84603e0a3fd4138dd0</anchor>
       <arglist>(proc_queue_t *queue)</arglist>
     </member>
     <member kind="function">
       <type>event_t *</type>
       <name>event_new</name>
       <anchorfile>sark__event_8c.html</anchorfile>
-      <anchor>ac3dc841f217092d14cd043929c4ef5a0</anchor>
+      <anchor>aa23f43825b16f28633f15bf1762b24ff</anchor>
       <arglist>(event_proc proc, uint arg1, uint arg2)</arglist>
     </member>
     <member kind="function">
@@ -8794,14 +8794,14 @@
       <type>static sdp_msg_t *</type>
       <name>io_std_init</name>
       <anchorfile>sark__io_8c.html</anchorfile>
-      <anchor>a579f10a217f94b6bed355a7715259e91</anchor>
+      <anchor>a4dc7fa6c355e35d22b662f2521f254c7</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function" static="yes">
       <type>static iobuf_t *</type>
       <name>io_buf_init</name>
       <anchorfile>sark__io_8c.html</anchorfile>
-      <anchor>a682a055c3c0f1d1d09ee4959cfd3a958</anchor>
+      <anchor>a96b59756cea6df5c1b734abc4a4fc5e1</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
@@ -10783,7 +10783,7 @@
       <type>pkt_buf_t *</type>
       <name>pkt_buf_get</name>
       <anchorfile>scamp-nn_8c.html</anchorfile>
-      <anchor>a2c73fdf2c5fcf933d4dc69e08f4e0428</anchor>
+      <anchor>ae255349abc48e577d4368e9c456dc201</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
