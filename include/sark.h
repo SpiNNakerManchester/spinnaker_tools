@@ -167,6 +167,7 @@ enum sark_aplx_command {
 
 #define ALLOC_LOCK      1       //!< Lock this operation
 #define ALLOC_ID        2       //!< Use supplied AppID
+#define ALLOC_TAG_RETRY 4       //!< If tag in use, just return address
 
 //------------------------------------------------------------------------------
 

@@ -782,10 +782,11 @@ uint cmd_alloc(sdp_msg_t *msg)
 
     switch (op) {
     case ALLOC_SDRAM:
+        uint extra_flag = (msg->arg1 >> 16) & 255;
         msg->arg1 = (uint) sark_xalloc(sv->sdram_heap,
                 msg->arg2,
                 msg->arg3,
-                ALLOC_LOCK + ALLOC_ID + (app_id << 8));
+                ALLOC_LOCK + ALLOC_ID + (app_id << 8) + extra_flag);
         sv->app_data[app_id].clean = 0;
         break;
 
