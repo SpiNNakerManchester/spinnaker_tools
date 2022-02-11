@@ -775,6 +775,7 @@ uint cmd_alloc(sdp_msg_t *msg)
 {
     uint op = msg->arg1 & 255;
     uint app_id = (msg->arg1 >> 8) & 255;
+    uint extra_flag = (msg->arg1 >> 16) & 255;
     if (op > ALLOC_MAX) {
         msg->cmd_rc = RC_ARG;
         return 0;
@@ -785,7 +786,7 @@ uint cmd_alloc(sdp_msg_t *msg)
         msg->arg1 = (uint) sark_xalloc(sv->sdram_heap,
                 msg->arg2,
                 msg->arg3,
-                ALLOC_LOCK + ALLOC_ID + (app_id << 8));
+                ALLOC_LOCK + ALLOC_ID + (app_id << 8) + extra_flag);
         sv->app_data[app_id].clean = 0;
         break;
 
