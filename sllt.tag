@@ -168,6 +168,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>ALLOC_TAG_RETRY</name>
+      <anchorfile>sark_8h.html</anchorfile>
+      <anchor>abc53aca666a0f6c0c1c22fd432bd744d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>A_LOCK_SEMA</name>
       <anchorfile>sark_8h.html</anchorfile>
       <anchor>a849f3988621b83a38f7ddcfd5ee72b5d</anchor>

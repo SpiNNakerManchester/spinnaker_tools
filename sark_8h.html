@@ -237,6 +237,8 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>ALLOC_ID</b>&#160;&#160;&#160;2</td></tr>
 <tr class="memdesc:a6ff0a91d1c257f90c16d72e4a48f619a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use supplied AppID. <br /></td></tr>
 <tr class="separator:a6ff0a91d1c257f90c16d72e4a48f619a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc53aca666a0f6c0c1c22fd432bd744d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sark_8h.html#abc53aca666a0f6c0c1c22fd432bd744d">ALLOC_TAG_RETRY</a>&#160;&#160;&#160;4</td></tr>
+<tr class="separator:abc53aca666a0f6c0c1c22fd432bd744d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a849f3988621b83a38f7ddcfd5ee72b5d"><td class="memItemLeft" align="right" valign="top"><a id="a849f3988621b83a38f7ddcfd5ee72b5d" name="a849f3988621b83a38f7ddcfd5ee72b5d"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>A_LOCK_SEMA</b>&#160;&#160;&#160;5</td></tr>
 <tr class="memdesc:a849f3988621b83a38f7ddcfd5ee72b5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">For "sark_alib.s" (maintain sync with enum spin_lock_e) <br /></td></tr>
@@ -1082,14 +1084,14 @@ char&#160;</td><td class="memItemRight" valign="bottom"><b>build_name</b> []</td
 <div class="line">            +-------------------------------+   f5000100 <a class="code hl_variable" href="sark_8h.html#a74ab0d3b2aa00fa87c323a46349fe3b9">sv</a>-&gt;<a class="code hl_variable" href="sark_8h.html#af6843a2eb98fe1699ffd4845a24ff359">sysram_base</a></div>
 <div class="line">            | 256 bytes                     |</div>
 <div class="line"><a class="code hl_define" href="spinnaker_8h.html#a2292f2ea539bb564b691a1a708447edf">SYSRAM_BASE</a> +-------------------------------+   f5000000</div>
-<div class="ttc" id="asark_8h_html_a06e96a522d4adf97fbb2549806f73cfb"><div class="ttname"><a href="sark_8h.html#a06e96a522d4adf97fbb2549806f73cfb">SV_VCPU</a></div><div class="ttdeci">#define SV_VCPU</div><div class="ttdoc">e5007000</div><div class="ttdef"><b>Definition:</b> sark.h:939</div></div>
-<div class="ttc" id="asark_8h_html_a41cd20bd99299a9ba4fbcc09768fb83e"><div class="ttname"><a href="sark_8h.html#a41cd20bd99299a9ba4fbcc09768fb83e">SV_SPARE</a></div><div class="ttdeci">#define SV_SPARE</div><div class="ttdoc">e5007900</div><div class="ttdef"><b>Definition:</b> sark.h:940</div></div>
-<div class="ttc" id="asark_8h_html_a4ea54a1b50b0f5d74df91b604006bca9"><div class="ttname"><a href="sark_8h.html#a4ea54a1b50b0f5d74df91b604006bca9">SV_RANDOM</a></div><div class="ttdeci">#define SV_RANDOM</div><div class="ttdoc">e5007ea0</div><div class="ttdef"><b>Definition:</b> sark.h:937</div></div>
-<div class="ttc" id="asark_8h_html_a6060b669d3bbd8528c906953d482b12e"><div class="ttname"><a href="sark_8h.html#a6060b669d3bbd8528c906953d482b12e">VCPU_SIZE</a></div><div class="ttdeci">#define VCPU_SIZE</div><div class="ttdoc">Size of vcpu_t.</div><div class="ttdef"><b>Definition:</b> sark.h:750</div></div>
-<div class="ttc" id="asark_8h_html_a74ab0d3b2aa00fa87c323a46349fe3b9"><div class="ttname"><a href="sark_8h.html#a74ab0d3b2aa00fa87c323a46349fe3b9">sv</a></div><div class="ttdeci">static sv_t *const sv</div><div class="ttdef"><b>Definition:</b> sark.h:1070</div></div>
-<div class="ttc" id="asark_8h_html_a993ec852f04f051ca86338808f053b93"><div class="ttname"><a href="sark_8h.html#a993ec852f04f051ca86338808f053b93">SV_VECTORS</a></div><div class="ttdeci">#define SV_VECTORS</div><div class="ttdoc">e5007ee0</div><div class="ttdef"><b>Definition:</b> sark.h:936</div></div>
-<div class="ttc" id="asark_8h_html_ae64acf62910ab7afdbbe57fbd92e3026"><div class="ttname"><a href="sark_8h.html#ae64acf62910ab7afdbbe57fbd92e3026">SV_SV</a></div><div class="ttdeci">#define SV_SV</div><div class="ttdoc">e5007f00</div><div class="ttdef"><b>Definition:</b> sark.h:930</div></div>
-<div class="ttc" id="asark_8h_html_af6843a2eb98fe1699ffd4845a24ff359"><div class="ttname"><a href="sark_8h.html#af6843a2eb98fe1699ffd4845a24ff359">sv_t::sysram_base</a></div><div class="ttdeci">uint * sysram_base</div><div class="ttdoc">c4 Base of user SysRAM</div><div class="ttdef"><b>Definition:</b> sark.h:1043</div></div>
+<div class="ttc" id="asark_8h_html_a06e96a522d4adf97fbb2549806f73cfb"><div class="ttname"><a href="sark_8h.html#a06e96a522d4adf97fbb2549806f73cfb">SV_VCPU</a></div><div class="ttdeci">#define SV_VCPU</div><div class="ttdoc">e5007000</div><div class="ttdef"><b>Definition:</b> sark.h:948</div></div>
+<div class="ttc" id="asark_8h_html_a41cd20bd99299a9ba4fbcc09768fb83e"><div class="ttname"><a href="sark_8h.html#a41cd20bd99299a9ba4fbcc09768fb83e">SV_SPARE</a></div><div class="ttdeci">#define SV_SPARE</div><div class="ttdoc">e5007900</div><div class="ttdef"><b>Definition:</b> sark.h:949</div></div>
+<div class="ttc" id="asark_8h_html_a4ea54a1b50b0f5d74df91b604006bca9"><div class="ttname"><a href="sark_8h.html#a4ea54a1b50b0f5d74df91b604006bca9">SV_RANDOM</a></div><div class="ttdeci">#define SV_RANDOM</div><div class="ttdoc">e5007ea0</div><div class="ttdef"><b>Definition:</b> sark.h:946</div></div>
+<div class="ttc" id="asark_8h_html_a6060b669d3bbd8528c906953d482b12e"><div class="ttname"><a href="sark_8h.html#a6060b669d3bbd8528c906953d482b12e">VCPU_SIZE</a></div><div class="ttdeci">#define VCPU_SIZE</div><div class="ttdoc">Size of vcpu_t.</div><div class="ttdef"><b>Definition:</b> sark.h:759</div></div>
+<div class="ttc" id="asark_8h_html_a74ab0d3b2aa00fa87c323a46349fe3b9"><div class="ttname"><a href="sark_8h.html#a74ab0d3b2aa00fa87c323a46349fe3b9">sv</a></div><div class="ttdeci">static sv_t *const sv</div><div class="ttdef"><b>Definition:</b> sark.h:1079</div></div>
+<div class="ttc" id="asark_8h_html_a993ec852f04f051ca86338808f053b93"><div class="ttname"><a href="sark_8h.html#a993ec852f04f051ca86338808f053b93">SV_VECTORS</a></div><div class="ttdeci">#define SV_VECTORS</div><div class="ttdoc">e5007ee0</div><div class="ttdef"><b>Definition:</b> sark.h:945</div></div>
+<div class="ttc" id="asark_8h_html_ae64acf62910ab7afdbbe57fbd92e3026"><div class="ttname"><a href="sark_8h.html#ae64acf62910ab7afdbbe57fbd92e3026">SV_SV</a></div><div class="ttdeci">#define SV_SV</div><div class="ttdoc">e5007f00</div><div class="ttdef"><b>Definition:</b> sark.h:939</div></div>
+<div class="ttc" id="asark_8h_html_af6843a2eb98fe1699ffd4845a24ff359"><div class="ttname"><a href="sark_8h.html#af6843a2eb98fe1699ffd4845a24ff359">sv_t::sysram_base</a></div><div class="ttdeci">uint * sysram_base</div><div class="ttdoc">c4 Base of user SysRAM</div><div class="ttdef"><b>Definition:</b> sark.h:1052</div></div>
 <div class="ttc" id="aspinnaker_8h_html_a2292f2ea539bb564b691a1a708447edf"><div class="ttname"><a href="spinnaker_8h.html#a2292f2ea539bb564b691a1a708447edf">SYSRAM_BASE</a></div><div class="ttdeci">#define SYSRAM_BASE</div><div class="ttdoc">Base address of System RAM.</div><div class="ttdef"><b>Definition:</b> spinnaker.h:113</div></div>
 <div class="ttc" id="aspinnaker_8h_html_aa061b51fb2d77d7721a3882edf5cd84a"><div class="ttname"><a href="spinnaker_8h.html#aa061b51fb2d77d7721a3882edf5cd84a">NUM_CPUS</a></div><div class="ttdeci">#define NUM_CPUS</div><div class="ttdoc">Number of CPU cores per chip.</div><div class="ttdef"><b>Definition:</b> spinnaker.h:65</div></div>
 <div class="ttc" id="aspinnaker_8h_html_ae91b1725f67078b99e68cc3508d7f2e6"><div class="ttname"><a href="spinnaker_8h.html#ae91b1725f67078b99e68cc3508d7f2e6">SYSRAM_TOP</a></div><div class="ttdeci">#define SYSRAM_TOP</div><div class="ttdoc">Top address of System RAM.</div><div class="ttdef"><b>Definition:</b> spinnaker.h:121</div></div>
@@ -3106,6 +3108,21 @@ fc Software version number </td></tr>
 </div>
 </div>
 <h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="abc53aca666a0f6c0c1c22fd432bd744d" name="abc53aca666a0f6c0c1c22fd432bd744d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc53aca666a0f6c0c1c22fd432bd744d">&#9670;&nbsp;</a></span>ALLOC_TAG_RETRY</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define ALLOC_TAG_RETRY&#160;&#160;&#160;4</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p >This allows for a "retry" of the allocation request when an SDRAM tag is specified. If this flag is specified, and the tag in use, and the size of the allocation requested is the same as the size currently allocated, just return the address of the tag from the previous allocation. Without this flag, the previous behavior is maintained, meaning that each tag can only be allocated once, and a re-allocation request will result in a NULL being returned. </p>
+
+</div>
+</div>
 <a id="a70a68a061183156ed09c67e2e724b0c2" name="a70a68a061183156ed09c67e2e724b0c2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a70a68a061183156ed09c67e2e724b0c2">&#9670;&nbsp;</a></span>sw_error</h2>
 
@@ -6141,9 +6158,9 @@ to the last block. The buffer can be used to initialise a "root" struct of type 
 <p>Controls one or more of the LEDs attached to the SpiNNaker chip. </p>
 <p >The argument should be a sum of calls to macros LED_ON, LED_OFF, LED_INV which turn on, turn off or flip a LED. The argument to each macro is the LED number, an integer starting at zero. All SpiNNaker boards to date have at least one LED so <a class="el" href="sark_8h.html#aaa8988d6632fc64b0ec4a8528cebb7fd" title="Turn LED on.">LED_ON(0)</a> will always work!</p>
 <p >To turn on LED 1 and turn off LED 2 the call looks like this... </p><div class="fragment"><div class="line"><a class="code hl_function" href="sark_8h.html#a74a3a76206602b65fc8f482d0c9cce5d">sark_led_set</a> (<a class="code hl_define" href="sark_8h.html#aaa8988d6632fc64b0ec4a8528cebb7fd">LED_ON</a>(1) + <a class="code hl_define" href="sark_8h.html#a552169688fe8834a280b877a8cf5020e">LED_OFF</a>(2));</div>
-<div class="ttc" id="asark_8h_html_a552169688fe8834a280b877a8cf5020e"><div class="ttname"><a href="sark_8h.html#a552169688fe8834a280b877a8cf5020e">LED_OFF</a></div><div class="ttdeci">#define LED_OFF(n)</div><div class="ttdoc">Turn LED off.</div><div class="ttdef"><b>Definition:</b> sark.h:364</div></div>
+<div class="ttc" id="asark_8h_html_a552169688fe8834a280b877a8cf5020e"><div class="ttname"><a href="sark_8h.html#a552169688fe8834a280b877a8cf5020e">LED_OFF</a></div><div class="ttdeci">#define LED_OFF(n)</div><div class="ttdoc">Turn LED off.</div><div class="ttdef"><b>Definition:</b> sark.h:373</div></div>
 <div class="ttc" id="asark_8h_html_a74a3a76206602b65fc8f482d0c9cce5d"><div class="ttname"><a href="sark_8h.html#a74a3a76206602b65fc8f482d0c9cce5d">sark_led_set</a></div><div class="ttdeci">void sark_led_set(uint leds)</div><div class="ttdoc">Controls one or more of the LEDs attached to the SpiNNaker chip.</div><div class="ttdef"><b>Definition:</b> sark_hw.c:147</div></div>
-<div class="ttc" id="asark_8h_html_aaa8988d6632fc64b0ec4a8528cebb7fd"><div class="ttname"><a href="sark_8h.html#aaa8988d6632fc64b0ec4a8528cebb7fd">LED_ON</a></div><div class="ttdeci">#define LED_ON(n)</div><div class="ttdoc">Turn LED on.</div><div class="ttdef"><b>Definition:</b> sark.h:363</div></div>
+<div class="ttc" id="asark_8h_html_aaa8988d6632fc64b0ec4a8528cebb7fd"><div class="ttname"><a href="sark_8h.html#aaa8988d6632fc64b0ec4a8528cebb7fd">LED_ON</a></div><div class="ttdeci">#define LED_ON(n)</div><div class="ttdoc">Turn LED on.</div><div class="ttdef"><b>Definition:</b> sark.h:372</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">leds</td><td>encoded value specifying LEDs and operations thereon </td></tr>
@@ -7612,7 +7629,7 @@ e-&gt;time == 0
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jan 31 2022 09:15:57 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.3
+Generated on Fri Feb 11 2022 10:17:40 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.3
 </small></address>
 </body>
 </html>
