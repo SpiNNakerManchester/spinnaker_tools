@@ -58,7 +58,8 @@ void *sark_xalloc(heap_t *heap, uint size, uint tag, uint flag)
     if (tag != 0 && sv->alloc_tag[entry] != NULL) {
         if (flag & ALLOC_TAG_RETRY) {
             block_t* block = sv->alloc_tag[entry] - 1;
-            uint alloc_size = (uchar *) block->next - (uchar *) block;
+            uint alloc_size =
+                    ((uchar *) block->next - (uchar *) block) - sizeof(block_t);
             if (size == alloc_size) {
                 return sv->alloc_tag[entry];
             }
