@@ -207,6 +207,9 @@ volatile uchar load = 0;
 //!     towards it over time.
 volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 
+//! \brief Whether to perform clock synchronization (on by default at start)
+volatile uint do_sync = 1;
+
 //------------------------------------------------------------------------------
 
 //! Update timeouts in IPTags.

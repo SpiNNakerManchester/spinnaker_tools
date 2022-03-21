@@ -859,6 +859,21 @@ uint cmd_remap(sdp_msg_t *msg)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+
+extern volatile uint do_sync;
+extern uint n_beacons_sent;
+
+//! \brief Synchronization of cores handler
+//! \param[in,out] msg: SCP message, will be updated with result
+//! \return Always zero; result never has a payload
+uint cmd_sync(sdp_msg_t *msg) {
+    do_sync = msg->arg1;
+    // Increment the number of beacons sent, to ensure the next is ignored
+    n_beacons_sent++;
+    return 0;
+}
+
 
 //------------------------------------------------------------------------------
 
@@ -937,6 +952,8 @@ uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
         return cmd_rtr(msg);
     case CMD_INFO:
         return cmd_info(msg);
+    case CMD_SYNC:
+        return cmd_sync(msg);
     default:
         msg->cmd_rc = RC_CMD;
         return 0;

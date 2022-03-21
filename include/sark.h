@@ -437,7 +437,6 @@ enum sark_scp_command_codes {
     CMD_FILL = 5,               //!< Fill memory
 
     // Following for monitors only
-
     CMD_REMAP = 16,             //!< Remap application core
     CMD_LINK_READ = 17,         //!< Read neighbour memory
     CMD_LINK_WRITE = 18,        //!< Write neighbour memory
@@ -445,6 +444,7 @@ enum sark_scp_command_codes {
 
     CMD_NNP = 20,               //!< Send broadcast NN packet
 
+    CMD_SYNC = 21,              //!< Control sending of synchronization msgs
     CMD_SIG = 22,               //!< Send signal to apps
     CMD_FFD = 23,               //!< Send flood-fill data
 
