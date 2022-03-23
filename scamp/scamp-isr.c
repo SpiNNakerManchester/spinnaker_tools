@@ -204,7 +204,7 @@ INT_HANDLER pkt_mc_int(void)
         } else {
             // Note maximum difference over 2 seconds is quite big but
             // once divided into per-us value, it will be small again.
-            int diff = last_ticks - ticks;
+            int diff = ticks - last_ticks;
             uint n_beacons = beacon - last_beacon;
             last_ticks = ticks;
             last_beacon = beacon;
@@ -212,7 +212,8 @@ INT_HANDLER pkt_mc_int(void)
             // beacons go missing is likely to give false results anyway.
             if ((diff <= MAX_DIFF) && (diff >= -MAX_DIFF) && (n_beacons == 1)) {
                 // Enough samples now, so do the difference
-                int scaled_diff = (diff * DRIFT_FP_FACTOR) / TIME_BETWEEN_SYNC_INT;
+                int scaled_diff = ((diff * DRIFT_FP_FACTOR) + DRIFT_HALF) /
+                        TIME_BETWEEN_SYNC_INT;
                 sum = (sum - samples[sample_pos]) + scaled_diff;
                 samples[sample_pos] = scaled_diff;
                 sample_pos = (sample_pos + 1) % N_ITEMS;

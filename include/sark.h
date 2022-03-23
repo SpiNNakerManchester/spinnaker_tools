@@ -168,6 +168,15 @@ enum sark_aplx_command {
 #define ALLOC_LOCK      1       //!< Lock this operation
 #define ALLOC_ID        2       //!< Use supplied AppID
 
+//! This allows for a "retry" of the allocation request when an SDRAM tag is
+//! specified.  If this flag is specified, and the tag in use, and the size of
+//! the allocation requested is the same as the size currently allocated, just
+//! return the address of the tag from the previous allocation.  Without this
+//! flag, the previous behavior is maintained, meaning that each tag can only
+//! be allocated once, and a re-allocation request will result in a NULL being
+//! returned.
+#define ALLOC_TAG_RETRY 4
+
 //------------------------------------------------------------------------------
 
 /*!

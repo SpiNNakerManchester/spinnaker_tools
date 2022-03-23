@@ -542,3 +542,9 @@ INT_HANDLER soft_int_fiqsr(void)
 }
 /*
 *******/
+
+extern void sark_int(void *pc);
+INT_HANDLER sark_fiqsr(void)
+{
+    sark_int(NULL);
+}
