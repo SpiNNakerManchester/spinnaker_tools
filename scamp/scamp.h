@@ -222,7 +222,7 @@ enum scamp_nn_opcodes {
     NN_CMD_SIG0 =  0,  //!< Misc (GTPC, Set FwdRty, LED, etc)
     NN_CMD_RTRC =  1,  //!< Router Control Reg
     NN_CMD_LTPC =  2,  //!< Local Time Phase Control (ID=0, Fwd=0)
-    NN_CMD_SP_3 =  3,  //!< Spare
+    NN_CMD_FCPY =  3,  //!< Copy data flood-fill
 
     NN_CMD_SIG1 =  4,  //!< Misc (MEM, etc)
     NN_CMD_P2PC =  5,  //!< P2P Address setup (Handled specially)

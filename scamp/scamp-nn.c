@@ -1399,6 +1399,54 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     }
 }
 
+//! \brief Perform the FF copy.  Can only be done outside of the callback.
+//! \param[in] start_addr The address to start from
+//! \param[in] chksum_link_length_id The encoded parameters in fields
+//!                  |chksum:4|spare(0):1|link:3|length:16|id:7|reserved:1|
+void nn_do_fcpy(uint start_addr, uint chksum_link_length_id) {
+    uint length = (chksum_link_length_id >> 8) & 0xFFFF;
+    uint link = (chksum_link_length_id >> 24) & 0x7;
+    uint addr = start_addr;
+
+    for (uint i = 0; i < length; i++) {
+        if (link_read_word(addr, link, (uint *) addr, 100) != RC_OK) {
+            io_printf(IO_BUF, "Failed to read!\n");
+            sw_error(SW_OPT);
+            return;
+        }
+        addr += 4;
+    }
+
+    // Schedule packet for forwarding
+    pkt_buf_t *pkt = pkt_buf_get();
+
+    if (pkt == NULL) { // !! ??
+        sw_error(SW_OPT);
+        return;
+    }
+
+    pkt->fwd = 0x3e; // Don't return to sender...
+    pkt->delay = 0; // Not sent more than once so no delay needed
+    pkt->link = link;
+
+    uint key = (chksum_link_length_id & 0xF0FFFFFF) | (NN_CMD_FCPY << 24);
+    pkt_t tp = {PKT_NN + PKT_PL, start_addr, key};
+    pkt->pkt = tp;
+
+    proc_pkt_bc((uint) pkt, 1);
+}
+
+//! \brief NN copy packet handler
+//! \param[in] link: Which link the packet was received on
+//! \param[in] data: The payload from the packet - the address to read/write
+//! \param[in] key: The key from the packet - contains the length to read/write
+void nn_rcv_fcpy(uint link, uint data, uint key) {
+    uint chksum_link_length_id = (key & 0xF0FFFFFF) | (link << 24);
+    if (!event_queue_proc(nn_do_fcpy, data, chksum_link_length_id, PRIO_0)) {
+        sw_error(SW_OPT);
+    }
+}
+
 //! \}
 
 //! \brief Nearest-neighbour packet received handler
@@ -1504,6 +1552,11 @@ void nn_rcv_pkt(uint link, uint data, uint key)
         if (nn_cmd_ffe(id, data, key)) {
             break;
         }
+        return;
+
+    case NN_CMD_FCPY:
+        // This command handles its own forwarding
+        nn_rcv_fcpy(link, data, key);
         return;
 
     default: // Ignore...
