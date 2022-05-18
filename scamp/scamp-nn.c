@@ -1410,7 +1410,6 @@ void nn_do_fcpy(uint start_addr, uint chksum_link_length_id) {
 
     for (uint i = 0; i < length; i++) {
         if (link_read_word(addr, link, (uint *) addr, 100) != RC_OK) {
-            io_printf(IO_BUF, "Failed to read!\n");
             sw_error(SW_OPT);
             return;
         }
