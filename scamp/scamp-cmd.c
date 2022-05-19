@@ -859,6 +859,51 @@ uint cmd_remap(sdp_msg_t *msg)
     return 0;
 }
 
+//------------------------------------------------------------------------------
+
+//! \brief Copy an application from an adjacent chip, then start it
+//! \param[in,out] msg: SCP message, will be updated with result
+//! \return The length of the payload of \p msg
+uint cmd_app_copy_run(sdp_msg_t *msg) {
+    uint addr = (uint) sv->sdram_sys;
+    uint link = msg->arg1;
+    uint len = msg->arg2;
+    uint id_op_mask = msg->arg3;
+
+    // Can't reset monitor
+    if (id_op_mask & 0x1) {
+        msg->cmd_rc = RC_ARG;
+        return 0;
+    }
+
+    // Link must be an actual link
+    if (link > 5) {
+        msg->cmd_rc = RC_ARG;
+        return 0;
+    }
+
+    // Size must be multiple of 4
+    if (len % 4 != 0) {
+        msg->cmd_rc = RC_ARG;
+        return 0;
+    }
+
+    // Do the copy
+    uint timeout = sv->peek_time;
+    for (uint i = 0; i < len / 4; i++) {
+        uint rc = link_read_word(addr, link, (uint *) addr, timeout);
+        if (rc != RC_OK) {
+            msg->cmd_rc = rc;
+            return 0;
+        }
+        addr += 4;
+    }
+
+    // Do the start
+    proc_start_app((uint) sv->sdram_sys, id_op_mask);
+    return 0;
+}
+
 
 //------------------------------------------------------------------------------
 
@@ -937,6 +982,8 @@ uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
         return cmd_rtr(msg);
     case CMD_INFO:
         return cmd_info(msg);
+    case CMD_APP_COPY_RUN:
+        return cmd_app_copy_run(msg);
     default:
         msg->cmd_rc = RC_CMD;
         return 0;
