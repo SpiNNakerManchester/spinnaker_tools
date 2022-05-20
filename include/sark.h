@@ -444,7 +444,7 @@ enum sark_scp_command_codes {
     CMD_AR = 19,                //!< Application core reset
 
     CMD_NNP = 20,               //!< Send broadcast NN packet
-
+    CMD_APP_COPY_RUN = 21,      //!< Copy app from adjacent chip and reset
     CMD_SIG = 22,               //!< Send signal to apps
     CMD_FFD = 23,               //!< Send flood-fill data
 
