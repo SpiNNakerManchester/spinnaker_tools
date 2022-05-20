@@ -1216,6 +1216,12 @@
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
+      <name>CMD_APP_COPY_RUN</name>
+      <anchorfile>sark_8h.html</anchorfile>
+      <anchor>add51abc04ff5e1d219053f53ce83fa05a2337fa7150e5bf0a44deadcea53249ed</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
       <name>CMD_SIG</name>
       <anchorfile>sark_8h.html</anchorfile>
       <anchor>add51abc04ff5e1d219053f53ce83fa05a027c8932fc4f1f58d96be1c9d3573348</anchor>
@@ -10290,6 +10296,13 @@
       <name>cmd_remap</name>
       <anchorfile>scamp-cmd_8c.html</anchorfile>
       <anchor>aca400b8c3a3b9fa1a4a73800319141d1</anchor>
+      <arglist>(sdp_msg_t *msg)</arglist>
+    </member>
+    <member kind="function">
+      <type>uint</type>
+      <name>cmd_app_copy_run</name>
+      <anchorfile>scamp-cmd_8c.html</anchorfile>
+      <anchor>a68bc6c98e75884c8419423bcd18414cc</anchor>
       <arglist>(sdp_msg_t *msg)</arglist>
     </member>
     <member kind="function">
