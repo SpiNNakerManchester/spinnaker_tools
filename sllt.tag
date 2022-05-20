@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<tagfile doxygen_version="1.9.3">
+<tagfile doxygen_version="1.9.4">
   <compound kind="file">
     <name>sark.h</name>
     <path>/github/workspace/include/</path>
