@@ -443,8 +443,7 @@ enum sark_scp_command_codes {
     CMD_AR = 19,                //!< Application core reset
 
     CMD_NNP = 20,               //!< Send broadcast NN packet
-
-    CMD_SYNC = 21,              //!< Control sending of synchronization msgs
+    CMD_APP_COPY_RUN = 21,      //!< Copy app from adjacent chip and reset
     CMD_SIG = 22,               //!< Send signal to apps
     CMD_FFD = 23,               //!< Send flood-fill data
 
@@ -455,6 +454,7 @@ enum sark_scp_command_codes {
 
     CMD_ALLOC = 28,             //!< Memory allocation
     CMD_RTR = 29,               //!< Router control
+    CMD_SYNC = 30,              //!< Control sending of synchronization msgs
     CMD_INFO = 31,              //!< Get chip/core info
 
     // 48-63 reserved for BMP

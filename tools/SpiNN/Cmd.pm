@@ -52,7 +52,6 @@ my $CMD_LINK_WRITE = 18;
 my $CMD_AR = 19;
 
 my $CMD_NNP = 20;
-my $CMD_P2PC = 21;
 my $CMD_SIG = 22;
 my $CMD_FFD = 23;
 
@@ -697,25 +696,6 @@ sub flood_boot
 
 
 #------------------------------------------------------------------------------
-
-
-sub p2pc
-{
-    my ($self, $x, $y, %opts) = @_;
-
-    my $id = $self->next_id ();
-
-    my $arg1 = (0x00 << 24) + (0x3e << 16) + (0x00 << 8) + $id;
-    my $arg2 = ($x << 24) + ($y << 16) + (0x00 << 8) + 0x00;
-    my $arg3 = (0x00 << 24) + (0x00 << 16) + (0x3f << 8) + 0xf8;
-
-    $self->scp_cmd ($CMD_P2PC,
-                    arg1 => $arg1,
-                    arg2 => $arg2,
-                    arg3 => $arg3,
-                    addr => [],
-                    %opts);
-}
 
 
 sub as
