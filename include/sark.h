@@ -454,8 +454,9 @@ enum sark_scp_command_codes {
 
     CMD_ALLOC = 28,             //!< Memory allocation
     CMD_RTR = 29,               //!< Router control
-    CMD_SYNC = 30,              //!< Control sending of synchronization msgs
+    CMD_RSVD = 30,              //!< Reserved (used elsewhere in software)
     CMD_INFO = 31,              //!< Get chip/core info
+    CMD_SYNC = 32,              //!< Control sending of synchronization msgs
 
     // 48-63 reserved for BMP
 
