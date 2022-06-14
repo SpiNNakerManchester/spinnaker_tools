@@ -1162,15 +1162,37 @@ void soft_wdog(uint max)
 void init_link_en(void)
 {
     uint timeout = sv->peek_time;
-    uint remote_chip_id;
+    uint local_chip_id = sc[SC_CHIP_ID];
     for (uint link = 0; link < NUM_LINKS; link++) {
-        // a link is deemed working if a link read of the
-        // corresponding neighbouring chip succeeds
+        // The link will be down here if blacklisted
         if (link_en & (1 << link)) {
+
+            // Try to read the system ID
+            uint remote_chip_id;
             uint rc = link_read_word((uint) (sc + SC_CHIP_ID), link,
                     &remote_chip_id, timeout);
-            if (rc != RC_OK) {
-              link_en &= ~(1 << link);
+            if (rc != RC_OK || remote_chip_id != local_chip_id) {
+                link_en &= ~(1 << link);
+                continue;
+            }
+
+            // Try to read 1000 words over the link (that'll test it)
+            for (uint i = 0; i < 1000; i++) {
+
+                // Be a little kind - 3 retries per word
+                for (uint j = 0; j < 3; j++) {
+                    uint data;
+                    rc = link_read_word((uint) sv->sdram_sys + i * 4, link,
+                            &data, timeout);
+                    if (rc == RC_OK) {
+                        break;
+                    }
+                    sark_delay_us(sv->peek_time);
+                }
+                if (rc != RC_OK) {
+                    link_en &= ~(1 << link);
+                    break;
+                }
             }
         }
     }
@@ -1182,6 +1204,8 @@ void init_link_en(void)
 void disable_unidirectional_links(void)
 {
     uint timeout = sv->peek_time;
+
+    // Check if the opposite thinks it is enabled
     uint remote_link_en;
     uint remote_addr = (uint) &(sv->link_en) & 0xfffffffc;  // word aligned
     uint remote_offs = (uint) &(sv->link_en) & 0x00000003;  // byte offset
@@ -1189,7 +1213,7 @@ void disable_unidirectional_links(void)
         if (link_en & (1 << link)) {
             uint rc = link_read_word(remote_addr, link,
                     &remote_link_en, timeout);
-            remote_link_en = remote_link_en >> (remote_offs * 8);
+            remote_link_en = (remote_link_en >> (remote_offs * 8)) & 0xFF;
 
             // check opposite link in neighbour
             uint rl = link + 3;
@@ -1200,10 +1224,23 @@ void disable_unidirectional_links(void)
 
             // disable link if its opposite was disabled
             // by the corresponding neighbouring chip
+            // or if the corresponding neighbouring chip has an odd value
             if ((rc != RC_OK) ||
-                ((remote_link_en & (1 << rl)) == 0)
+                ((remote_link_en & (1 << rl)) == 0) ||
+                (remote_link_en > 0x3F)
                ){
               link_en &= ~(1 << link);
+            }
+        }
+    }
+
+    // Check if the opposite agrees with us about system size
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        if (link_en & (1 << link)) {
+            uint remote_sv;
+            uint rc = link_read_word((uint) sv, link, &remote_sv, timeout);
+            if (rc != RC_OK || ((remote_sv & 0xFFFF0000) >> 16) != sv->p2p_dims) {
+                link_en &= ~(1 << link);
             }
         }
     }
@@ -1382,7 +1419,11 @@ void proc_100hz(uint a1, uint a2)
         // accounting for the fact that the timers are not necessarily
         // *perfectly* aligned to within 10ms...
 
-        netinit_biff_tick_counter++;
+        // Get stuck here if we add a flag.  Once we reset the flag, we can
+        // proceed.
+        if ((sv->bt_flags & 0x2) == 0) {
+            netinit_biff_tick_counter++;
+        }
 
         if (netinit_biff_tick_counter == 1) {
             if (sv->board_info) {
@@ -1398,6 +1439,8 @@ void proc_100hz(uint a1, uint a2)
         } else if (netinit_biff_tick_counter >= 3) {
             netinit_p2p_tick_counter = 0;
             netinit_phase = NETINIT_PHASE_P2P_TABLE;
+            // We can do this here first time; we can do it once more later
+            disable_unidirectional_links();
         }
         break;
 
@@ -1679,6 +1722,12 @@ void sark_config(void)
 //! Delegate acting as a monitor to another core
 void delegate(void)
 {
+    // If no cores are OK, just stop
+    if (!sc[SC_CPU_OK]) {
+        sv->link_en = link_en = 0;
+        remap_phys_cores(0x3ffff);
+    }
+
     // choose delegate
     uint del      = NUM_CPUS - 1;         // potential delegate
     uint del_mask = 1 << (NUM_CPUS - 1);  // delegate mask

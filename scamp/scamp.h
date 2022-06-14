@@ -524,6 +524,9 @@ extern uint scamp_debug(sdp_msg_t *msg, uint srce_ip);
 //! \{
 
 extern void boot_nn(uint hw_ver);
+
+//! \name SCAMP disable links function.  See scamp-3.c
+extern void disable_unidirectional_links(void);
 //! \}
 
 //------------------------------------------------------------------------------

@@ -431,23 +431,8 @@ uint cmd_info(sdp_msg_t *msg)
     // Is this chip's Ethernet connection up?
     msg->arg1 |= (!!(sv->eth_up)) << 25;
 
-    // Get working link bitmap
-    uint timeout = sv->peek_time;
-    uint local_chip_id = sc[SC_CHIP_ID];
-    for (uint link = 0; link < NUM_LINKS; link++) {
-        // A link is determined working if: a link read of the remote system
-        // controller's chip ID returns and the chip ID matches this chip's
-        // ID (i.e. the remote chip is the same type of chip as this one!).
-        // Mark "disabled" links as not working.
-        if (link_en & (1 << link)) {
-            uint remote_chip_id;
-            uint rc = link_read_word((uint) (sc + SC_CHIP_ID), link,
-                    &remote_chip_id, timeout);
-            if (rc == RC_OK && remote_chip_id == local_chip_id) {
-                msg->arg1 |= 1 << (link + 8);
-            }
-        }
-    }
+    // Get working link bitmap (retry links to be sure)
+    msg->arg1 |= link_en << 8;
 
     // Get largest free block in SDRAM
     msg->arg2 = sark_heap_max(sv->sdram_heap, ALLOC_LOCK);
@@ -891,7 +876,15 @@ uint cmd_app_copy_run(sdp_msg_t *msg) {
     // Do the copy
     uint timeout = sv->peek_time;
     for (uint i = 0; i < len / 4; i++) {
-        uint rc = link_read_word(addr, link, (uint *) addr, timeout);
+        uint rc;
+        // Try 3 times per word to avoid giving up too easily
+        for (uint j = 0; j < 3; j++) {
+            rc = link_read_word(addr, link, (uint *) addr, timeout);
+            if (rc == RC_OK) {
+                break;
+            }
+            sark_delay_us(timeout);
+        }
         if (rc != RC_OK) {
             msg->cmd_rc = rc;
             return 0;
