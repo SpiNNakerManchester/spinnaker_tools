@@ -851,7 +851,8 @@ uint cmd_remap(sdp_msg_t *msg)
 //! \return The length of the payload of \p msg
 uint cmd_app_copy_run(sdp_msg_t *msg) {
     uint addr = (uint) sv->sdram_sys;
-    uint link = msg->arg1;
+    uint link = msg->arg1 & 0x7;
+    uint chksum = msg->arg1 >> 3;
     uint len = msg->arg2;
     uint id_op_mask = msg->arg3;
 
@@ -875,11 +876,13 @@ uint cmd_app_copy_run(sdp_msg_t *msg) {
 
     // Do the copy
     uint timeout = sv->peek_time;
+    uint sum = 0;
     for (uint i = 0; i < len / 4; i++) {
         uint rc;
+        uint data;
         // Try 3 times per word to avoid giving up too easily
         for (uint j = 0; j < 3; j++) {
-            rc = link_read_word(addr, link, (uint *) addr, timeout);
+            rc = link_read_word(addr, link, &data, timeout);
             if (rc == RC_OK) {
                 break;
             }
@@ -889,7 +892,15 @@ uint cmd_app_copy_run(sdp_msg_t *msg) {
             msg->cmd_rc = rc;
             return 0;
         }
+        sum += data;
+        *((uint *) addr) = data;
         addr += 4;
+    }
+
+    if ((chksum != 0) && ((sum & 0x1FFFFFFF) != chksum)) {
+        msg->cmd_rc = RC_SUM;
+        msg->arg1 = sum;
+        return 4;
     }
 
     // Do the start
