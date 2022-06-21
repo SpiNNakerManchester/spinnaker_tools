@@ -307,7 +307,8 @@ void level_config(void)
 //! \param[in] key: The key of the packet
 void peek_ack_pkt(uint link, uint data, uint key)
 {
-    if (peek_pkt.flags != 1) {
+    if (peek_pkt.flags != 1 && peek_pkt.pkt.data == key
+            && peek_pkt.pkt.ctrl == link) {
         pkt_t t = {link, data, key};
         peek_pkt.pkt = t;
         peek_pkt.flags = 1;
@@ -340,7 +341,12 @@ void poke_ack_pkt(uint link, uint data, uint key)
 //! \return result code
 uint link_read_word(uint addr, uint link, uint *buf, uint timeout)
 {
+    // Clear any existing status and set the address to be checked against
+    cpu_int_disable();
+    peek_pkt.pkt.data = addr + 1;
+    peek_pkt.pkt.ctrl = link;
     peek_pkt.flags = 0;
+    cpu_int_enable();
 
     if (! pkt_tx(PKT_NND + (link << 18), 0, addr)) {
         return RC_PKT_TX;
