@@ -437,7 +437,6 @@ enum sark_scp_command_codes {
     CMD_FILL = 5,               //!< Fill memory
 
     // Following for monitors only
-
     CMD_REMAP = 16,             //!< Remap application core
     CMD_LINK_READ = 17,         //!< Read neighbour memory
     CMD_LINK_WRITE = 18,        //!< Write neighbour memory
@@ -455,7 +454,9 @@ enum sark_scp_command_codes {
 
     CMD_ALLOC = 28,             //!< Memory allocation
     CMD_RTR = 29,               //!< Router control
+    CMD_RSVD = 30,              //!< Reserved (used elsewhere in software)
     CMD_INFO = 31,              //!< Get chip/core info
+    CMD_SYNC = 32,              //!< Control sending of synchronization msgs
 
     // 48-63 reserved for BMP
 

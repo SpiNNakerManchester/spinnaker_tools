@@ -55,6 +55,7 @@ extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 
 extern uchar v2p_map[MAX_CPUS];
 extern uint num_cpus;
+extern volatile uint do_sync;
 
 static uint centi_ms;   //!< Counts 0 to 9 in ms
 
@@ -293,7 +294,7 @@ INT_HANDLER pkt_p2p_int(void)
 //------------------------------------------------------------------------------
 
 //! Time beacon counter
-static uint n_beacons_sent = 0;
+uint n_beacons_sent = 0;
 //! Inter-synchronisation time, in microseconds
 static uint time_to_next_sync = TIME_BETWEEN_SYNC_US;
 
@@ -309,7 +310,7 @@ INT_HANDLER ms_timer_int(void)
 
     // Send the sync signal if appropriate
     if ((sv->p2p_root == sv->p2p_addr)
-            && (netinit_phase == NETINIT_PHASE_DONE)) {
+            && (netinit_phase == NETINIT_PHASE_DONE) && do_sync) {
         if (time_to_next_sync == 0) {
             uint data = (n_beacons_sent & N_BEACONS_MASK) << N_BEACONS_SHIFT;
             data |= tc[T1_COUNT] & SOURCE_T1_COUNT_MASK;
