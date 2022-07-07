@@ -1270,9 +1270,21 @@
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
+      <name>CMD_RSVD</name>
+      <anchorfile>sark_8h.html</anchorfile>
+      <anchor>add51abc04ff5e1d219053f53ce83fa05a9ab7ff8466953d3cf4980188105b01fd</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
       <name>CMD_INFO</name>
       <anchorfile>sark_8h.html</anchorfile>
       <anchor>add51abc04ff5e1d219053f53ce83fa05a6b1ac29fd084fc49f7c5c5e80130614b</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>CMD_SYNC</name>
+      <anchorfile>sark_8h.html</anchorfile>
+      <anchor>add51abc04ff5e1d219053f53ce83fa05adbb752da1732f16260da347efcfa3355</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
@@ -9782,6 +9794,13 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
+      <type>volatile uint</type>
+      <name>do_sync</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a7402f8e87c78b63b027fd7134836fdf0</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
       <type>const uint</type>
       <name>rst_init</name>
       <anchorfile>scamp-3_8c.html</anchorfile>
@@ -10307,6 +10326,13 @@
     </member>
     <member kind="function">
       <type>uint</type>
+      <name>cmd_sync</name>
+      <anchorfile>scamp-cmd_8c.html</anchorfile>
+      <anchor>a4790c9260678d918df8300ac9192d263</anchor>
+      <arglist>(sdp_msg_t *msg)</arglist>
+    </member>
+    <member kind="function">
+      <type>uint</type>
       <name>scamp_debug</name>
       <anchorfile>scamp-cmd_8c.html</anchorfile>
       <anchor>a5b830754727615d4f6bba4876f348c27</anchor>
@@ -10318,6 +10344,20 @@
       <anchorfile>scamp-cmd_8c.html</anchorfile>
       <anchor>ad415696ea03a6a1d98e2247335840836</anchor>
       <arglist>[4]</arglist>
+    </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>do_sync</name>
+      <anchorfile>scamp-cmd_8c.html</anchorfile>
+      <anchor>a7402f8e87c78b63b027fd7134836fdf0</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>uint</type>
+      <name>n_beacons_sent</name>
+      <anchorfile>scamp-cmd_8c.html</anchorfile>
+      <anchor>a6ee20526fd90716c9af350599ed326df</anchor>
+      <arglist></arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -10538,6 +10578,13 @@
       <anchor>ac80496cd2e8e8cdeaacf7d6d0468c9c1</anchor>
       <arglist></arglist>
     </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>do_sync</name>
+      <anchorfile>scamp-isr_8c.html</anchorfile>
+      <anchor>a7402f8e87c78b63b027fd7134836fdf0</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="variable" static="yes">
       <type>static uint</type>
       <name>centi_ms</name>
@@ -10587,8 +10634,8 @@
       <anchor>ae5df0fadd48c0d82df01a81dc4400a2f</anchor>
       <arglist></arglist>
     </member>
-    <member kind="variable" static="yes">
-      <type>static uint</type>
+    <member kind="variable">
+      <type>uint</type>
       <name>n_beacons_sent</name>
       <anchorfile>scamp-isr_8c.html</anchorfile>
       <anchor>a6ee20526fd90716c9af350599ed326df</anchor>
@@ -12131,6 +12178,13 @@
       <anchor>aeafed943f53ac9e25a483de3745935ad</anchor>
       <arglist>(uint hw_ver)</arglist>
     </member>
+    <member kind="function">
+      <type>void</type>
+      <name>disable_unidirectional_links</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a5505bb7a8760b0b56f386c9745a87c3a</anchor>
+      <arglist>(void)</arglist>
+    </member>
     <member kind="define">
       <type>#define</type>
       <name>MAX_CPUS</name>
@@ -13172,6 +13226,13 @@
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>aeafed943f53ac9e25a483de3745935ad</anchor>
       <arglist>(uint hw_ver)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>disable_unidirectional_links</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a5505bb7a8760b0b56f386c9745a87c3a</anchor>
+      <arglist>(void)</arglist>
     </member>
   </compound>
   <compound kind="file">

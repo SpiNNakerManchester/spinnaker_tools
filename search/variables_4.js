@@ -22,10 +22,11 @@ var searchData=
   ['dma_5fqueue_19',['dma_queue',['../spin1__api_8c.html#a3f96945e579863d7fdc4c2110dc84555',1,'dma_queue():&#160;spin1_api.c'],['../spin1__isr_8c.html#a3f96945e579863d7fdc4c2110dc84555',1,'dma_queue():&#160;spin1_api.c']]],
   ['dma_5fqueue_5ffull_20',['dma_queue_full',['../spin1__api_8h.html#af6db95d506fa0ebabd265ab9c77384b3',1,'diagnostics_t']]],
   ['dma_5ftransfers_21',['dma_transfers',['../spin1__api_8h.html#a51b263b00d8c7d8d80023d41019cade4',1,'diagnostics_t']]],
-  ['drift_22',['drift',['../spin1__api_8c.html#a3539afc91ff4e1a2bb2ea3ee49ab9a32',1,'drift():&#160;spin1_api.c'],['../spin1__isr_8c.html#a3539afc91ff4e1a2bb2ea3ee49ab9a32',1,'drift():&#160;spin1_api.c']]],
-  ['drift_5faccum_23',['drift_accum',['../spin1__api_8c.html#a98afce4d956b1340857dc4677531a7c7',1,'drift_accum():&#160;spin1_api.c'],['../spin1__isr_8c.html#a98afce4d956b1340857dc4677531a7c7',1,'drift_accum():&#160;spin1_api.c']]],
-  ['drift_5fsign_24',['drift_sign',['../spin1__api_8c.html#ae2ac308ec0c5c2302af6ef1d1c676405',1,'drift_sign():&#160;spin1_api.c'],['../spin1__isr_8c.html#ae2ac308ec0c5c2302af6ef1d1c676405',1,'drift_sign():&#160;spin1_api.c']]],
-  ['ds_25',['DS',['../spinn__net_8h.html#a16ed05e077e3c1f75a258903d8b05aa4',1,'ip_hdr_t']]],
-  ['dumped_5ffr_5fpackets_26',['dumped_fr_packets',['../spin1__api_8h.html#a8c352bd034675275742b760bd3b98a8d',1,'diagnostics_t']]],
-  ['dumped_5fmc_5fpackets_27',['dumped_mc_packets',['../spin1__api_8h.html#a00330c81fd3e4264423ecaae945bb729',1,'diagnostics_t']]]
+  ['do_5fsync_22',['do_sync',['../scamp-3_8c.html#a7402f8e87c78b63b027fd7134836fdf0',1,'do_sync():&#160;scamp-3.c'],['../scamp-cmd_8c.html#a7402f8e87c78b63b027fd7134836fdf0',1,'do_sync():&#160;scamp-3.c'],['../scamp-isr_8c.html#a7402f8e87c78b63b027fd7134836fdf0',1,'do_sync():&#160;scamp-3.c']]],
+  ['drift_23',['drift',['../spin1__api_8c.html#a3539afc91ff4e1a2bb2ea3ee49ab9a32',1,'drift():&#160;spin1_api.c'],['../spin1__isr_8c.html#a3539afc91ff4e1a2bb2ea3ee49ab9a32',1,'drift():&#160;spin1_api.c']]],
+  ['drift_5faccum_24',['drift_accum',['../spin1__isr_8c.html#a98afce4d956b1340857dc4677531a7c7',1,'drift_accum():&#160;spin1_api.c'],['../spin1__api_8c.html#a98afce4d956b1340857dc4677531a7c7',1,'drift_accum():&#160;spin1_api.c']]],
+  ['drift_5fsign_25',['drift_sign',['../spin1__api_8c.html#ae2ac308ec0c5c2302af6ef1d1c676405',1,'drift_sign():&#160;spin1_api.c'],['../spin1__isr_8c.html#ae2ac308ec0c5c2302af6ef1d1c676405',1,'drift_sign():&#160;spin1_api.c']]],
+  ['ds_26',['DS',['../spinn__net_8h.html#a16ed05e077e3c1f75a258903d8b05aa4',1,'ip_hdr_t']]],
+  ['dumped_5ffr_5fpackets_27',['dumped_fr_packets',['../spin1__api_8h.html#a8c352bd034675275742b760bd3b98a8d',1,'diagnostics_t']]],
+  ['dumped_5fmc_5fpackets_28',['dumped_mc_packets',['../spin1__api_8h.html#a00330c81fd3e4264423ecaae945bb729',1,'diagnostics_t']]]
 ];

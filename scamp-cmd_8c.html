@@ -187,6 +187,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a68bc6c98e75884c8419423bcd18414cc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a68bc6c98e75884c8419423bcd18414cc">cmd_app_copy_run</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg)</td></tr>
 <tr class="memdesc:a68bc6c98e75884c8419423bcd18414cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy an application from an adjacent chip, then start it.  <a href="scamp-cmd_8c.html#a68bc6c98e75884c8419423bcd18414cc">More...</a><br /></td></tr>
 <tr class="separator:a68bc6c98e75884c8419423bcd18414cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4790c9260678d918df8300ac9192d263"><td class="memItemLeft" align="right" valign="top"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a4790c9260678d918df8300ac9192d263">cmd_sync</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg)</td></tr>
+<tr class="memdesc:a4790c9260678d918df8300ac9192d263"><td class="mdescLeft">&#160;</td><td class="mdescRight">Synchronization of cores handler.  <a href="scamp-cmd_8c.html#a4790c9260678d918df8300ac9192d263">More...</a><br /></td></tr>
+<tr class="separator:a4790c9260678d918df8300ac9192d263"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b830754727615d4f6bba4876f348c27"><td class="memItemLeft" align="right" valign="top"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a5b830754727615d4f6bba4876f348c27">scamp_debug</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> srce_ip)</td></tr>
 <tr class="memdesc:a5b830754727615d4f6bba4876f348c27"><td class="mdescLeft">&#160;</td><td class="mdescRight">General debugging and control command handler.  <a href="scamp-cmd_8c.html#a5b830754727615d4f6bba4876f348c27">More...</a><br /></td></tr>
 <tr class="separator:a5b830754727615d4f6bba4876f348c27"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -197,6 +200,14 @@ Variables</h2></td></tr>
 <a class="el" href="scamp_8h.html#structlevel__t">level_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>levels</b> [4]</td></tr>
 <tr class="memdesc:ad415696ea03a6a1d98e2247335840836"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used for tracking signal dispatch. <br /></td></tr>
 <tr class="separator:ad415696ea03a6a1d98e2247335840836"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7402f8e87c78b63b027fd7134836fdf0"><td class="memItemLeft" align="right" valign="top"><a id="a7402f8e87c78b63b027fd7134836fdf0" name="a7402f8e87c78b63b027fd7134836fdf0"></a>
+volatile <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>do_sync</b></td></tr>
+<tr class="memdesc:a7402f8e87c78b63b027fd7134836fdf0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether to perform clock synchronization (on by default at start) <br /></td></tr>
+<tr class="separator:a7402f8e87c78b63b027fd7134836fdf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ee20526fd90716c9af350599ed326df"><td class="memItemLeft" align="right" valign="top"><a id="a6ee20526fd90716c9af350599ed326df" name="a6ee20526fd90716c9af350599ed326df"></a>
+<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>n_beacons_sent</b></td></tr>
+<tr class="memdesc:a6ee20526fd90716c9af350599ed326df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time beacon counter. <br /></td></tr>
+<tr class="separator:a6ee20526fd90716c9af350599ed326df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Command handling for SC&amp;MP. </p>
@@ -1051,6 +1062,33 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="a4790c9260678d918df8300ac9192d263" name="a4790c9260678d918df8300ac9192d263"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4790c9260678d918df8300ac9192d263">&#9670;&nbsp;</a></span>cmd_sync()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> cmd_sync </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *&#160;</td>
+          <td class="paramname"><em>msg</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Synchronization of cores handler. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">msg</td><td>SCP message, will be updated with result </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Always zero; result never has a payload </dd></dl>
+
+</div>
+</div>
 <a id="a5b830754727615d4f6bba4876f348c27" name="a5b830754727615d4f6bba4876f348c27"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5b830754727615d4f6bba4876f348c27">&#9670;&nbsp;</a></span>scamp_debug()</h2>
 
@@ -1112,7 +1150,7 @@ Variables</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri May 20 2022 15:21:04 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.4
+Generated on Thu Jul 7 2022 14:48:14 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.4
 </small></address>
 </body>
 </html>
