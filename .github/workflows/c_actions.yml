@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Install system dependencies
       run: sudo apt-get -q install gcc-arm-none-eabi freeglut3-dev --fix-missing
     - name: Set C environment variables
@@ -50,9 +50,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Checkout SupportScripts
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: SpiNNakerManchester/SupportScripts
         path: support
