@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<tagfile doxygen_version="1.9.5">
+<tagfile doxygen_version="1.9.6">
   <compound kind="file">
     <name>sark.h</name>
-    <path>/github/workspace/include/</path>
+    <path>include/</path>
     <filename>sark_8h.html</filename>
     <includes id="spinnaker_8h" name="spinnaker.h" local="no" imported="no">spinnaker.h</includes>
     <includes id="version_8h" name="version.h" local="no" imported="no">version.h</includes>
@@ -2586,13 +2586,13 @@
   </compound>
   <compound kind="file">
     <name>sark_cpp.h</name>
-    <path>/github/workspace/include/</path>
+    <path>include/</path>
     <filename>sark__cpp_8h.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
   </compound>
   <compound kind="file">
     <name>spin1_api.h</name>
-    <path>/github/workspace/include/</path>
+    <path>include/</path>
     <filename>spin1__api_8h.html</filename>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
     <class kind="struct">diagnostics_t</class>
@@ -3027,13 +3027,13 @@
   </compound>
   <compound kind="file">
     <name>spin1_api_cpp.h</name>
-    <path>/github/workspace/include/</path>
+    <path>include/</path>
     <filename>spin1__api__cpp_8h.html</filename>
     <includes id="spin1__api_8h" name="spin1_api.h" local="no" imported="no">spin1_api.h</includes>
   </compound>
   <compound kind="file">
     <name>spin1_api_params.h</name>
-    <path>/github/workspace/include/</path>
+    <path>include/</path>
     <filename>spin1__api__params_8h.html</filename>
     <class kind="struct">copy_t</class>
     <class kind="struct">dma_queue_t</class>
@@ -3315,7 +3315,7 @@
   </compound>
   <compound kind="file">
     <name>spinnaker.h</name>
-    <path>/github/workspace/include/</path>
+    <path>include/</path>
     <filename>spinnaker_8h.html</filename>
     <member kind="define">
       <type>#define</type>
@@ -8011,7 +8011,7 @@
   </compound>
   <compound kind="file">
     <name>version.h</name>
-    <path>/github/workspace/include/</path>
+    <path>include/</path>
     <filename>version_8h.html</filename>
     <member kind="define">
       <type>#define</type>
@@ -8030,7 +8030,7 @@
   </compound>
   <compound kind="file">
     <name>sark_alloc.c</name>
-    <path>/github/workspace/sark/</path>
+    <path>sark/</path>
     <filename>sark__alloc_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <member kind="define">
@@ -8134,7 +8134,7 @@
   </compound>
   <compound kind="file">
     <name>sark_base.c</name>
-    <path>/github/workspace/sark/</path>
+    <path>sark/</path>
     <filename>sark__base_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <member kind="define">
@@ -8392,7 +8392,7 @@
   </compound>
   <compound kind="file">
     <name>sark_div0.c</name>
-    <path>/github/workspace/sark/</path>
+    <path>sark/</path>
     <filename>sark__div0_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <member kind="function">
@@ -8412,7 +8412,7 @@
   </compound>
   <compound kind="file">
     <name>sark_event.c</name>
-    <path>/github/workspace/sark/</path>
+    <path>sark/</path>
     <filename>sark__event_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <member kind="define">
@@ -8644,7 +8644,7 @@
   </compound>
   <compound kind="file">
     <name>sark_hw.c</name>
-    <path>/github/workspace/sark/</path>
+    <path>sark/</path>
     <filename>sark__hw_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <member kind="function">
@@ -8811,7 +8811,7 @@
   </compound>
   <compound kind="file">
     <name>sark_io.c</name>
-    <path>/github/workspace/sark/</path>
+    <path>sark/</path>
     <filename>sark__io_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <class kind="struct">iobuf_t</class>
@@ -9000,7 +9000,7 @@
   </compound>
   <compound kind="file">
     <name>sark_isr.c</name>
-    <path>/github/workspace/sark/</path>
+    <path>sark/</path>
     <filename>sark__isr_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <member kind="function">
@@ -9202,7 +9202,7 @@
   </compound>
   <compound kind="file">
     <name>sark_pkt.c</name>
-    <path>/github/workspace/sark/</path>
+    <path>sark/</path>
     <filename>sark__pkt_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <member kind="function">
@@ -9250,7 +9250,7 @@
   </compound>
   <compound kind="file">
     <name>sark_timer.c</name>
-    <path>/github/workspace/sark/</path>
+    <path>sark/</path>
     <filename>sark__timer_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <member kind="function">
@@ -9312,7 +9312,7 @@
   </compound>
   <compound kind="file">
     <name>sark.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>sark_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
     <member kind="function">
@@ -9325,7 +9325,7 @@
   </compound>
   <compound kind="file">
     <name>scamp-3.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>scamp-3_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
     <includes id="scamp_8h" name="scamp.h" local="yes" imported="no">scamp.h</includes>
@@ -9894,7 +9894,7 @@
   </compound>
   <compound kind="file">
     <name>scamp-app.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>scamp-app_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
     <includes id="scamp_8h" name="scamp.h" local="yes" imported="no">scamp.h</includes>
@@ -9985,7 +9985,7 @@
   </compound>
   <compound kind="file">
     <name>scamp-boot.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>scamp-boot_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
     <includes id="scamp_8h" name="scamp.h" local="yes" imported="no">scamp.h</includes>
@@ -10071,7 +10071,7 @@
   </compound>
   <compound kind="file">
     <name>scamp-cmd.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>scamp-cmd_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
     <includes id="scamp_8h" name="scamp.h" local="yes" imported="no">scamp.h</includes>
@@ -10362,7 +10362,7 @@
   </compound>
   <compound kind="file">
     <name>scamp-del.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>scamp-del_8c.html</filename>
     <includes id="spinnaker_8h" name="spinnaker.h" local="yes" imported="no">spinnaker.h</includes>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
@@ -10377,7 +10377,7 @@
   </compound>
   <compound kind="file">
     <name>scamp-isr.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>scamp-isr_8c.html</filename>
     <includes id="spinnaker_8h" name="spinnaker.h" local="yes" imported="no">spinnaker.h</includes>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
@@ -10658,7 +10658,7 @@
   </compound>
   <compound kind="file">
     <name>scamp-nn.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>scamp-nn_8c.html</filename>
     <includes id="spinnaker_8h" name="spinnaker.h" local="yes" imported="no">spinnaker.h</includes>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
@@ -11318,7 +11318,7 @@
   </compound>
   <compound kind="file">
     <name>scamp-p2p.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>scamp-p2p_8c.html</filename>
     <includes id="spinnaker_8h" name="spinnaker.h" local="yes" imported="no">spinnaker.h</includes>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
@@ -11623,7 +11623,7 @@
   </compound>
   <compound kind="file">
     <name>scamp.h</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>scamp_8h.html</filename>
     <class kind="struct">iptag_t</class>
     <class kind="struct">pkt_queue_t</class>
@@ -13237,7 +13237,7 @@
   </compound>
   <compound kind="file">
     <name>spinn_net.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>spinn__net_8c.html</filename>
     <includes id="spinnaker_8h" name="spinnaker.h" local="yes" imported="no">spinnaker.h</includes>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
@@ -13401,7 +13401,7 @@
   </compound>
   <compound kind="file">
     <name>spinn_net.h</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>spinn__net_8h.html</filename>
     <class kind="struct">arp_pkt_t</class>
     <class kind="struct">udp_hdr_t</class>
@@ -13635,7 +13635,7 @@
   </compound>
   <compound kind="file">
     <name>spinn_phy.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>spinn__phy_8c.html</filename>
     <includes id="spinnaker_8h" name="spinnaker.h" local="yes" imported="no">spinnaker.h</includes>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
@@ -13677,7 +13677,7 @@
   </compound>
   <compound kind="file">
     <name>spinn_phy.h</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>spinn__phy_8h.html</filename>
     <member kind="enumeration">
       <type></type>
@@ -13794,7 +13794,7 @@
   </compound>
   <compound kind="file">
     <name>spinn_srom.c</name>
-    <path>/github/workspace/scamp/</path>
+    <path>scamp/</path>
     <filename>spinn__srom_8c.html</filename>
     <includes id="spinnaker_8h" name="spinnaker.h" local="yes" imported="no">spinnaker.h</includes>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
@@ -13857,7 +13857,7 @@
   </compound>
   <compound kind="file">
     <name>spin1_api.c</name>
-    <path>/github/workspace/spin1_api/</path>
+    <path>spin1_api/</path>
     <filename>spin1__api_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <includes id="spin1__api_8h" name="spin1_api.h" local="no" imported="no">spin1_api.h</includes>
@@ -14446,7 +14446,7 @@
   </compound>
   <compound kind="file">
     <name>spin1_isr.c</name>
-    <path>/github/workspace/spin1_api/</path>
+    <path>spin1_api/</path>
     <filename>spin1__isr_8c.html</filename>
     <includes id="sark_8h" name="sark.h" local="no" imported="no">sark.h</includes>
     <includes id="spin1__api_8h" name="spin1_api.h" local="no" imported="no">spin1_api.h</includes>
