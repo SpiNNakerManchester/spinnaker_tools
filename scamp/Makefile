@@ -91,7 +91,7 @@ $(BUILD_DIR)%.gas: %.s
 $(BUILD_DIR)boot_aplx.elf: $(BUILD_DIR)boot_aplx.gas $(BUILD_DIR)spinnaker.gas $(BUILD_DIR)sark.gas
 	$(MKDIR) $(BUILD_DIR)
 	$(AS) -I $(BUILD_DIR) -o $(BUILD_DIR)boot_aplx.o $<
-	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx -nostartfiles $(BUILD_DIR)boot_aplx.o -o $@
+	$(GP)-ld -Tboot.lnk -static --no-gc-sections --use-blx $(BUILD_DIR)boot_aplx.o -o $@
 
 else
 $(BUILD_DIR)boot_aplx.elf: boot_aplx.s $(BUILD_DIR)spinnaker.s $(BUILD_DIR)sark.s

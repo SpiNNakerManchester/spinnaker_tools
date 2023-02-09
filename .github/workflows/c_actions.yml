@@ -26,7 +26,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Install system dependencies
-      run: sudo apt-get -q install gcc-arm-none-eabi freeglut3-dev --fix-missing
+      run: sudo apt-get -q install gcc-arm-none-eabi --fix-missing
     - name: Set C environment variables
       run: |
         echo "SPINN_DIRS=$PWD" >> $GITHUB_ENV
@@ -40,7 +40,6 @@ jobs:
         make -C apps/hello
         make -C apps/hello_cpp
         make -C apps/life
-        make -C apps/pt_demo
       env:
         GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
         CFLAGS: -fdiagnostics-color
