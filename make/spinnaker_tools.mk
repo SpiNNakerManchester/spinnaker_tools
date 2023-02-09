@@ -90,7 +90,7 @@ ifeq ($(GNU),1)
         CFLAGS += -fdata-sections -ffunction-sections
         LD := $(GP)-ld -i
     else
-        LD := $(GP)-gcc -T$(LD_LNK) -Wl,-e,cpu_reset -Wl,-static -ffreestanding -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx -nostartfiles -static
+        LD := $(GP)-gcc -T$(LD_LNK) -Wl,-e,cpu_reset -Wl,-static -ffreestanding -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,--use-blx --nostartfiles -static
         LFLAGS += -L $(SPINN_LIB_DIR)
     endif
 
