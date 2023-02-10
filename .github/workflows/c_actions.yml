@@ -95,6 +95,8 @@ jobs:
         options: -P max-line-length=200 -P max-file-length=3000
     - name: Run rat copyright enforcement
       uses: ./support/actions/check-copyrights
+      with:
+        config_file: asl20.xml
     - name: Build documentation using doxygen
       run: |
         sudo apt-get -q install doxygen --fix-missing
