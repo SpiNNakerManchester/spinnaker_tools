@@ -20,6 +20,12 @@
 #ifndef __SPIN1_API_H__
 #define __SPIN1_API_H__
 
+#ifdef __cplusplus
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+extern "C"
+{
+#endif /* __cplusplus */
+
 #include "sark.h"
 
 // ------------------------------------------------------------------------
@@ -632,5 +638,8 @@ extern diagnostics_t diagnostics;
 extern uchar         leadAp;   //!< lead appl. core has special functions
 // ------------------------------------------------------------------------
 
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
-#endif /* __SPIN1_API_H__ */
+#endif // __SPIN1_API_H__
