@@ -96,7 +96,7 @@ jobs:
     - name: Run rat copyright enforcement
       uses: ./support/actions/check-copyrights
       with:
-        config_file: asl20.xml
+        config_file: rat_asl20.xml
     - name: Build documentation using doxygen
       run: |
         sudo apt-get -q install doxygen --fix-missing
