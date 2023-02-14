@@ -361,9 +361,9 @@ Variables</h2></td></tr>
 <p>Controls one or more of the LEDs attached to the SpiNNaker chip. </p>
 <p>The argument should be a sum of calls to macros LED_ON, LED_OFF, LED_INV which turn on, turn off or flip a LED. The argument to each macro is the LED number, an integer starting at zero. All SpiNNaker boards to date have at least one LED so <a class="el" href="sark_8h.html#aaa8988d6632fc64b0ec4a8528cebb7fd" title="Turn LED on.">LED_ON(0)</a> will always work!</p>
 <p>To turn on LED 1 and turn off LED 2 the call looks like this... </p><div class="fragment"><div class="line"><a class="code hl_function" href="sark_8h.html#a74a3a76206602b65fc8f482d0c9cce5d">sark_led_set</a> (<a class="code hl_define" href="sark_8h.html#aaa8988d6632fc64b0ec4a8528cebb7fd">LED_ON</a>(1) + <a class="code hl_define" href="sark_8h.html#a552169688fe8834a280b877a8cf5020e">LED_OFF</a>(2));</div>
-<div class="ttc" id="asark_8h_html_a552169688fe8834a280b877a8cf5020e"><div class="ttname"><a href="sark_8h.html#a552169688fe8834a280b877a8cf5020e">LED_OFF</a></div><div class="ttdeci">#define LED_OFF(n)</div><div class="ttdoc">Turn LED off.</div><div class="ttdef"><b>Definition:</b> sark.h:373</div></div>
-<div class="ttc" id="asark_8h_html_a74a3a76206602b65fc8f482d0c9cce5d"><div class="ttname"><a href="sark_8h.html#a74a3a76206602b65fc8f482d0c9cce5d">sark_led_set</a></div><div class="ttdeci">void sark_led_set(uint leds)</div><div class="ttdoc">Controls one or more of the LEDs attached to the SpiNNaker chip.</div><div class="ttdef"><b>Definition:</b> sark_hw.c:147</div></div>
-<div class="ttc" id="asark_8h_html_aaa8988d6632fc64b0ec4a8528cebb7fd"><div class="ttname"><a href="sark_8h.html#aaa8988d6632fc64b0ec4a8528cebb7fd">LED_ON</a></div><div class="ttdeci">#define LED_ON(n)</div><div class="ttdoc">Turn LED on.</div><div class="ttdef"><b>Definition:</b> sark.h:372</div></div>
+<div class="ttc" id="asark_8h_html_a552169688fe8834a280b877a8cf5020e"><div class="ttname"><a href="sark_8h.html#a552169688fe8834a280b877a8cf5020e">LED_OFF</a></div><div class="ttdeci">#define LED_OFF(n)</div><div class="ttdoc">Turn LED off.</div><div class="ttdef"><b>Definition:</b> sark.h:372</div></div>
+<div class="ttc" id="asark_8h_html_a74a3a76206602b65fc8f482d0c9cce5d"><div class="ttname"><a href="sark_8h.html#a74a3a76206602b65fc8f482d0c9cce5d">sark_led_set</a></div><div class="ttdeci">void sark_led_set(uint leds)</div><div class="ttdoc">Controls one or more of the LEDs attached to the SpiNNaker chip.</div><div class="ttdef"><b>Definition:</b> sark_hw.c:146</div></div>
+<div class="ttc" id="asark_8h_html_aaa8988d6632fc64b0ec4a8528cebb7fd"><div class="ttname"><a href="sark_8h.html#aaa8988d6632fc64b0ec4a8528cebb7fd">LED_ON</a></div><div class="ttdeci">#define LED_ON(n)</div><div class="ttdoc">Turn LED on.</div><div class="ttdef"><b>Definition:</b> sark.h:371</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">leds</td><td>encoded value specifying LEDs and operations thereon </td></tr>
@@ -899,7 +899,7 @@ Counter 11: dumped fixed-route packets <br  />
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Feb 10 2023 07:48:29 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.6
+Generated on Tue Feb 14 2023 07:38:39 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.6
 </small></address>
 </body>
 </html>
