@@ -284,6 +284,11 @@ void proc_byte_set(uint a1, uint a2)
     * (uchar *) a1 = a2;
 }
 
+void proc_word_set(uint a1, uint a2)
+{
+    * (uint *) a1 = a2;
+}
+
 
 void proc_route_msg(uint arg1, uint arg2);
 
@@ -1157,6 +1162,26 @@ void soft_wdog(uint max)
 // functionality, e.g. P2P tables and addresses
 
 
+extern const signed char lx[6]; //!< X deltas, by link ID
+extern const signed char ly[6]; //!< Y deltas, by link ID
+
+static uint x;
+static uint y;
+static uint w;
+static uint h;
+
+uint n_addr(uint link) {
+    int nx = x + (int)lx[link];
+    if (nx < 0) {
+        nx = w - 1;
+    }
+    int ny = y + (int)ly[link];
+    if (ny < 0) {
+        ny = h - 1;
+    }
+    uint addr = nx << 8 | ny;
+}
+
 //! Initialise inter-chip link state bitmap
 void init_link_en(void)
 {
@@ -1191,6 +1216,14 @@ void init_link_en(void)
                 if (rc != RC_OK) {
                     link_en &= ~(1 << link);
                     break;
+                }
+            }
+
+            // Try a P2P "ping" over the link
+            if (link_en & (1 << link)) {
+                uint addr = n_addr(link);
+                if (p2p_ping(addr, link, timeout) != RC_OK) {
+                    io_printf(IO_BUF, "Link %u down\n", link);
                 }
             }
         }
@@ -1378,11 +1411,19 @@ void proc_100hz(uint a1, uint a2)
             }
 
             // Record the coordinates/dimensions discovered
-            sv->p2p_addr = p2p_addr = ((p2p_addr_guess_x - p2p_min_x) << 8) |
-                    ((p2p_addr_guess_y - p2p_min_y) << 0);
-            sv->p2p_dims = p2p_dims = ((1 + p2p_max_x - p2p_min_x) << 8) |
-                    ((1 + p2p_max_y - p2p_min_y) << 0);
+            x = p2p_addr_guess_x - p2p_min_x;
+            y = p2p_addr_guess_y - p2p_min_y;
+            w = 1 + p2p_max_x - p2p_min_x;
+            h = 1 + p2p_max_y - p2p_min_y;
+            sv->p2p_addr = p2p_addr = (x << 8) | (y << 0);
+            sv->p2p_dims = p2p_dims = (w << 8) | (h << 0);
             sv->p2p_root = p2p_root = (-p2p_min_x << 8) | -p2p_min_y;
+
+            // Set up my address, and my direct neighbour addresses
+            rtr_p2p_set(p2p_addr, 7);
+            for (uint lnk = 0; lnk < 6; lnk++) {
+                rtr_p2p_set(n_addr(lnk), lnk);
+            }
 
             sv->p2p_active += 1;
 

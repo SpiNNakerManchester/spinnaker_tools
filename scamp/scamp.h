@@ -264,7 +264,12 @@ enum scamp_p2p_control_message_codes {
     P2P_OPEN_ACK =      (2 << 24),      //!< Open channel acknowledge
     P2P_DATA_ACK =      (3 << 24),      //!< Data acknowledge
     P2P_CLOSE_REQ =     (4 << 24),      //!< Close channel request
-    P2P_CLOSE_ACK =     (5 << 24)       //!< Close channel acknowledge
+    P2P_CLOSE_ACK =     (5 << 24),      //!< Close channel acknowledge
+
+    // These should only be sent when the table is empty, as they can then
+    // send and receive to a fake (0, 0)
+    P2P_PING_REQ =      (6 << 24),      //!< Ping request
+    P2P_PING_ACK =      (7 << 24)       //!< Ping response
 };
 
 #define P2P_DEF_SQL     4               //!< Seq len = 2<sup>4</sup>
@@ -500,6 +505,7 @@ extern void reset_ap(uint virt_mask);
 
 extern uint p2p_send_msg(uint addr, sdp_msg_t *msg);
 extern void desc_init(void);
+extern uint p2p_ping(uint addr, uint link, uint timeout);
 //! \}
 
 //! \name SCAMP nearest-neighbour discovery protocol
