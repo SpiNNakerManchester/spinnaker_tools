@@ -29,8 +29,6 @@
 #include "scamp.h"
 #include <scamp_spin1_sync.h>
 
-
-
 //------------------------------------------------------------------------------
 
 extern pkt_queue_t tx_pkt_queue;
