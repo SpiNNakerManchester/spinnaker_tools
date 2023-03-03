@@ -65,7 +65,7 @@
 // BLOCK_COUNT * BYTE_COUNT must be < 32kB
 
 //! The number of blocks in the image to boot
-#define BLOCK_COUNT     31      // From 1-256
+#define BLOCK_COUNT     32      // From 1-32
 //! The number of words in a block (1kB)
 #define WORD_COUNT      256     // From 1-256
 //! The number of bytes in a block

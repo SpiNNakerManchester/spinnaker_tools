@@ -1174,12 +1174,16 @@ uint n_addr(uint link) {
     int nx = x + (int)lx[link];
     if (nx < 0) {
         nx = w - 1;
+    } else if (nx >= w) {
+        nx = 0;
     }
     int ny = y + (int)ly[link];
     if (ny < 0) {
         ny = h - 1;
+    } else if (ny >= h) {
+        ny = 0;
     }
-    uint addr = nx << 8 | ny;
+    return (nx << 8) | ny;
 }
 
 //! Initialise inter-chip link state bitmap
@@ -1200,31 +1204,11 @@ void init_link_en(void)
                 continue;
             }
 
-            // Try to read 1000 words over the link (that'll test it)
-            for (uint i = 0; i < 1000; i++) {
-
-                // Be a little kind - 3 retries per word
-                for (uint j = 0; j < 3; j++) {
-                    uint data;
-                    rc = link_read_word((uint) sv->sdram_sys + i * 4, link,
-                            &data, timeout);
-                    if (rc == RC_OK) {
-                        break;
-                    }
-                    sark_delay_us(sv->peek_time);
-                }
-                if (rc != RC_OK) {
-                    link_en &= ~(1 << link);
-                    break;
-                }
-            }
-
             // Try a P2P "ping" over the link
-            if (link_en & (1 << link)) {
-                uint addr = n_addr(link);
-                if (p2p_ping(addr, link, timeout) != RC_OK) {
-                    io_printf(IO_BUF, "Link %u down\n", link);
-                }
+            uint addr = n_addr(link);
+            if (p2p_ping(addr, link, timeout) != RC_OK) {
+                link_en &= ~(1 << link);
+                continue;
             }
         }
     }
@@ -1427,14 +1411,11 @@ void proc_100hz(uint a1, uint a2)
 
             sv->p2p_active += 1;
 
-            // Initialise link_en to avoid broken inter-chip links
-            init_link_en();
+            // Set our P2P addr in the comms controller
+            cc[CC_SAR] = 0x07000000 + p2p_addr;
 
             // Reseed uniquely for each chip
             sark_srand(p2p_addr);
-
-            // Set our P2P addr in the comms controller
-            cc[CC_SAR] = 0x07000000 + p2p_addr;
 
             // Work out the local Ethernet connected chip coordinates
             compute_eth();
@@ -1489,6 +1470,8 @@ void proc_100hz(uint a1, uint a2)
         // reduce network load.
         uint p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
         if (netinit_p2p_tick_counter == 0) {
+            // Initialise link_en to avoid broken inter-chip links
+            init_link_en();
             hop_table[p2p_addr] = 0;
             rtr_p2p_set(p2p_addr, 7);
             timer_schedule_proc(p2pb_nn_send, 0, 0,
