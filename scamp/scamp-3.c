@@ -209,6 +209,10 @@ volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 //! \brief Whether to perform clock synchronization (on by default at start)
 volatile uint do_sync = 1;
 
+//! Reserved for performing MC pings
+static volatile uint ping_flags;
+static uint ping_addr;
+
 //------------------------------------------------------------------------------
 
 //! Update timeouts in IPTags.
@@ -1186,6 +1190,54 @@ uint n_addr(uint link) {
     return (nx << 8) | ny;
 }
 
+uint opp_link(uint link) {
+    uint opposite_link = link + 3;
+    if (opposite_link > 5) {
+        opposite_link -= 6;
+    }
+    return opposite_link;
+}
+
+//! \brief Send a mc ping over a link
+//! \param[in] link: The link to use
+//! \param[in] timeout: How long to wait for the other side to respond
+//! \return result code
+uint mc_ping(uint addr, uint link, uint timeout)
+{
+    // Clear any existing status
+    cpu_int_disable();
+    ping_flags = 0;
+    ping_addr = (link << 16) + addr;
+    cpu_int_enable();
+
+    // Send the link to respond on to the address as a ping
+    uint opposite_link = opp_link(link);
+    pkt_tx(PKT_MC_PL, (opposite_link << 16) | p2p_addr, ping_addr);
+
+    // Create a timeout which will set the flag to "2"
+    event_t* e = event_new(proc_word_set, (uint) &ping_flags, 2);
+    if (e == NULL) {
+        sw_error(SW_OPT);
+        return RC_BUF;
+    }
+    uint id = e->ID;
+    timer_schedule(e, timeout);
+
+    // Wait for something to happen
+    while (ping_flags == 0) {
+        continue;
+    }
+
+    // If the response is 2, fail on timeout
+    if (ping_flags == 2) {
+        return RC_TIMEOUT;
+    }
+
+    // Otherwise we can cancel the timer, and return OK
+    timer_cancel(e, id);
+    return RC_OK;
+}
+
 //! Initialise inter-chip link state bitmap
 void init_link_en(void)
 {
@@ -1207,6 +1259,12 @@ void init_link_en(void)
             // Try a P2P "ping" over the link
             uint addr = n_addr(link);
             if (p2p_ping(addr, link, timeout) != RC_OK) {
+                link_en &= ~(1 << link);
+                continue;
+            }
+
+            // Try an MC "ping" over the link
+            if (mc_ping(addr, link, timeout) != RC_OK) {
                 link_en &= ~(1 << link);
                 continue;
             }
@@ -1296,6 +1354,8 @@ void netinit_start(void)
     ticks_since_last_p2pc_dims = 0;
 }
 
+extern INT_HANDLER pkt_mc_int(void);
+
 //! \brief Sets up a broadcast MC route by constructing a spanning tree of the
 //! P2P routes constructed routing back to chip used to boot the machine
 //! (see ::p2p_root).
@@ -1337,7 +1397,29 @@ void compute_st(void)
         }
     }
 
+    rtr_mc_clear(0, MC_TABLE_SIZE);
     rtr_mc_set(0, SCAMP_MC_ROUTING_KEY, SCAMP_MC_ROUTING_MASK, route);
+    sark_vic_set(MC_SLOT, CC_MC_INT, 1, pkt_mc_int);
+}
+
+INT_HANDLER test_mc_int(void) {
+    // When we receive a ping, respond
+    uint data = cc[CC_RXDATA];
+    uint key = cc[CC_RXKEY];
+
+    if (data & 0xFF000000) {
+        // This is a response to a ping
+        if ((data & 0x00FFFFFF) == ping_addr) {
+            ping_flags = 1;
+        }
+    } else {
+        // This is a ping request - requester addr and link is in the data
+        pkt_tx(PKT_MC_PL, 0xFF000000 | key, data);
+    }
+
+#if MC_SLOT != SLOT_FIQ
+    vic[VIC_VADDR] = (uint) vic;
+#endif
 }
 
 
@@ -1406,8 +1488,13 @@ void proc_100hz(uint a1, uint a2)
             // Set up my address, and my direct neighbour addresses
             rtr_p2p_set(p2p_addr, 7);
             for (uint lnk = 0; lnk < 6; lnk++) {
-                rtr_p2p_set(n_addr(lnk), lnk);
+                uint addr = n_addr(lnk);
+                rtr_p2p_set(addr, lnk);
+                uint o_lnk = opp_link(lnk);
+                rtr_mc_set(lnk, (o_lnk << 16) + p2p_addr, 0xFFFFFFFF, MC_CORE_ROUTE(0));
+                rtr_mc_set(lnk + 6, (lnk << 16) + addr, 0xFFFFFFFF, MC_LINK_ROUTE(lnk));
             }
+            sark_vic_set(MC_SLOT, CC_MC_INT, 1, test_mc_int);
 
             sv->p2p_active += 1;
 

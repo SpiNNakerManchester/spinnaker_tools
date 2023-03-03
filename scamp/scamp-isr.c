@@ -29,8 +29,6 @@
 #include "scamp.h"
 #include <scamp_spin1_sync.h>
 
-//! Multicast packet handler uses the FIQ VIC slot
-#define MC_SLOT SLOT_FIQ
 
 
 //------------------------------------------------------------------------------

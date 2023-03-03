@@ -54,6 +54,9 @@
 
 //! The key used for signal packets
 #define SCAMP_MC_SIGNAL_KEY 0xffff5555
+
+//! Multicast packet handler uses the FIQ VIC slot
+#define MC_SLOT SLOT_FIQ
 //! \}
 //------------------------------------------------------------------------------
 
