@@ -1405,7 +1405,7 @@ void compute_st(void)
         }
     }
 
-    rtr_mc_clear(0, MC_TABLE_SIZE);
+    rtr_mc_init(0);
     rtr_mc_set(0, SCAMP_MC_ROUTING_KEY, SCAMP_MC_ROUTING_MASK, route);
     sark_vic_set(MC_SLOT, CC_MC_INT, 1, pkt_mc_int);
 }
@@ -1486,11 +1486,11 @@ void proc_100hz(uint a1, uint a2)
 
             sv->p2p_active += 1;
 
-            // Set our P2P addr in the comms controller
-            cc[CC_SAR] = 0x07000000 + p2p_addr;
-
             // Reseed uniquely for each chip
             sark_srand(p2p_addr);
+
+            // Set our P2P addr in the comms controller
+            cc[CC_SAR] = 0x07000000 + p2p_addr;
 
             // Work out the local Ethernet connected chip coordinates
             compute_eth();
@@ -1535,6 +1535,8 @@ void proc_100hz(uint a1, uint a2)
         } else if (netinit_biff_tick_counter >= 3) {
             netinit_p2p_tick_counter = 0;
             netinit_phase = NETINIT_PHASE_P2P_TABLE;
+            // Initialise link_en to avoid broken inter-chip links
+            init_link_en();
             // We can do this here first time; we can do it once more later
             disable_unidirectional_links();
         }
@@ -1545,8 +1547,6 @@ void proc_100hz(uint a1, uint a2)
         // reduce network load.
         uint p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
         if (netinit_p2p_tick_counter == 0) {
-            // Initialise link_en to avoid broken inter-chip links
-            init_link_en();
             hop_table[p2p_addr] = 0;
             rtr_p2p_set(p2p_addr, 7);
             timer_schedule_proc(p2pb_nn_send, 0, 0,
@@ -1565,6 +1565,13 @@ void proc_100hz(uint a1, uint a2)
                     netinit_phase = NETINIT_PHASE_DEL;
                 } else {
                     netinit_phase = NETINIT_PHASE_DONE;
+                }
+
+                for (uint lnk = 0; lnk < 6; lnk++) {
+                    uint addr = n_addr(lnk);
+                    if (hop_table[addr] == 0x8000FFFF) {
+                        rtr_p2p_set(addr, 6);
+                    }
                 }
 
                 level_config();
