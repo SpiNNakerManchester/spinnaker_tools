@@ -52,6 +52,9 @@ extern uchar v2p_map[MAX_CPUS];
 extern uint num_cpus;
 extern volatile uint do_sync;
 
+extern uint ping_flags;
+extern uint ping_addr;
+
 static uint centi_ms;   //!< Counts 0 to 9 in ms
 
 //------------------------------------------------------------------------------
@@ -224,6 +227,26 @@ INT_HANDLER pkt_mc_int(void)
                 }
             }
         }
+    }
+
+#if MC_SLOT != SLOT_FIQ
+    vic[VIC_VADDR] = (uint) vic;
+#endif
+}
+
+INT_HANDLER test_mc_int(void) {
+    // When we receive a ping, respond
+    uint data = cc[CC_RXDATA];
+    uint key = cc[CC_RXKEY];
+
+    if (data & 0xFF000000) {
+        // This is a response to a ping
+        if ((data & 0x00FFFFFF) == ping_addr) {
+            ping_flags = 1;
+        }
+    } else {
+        // This is a ping request - requester addr and link is in the data
+        pkt_tx(PKT_MC_PL, 0xFF000000 | key, data);
     }
 
 #if MC_SLOT != SLOT_FIQ

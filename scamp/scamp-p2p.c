@@ -841,7 +841,6 @@ void p2p_ping_req(uint data, uint addr) {
     // Send the response down the link
     uint link = data & 0x7;
     if (link < 6) {
-        rtr_p2p_set(addr, link);
         p2p_send_ctl(P2P_PING_ACK, addr, 0);
     }
 }

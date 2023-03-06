@@ -210,8 +210,27 @@ volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 volatile uint do_sync = 1;
 
 //! Reserved for performing MC pings
-static volatile uint ping_flags;
-static uint ping_addr;
+volatile uint ping_flags;
+uint ping_addr;
+
+//! Interrupt handlers for multicast
+extern INT_HANDLER pkt_mc_int(void);
+extern INT_HANDLER test_mc_int(void);
+
+//! The x coordinate of this chip
+static uint x;
+
+//! The y coordinate of this chip
+static uint y;
+
+//! The width of the machine
+static uint w;
+
+//! The height of the machine
+static uint h;
+
+const signed char dx[6] = { 1,  1,  0, -1, -1,  0}; //!< X deltas, by link ID
+const signed char dy[6] = { 0,  1,  1,  0, -1, -1}; //!< Y deltas, by link ID
 
 //------------------------------------------------------------------------------
 
@@ -1165,23 +1184,14 @@ void soft_wdog(uint max)
 // Late-stage boot related functions which initialise higher-level network
 // functionality, e.g. P2P tables and addresses
 
-
-extern const signed char lx[6]; //!< X deltas, by link ID
-extern const signed char ly[6]; //!< Y deltas, by link ID
-
-static uint x;
-static uint y;
-static uint w;
-static uint h;
-
 uint n_addr(uint link) {
-    int nx = x + (int)lx[link];
+    int nx = x + (int)dx[link];
     if (nx < 0) {
         nx = w - 1;
     } else if (nx >= w) {
         nx = 0;
     }
-    int ny = y + (int)ly[link];
+    int ny = y + (int)dy[link];
     if (ny < 0) {
         ny = h - 1;
     } else if (ny >= h) {
@@ -1354,8 +1364,6 @@ void netinit_start(void)
     ticks_since_last_p2pc_dims = 0;
 }
 
-extern INT_HANDLER pkt_mc_int(void);
-
 //! \brief Sets up a broadcast MC route by constructing a spanning tree of the
 //! P2P routes constructed routing back to chip used to boot the machine
 //! (see ::p2p_root).
@@ -1400,26 +1408,6 @@ void compute_st(void)
     rtr_mc_clear(0, MC_TABLE_SIZE);
     rtr_mc_set(0, SCAMP_MC_ROUTING_KEY, SCAMP_MC_ROUTING_MASK, route);
     sark_vic_set(MC_SLOT, CC_MC_INT, 1, pkt_mc_int);
-}
-
-INT_HANDLER test_mc_int(void) {
-    // When we receive a ping, respond
-    uint data = cc[CC_RXDATA];
-    uint key = cc[CC_RXKEY];
-
-    if (data & 0xFF000000) {
-        // This is a response to a ping
-        if ((data & 0x00FFFFFF) == ping_addr) {
-            ping_flags = 1;
-        }
-    } else {
-        // This is a ping request - requester addr and link is in the data
-        pkt_tx(PKT_MC_PL, 0xFF000000 | key, data);
-    }
-
-#if MC_SLOT != SLOT_FIQ
-    vic[VIC_VADDR] = (uint) vic;
-#endif
 }
 
 
