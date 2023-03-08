@@ -100,3 +100,6 @@ jobs:
       run: |
         sudo apt-get -q install doxygen --fix-missing
         make doxygen
+
+    - name: Validate CITATION.cff
+      uses: dieghernan/cff-validator@main
