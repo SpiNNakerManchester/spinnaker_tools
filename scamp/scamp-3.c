@@ -209,9 +209,11 @@ volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 //! \brief Whether to perform clock synchronization (on by default at start)
 volatile uint do_sync = 1;
 
-//! Reserved for performing MC pings
-volatile uint ping_flags;
-uint ping_addr;
+//! Reserved for performing MC and P2P pings
+volatile uint mc_ping_flags[NUM_LINKS];
+volatile uint pp_ping_flags[NUM_LINKS];
+uint ping_addr[NUM_LINKS];
+uint opposite_link[NUM_LINKS];
 
 //! Interrupt handlers for multicast
 extern INT_HANDLER pkt_mc_int(void);
@@ -305,11 +307,6 @@ void queue_init(void)
 void proc_byte_set(uint a1, uint a2)
 {
     * (uchar *) a1 = a2;
-}
-
-void proc_word_set(uint a1, uint a2)
-{
-    * (uint *) a1 = a2;
 }
 
 
@@ -1208,48 +1205,8 @@ uint opp_link(uint link) {
     return opposite_link;
 }
 
-//! \brief Send a mc ping over a link
-//! \param[in] link: The link to use
-//! \param[in] timeout: How long to wait for the other side to respond
-//! \return result code
-uint mc_ping(uint addr, uint link, uint timeout)
-{
-    // Clear any existing status
-    cpu_int_disable();
-    ping_flags = 0;
-    ping_addr = (link << 16) + addr;
-    cpu_int_enable();
-
-    // Send the link to respond on to the address as a ping
-    uint opposite_link = opp_link(link);
-    pkt_tx(PKT_MC_PL, (opposite_link << 16) | p2p_addr, ping_addr);
-
-    // Create a timeout which will set the flag to "2"
-    event_t* e = event_new(proc_word_set, (uint) &ping_flags, 2);
-    if (e == NULL) {
-        sw_error(SW_OPT);
-        return RC_BUF;
-    }
-    uint id = e->ID;
-    timer_schedule(e, timeout);
-
-    // Wait for something to happen
-    while (ping_flags == 0) {
-        continue;
-    }
-
-    // If the response is 2, fail on timeout
-    if (ping_flags == 2) {
-        return RC_TIMEOUT;
-    }
-
-    // Otherwise we can cancel the timer, and return OK
-    timer_cancel(e, id);
-    return RC_OK;
-}
-
 //! Initialise inter-chip link state bitmap
-void init_link_en(void)
+void init_link_en_nn()
 {
     uint timeout = sv->peek_time;
     uint local_chip_id = sc[SC_CHIP_ID];
@@ -1257,35 +1214,77 @@ void init_link_en(void)
         // The link will be down here if blacklisted
         if (link_en & (1 << link)) {
 
-            // Try to read the system ID
-            uint remote_chip_id;
-            uint rc = link_read_word((uint) (sc + SC_CHIP_ID), link,
-                    &remote_chip_id, timeout);
-            if (rc != RC_OK || remote_chip_id != local_chip_id) {
-                link_en &= ~(1 << link);
-                continue;
-            }
-
-            // Try a P2P "ping" over the link
             uint addr = n_addr(link);
-            if (p2p_ping(addr, link, timeout) != RC_OK) {
-                link_en &= ~(1 << link);
-                continue;
-            }
 
-            // Try an MC "ping" over the link
-            if (mc_ping(addr, link, timeout) != RC_OK) {
-                link_en &= ~(1 << link);
-                continue;
+            // Repeat test 100 times to avoid poor connections
+            for (uint i = 100; i > 0; i--) {
+
+                // Try to read the system ID
+                uint remote_chip_id;
+                uint rc = link_read_word((uint) (sc + SC_CHIP_ID), link,
+                        &remote_chip_id, timeout);
+                if (rc != RC_OK || remote_chip_id != local_chip_id) {
+                    link_en &= ~(1 << link);
+                    break;
+                }
             }
         }
     }
+}
 
-    sv->link_en = link_en;
+static void send_link_checks_pp() {
+    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
+        if (link_en & (1 << lnk)) {
+            pp_ping_flags[lnk] = 0;
+            p2p_send_ping(ping_addr[lnk], lnk);
+        }
+    }
+}
+
+static void check_links_pp() {
+    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
+        if ((link_en & (1 << lnk)) && pp_ping_flags[lnk] != 1) {
+            link_en &= ~(1 << lnk);
+        }
+    }
+}
+
+static void send_link_checks_mc() {
+    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
+        if (link_en & (1 << lnk)) {
+            mc_ping_flags[lnk] = 0;
+            pkt_tx(PKT_MC_PL, (opposite_link[lnk] << 16) | p2p_addr,
+                    (lnk << 16) | ping_addr[lnk]);
+        }
+    }
+}
+
+static void check_links_mc() {
+    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
+        if ((link_en & (1 << lnk)) && mc_ping_flags[lnk] != 1) {
+            link_en &= ~(1 << lnk);
+        }
+    }
+}
+
+//! Set up for link checking
+static void setup_link_checks() {
+    // Set up my address, and my direct neighbour addresses
+    rtr_p2p_set(p2p_addr, 7);
+    for (uint lnk = 0; lnk < 6; lnk++) {
+        uint addr = n_addr(lnk);
+        ping_addr[lnk] = addr;
+        rtr_p2p_set(addr, lnk);
+        uint o_lnk = opp_link(lnk);
+        opposite_link[lnk] = o_lnk;
+        rtr_mc_set(lnk, (o_lnk << 16) + p2p_addr, 0xFFFFFFFF, MC_CORE_ROUTE(0));
+        rtr_mc_set(lnk + 6, (lnk << 16) + addr, 0xFFFFFFFF, MC_LINK_ROUTE(lnk));
+    }
+    sark_vic_set(MC_SLOT, CC_MC_INT, 1, test_mc_int);
 }
 
 //! Disable links that have been disabled by neighbours
-void disable_unidirectional_links(void)
+static void disable_unidirectional_links(void)
 {
     uint timeout = sv->peek_time;
 
@@ -1473,17 +1472,6 @@ void proc_100hz(uint a1, uint a2)
             sv->p2p_dims = p2p_dims = (w << 8) | (h << 0);
             sv->p2p_root = p2p_root = (-p2p_min_x << 8) | -p2p_min_y;
 
-            // Set up my address, and my direct neighbour addresses
-            rtr_p2p_set(p2p_addr, 7);
-            for (uint lnk = 0; lnk < 6; lnk++) {
-                uint addr = n_addr(lnk);
-                rtr_p2p_set(addr, lnk);
-                uint o_lnk = opp_link(lnk);
-                rtr_mc_set(lnk, (o_lnk << 16) + p2p_addr, 0xFFFFFFFF, MC_CORE_ROUTE(0));
-                rtr_mc_set(lnk + 6, (lnk << 16) + addr, 0xFFFFFFFF, MC_LINK_ROUTE(lnk));
-            }
-            sark_vic_set(MC_SLOT, CC_MC_INT, 1, test_mc_int);
-
             sv->p2p_active += 1;
 
             // Reseed uniquely for each chip
@@ -1494,6 +1482,13 @@ void proc_100hz(uint a1, uint a2)
 
             // Work out the local Ethernet connected chip coordinates
             compute_eth();
+
+            // Setup link checking early so that this is done by the time it is
+            // needed on other cores later
+            setup_link_checks();
+
+            // Check NN connectivity first
+            init_link_en_nn();
 
             netinit_biff_tick_counter = 0;
             netinit_phase = NETINIT_PHASE_BIFF;
@@ -1532,13 +1527,23 @@ void proc_100hz(uint a1, uint a2)
                     biff_nn_send(*(info_word++));
                 }
             }
-        } else if (netinit_biff_tick_counter >= 3) {
+        } else if (netinit_biff_tick_counter >= 100) {
             netinit_p2p_tick_counter = 0;
             netinit_phase = NETINIT_PHASE_P2P_TABLE;
-            // Initialise link_en to avoid broken inter-chip links
-            init_link_en();
             // We can do this here first time; we can do it once more later
             disable_unidirectional_links();
+        } else if (netinit_biff_tick_counter >= 3) {
+
+            // Only check links if the messages were sent last time
+            if (netinit_biff_tick_counter >= 4) {
+                check_links_pp();
+                check_links_mc();
+                sv->link_en = link_en;
+            }
+
+            // Send out next link check messages
+            send_link_checks_pp();
+            send_link_checks_mc();
         }
         break;
 

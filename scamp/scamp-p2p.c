@@ -153,8 +153,8 @@ const uint data_time = 500;
 const uint close_ack_time = 250;
 
 //! Reserved for performing P2P pings
-static volatile uint ping_flags;
-static uint ping_addr;
+extern volatile uint pp_ping_flags[NUM_LINKS];
+extern uint ping_addr[NUM_LINKS];
 
 //------------------------------------------------------------------------------
 
@@ -792,63 +792,23 @@ void p2p_rcv_data(uint data, uint addr)
     }
 }
 
-extern void proc_word_set(uint a, uint b);
-
-//! \brief Send a p2p ping over a link
-//! \param[in] link: The link to use
-//! \param[in] timeout: How long to wait for the other side to respond
-//! \return result code
-uint p2p_ping(uint addr, uint link, uint timeout)
-{
-    // Clear any existing status
-    cpu_int_disable();
-    ping_flags = 0;
-    ping_addr = addr;
-    cpu_int_enable();
-
-    // Send the link to respond on to the address as a ping
-    uint opposite_link = link + 3;
-    if (opposite_link > 5) {
-        opposite_link -= 6;
-    }
-    p2p_send_ctl(P2P_PING_REQ, addr, opposite_link);
-
-    // Create a timeout which will set the flag to "2"
-    event_t* e = event_new(proc_word_set, (uint) &ping_flags, 2);
-    if (e == NULL) {
-        sw_error(SW_OPT);
-        return RC_BUF;
-    }
-    uint id = e->ID;
-    timer_schedule(e, timeout);
-
-    // Wait for something to happen
-    while (ping_flags == 0) {
-        continue;
-    }
-
-    // If the response is 2, fail on timeout
-    if (ping_flags == 2) {
-        return RC_TIMEOUT;
-    }
-
-    // Otherwise we can cancel the timer, and return OK
-    timer_cancel(e, id);
-    return RC_OK;
+void p2p_send_ping(uint addr, uint link) {
+    p2p_send_ctl(P2P_PING_REQ, addr, link);
 }
 
 void p2p_ping_req(uint data, uint addr) {
     // Send the response down the link
     uint link = data & 0x7;
     if (link < 6) {
-        p2p_send_ctl(P2P_PING_ACK, addr, 0);
+        p2p_send_ctl(P2P_PING_ACK, addr, link);
     }
 }
 
-void p2p_ping_ack(uint addr) {
+void p2p_ping_ack(uint data, uint addr) {
     // All we need to do here is store the reception
-    if (addr == ping_addr) {
-        ping_flags = 1;
+    uint link = data & 0x7;
+    if (link < 6 && addr == ping_addr[link]) {
+        pp_ping_flags[link] = 1;
     }
 }
 
@@ -928,7 +888,7 @@ void p2p_rcv_ctrl(uint data, uint addr)
     } else if (cmd == P2P_PING_REQ >> 24) {
         p2p_ping_req(data, addr);
     } else if (cmd == P2P_PING_ACK >> 24) {
-        p2p_ping_ack(addr);
+        p2p_ping_ack(data, addr);
     }
 }
 #endif

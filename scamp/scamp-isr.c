@@ -48,12 +48,11 @@ extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 
 //------------------------------------------------------------------------------
 
-extern uchar v2p_map[MAX_CPUS];
 extern uint num_cpus;
 extern volatile uint do_sync;
 
-extern uint ping_flags;
-extern uint ping_addr;
+extern uint mc_ping_flags[NUM_LINKS];
+extern uint ping_addr[NUM_LINKS];
 
 static uint centi_ms;   //!< Counts 0 to 9 in ms
 
@@ -241,8 +240,10 @@ INT_HANDLER test_mc_int(void) {
 
     if (data & 0xFF000000) {
         // This is a response to a ping
-        if ((data & 0x00FFFFFF) == ping_addr) {
-            ping_flags = 1;
+        uint link = (data >> 16) & 0xFF;
+        uint addr = data & 0xFFFF;
+        if (link < 6 && addr == ping_addr[link]) {
+            mc_ping_flags[link] = 1;
         }
     } else {
         // This is a ping request - requester addr and link is in the data

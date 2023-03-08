@@ -508,7 +508,7 @@ extern void reset_ap(uint virt_mask);
 
 extern uint p2p_send_msg(uint addr, sdp_msg_t *msg);
 extern void desc_init(void);
-extern uint p2p_ping(uint addr, uint link, uint timeout);
+extern void p2p_send_ping(uint addr, uint link);
 //! \}
 
 //! \name SCAMP nearest-neighbour discovery protocol
