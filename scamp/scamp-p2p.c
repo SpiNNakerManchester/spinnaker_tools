@@ -153,8 +153,7 @@ const uint data_time = 500;
 const uint close_ack_time = 250;
 
 //! Reserved for performing P2P pings
-extern volatile uint pp_ping_flags[NUM_LINKS];
-extern uint ping_addr[NUM_LINKS];
+extern volatile uint pp_ping_count[NUM_LINKS];
 
 //------------------------------------------------------------------------------
 
@@ -249,14 +248,16 @@ static void p2p_send_data(uint data, uint addr)
 //! \param[in] ctrl: What message to send
 //! \param[in] addr: Where to send to
 //! \param[in] data: Payload of the message
-static void p2p_send_ctl(uint ctrl, uint addr, uint data)
+static uint p2p_send_ctl(uint ctrl, uint addr, uint data)
 {
     data |= ctrl;
     data |= chksum_32(data);
     uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
     if (r == 0) {
         p2p_stats[TX_FAIL]++;
+        return 0;
     }
+    return 1;
 }
 
 #endif // ASM
@@ -571,6 +572,7 @@ void p2p_open_req(uint data, uint addr)
     if (len > (SDP_BUF_SIZE + 8 + 16) || seq_len > 16) { //const
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_REJECT);
         p2p_stats[P2P_REJECTS]++;
+        io_printf(IO_BUF, "reject\n");
         return;
     }
 
@@ -609,6 +611,7 @@ void p2p_open_req(uint data, uint addr)
     if (rid == P2P_NUM_STR) {           // No free streams - send busy
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
         p2p_stats[P2P_BUSY1]++;
+        io_printf(IO_BUF, "busy\n");
         return;
     }
 
@@ -618,6 +621,7 @@ void p2p_open_req(uint data, uint addr)
     if (msg == NULL) {
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
         p2p_stats[P2P_BUSY2]++;
+        io_printf(IO_BUF, "busy2\n");
         return;
     }
 
@@ -728,6 +732,9 @@ void p2p_close_ack(uint data, uint srce)
 
 void p2p_rcv_data(uint data, uint addr)
 {
+    if (sv->utmp0 == 1) {
+        io_printf(IO_BUF, "pd %x %u %u\n", addr, data);
+    }
     uint rid = (data >> 29) & 7; //##
     uint phase = (data >> 28) & 1; //##
     rx_desc_t *desc = rx_desc_table + rid;
@@ -792,23 +799,15 @@ void p2p_rcv_data(uint data, uint addr)
     }
 }
 
-void p2p_send_ping(uint addr, uint link) {
-    p2p_send_ctl(P2P_PING_REQ, addr, link);
+uint p2p_send_ping(uint addr, uint link) {
+    return p2p_send_ctl(P2P_PING, addr, link);
 }
 
-void p2p_ping_req(uint data, uint addr) {
-    // Send the response down the link
+void p2p_ping(uint data, uint addr) {
+    // Count pings received from each neighbor
     uint link = data & 0x7;
     if (link < 6) {
-        p2p_send_ctl(P2P_PING_ACK, addr, link);
-    }
-}
-
-void p2p_ping_ack(uint data, uint addr) {
-    // All we need to do here is store the reception
-    uint link = data & 0x7;
-    if (link < 6 && addr == ping_addr[link]) {
-        pp_ping_flags[link] = 1;
+        pp_ping_count[link] += 1;
     }
 }
 
@@ -875,6 +874,9 @@ void p2p_rcv_ctrl(uint data, uint addr)
     }
 
     uint cmd = (data >> 24) & 15;
+    if (sv->utmp0 == 1) {
+        io_printf(IO_BUF, "pc %x %u %u\n", addr, data, cmd);
+    }
     if (cmd == P2P_OPEN_REQ >> 24) {
         p2p_open_req(data, addr);
     } else if (cmd == P2P_OPEN_ACK >> 24) {
@@ -885,10 +887,8 @@ void p2p_rcv_ctrl(uint data, uint addr)
         p2p_close_req(data, addr);
     } else if (cmd == P2P_CLOSE_ACK >> 24) {
         p2p_close_ack(data, addr);
-    } else if (cmd == P2P_PING_REQ >> 24) {
-        p2p_ping_req(data, addr);
-    } else if (cmd == P2P_PING_ACK >> 24) {
-        p2p_ping_ack(data, addr);
+    } else if (cmd == P2P_PING >> 24) {
+        p2p_ping(data, addr);
     }
 }
 #endif

@@ -210,10 +210,13 @@ volatile uint disp_load = 0 << LOAD_FRAC_BITS;
 volatile uint do_sync = 1;
 
 //! Reserved for performing MC and P2P pings
-volatile uint mc_ping_flags[NUM_LINKS];
-volatile uint pp_ping_flags[NUM_LINKS];
-uint ping_addr[NUM_LINKS];
+volatile uint mc_ping_count[NUM_LINKS];
+volatile uint pp_ping_count[NUM_LINKS];
 uint opposite_link[NUM_LINKS];
+uint ping_addr[NUM_LINKS];
+
+//! The minimum number of packets we expect to receive over P2P or MC
+#define MINIMUM_PINGS_RECEIVED 25
 
 //! Interrupt handlers for multicast
 extern INT_HANDLER pkt_mc_int(void);
@@ -231,8 +234,25 @@ static uint w;
 //! The height of the machine
 static uint h;
 
+//! The count of p2pb repeats to go
+static uint p2pb_repeats;
+
+//! The total time over which p2pb will be sent
+static uint p2pb_period;
+
+//! Division to apply to n_chips to work out the repeats
+#define P2PB_DIVISOR 8192
+
 const signed char dx[6] = { 1,  1,  0, -1, -1,  0}; //!< X deltas, by link ID
 const signed char dy[6] = { 0,  1,  1,  0, -1, -1}; //!< Y deltas, by link ID
+
+static uint netinit_biff_tick_counter = 0;
+
+extern volatile uint neighbour_netinit_level[NUM_LINKS];
+extern volatile uint neighbour_links_enabled[NUM_LINKS];
+extern void send_nn_netinit(uint netinit_phase);
+extern void send_nn_links(uint links_enabled);
+extern void p2pc_reth_nn_send(uint, uint);
 
 //------------------------------------------------------------------------------
 
@@ -366,6 +386,33 @@ uint pkt_tx(uint tcr, uint data, uint key)
 }
 
 #pragma pop
+
+//! Mask to recognise the Comms Controller "not full" flag
+#define TX_NOT_FULL_MASK 0x10000000
+
+static inline uint wait_for_cc(void) {
+    uint n_loops = 0;
+    while (!(cc[CC_TCR] & TX_NOT_FULL_MASK) && (n_loops < 10000)) {
+        sark_delay_us(1);
+        n_loops++;
+    }
+    if (!(cc[CC_TCR] & TX_NOT_FULL_MASK)) {
+        return 0;
+    }
+    return 1;
+}
+
+uint pkt_tx_wait(uint tcr, uint data, uint key) {
+    if (!wait_for_cc()) {
+        return 0;
+    }
+    cc[CC_TCR] = tcr;
+    if (tcr & PKT_PL) {
+        cc[CC_TXDATA] = data;
+    }
+    cc[CC_TXKEY] = key;
+    return 1;
+}
 
 
 //------------------------------------------------------------------------------
@@ -1199,8 +1246,8 @@ uint n_addr(uint link) {
 
 uint opp_link(uint link) {
     uint opposite_link = link + 3;
-    if (opposite_link > 5) {
-        opposite_link -= 6;
+    if (opposite_link >= NUM_LINKS) {
+        opposite_link -= NUM_LINKS;
     }
     return opposite_link;
 }
@@ -1225,26 +1272,20 @@ void init_link_en_nn()
                         &remote_chip_id, timeout);
                 if (rc != RC_OK || remote_chip_id != local_chip_id) {
                     link_en &= ~(1 << link);
+                    io_printf(IO_BUF, "%u -n %u\n", sv->unix_time, link);
                     break;
                 }
             }
         }
     }
+    sv->link_en = link_en;
+    send_nn_links(link_en);
 }
 
 static void send_link_checks_pp() {
     for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
         if (link_en & (1 << lnk)) {
-            pp_ping_flags[lnk] = 0;
-            p2p_send_ping(ping_addr[lnk], lnk);
-        }
-    }
-}
-
-static void check_links_pp() {
-    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
-        if ((link_en & (1 << lnk)) && pp_ping_flags[lnk] != 1) {
-            link_en &= ~(1 << lnk);
+            p2p_send_ping(ping_addr[lnk], opposite_link[lnk]);
         }
     }
 }
@@ -1252,19 +1293,24 @@ static void check_links_pp() {
 static void send_link_checks_mc() {
     for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
         if (link_en & (1 << lnk)) {
-            mc_ping_flags[lnk] = 0;
-            pkt_tx(PKT_MC_PL, (opposite_link[lnk] << 16) | p2p_addr,
-                    (lnk << 16) | ping_addr[lnk]);
+            pkt_tx(PKT_MC_PL, opposite_link[lnk], (lnk << 16) | ping_addr[lnk]);
         }
     }
 }
 
-static void check_links_mc() {
+static void final_link_checks() {
     for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
-        if ((link_en & (1 << lnk)) && mc_ping_flags[lnk] != 1) {
-            link_en &= ~(1 << lnk);
+        if ((link_en & (1 << lnk))) {
+            io_printf(IO_BUF, "lc %u %u %u %u\n", lnk, mc_ping_count[lnk], pp_ping_count[lnk], neighbour_netinit_level[lnk]);
+            if (mc_ping_count[lnk] < MINIMUM_PINGS_RECEIVED ||
+                    pp_ping_count[lnk] < MINIMUM_PINGS_RECEIVED) {
+                link_en &= ~(1 << lnk);
+
+            }
         }
     }
+    sv->link_en = link_en;
+    send_nn_links(link_en);
 }
 
 //! Set up for link checking
@@ -1286,49 +1332,20 @@ static void setup_link_checks() {
 //! Disable links that have been disabled by neighbours
 static void disable_unidirectional_links(void)
 {
-    uint timeout = sv->peek_time;
-
-    // Check if the opposite thinks it is enabled
-    uint remote_link_en;
-    uint remote_addr = (uint) &(sv->link_en) & 0xfffffffc;  // word aligned
-    uint remote_offs = (uint) &(sv->link_en) & 0x00000003;  // byte offset
-    for (uint link = 0; link < NUM_LINKS; link++) {
-        if (link_en & (1 << link)) {
-            uint rc = link_read_word(remote_addr, link,
-                    &remote_link_en, timeout);
-            remote_link_en = (remote_link_en >> (remote_offs * 8)) & 0xFF;
-
-            // check opposite link in neighbour
-            uint rl = link + 3;
-            if (rl >= NUM_LINKS)
-            {
-                rl -= NUM_LINKS;
-            }
-
-            // disable link if its opposite was disabled
-            // by the corresponding neighbouring chip
-            // or if the corresponding neighbouring chip has an odd value
-            if ((rc != RC_OK) ||
-                ((remote_link_en & (1 << rl)) == 0) ||
-                (remote_link_en > 0x3F)
-               ){
-              link_en &= ~(1 << link);
-            }
-        }
-    }
-
-    // Check if the opposite agrees with us about system size
-    for (uint link = 0; link < NUM_LINKS; link++) {
-        if (link_en & (1 << link)) {
-            uint remote_sv;
-            uint rc = link_read_word((uint) sv, link, &remote_sv, timeout);
-            if (rc != RC_OK || ((remote_sv & 0xFFFF0000) >> 16) != sv->p2p_dims) {
-                link_en &= ~(1 << link);
+    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
+        if (link_en & (1 << lnk)) {
+            uint o_link = opp_link(lnk);
+            uint nl = neighbour_links_enabled[lnk];
+            io_printf(IO_BUF, "ul %u (%u) %u\n", lnk, o_link, nl);
+            if ((nl & (1 << o_link)) == 0) {
+                link_en &= ~(1 << lnk);
+                io_printf(IO_BUF, "%u -o %u %x\n", sv->unix_time, lnk, nl);
             }
         }
     }
 
     sv->link_en = link_en;
+    send_nn_links(link_en);
 }
 
 //! \brief Start the higher-level network initialisation process.
@@ -1361,6 +1378,14 @@ void netinit_start(void)
 
     ticks_since_last_p2pc_new = 0;
     ticks_since_last_p2pc_dims = 0;
+
+    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
+        // Assume all enabled
+        neighbour_links_enabled[lnk] = 0x3F;
+
+        // Start at 0
+        neighbour_netinit_level[lnk] = 0;
+    }
 }
 
 //! \brief Sets up a broadcast MC route by constructing a spanning tree of the
@@ -1409,6 +1434,24 @@ void compute_st(void)
     sark_vic_set(MC_SLOT, CC_MC_INT, 1, pkt_mc_int);
 }
 
+static uint netinit_biff_barrier() {
+    if (netinit_biff_tick_counter > 0) {
+        return 1;
+    }
+    return (sv->bt_flags & 0x2) == 0;
+}
+
+void send_biffs(uint unused0, uint unused1) {
+    uint num_info_words = sv->board_info[0];
+    uint *info_word = sv->board_info + 1;
+    while (num_info_words--) {
+        // Handle command on this chip
+        nn_cmd_biff(0, 0, *(info_word));
+        // Also flood to other chips on this board
+        biff_nn_send(*(info_word++));
+    }
+}
+
 
 //------------------------------------------------------------------------------
 
@@ -1426,7 +1469,6 @@ void compute_st(void)
 void proc_100hz(uint a1, uint a2)
 {
     // Counter used to time how long we've been in certain netinit states.
-    static uint netinit_biff_tick_counter = 0;
     static uint netinit_p2p_tick_counter = 0;
 
     // Boot-up related packet sending and boot-phase advancing
@@ -1468,6 +1510,7 @@ void proc_100hz(uint a1, uint a2)
             y = p2p_addr_guess_y - p2p_min_y;
             w = 1 + p2p_max_x - p2p_min_x;
             h = 1 + p2p_max_y - p2p_min_y;
+            io_printf(IO_BUF, "%u %u %u %u\n", x, y, w, h);
             sv->p2p_addr = p2p_addr = (x << 8) | (y << 0);
             sv->p2p_dims = p2p_dims = (w << 8) | (h << 0);
             sv->p2p_root = p2p_root = (-p2p_min_x << 8) | -p2p_min_y;
@@ -1487,84 +1530,114 @@ void proc_100hz(uint a1, uint a2)
             // needed on other cores later
             setup_link_checks();
 
-            // Check NN connectivity first
+            // Check NN connectivity early to disable some links that just don't
+            // work
             init_link_en_nn();
 
             netinit_biff_tick_counter = 0;
             netinit_phase = NETINIT_PHASE_BIFF;
+
+            p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
+
+            io_printf(IO_BUF, "eob %u\n", sv->unix_time);
         }
         break;
 
     case NETINIT_PHASE_BIFF:
-        // The board information floodfill is allowed three 100Hz ticks. In
-        // the first tick, the board information is actually broadcast. In
-        // the second tick, nothing happens and in the third the state
-        // advances to the P2P table generation phase.
+        // The board information floodfill is allowed multiple 100Hz ticks:
+        // - 1: Send board information
+        // - 2-9: Do nothing - resync
+        // - 10-94: Send pings
+        // - 95-99: Do nothing - resync
+        // - 100: Move on to P2P generation.
         //
         // The reason for using more than one tick is that the 10ms ticks
         // around the machine are not aligned. As a result, some chips may be
         // *almost* 10ms ahead of others. Since it is important that
         // blacklisting information is broadcast ahead of P2P generation,
-        // leaving an extra "tick" before moving to the next state should
-        // deal with the problem. A third tick is left to allow extra leeway
-        // accounting for the fact that the timers are not necessarily
-        // *perfectly* aligned to within 10ms...
+        // and links are checked before this too, leaving an extra "ticks"
+        // before moving to the next state should deal with the problem.
 
         // Get stuck here if we add a flag.  Once we reset the flag, we can
         // proceed.
-        if ((sv->bt_flags & 0x2) == 0) {
+        if (netinit_biff_barrier()) {
             netinit_biff_tick_counter++;
         }
 
+        // Do the send on counter == 1
         if (netinit_biff_tick_counter == 1) {
             if (sv->board_info) {
-                uint num_info_words = sv->board_info[0];
-                uint *info_word = sv->board_info + 1;
-                while (num_info_words--) {
-                    // Handle command on this chip
-                    nn_cmd_biff(0, 0, *(info_word));
-                    // Also flood to other chips on this board
-                    biff_nn_send(*(info_word++));
-                }
+                timer_schedule_proc(send_biffs, 0, 0, 1);
             }
-        } else if (netinit_biff_tick_counter >= 100) {
-            netinit_p2p_tick_counter = 0;
-            netinit_phase = NETINIT_PHASE_P2P_TABLE;
+
+        // End the phase on counter == 100
+        } else if (netinit_biff_tick_counter >= 200) {
+            // Do final link checks
+            final_link_checks();
             // We can do this here first time; we can do it once more later
             disable_unidirectional_links();
-        } else if (netinit_biff_tick_counter >= 3) {
-
-            // Only check links if the messages were sent last time
-            if (netinit_biff_tick_counter >= 4) {
-                check_links_pp();
-                check_links_mc();
-                sv->link_en = link_en;
+            netinit_p2p_tick_counter = 0;
+            netinit_phase = NETINIT_PHASE_P2P_TABLE_ETH;
+            p2pb_repeats = sv->p2pb_repeats;
+        } else if (netinit_biff_tick_counter >= 95) {
+            // Do Nothing here - this is slack time to attempt to resync
+        } else if (netinit_biff_tick_counter >= 10) {
+            // Send out link pings
+            if (netinit_biff_tick_counter % 2 != 0) {
+                send_link_checks_pp();
+            } else {
+                send_link_checks_mc();
             }
-
-            // Send out next link check messages
-            send_link_checks_pp();
-            send_link_checks_mc();
         }
         break;
 
-    case NETINIT_PHASE_P2P_TABLE: {
+    case NETINIT_PHASE_P2P_TABLE_ETH: {
         // Broadcast P2P table generation packets, staggered by chip to
         // reduce network load.
-        uint p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
         if (netinit_p2p_tick_counter == 0) {
             hop_table[p2p_addr] = 0;
             rtr_p2p_set(p2p_addr, 7);
-            timer_schedule_proc(p2pb_nn_send, 0, 0,
+            if (srom.flags & SRF_PRESENT) {
+                timer_schedule_proc(p2pb_nn_send, 0, 0,
                     (sark_rand() % p2pb_period) + 1);
+            }
         }
 
         // Once all P2P messages have had ample time to send (and the
         // required number of repeats have occurred), compute the level
         // config and signalling broadcast spanning tree.
-        if (netinit_p2p_tick_counter++ >= (p2pb_period / 10000) + 2) {
+        if (netinit_p2p_tick_counter++ >= (p2pb_period / P2PB_DIVISOR) + 2) {
             netinit_p2p_tick_counter = 0;
 
-            if (sv->p2pb_repeats-- == 0) {
+            if (p2pb_repeats-- == 0) {
+                netinit_phase = NETINIT_PHASE_P2P_TABLE;
+                p2pb_repeats = sv->p2pb_repeats;
+            }
+        }
+        break;
+    }
+
+    case NETINIT_PHASE_P2P_TABLE: {
+        // Broadcast P2P table generation packets, staggered by chip to
+        // reduce network load.
+        if (netinit_p2p_tick_counter == 0) {
+            hop_table[p2p_addr] = 0;
+            rtr_p2p_set(p2p_addr, 7);
+            timer_schedule_proc(p2pc_reth_nn_send, 0, 0,
+                    (sark_rand() % p2pb_period) + 1);
+            if (sv->eth_addr != 0) {
+                timer_schedule_proc(p2pc_reth_nn_send, sv->eth_addr, 0,
+                        (sark_rand() % p2pb_period) + 2);
+            }
+        }
+
+        // Once all P2P messages have had ample time to send (and the
+        // required number of repeats have occurred), compute the level
+        // config and signalling broadcast spanning tree.
+        if (netinit_p2p_tick_counter++ >= (p2pb_period / P2PB_DIVISOR) + 2) {
+            netinit_p2p_tick_counter = 0;
+
+            if (p2pb_repeats-- == 0) {
                 // check if delegating
                 if (mon_del) {
                     netinit_phase = NETINIT_PHASE_DEL;
@@ -1575,9 +1648,11 @@ void proc_100hz(uint a1, uint a2)
                 for (uint lnk = 0; lnk < 6; lnk++) {
                     uint addr = n_addr(lnk);
                     if (hop_table[addr] == 0x8000FFFF) {
+                        // If we don't have a route to neighbour, disable it!
                         rtr_p2p_set(addr, 6);
                     }
                 }
+                sv->link_en = link_en;
 
                 level_config();
                 compute_st();
@@ -1642,6 +1717,8 @@ void proc_100hz(uint a1, uint a2)
         if (++ticks >= LIVENESS_FLASH_INTERVAL) {
             ticks = 0;
         }
+    } else {
+        send_nn_netinit(netinit_phase);
     }
 
     // Sample core sleep states at a random interval to estimate chip load.

@@ -124,6 +124,15 @@ pkt_buf_t poke_pkt;
 
 //! delegate blacklisted monitor
 uint mon_del = 0;
+
+//! neighbour over link netinit level
+volatile uint neighbour_netinit_level[NUM_LINKS];
+
+//! neighbour over link links enabled
+volatile uint neighbour_links_enabled[NUM_LINKS];
+
+void send_nn_links(uint);
+
 //------------------------------------------------------------------------------
 
 //! Initialise the nearest-neighbour data structures
@@ -537,12 +546,10 @@ void biff_nn_send(uint data)
 
     key |= chksum_64(key, data);
 
-    uint forward = 0x07; // East, North-East, North only
-    for (uint link = 0; link < NUM_LINKS; link++) {
-        if (forward & (1 << link) & link_en) {
-            sark_delay_us(8);  // !! const
-            (void) pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
-        }
+    // East, North-East, North only
+    for (uint link = 0; link <= 2; link++) {
+        // sark_delay_us(8);  // !! const
+        (void) pkt_tx_wait(PKT_NN + PKT_PL + (link << 18), data, key);
     }
 }
 //! \}
@@ -609,6 +616,25 @@ void p2pc_dims_nn_send(uint arg1, uint arg2)
     }
 }
 
+//! \brief Transmit our address back to an Ethernet
+//! \param eth: The Ethernet address to send to
+//! \param arg2: unused
+void p2pc_reth_nn_send(uint eth, uint arg2)
+{
+    uint key = (NN_CMD_P2PC << 24) | (P2PC_RETH << 2);
+
+    // Identify the nearest Ethernet to get back to
+    uint data = (sv->p2p_addr << 16) | eth;
+
+    key |= chksum_64(key, data);
+
+    // Send to link that we know goes to the Ethernet address
+    uint eth_link = rtr_p2p_get(eth);
+    if (eth_link < NUM_LINKS) {
+        pkt_tx(PKT_NN + PKT_PL + (eth_link << 18), data, key);
+    }
+}
+
 //! \brief Transmit "P2PB" table generating packets
 //! \param arg1: unused
 //! \param arg2: unused
@@ -621,6 +647,7 @@ void p2pb_nn_send(uint arg1, uint arg2)
 
     key |= chksum_64(key, data);
 
+    // Send down the link used to get to 0,0 and nearest ethernet
     for (uint link = 0; link < NUM_LINKS; link++) {
         if (link_en & (1 << link)) {
             pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
@@ -766,6 +793,36 @@ static void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
     }
 }
 
+//! \brief A P2P address to link back to Ethernet has been sent
+//! \param[in] link: What link was the packet received on
+//! \param[in] data: The payload from the packet
+//! \param[in] key: The key from the packet
+static void nn_rcv_p2pc_reth_pct(uint link, uint data, uint key)
+{
+    // Get the address of the source
+    uint addr = data >> 16;
+
+    // Get the sources nearest Ethernet
+    uint eth_addr = data & 0xFFFF;
+
+    // We now know this is how we should be able to get to this chip from here.
+    // Note that the hop table in this direction is unimportant, so use 1 to
+    // show that we have had a packet from this chip.
+    rtr_p2p_set(addr, link);
+    hop_table[addr] = 1;
+
+    // If we are the Ethernet in question we can stop
+    if (sv->p2p_addr == eth_addr) {
+        return;
+    }
+
+    // Otherwise continue to send to the Ethernet if possible
+    uint eth_link = rtr_p2p_get(eth_addr);
+    if (eth_link < NUM_LINKS) {
+        pkt_tx(PKT_NN + PKT_PL + (eth_link << 18), data, key);
+    }
+}
+
 //! \brief Handle P2PC packet
 //!
 //! Delegates to:
@@ -789,6 +846,9 @@ void nn_rcv_p2pc_pct(uint link, uint data, uint key)
         break;
     case P2PC_DIMS:
         nn_rcv_p2pc_dims_pct(link, data, key);
+        break;
+    case P2PC_RETH:
+        nn_rcv_p2pc_reth_pct(link, data, key);
         break;
     }
 }
@@ -990,10 +1050,11 @@ static uint nn_cmd_p2pb(uint id, uint data, uint link)
 
     uint table_hops = hop_table[addr] & 0xffff;
 
-    if ((netinit_phase == NETINIT_PHASE_P2P_TABLE) &&
-	    (addr != p2p_addr) &&
+    if ((addr != p2p_addr) &&
 	    (hops < table_hops) &&
 	    (link_en & (1 << link))) {
+
+        io_printf(IO_BUF, "p2pb %x %u %u\n", addr, hops, link);
 
         // keep a count of P2P addresses we've heard of
         if (table_hops == 0xffff) {
@@ -1005,13 +1066,18 @@ static uint nn_cmd_p2pb(uint id, uint data, uint link)
         rtr_p2p_set(addr, link);
 
         if (hops >= 0x3FF) {
+            // Stop sending
             data |= P2PB_STOP_BIT;
+            return data;
         }
-    } else {
-        data |= P2PB_STOP_BIT;
+
+        // Continue, with hops = hops + 1
+        return data + 1;
     }
 
-    return data + 1;
+    // Not applicable, so stop sending
+    data |= P2PB_STOP_BIT;
+    return data;
 }
 
 
@@ -1280,6 +1346,7 @@ void nn_cmd_biff(uint x, uint y, uint data)
 
     switch (type) {
     case 0: {
+        io_printf(IO_BUF, "Biff 0x%08x\n", data);
         uint target_x = (data >> 27) & 7;
         uint target_y = (data >> 24) & 7;
 
@@ -1291,6 +1358,7 @@ void nn_cmd_biff(uint x, uint y, uint data)
         // disable blacklisted links
         // NB: blacklisted links are given as '1'
         sv->link_en = link_en = ((~data) >> 18) & link_en;
+        send_nn_links(link_en);
 
         // remember blacklisted cores
         uint dead_cores = data & 0x3ffff;
@@ -1315,6 +1383,7 @@ void nn_cmd_biff(uint x, uint y, uint data)
 
             // and remember to delegate when ready
             mon_del = 1;
+            io_printf(IO_BUF, "%u biff mon!\n");
         }
 
         // Kill blacklisted cores
@@ -1384,23 +1453,28 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     key &= 0x0fffffff;
     key |= chksum_64(key, data);
 
-    // Schedule packet for forwarding
-    pkt_buf_t *pkt = pkt_buf_get();
-
-    if (pkt == NULL) { // !! ??
-        sw_error(SW_OPT);
-        return;
+    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
+        if (lnk != link) {
+            pkt_tx(PKT_NN + PKT_PL + (lnk << 18), data, key);
+        }
     }
+}
 
-    pkt->fwd = 0x3e; // Don't return to sender...
-    pkt->delay = 0; // Not sent more than once so no delay needed
-    pkt->link = link;
+void send_nn_netinit(uint netinit_level) {
+    uint key = NN_CMD_NISYN << 24;
+    key |= chksum_64(key, netinit_level);
 
-    pkt_t tp = {PKT_NN + PKT_PL, data, key};
-    pkt->pkt = tp;
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        pkt_tx(PKT_NN + PKT_PL + (link << 18), netinit_level, key);
+    }
+}
 
-    if (!timer_schedule_proc(proc_pkt_bc, (uint) pkt, 1, 8)) {
-        sw_error(SW_OPT);
+void send_nn_links(uint links_enabled) {
+    uint key = NN_CMD_LKSYN << 24;
+    key |= chksum_64(key, links_enabled);
+
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        pkt_tx(PKT_NN + PKT_PL + (link << 18), links_enabled, key);
     }
 }
 
@@ -1421,12 +1495,18 @@ void nn_rcv_pkt(uint link, uint data, uint key)
     uint cmd = (key >> 24) & 15;
     uint id = (key >> 1) & 127;
 
-    // NN_CMD_BIFF and NN_CMD_P2PC are handled separately
+    // These commands are handled separately as forward/retry is not the same
     if (cmd == NN_CMD_BIFF) {
         nn_rcv_biff_pct(link, data, key);
         return;
     } else if (cmd == NN_CMD_P2PC) {
         nn_rcv_p2pc_pct(link, data, key);
+        return;
+    } else if (cmd == NN_CMD_NISYN) {
+        neighbour_netinit_level[link] = data & 0xFF;
+        return;
+    } else if (cmd == NN_CMD_LKSYN) {
+        neighbour_links_enabled[link] = data & 0x3F;
         return;
     }
 
@@ -1548,6 +1628,7 @@ void nn_rcv_pkt(uint link, uint data, uint key)
     pkt_buf_t *pkt = pkt_buf_get();
 
     if (pkt == NULL) { // !! ??
+        io_printf(IO_BUF, "nn f pt = 0\n");
         sw_error(SW_OPT);
         return;
     }
@@ -1561,6 +1642,7 @@ void nn_rcv_pkt(uint link, uint data, uint key)
 
     if (!timer_schedule_proc(proc_pkt_bc,
             (uint) pkt, (retry & 7) + 1, 8)) { // const
+        io_printf(IO_BUF, "nn f tr = 0\n");
         sw_error(SW_OPT);
     }
 }

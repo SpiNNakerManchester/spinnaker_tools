@@ -232,8 +232,8 @@ enum scamp_nn_opcodes {
     NN_CMD_FFCS =  7,  //!< Flood fill core and region select
 
     NN_CMD_P2PB =  8,  //!< Hop count limited
-    NN_CMD_SP_9 =  9,  //!< Spare
-    NN_CMD_SP_10 = 10, //!< Spare
+    NN_CMD_LKSYN = 9,  //!< Synchronize opposite links
+    NN_CMD_NISYN = 10, //!< Synchronize Netinit level
     NN_CMD_BIFF =  11, //!< Board-info flood-fill (handled specially)
 
     NN_CMD_FBS =   12, //!< Filtered in FF code
@@ -245,7 +245,8 @@ enum scamp_nn_opcodes {
 enum scamp_nn_p2p_config_subcommands {
     P2PC_ADDR = 0, //!< Your P2P address is...
     P2PC_NEW = 1,  //!< (Broadcast) I/somebody just discovered/updated my/their P2P address
-    P2PC_DIMS = 2  //!< (Broadcast) The current best guess of P2P coordinates is...
+    P2PC_DIMS = 2, //!< (Broadcast) The current best guess of P2P coordinates is...
+    P2PC_RETH = 3  //!< Sending route back to 0, 0 or nearest Ethernet
 };
 //! \}
 
@@ -268,11 +269,7 @@ enum scamp_p2p_control_message_codes {
     P2P_DATA_ACK =      (3 << 24),      //!< Data acknowledge
     P2P_CLOSE_REQ =     (4 << 24),      //!< Close channel request
     P2P_CLOSE_ACK =     (5 << 24),      //!< Close channel acknowledge
-
-    // These should only be sent when the table is empty, as they can then
-    // send and receive to a fake (0, 0)
-    P2P_PING_REQ =      (6 << 24),      //!< Ping request
-    P2P_PING_ACK =      (7 << 24)       //!< Ping response
+    P2P_PING =          (6 << 24)       //!< Ping from a neighbor
 };
 
 #define P2P_DEF_SQL     4               //!< Seq len = 2<sup>4</sup>
@@ -328,6 +325,8 @@ enum netinit_phase_e {
     //! Send Board-info flood-fill messages to disable all known iffy links,
     //! cores and chips.
     NETINIT_PHASE_BIFF,
+    //! Construct the P2P routing tables for Ethernet chips (more critical)
+    NETINIT_PHASE_P2P_TABLE_ETH,
     //! Construct the P2P routing tables
     NETINIT_PHASE_P2P_TABLE,
     //! Setting the Ethernet address
@@ -425,6 +424,7 @@ typedef struct {        // 64 bytes
 //! \{
 
 extern uint pkt_tx(uint tcr, uint data, uint key);
+extern uint pkt_tx_wait(uint tcr, uint data, uint key);
 extern void proc_byte_set(uint a1, uint a2);
 extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 extern uint iptag_new(void);
@@ -508,7 +508,7 @@ extern void reset_ap(uint virt_mask);
 
 extern uint p2p_send_msg(uint addr, sdp_msg_t *msg);
 extern void desc_init(void);
-extern void p2p_send_ping(uint addr, uint link);
+extern uint p2p_send_ping(uint addr, uint link);
 //! \}
 
 //! \name SCAMP nearest-neighbour discovery protocol

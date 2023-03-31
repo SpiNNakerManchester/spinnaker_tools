@@ -51,8 +51,7 @@ extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 extern uint num_cpus;
 extern volatile uint do_sync;
 
-extern uint mc_ping_flags[NUM_LINKS];
-extern uint ping_addr[NUM_LINKS];
+extern uint mc_ping_count[NUM_LINKS];
 
 static uint centi_ms;   //!< Counts 0 to 9 in ms
 
@@ -238,16 +237,9 @@ INT_HANDLER test_mc_int(void) {
     uint data = cc[CC_RXDATA];
     uint key = cc[CC_RXKEY];
 
-    if (data & 0xFF000000) {
-        // This is a response to a ping
-        uint link = (data >> 16) & 0xFF;
-        uint addr = data & 0xFFFF;
-        if (link < 6 && addr == ping_addr[link]) {
-            mc_ping_flags[link] = 1;
-        }
-    } else {
-        // This is a ping request - requester addr and link is in the data
-        pkt_tx(PKT_MC_PL, 0xFF000000 | key, data);
+    // This is a response to a ping
+    if (data < 6) {
+        mc_ping_count[data] += 1;
     }
 
 #if MC_SLOT != SLOT_FIQ
