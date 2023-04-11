@@ -1455,7 +1455,7 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
 
     for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
         if (lnk != link) {
-            pkt_tx(PKT_NN + PKT_PL + (lnk << 18), data, key);
+            pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key);
         }
     }
 }
