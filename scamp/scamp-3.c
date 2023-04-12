@@ -1320,14 +1320,14 @@ static void setup_link_checks() {
         uint addr = n_addr(lnk);
         ping_addr[lnk] = addr;
         uint o_addr = n_addr(o_lnk);
-        if (ping_addr[o_lnk] == addr) {
+        if (o_addr == addr) {
             if (addr > p2p_addr == o_lnk > lnk) {
                 rtr_p2p_set(addr, lnk);
             } else {
                 rtr_p2p_set(addr, o_lnk);
             }
         } else {
-            rtr_p2p_set(addr, o_lnk);
+            rtr_p2p_set(addr, lnk);
         }
         rtr_mc_set(lnk, (o_lnk << 16) + p2p_addr, 0xFFFFFFFF, MC_CORE_ROUTE(0));
         rtr_mc_set(lnk + 6, (lnk << 16) + addr, 0xFFFFFFFF, MC_LINK_ROUTE(lnk));
