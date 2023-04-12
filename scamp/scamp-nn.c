@@ -1054,8 +1054,6 @@ static uint nn_cmd_p2pb(uint id, uint data, uint link)
 	    (hops < table_hops) &&
 	    (link_en & (1 << link))) {
 
-        io_printf(IO_BUF, "p2pb %x %u %u\n", addr, hops, link);
-
         // keep a count of P2P addresses we've heard of
         if (table_hops == 0xffff) {
             sv->p2p_active++;
@@ -1346,7 +1344,6 @@ void nn_cmd_biff(uint x, uint y, uint data)
 
     switch (type) {
     case 0: {
-        io_printf(IO_BUF, "Biff 0x%08x\n", data);
         uint target_x = (data >> 27) & 7;
         uint target_y = (data >> 24) & 7;
 
@@ -1383,7 +1380,6 @@ void nn_cmd_biff(uint x, uint y, uint data)
 
             // and remember to delegate when ready
             mon_del = 1;
-            io_printf(IO_BUF, "%u biff mon!\n");
         }
 
         // Kill blacklisted cores
@@ -1628,7 +1624,6 @@ void nn_rcv_pkt(uint link, uint data, uint key)
     pkt_buf_t *pkt = pkt_buf_get();
 
     if (pkt == NULL) { // !! ??
-        io_printf(IO_BUF, "nn f pt = 0\n");
         sw_error(SW_OPT);
         return;
     }
@@ -1642,7 +1637,6 @@ void nn_rcv_pkt(uint link, uint data, uint key)
 
     if (!timer_schedule_proc(proc_pkt_bc,
             (uint) pkt, (retry & 7) + 1, 8)) { // const
-        io_printf(IO_BUF, "nn f tr = 0\n");
         sw_error(SW_OPT);
     }
 }

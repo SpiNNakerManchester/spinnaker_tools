@@ -1272,7 +1272,6 @@ void init_link_en_nn()
                         &remote_chip_id, timeout);
                 if (rc != RC_OK || remote_chip_id != local_chip_id) {
                     link_en &= ~(1 << link);
-                    io_printf(IO_BUF, "%u -n %u\n", sv->unix_time, link);
                     break;
                 }
             }
@@ -1301,11 +1300,9 @@ static void send_link_checks_mc() {
 static void final_link_checks() {
     for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
         if ((link_en & (1 << lnk))) {
-            io_printf(IO_BUF, "lc %u %u %u %u\n", lnk, mc_ping_count[lnk], pp_ping_count[lnk], neighbour_netinit_level[lnk]);
             if (mc_ping_count[lnk] < MINIMUM_PINGS_RECEIVED ||
                     pp_ping_count[lnk] < MINIMUM_PINGS_RECEIVED) {
                 link_en &= ~(1 << lnk);
-
             }
         }
     }
@@ -1318,11 +1315,20 @@ static void setup_link_checks() {
     // Set up my address, and my direct neighbour addresses
     rtr_p2p_set(p2p_addr, 7);
     for (uint lnk = 0; lnk < 6; lnk++) {
-        uint addr = n_addr(lnk);
-        ping_addr[lnk] = addr;
-        rtr_p2p_set(addr, lnk);
         uint o_lnk = opp_link(lnk);
         opposite_link[lnk] = o_lnk;
+        uint addr = n_addr(lnk);
+        ping_addr[lnk] = addr;
+        uint o_addr = n_addr(o_lnk);
+        if (ping_addr[o_lnk] == addr) {
+            if (addr > p2p_addr == o_lnk > lnk) {
+                rtr_p2p_set(addr, lnk);
+            } else {
+                rtr_p2p_set(addr, o_lnk);
+            }
+        } else {
+            rtr_p2p_set(addr, o_lnk);
+        }
         rtr_mc_set(lnk, (o_lnk << 16) + p2p_addr, 0xFFFFFFFF, MC_CORE_ROUTE(0));
         rtr_mc_set(lnk + 6, (lnk << 16) + addr, 0xFFFFFFFF, MC_LINK_ROUTE(lnk));
     }
@@ -1336,10 +1342,8 @@ static void disable_unidirectional_links(void)
         if (link_en & (1 << lnk)) {
             uint o_link = opp_link(lnk);
             uint nl = neighbour_links_enabled[lnk];
-            io_printf(IO_BUF, "ul %u (%u) %u\n", lnk, o_link, nl);
             if ((nl & (1 << o_link)) == 0) {
                 link_en &= ~(1 << lnk);
-                io_printf(IO_BUF, "%u -o %u %x\n", sv->unix_time, lnk, nl);
             }
         }
     }
@@ -1510,7 +1514,6 @@ void proc_100hz(uint a1, uint a2)
             y = p2p_addr_guess_y - p2p_min_y;
             w = 1 + p2p_max_x - p2p_min_x;
             h = 1 + p2p_max_y - p2p_min_y;
-            io_printf(IO_BUF, "%u %u %u %u\n", x, y, w, h);
             sv->p2p_addr = p2p_addr = (x << 8) | (y << 0);
             sv->p2p_dims = p2p_dims = (w << 8) | (h << 0);
             sv->p2p_root = p2p_root = (-p2p_min_x << 8) | -p2p_min_y;
@@ -1538,8 +1541,6 @@ void proc_100hz(uint a1, uint a2)
             netinit_phase = NETINIT_PHASE_BIFF;
 
             p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
-
-            io_printf(IO_BUF, "eob %u\n", sv->unix_time);
         }
         break;
 

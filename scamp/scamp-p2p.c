@@ -572,7 +572,6 @@ void p2p_open_req(uint data, uint addr)
     if (len > (SDP_BUF_SIZE + 8 + 16) || seq_len > 16) { //const
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_REJECT);
         p2p_stats[P2P_REJECTS]++;
-        io_printf(IO_BUF, "reject\n");
         return;
     }
 
@@ -611,7 +610,6 @@ void p2p_open_req(uint data, uint addr)
     if (rid == P2P_NUM_STR) {           // No free streams - send busy
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
         p2p_stats[P2P_BUSY1]++;
-        io_printf(IO_BUF, "busy\n");
         return;
     }
 
@@ -621,7 +619,6 @@ void p2p_open_req(uint data, uint addr)
     if (msg == NULL) {
         p2p_send_ctl(P2P_OPEN_ACK, addr, (tid << 16) + RC_P2P_BUSY);
         p2p_stats[P2P_BUSY2]++;
-        io_printf(IO_BUF, "busy2\n");
         return;
     }
 
@@ -732,9 +729,6 @@ void p2p_close_ack(uint data, uint srce)
 
 void p2p_rcv_data(uint data, uint addr)
 {
-    if (sv->utmp0 == 1) {
-        io_printf(IO_BUF, "pd %x %u %u\n", addr, data);
-    }
     uint rid = (data >> 29) & 7; //##
     uint phase = (data >> 28) & 1; //##
     rx_desc_t *desc = rx_desc_table + rid;
@@ -874,9 +868,6 @@ void p2p_rcv_ctrl(uint data, uint addr)
     }
 
     uint cmd = (data >> 24) & 15;
-    if (sv->utmp0 == 1) {
-        io_printf(IO_BUF, "pc %x %u %u\n", addr, data, cmd);
-    }
     if (cmd == P2P_OPEN_REQ >> 24) {
         p2p_open_req(data, addr);
     } else if (cmd == P2P_OPEN_ACK >> 24) {
