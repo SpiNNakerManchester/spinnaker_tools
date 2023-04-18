@@ -60,7 +60,7 @@ typedef struct nn_desc_t {
     uchar block_num;            //!< Block number
 
     uchar app_id;               //!< AppID
-    uchar load;                 //!< Set if for us
+    uchar load;                 //!< Whether to load locally
     ushort srce_addr;           //!< P2P of sender
 
     ushort word_len;            //!< Number of words in block
@@ -69,7 +69,6 @@ typedef struct nn_desc_t {
     uint gidr_id;               //!< GIDR ID
 
     uint sum;                   //!< Checksum
-    uint region;                //!< Region
     uint cores;                 //!< Selected cores to load
     uint* aplx_addr;            //!< APLX block addr
     uint load_addr;             //!< Block load base
@@ -105,9 +104,6 @@ uint pkt_buf_max;
 //!
 //! Stored in SYSRAM so visible to all cores. Should only be updated by SCAMP
 uint *hop_table;
-
-//! Used for tracking signal dispatch
-level_t levels[4];
 
 //! What application (or at least AppID) is running on each core.
 uchar core_app[MAX_CPUS];
@@ -242,68 +238,6 @@ const signed char lx[6] = {-1, -1,  0, +1, +1,  0}; //!< X deltas, by link ID
 const signed char ly[6] = { 0, -1, -1,  0, +1, +1}; //!< Y deltas, by link ID
 
 //! \}
-
-//------------------------------------------------------------------------------
-
-//! \brief Given a P2P address, compute region addresses for each of the four
-//!     levels, updating the levels structure.
-//! \param[in] p2p_addr: The address to compute for.
-void compute_level(uint p2p_addr)
-{
-    uint x = p2p_addr >> 8;
-    uint y = p2p_addr & 255;
-
-    for (uint lvl = 0; lvl < 4; lvl++) {
-        uint shift = 6 - 2 * lvl;
-        uint mask = ~((4 << shift) - 1);
-        uint bit = ((x >> shift) & 3) + 4 * ((y >> shift) & 3);
-        uint nx = x & mask;
-        uint ny = y & mask;
-        levels[lvl].level_addr = (nx << 24) + ((ny + lvl) << 16) + (1 << bit);
-    }
-}
-
-//! \brief For all regions at all levels, find a working chip within each of
-//!     the 16 subregions and record its coordinates.
-void level_config(void)
-{
-    compute_level(p2p_addr);
-
-    for (uint level = 0; level < 4; level++) {
-        uint base = (levels[level].level_addr >> 16) & 0xfcfc;
-        uint shift = 6 - 2 * level;     // {6, 4, 2, 0};
-        uint width = (1 << shift);      // {64, 16, 4, 1};
-
-        for (uint ix = 0; ix < 4; ix++) {
-            for (uint iy = 0; iy < 4; iy++) {
-                uint num = ix + 4 * iy;
-                uint addr = ((ix << 8) + iy) << shift;
-
-                // Now search for a working chip within the subregion.
-
-                for (uint i = 0; i < (width * width); i++) {
-                    uint wx = i & ((1 << shift) - 1);
-                    uint wy = i >> shift;
-                    uint a = base + addr + (wx << 8) + wy;
-
-                    // Don't bother trying outside the scope of the system
-                    if (a >= p2p_dims || (a & 0xFF) >= (p2p_dims & 0xFF)) {
-                        continue;
-                    }
-
-                    uint link = rtr_p2p_get(a);
-
-                    if (link != 6) {
-                        levels[level].addr[num] = a;
-                        levels[level].valid[num] = 1;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-}
-
 
 //------------------------------------------------------------------------------
 
@@ -909,7 +843,7 @@ enum sig0_operations {
     SIG0_LEDS,          //!< Set LEDs (call sark_led_set())
     SIG0_GTP,           //!< Global Time Phase
     SIG0_ID,            //!< ID set/reset
-    SIG0_LEVEL,         //!< Trigger level_config()
+    SIG0_LEVEL,         //!< Trigger level_config() _(unimplemented)_
     SIG0_APP,           //!< Signal application (call signal_app())
     SIG0_TP,            //!< Router time phase period _(unimplemented)_
     SIG0_RST,           //!< Shut down APs _(unimplemented)_
@@ -953,14 +887,12 @@ uint nn_cmd_sig0(uint data)
         sark_word_set(nn_desc.id_set, (data & 1) ? 0xff : 0x00, 16);
         break;
 
-    case SIG0_LEVEL:
-        event_queue_proc((event_proc) level_config, 0, 0, PRIO_0);
-        break;
 
     case SIG0_APP:
         signal_app(data);
         break;
       /*
+    case SIG0_LEVEL:    // Level config (levels no longer implemented)
     case SIG0_TP:       // Router time phase period
     case SIG0_RST:      // Shut down APs
     case SIG0_DOWN:     // Minimum power mode
@@ -1090,7 +1022,6 @@ static uint nn_cmd_p2pb(uint id, uint data, uint link)
 static void nn_cmd_ffs(uint data, uint key)
 {
     nn_desc.aplx_addr = sv->sdram_sys;
-    nn_desc.region = data;
     nn_desc.id = (key >> 17) & 127;     // 8 bits (LSB zero)
     nn_desc.block_len = key >> 8;       // 8 bits
     nn_desc.block_count = 0;            // 8 bits
@@ -1103,16 +1034,6 @@ static void nn_cmd_ffs(uint data, uint key)
     nn_desc.cores = 0;
     nn_desc.last_ffcs = 0;
 
-    uint mask = nn_desc.region & 0xffff;
-    uint region = nn_desc.region >> 16;
-    uint level = region & 3;
-
-    if ((mask == 0) ||
-            (((levels[level].level_addr >> 16) == region)) &&
-            (levels[level].level_addr & mask)) {
-        nn_desc.load = 1;
-    }
-
     nn_desc.state = FF_ST_EXBLK;
 }
 
@@ -1122,12 +1043,6 @@ static void nn_cmd_ffs(uint data, uint key)
 //! \return 1 if the packet should not be propagated further
 static uint nn_cmd_ffcs(uint data, uint key)
 {
-    // Select cores to flood-fill to
-    // Determine if we're in the region specified by the packet
-    uint mask = data & 0xffff;
-    uint region = data >> 16;
-    uint level = region & 3;
-
     // Extract the cores from the key.
     uint cores = key & 0x0003ffff;
 
@@ -1139,15 +1054,11 @@ static uint nn_cmd_ffcs(uint data, uint key)
     }
     nn_desc.last_ffcs = id;
 
-    if ((mask == 0) ||
-            (((levels[level].level_addr >> 16) == region)) &&
-            (levels[level].level_addr & mask)) {
-        // We're in the region, so ensure that load is set
-        nn_desc.load = 1;
+    // Ensure that load is set
+    nn_desc.load = 1;
 
-        // And include the cores that we wish to load
-        nn_desc.cores |= cores;
-    }
+    // And include the cores that we wish to load
+    nn_desc.cores |= cores;
 
     return 0;
 }

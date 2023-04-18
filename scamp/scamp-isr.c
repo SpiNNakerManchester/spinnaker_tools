@@ -33,7 +33,6 @@
 
 extern pkt_queue_t tx_pkt_queue;
 
-extern void p2p_region(uint data, uint key);
 extern void p2p_rcv_data(uint data, uint key);
 extern void p2p_rcv_ctrl(uint data, uint key);
 extern void nn_rcv_pkt(uint link, uint data, uint key);
@@ -291,7 +290,7 @@ INT_HANDLER pkt_p2p_int(void)
     key &= 0xffff;
 
     if (p2p_type == P2P_LEVEL) {
-        p2p_region(data, key);
+        // Do Nothing - no longer supported!
     } else if (p2p_type == P2P_DATA) {
         p2p_rcv_data(data, key);
     } else if (p2p_type == P2P_CTRL) {

@@ -329,6 +329,14 @@ void proc_byte_set(uint a1, uint a2)
     * (uchar *) a1 = a2;
 }
 
+//! \brief Write a word at a location
+//! \param[in] a1: The location to write
+//! \param[in] a2: The byte to write there
+void proc_word_set(uint a1, uint a2)
+{
+    * (uint *) a1 = a2;
+}
+
 
 void proc_route_msg(uint arg1, uint arg2);
 
@@ -1611,6 +1619,34 @@ void proc_100hz(uint a1, uint a2)
             netinit_p2p_tick_counter = 0;
 
             if (p2pb_repeats-- == 0) {
+                netinit_phase = NETINIT_PHASE_P2P_TABLE_R_ETH;
+                p2pb_repeats = sv->p2pb_repeats;
+            }
+        }
+        break;
+    }
+
+    case NETINIT_PHASE_P2P_TABLE_R_ETH: {
+        // Broadcast P2P table generation packets, staggered by chip to
+        // reduce network load.
+        if (netinit_p2p_tick_counter == 0) {
+            hop_table[p2p_addr] = 0;
+            rtr_p2p_set(p2p_addr, 7);
+            timer_schedule_proc(p2pc_reth_nn_send, 0, 0,
+                    (sark_rand() % p2pb_period) + 1);
+            if (sv->eth_addr != 0) {
+                timer_schedule_proc(p2pc_reth_nn_send, sv->eth_addr, 0,
+                        (sark_rand() % p2pb_period) + 2);
+            }
+        }
+
+        // Once all P2P messages have had ample time to send (and the
+        // required number of repeats have occurred), compute the level
+        // config and signalling broadcast spanning tree.
+        if (netinit_p2p_tick_counter++ >= (p2pb_period / P2PB_DIVISOR) + 2) {
+            netinit_p2p_tick_counter = 0;
+
+            if (p2pb_repeats-- == 0) {
                 netinit_phase = NETINIT_PHASE_P2P_TABLE;
                 p2pb_repeats = sv->p2pb_repeats;
             }
@@ -1624,12 +1660,8 @@ void proc_100hz(uint a1, uint a2)
         if (netinit_p2p_tick_counter == 0) {
             hop_table[p2p_addr] = 0;
             rtr_p2p_set(p2p_addr, 7);
-            timer_schedule_proc(p2pc_reth_nn_send, 0, 0,
+            timer_schedule_proc(p2pb_nn_send, 0, 0,
                     (sark_rand() % p2pb_period) + 1);
-            if (sv->eth_addr != 0) {
-                timer_schedule_proc(p2pc_reth_nn_send, sv->eth_addr, 0,
-                        (sark_rand() % p2pb_period) + 2);
-            }
         }
 
         // Once all P2P messages have had ample time to send (and the
@@ -1655,7 +1687,6 @@ void proc_100hz(uint a1, uint a2)
                 }
                 sv->link_en = link_en;
 
-                level_config();
                 compute_st();
                 disable_unidirectional_links();
                 sv->p2p_up = p2p_up = 1;
@@ -2095,9 +2126,6 @@ void c_main(void)
         p2p_dims = sv->p2p_dims;
         p2p_root = sv->p2p_root;
         p2p_up   = sv->p2p_up;
-
-        // (re-)construct the level/region information (not in shared memory)
-        level_config();
 
         // Reseed uniquely for each chip
         sark_srand(p2p_addr);

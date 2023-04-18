@@ -470,217 +470,7 @@ uint cmd_info(sdp_msg_t *msg)
 }
 
 //------------------------------------------------------------------------------
-
-extern level_t levels[4];
 extern uint pkt_tx(uint tcr, uint data, uint key);
-extern void return_msg(sdp_msg_t *msg, uint rc);
-
-//! State "counting" coalescing mode
-enum state_coalesce_mode {
-    MODE_OR =       0,  //!< Combine using bitwise OR (any in state?)
-    MODE_AND =      1,  //!< Combine using bitwise AND (all in state?)
-    MODE_SUM =      2,  //!< Combine using ADD
-    MODE_3 =        3   //!< unused
-};
-
-//! Operation to use for P2P_LEVEL messages
-enum send_reg_ctrl {
-    APP_RET =       0,  //!< This is a RETURN (from APP_STAT)
-    APP_STAT =      1,  //!< This is a request for statistics/count
-    APP_SIG =       2,  //!< This is a request to signal cores
-    APP_3 =         3   //!< unused
-};
-
-//! \brief Send a P2P packet encoding a value sent in response.
-//! \param[in] ctrl: The packet control data (::send_reg_ctrl << 22)
-//! \param[in] addr: The packet target address (::ushort)
-//! \param[in] data: The packet payload information
-static void p2p_send_reg(uint ctrl, uint addr, uint data)
-{
-    data |= ctrl;
-    data |= chksum_32(data);
-    addr |= P2P_LEVEL << 16;
-
-    (void) pkt_tx(PKT_P2P_PL, data, addr);
-}
-
-//! \brief Timer callback, used to finish cmd_sig() call for state counting.
-//! \param[in,out] arg1: SDP message
-//! \param[in] level: Which counter are we reporting the value of?
-static void proc_ret_msg(uint arg1, uint level)
-{
-    sdp_msg_t *msg = (sdp_msg_t *) arg1;
-    msg->arg1 = levels[level].result;
-    msg->length = sizeof(cmd_hdr_t);
-
-    // check that replies actually arrived
-    if (levels[level].rcvd != 0) {
-        return_msg(msg, 0);
-    } else {
-        return_msg(msg, RC_P2P_NOREPLY);
-    }
-
-    //NB: clear result just in case
-    levels[level].result = 0;
-}
-
-//! \brief Callback for proc_send(), gathering the results from sending and
-//!     passing them on to our parent SCAMP.
-//! \param[in] level: Which level are we processing at
-//! \param[in] mode: What mode were we operating in
-static void proc_gather(uint level, uint mode)
-{
-    //  uint rcvd = levels[level].rcvd;
-    uint srce = levels[level].parent;
-    uint d = (mode << 20) + ((level - 1) << 26) + levels[level].result;
-
-    p2p_send_reg(APP_RET << 22, srce, d);
-
-    //NB: clear result just in case
-    levels[level].result = 0;
-}
-
-//! \brief Callback for p2p_region(), distributing requests to other SCAMPs
-//! \param[in] data: The description of exactly what is to be done
-//! \param[in] mask: Which bits are relevant
-static void proc_send(uint data, uint mask)
-{
-    uint level = (data >> 26) & 3;
-    uint mode = (data >> 20) & 3;
-
-    data &= ~(3 << 26);
-    data |= ((level + 1) & 3) << 26;
-
-    levels[level].sent = 0;
-    levels[level].rcvd = 0;
-    levels[level].result = (mode == MODE_AND) ? (1 << 16) : 0;
-
-    for (uint i = 0; i < 16; i++) {
-        if (mask & (1 << i)) {
-            uint valid = levels[level].valid[i];
-
-            if (valid) {
-                uint addr = levels[level].addr[i];
-
-                levels[level].sent++;
-                p2p_send_reg(data & (3 << 22), addr, data); //##
-            }
-        }
-    }
-
-    // schedule the sending of the return message in plenty of time
-    if (mask & 0xffff0000) {
-        timer_schedule_proc(proc_gather, level, mode, 500 * (4 - level));
-    }
-}
-
-//! \brief Callback for p2p_region() when statistics are being collected,
-//!     used so that low-priority processing does not block a high-priority
-//!     interrupt.
-//! \param[in] data: The description of exactly what is to be calculated
-//! \param[in] srce: Where the data came from
-static void proc_process(uint data, uint srce)
-{
-    uint mode = (data >> 20) & 3;
-    uint app_id = data & 255;
-    uint app_mask = (data >> 8) & 255;
-    uint state = (data >> 16) & 15;
-    uint mask = 0;
-
-    for (uint i = 1; i < num_cpus; i++) {
-        uint b = (core_app[i] & app_mask) == app_id;
-        mask |= b << i;
-    }
-
-    uint result = 0;
-    if (mode == MODE_SUM) {
-        for (uint i = 1; i < num_cpus; i++) {
-            if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
-                result++;
-            }
-        }
-    } else if (mode == MODE_OR) {
-        for (uint i = 1; i < num_cpus; i++) {
-            if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state == state)) {
-                result = 1 << 16;
-            }
-        }
-
-        result++;
-    } else {            // MODE_AND
-        result = 1 << 16;
-
-        for (uint i = 1; i < num_cpus; i++) {
-            if ((mask & (1 << i)) && (sv_vcpu[i].cpu_state != state)) {
-                result = 0;
-            }
-        }
-
-        result++;
-    }
-
-    uint d = (mode << 20) + (3 << 26) + result;
-    p2p_send_reg(APP_RET << 22, srce, d);
-}
-
-//! \brief Handler for P2P Region packets (those with type ::P2P_LEVEL)
-//! \param[in] data: The payload from the packet
-//! \param[in] srce: The sender address (lower 16 bits) from the packet
-void p2p_region(uint data, uint srce)
-{
-    uint t = chksum_32(data);
-    if (t != 0) {
-        return;
-    }
-
-    uint cmd = (data >> 22) & 3;
-    uint level = (data >> 26) & 3;
-    uint mode = (data >> 20) & 3;
-
-    if (cmd == APP_RET) {
-        data &= 0x000fffff;     // trim to 20 bits
-
-        if (mode == MODE_OR) {
-            levels[level].result += data & 0xffff;
-            levels[level].result |= data & (1 << 16);
-        } else if (mode == MODE_AND) {
-            uint count = (levels[level].result + data) & 0xffff;
-            uint bit = levels[level].result & data & (1 << 16);
-            levels[level].result = bit | count;
-        } else {
-            levels[level].result += data;
-        }
-
-        levels[level].rcvd++;
-        return;
-    }
-
-    if (level != 0) {
-        levels[level].parent = srce;
-        data &= 0x0fffffff;
-
-        // schedule the sending of packets to subregions
-        event_queue_proc(proc_send, data, 0xffffffff, PRIO_0);
-
-        return;
-    }
-
-    // Level == 0 - process packet
-
-    uint result = 1;
-
-    if (cmd == APP_STAT) {
-        // schedule the processing of the packet
-        event_queue_proc(proc_process, data, srce, PRIO_0);
-        return;
-    } else if (cmd == APP_SIG) {
-        signal_app(data);
-    }
-    // else     // APP_3
-
-    uint d = (mode << 20) + (3 << 26) + result;
-    p2p_send_reg(APP_RET << 22, srce, d);
-}
 
 //! The types of messages to use to send signals
 enum signal_type {
@@ -705,29 +495,9 @@ uint cmd_sig(sdp_msg_t *msg)
         }
         pkt_tx(PKT_MC_PL, data, SCAMP_MC_SIGNAL_KEY);
     } else if (type == SIG_TYPE_P2P) {
-        uint mask = msg->arg3;
-
-        if (mask == 0) {
-            msg->cmd_rc = RC_ARG;
-            return 0;
-        }
-
-        uint level = (data >> 26) & 3;
-
-        proc_send(data, mask);
-
-        // check that packets were actually sent (i.e., chips are listening)
-        if (levels[level].sent != 0) {
-            // schedule the return message with plenty of time to finish
-            timer_schedule_proc(proc_ret_msg, (uint) msg, level, 10000);
-
-            // a 'wrong' message length indicates that the
-            // return message should not be sent at this time
-            return 0xffff0000;
-        } else {
-            msg->cmd_rc = RC_ROUTE;
-            return 0;
-        }
+        // No longer supported so error
+        msg->cmd_rc = RC_ARG;
+        return 0;
     } else if (type == SIG_TYPE_NN) {
         ff_nn_send((NN_CMD_SIG0 << 24) + 0x3f0000,
                 (5 << 28) + data, 0x3f00, 1);
@@ -922,6 +692,37 @@ uint cmd_sync(sdp_msg_t *msg) {
     return 0;
 }
 
+static uint count_in_progress;
+extern uint n_cores_in_state(uint app_id, uint state);
+
+uint cmd_count(sdp_msg_t *msg) {
+    cpu_int_disable();
+    if (count_in_progress) {
+        cpu_int_enable();
+        msg->cmd_rc = RC_P2P_BUSY;
+        return 0;
+    }
+    count_in_progress = 1;
+    cpu_int_enable();
+    uint app_id = msg->arg1;
+    uint state = msg->arg2;
+    uint w = sv->p2p_dims >> 8;
+    uint h = sv->p2p_dims & 0xFF;
+    uint total = n_cores_in_state(app_id, state);
+    for (uint x = 0; x < w; x++) {
+        for (uint y = 0; y < h; y++) {
+            uint addr = (x << 8) | y;
+            if (rtr_p2p_get(addr) < NUM_LINKS) {
+                total += p2p_req_count(addr, app_id, state, sv->peek_time);
+            }
+        }
+    }
+    msg->arg1 = total;
+    cpu_int_disable();
+    count_in_progress = 0;
+    cpu_int_enable();
+    return 4;
+}
 
 //------------------------------------------------------------------------------
 
@@ -1004,6 +805,8 @@ uint scamp_debug(sdp_msg_t *msg, uint srce_ip)
         return cmd_app_copy_run(msg);
     case CMD_SYNC:
         return cmd_sync(msg);
+    case CMD_COUNT:
+        return cmd_count(msg);
     default:
         msg->cmd_rc = RC_CMD;
         return 0;

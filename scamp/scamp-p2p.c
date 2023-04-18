@@ -155,6 +155,10 @@ const uint close_ack_time = 250;
 //! Reserved for performing P2P pings
 extern volatile uint pp_ping_count[NUM_LINKS];
 
+//! Reserved for performing a P2P count operation
+volatile uint p2p_count_response;
+uint p2p_count_id;
+
 //------------------------------------------------------------------------------
 
 //! initialise TX and RX descriptors
@@ -805,6 +809,60 @@ void p2p_ping(uint data, uint addr) {
     }
 }
 
+uint p2p_req_count(uint addr, uint app_id, uint state, uint timeout) {
+    cpu_int_disable();
+    p2p_count_id = (p2p_count_id + 1) & 127;
+    p2p_count_response = 0xFFFFFFFF;
+    cpu_int_enable();
+
+    uint data = app_id | (state << 8) | (p2p_count_id << 16);
+    p2p_send_ctl(P2P_COUNT_REQ, addr, data);
+
+    event_t* e = event_new(proc_word_set, (uint) &p2p_count_response, 0);
+    if (e == NULL) {
+        sw_error(SW_OPT);
+        return RC_BUF;
+    }
+
+    uint id = e->ID;
+    timer_schedule(e, timeout);
+
+    while (p2p_count_response == 0xFFFFFFFF) {
+        continue;
+    }
+
+    timer_cancel(e, id);
+
+    return p2p_count_response;
+}
+
+uint n_cores_in_state(uint app_id, uint state) {
+    uint result = 0;
+    for (uint i = 1; i < num_cpus; i++) {
+        if ((core_app[i] == app_id) && (sv_vcpu[i].cpu_state == state)) {
+            result++;
+        }
+    }
+    return result;
+}
+
+void p2p_count(uint data, uint addr) {
+    uint app_id = data & 255;
+    uint state = (data >> 8) & 15;
+    uint count_id = (data >> 16) & 0xFF;
+
+    // "Return" the count
+    uint return_data = n_cores_in_state(app_id, state) | (count_id << 16);
+    p2p_send_ctl(P2P_COUNT_RESP, addr, return_data);
+}
+
+void p2p_count_resp(uint data, uint addr) {
+    uint count_id = (data >> 16) & 0xFF;
+    if (count_id == p2p_count_id) {
+        p2p_count_response = data & 31;
+    }
+}
+
 #ifdef ASM // !! Needs updating
 
 __asm void p2p_rcv_pkt(uint data, uint addr)
@@ -880,6 +938,10 @@ void p2p_rcv_ctrl(uint data, uint addr)
         p2p_close_ack(data, addr);
     } else if (cmd == P2P_PING >> 24) {
         p2p_ping(data, addr);
+    } else if (cmd == P2P_COUNT_REQ >> 24) {
+        p2p_count(data, addr);
+    } else if (cmd == P2P_COUNT_RESP >> 24) {
+        p2p_count_resp(data, addr);
     }
 }
 #endif
