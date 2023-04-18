@@ -1641,32 +1641,8 @@ void proc_100hz(uint a1, uint a2)
         }
 
         // Once all P2P messages have had ample time to send (and the
-        // required number of repeats have occurred), compute the level
-        // config and signalling broadcast spanning tree.
-        if (netinit_p2p_tick_counter++ >= (p2pb_period / P2PB_DIVISOR) + 2) {
-            netinit_p2p_tick_counter = 0;
-
-            if (p2pb_repeats-- == 0) {
-                netinit_phase = NETINIT_PHASE_P2P_TABLE;
-                p2pb_repeats = sv->p2pb_repeats;
-            }
-        }
-        break;
-    }
-
-    case NETINIT_PHASE_P2P_TABLE: {
-        // Broadcast P2P table generation packets, staggered by chip to
-        // reduce network load.
-        if (netinit_p2p_tick_counter == 0) {
-            hop_table[p2p_addr] = 0;
-            rtr_p2p_set(p2p_addr, 7);
-            timer_schedule_proc(p2pb_nn_send, 0, 0,
-                    (sark_rand() % p2pb_period) + 1);
-        }
-
-        // Once all P2P messages have had ample time to send (and the
-        // required number of repeats have occurred), compute the level
-        // config and signalling broadcast spanning tree.
+        // required number of repeats have occurred), compute the signalling
+        // broadcast spanning tree.
         if (netinit_p2p_tick_counter++ >= (p2pb_period / P2PB_DIVISOR) + 2) {
             netinit_p2p_tick_counter = 0;
 
