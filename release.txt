@@ -19,9 +19,11 @@ Changes:
 * SCAMP: Signals using the levels have been removed, so a signal with type
          P2P will fail!
          
-* SCAMP: A new command has been added to count cores in a given state 
-         (CMD_COUNT).  This only works for a single state with a single app_id
-         per call (as this is how the core state count was being used).
+* SCAMP: A new command has been added to count cores in a given state on a  
+         board (CMD_COUNT).  This only works for a single state with a single 
+         app_id per call (as this is how the core state count was being used),
+         and should only be called on each Ethernet chip (though it will work
+         on other chips too, it might give misleading results).
 
 
 #-------------------------------------------------------------------------------

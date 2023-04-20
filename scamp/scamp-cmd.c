@@ -692,35 +692,72 @@ uint cmd_sync(sdp_msg_t *msg) {
     return 0;
 }
 
-static uint count_in_progress;
+extern char eth_map[12][12];
 extern uint n_cores_in_state(uint app_id, uint state);
+volatile uint p2p_count_result;
+volatile uint p2p_count_n_results;
+uint p2p_count_id;
+static uint count_in_progress = 0;
 
 uint cmd_count(sdp_msg_t *msg) {
     cpu_int_disable();
     if (count_in_progress) {
-        cpu_int_enable();
         msg->cmd_rc = RC_P2P_BUSY;
+        cpu_int_enable();
         return 0;
     }
     count_in_progress = 1;
+    p2p_count_id = (p2p_count_id + 1) % 127;
+    p2p_count_result = 0;
+    p2p_count_n_results = 0;
     cpu_int_enable();
     uint app_id = msg->arg1;
     uint state = msg->arg2;
-    uint w = sv->p2p_dims >> 8;
-    uint h = sv->p2p_dims & 0xFF;
-    uint total = n_cores_in_state(app_id, state);
-    for (uint x = 0; x < w; x++) {
-        for (uint y = 0; y < h; y++) {
-            uint addr = (x << 8) | y;
-            if (rtr_p2p_get(addr) < NUM_LINKS) {
-                total += p2p_req_count(addr, app_id, state, sv->peek_time);
+    p2p_count_result = n_cores_in_state(app_id, state);
+    uint ly = sv->p2p_addr & 0xFF;
+    uint lx = (sv->p2p_addr >> 8) & 0xFF;
+
+    // Get the count from chips on the same board
+    uint n_sent_packets = 0;
+    for (uint dx = 0; dx < 8; dx++) {
+        for (uint dy = 0; dy < 8; dy++) {
+            uint exp_eth_map = (dx << 4) | dy;
+            if (eth_map[dy][dx] == exp_eth_map) {
+                uint x = lx + dx;
+                uint y = ly + dy;
+                uint addr = (x << 8) | y;
+                if (rtr_p2p_get(addr) < NUM_LINKS) {
+                    p2p_req_count(addr, app_id, state);
+                    n_sent_packets++;
+                }
             }
         }
     }
-    msg->arg1 = total;
-    cpu_int_disable();
+
+    // Make a timeout
+    uint timeout = 0;
+    event_t* e = event_new(proc_word_set, (uint) &timeout, 1);
+    if (e == NULL) {
+        msg->cmd_rc = RC_BUF;
+        return 0;
+    }
+
+    uint id = e->ID;
+    timer_schedule(e, 500);
+
+    while (!timeout && (p2p_count_n_results < n_sent_packets)) {
+        continue;
+    }
+
+    if (timeout) {
+        msg->cmd_rc = RC_TIMEOUT;
+        return 0;
+    }
+
+    timer_cancel(e, id);
+
+    msg->arg1 = p2p_count_result;
     count_in_progress = 0;
-    cpu_int_enable();
     return 4;
 }
 

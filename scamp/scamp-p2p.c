@@ -156,8 +156,9 @@ const uint close_ack_time = 250;
 extern volatile uint pp_ping_count[NUM_LINKS];
 
 //! Reserved for performing a P2P count operation
-volatile uint p2p_count_response;
-uint p2p_count_id;
+extern volatile uint p2p_count_result;
+extern volatile uint p2p_count_n_results;
+extern uint p2p_count_id;
 
 //------------------------------------------------------------------------------
 
@@ -809,31 +810,9 @@ void p2p_ping(uint data, uint addr) {
     }
 }
 
-uint p2p_req_count(uint addr, uint app_id, uint state, uint timeout) {
-    cpu_int_disable();
-    p2p_count_id = (p2p_count_id + 1) & 127;
-    p2p_count_response = 0xFFFFFFFF;
-    cpu_int_enable();
-
+void p2p_req_count(uint addr, uint app_id, uint state) {
     uint data = app_id | (state << 8) | (p2p_count_id << 16);
     p2p_send_ctl(P2P_COUNT_REQ, addr, data);
-
-    event_t* e = event_new(proc_word_set, (uint) &p2p_count_response, 0);
-    if (e == NULL) {
-        sw_error(SW_OPT);
-        return RC_BUF;
-    }
-
-    uint id = e->ID;
-    timer_schedule(e, timeout);
-
-    while (p2p_count_response == 0xFFFFFFFF) {
-        continue;
-    }
-
-    timer_cancel(e, id);
-
-    return p2p_count_response;
 }
 
 uint n_cores_in_state(uint app_id, uint state) {
@@ -852,14 +831,16 @@ void p2p_count(uint data, uint addr) {
     uint count_id = (data >> 16) & 0xFF;
 
     // "Return" the count
-    uint return_data = n_cores_in_state(app_id, state) | (count_id << 16);
+    uint n_cores = n_cores_in_state(app_id, state);
+    uint return_data = n_cores | (count_id << 16);
     p2p_send_ctl(P2P_COUNT_RESP, addr, return_data);
 }
 
 void p2p_count_resp(uint data, uint addr) {
     uint count_id = (data >> 16) & 0xFF;
     if (count_id == p2p_count_id) {
-        p2p_count_response = data & 31;
+        p2p_count_result += data & 31;
+        p2p_count_n_results += 1;
     }
 }
 
