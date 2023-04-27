@@ -38,8 +38,7 @@ jobs:
           cp -a bmp/html deploy/bmp
         working-directory: doxybuild
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@3.7.1
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
           folder: doxybuild/deploy
