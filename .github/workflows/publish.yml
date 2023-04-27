@@ -24,11 +24,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Doxygen
-        uses: mattnotmitt/doxygen-action@v1.1.0
+        uses: mattnotmitt/doxygen-action@v1.9.5
         with:
           working-directory: .
       - name: Doxygen BMP
-        uses: mattnotmitt/doxygen-action@v1.1.0
+        uses: mattnotmitt/doxygen-action@v1.9.5
         with:
           working-directory: bmp
       - name: Combine documentation trees
