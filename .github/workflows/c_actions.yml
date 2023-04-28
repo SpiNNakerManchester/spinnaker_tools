@@ -21,6 +21,7 @@ jobs:
   build:
     # Checks that need a compiler
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -49,6 +50,7 @@ jobs:
   verify:
     # Checks that don't need to compile things
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
     - name: Checkout
       uses: actions/checkout@v3
