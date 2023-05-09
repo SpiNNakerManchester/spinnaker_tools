@@ -216,7 +216,7 @@ uint opposite_link[NUM_LINKS];
 uint ping_addr[NUM_LINKS];
 
 //! The minimum number of packets we expect to receive over P2P or MC
-#define MINIMUM_PINGS_RECEIVED 25
+#define MINIMUM_PINGS_RECEIVED 80
 
 //! Interrupt handlers for multicast
 extern INT_HANDLER pkt_mc_int(void);
@@ -1271,8 +1271,8 @@ void init_link_en_nn()
 
             uint addr = n_addr(link);
 
-            // Repeat test 100 times to avoid poor connections
-            for (uint i = 100; i > 0; i--) {
+            // Repeat test 200 times to avoid poor connections
+            for (uint i = 200; i > 0; i--) {
 
                 // Try to read the system ID
                 uint remote_chip_id;
@@ -1588,7 +1588,7 @@ void proc_100hz(uint a1, uint a2)
             netinit_p2p_tick_counter = 0;
             netinit_phase = NETINIT_PHASE_P2P_TABLE_ETH;
             p2pb_repeats = sv->p2pb_repeats;
-        } else if (netinit_biff_tick_counter >= 95) {
+        } else if (netinit_biff_tick_counter >= 190) {
             // Do Nothing here - this is slack time to attempt to resync
         } else if (netinit_biff_tick_counter >= 10) {
             // Send out link pings

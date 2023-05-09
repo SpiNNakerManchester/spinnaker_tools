@@ -127,6 +127,10 @@ volatile uint neighbour_netinit_level[NUM_LINKS];
 //! neighbour over link links enabled
 volatile uint neighbour_links_enabled[NUM_LINKS];
 
+// External counts
+extern uint pp_ping_count[NUM_LINKS];
+extern uint mc_ping_count[NUM_LINKS];
+
 void send_nn_links(uint);
 
 //------------------------------------------------------------------------------
@@ -739,6 +743,10 @@ static void nn_rcv_p2pc_reth_pct(uint link, uint data, uint key)
     // Get the sources nearest Ethernet
     uint eth_addr = data & 0xFFFF;
 
+    if ((hop_table[addr] & 0xFFFF) == 0xffff) {
+        sv->p2p_active++;
+    }
+
     // We now know this is how we should be able to get to this chip from here.
     // Note that the hop table in this direction is unimportant, so use 1 to
     // show that we have had a packet from this chip.
@@ -989,6 +997,14 @@ static uint nn_cmd_p2pb(uint id, uint data, uint link)
         // keep a count of P2P addresses we've heard of
         if (table_hops == 0xffff) {
             sv->p2p_active++;
+        } else {
+            // Don't use less reliable links over more reliable links
+            uint existing_link = rtr_p2p_get(addr);
+            if (pp_ping_count[existing_link] + mc_ping_count[existing_link] >
+                    pp_ping_count[link] + mc_ping_count[link]) {
+                data |= P2PB_STOP_BIT;
+                return data;
+            }
         }
 
         hop_table[addr] = (id << 24) + hops;
