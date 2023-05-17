@@ -649,13 +649,12 @@ uint cmd_app_copy_run(sdp_msg_t *msg) {
     for (uint i = 0; i < len / 4; i++) {
         uint rc;
         uint data;
-        // Try 3 times per word to avoid giving up too easily
-        for (uint j = 0; j < 3; j++) {
+        // Try 6 times per word to avoid giving up too easily
+        for (uint j = 10; j > 0; j--) {
             rc = link_read_word(addr, link, &data, timeout);
             if (rc == RC_OK) {
                 break;
             }
-            sark_delay_us(timeout);
         }
         if (rc != RC_OK) {
             msg->cmd_rc = rc;
