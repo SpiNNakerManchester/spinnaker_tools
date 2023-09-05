@@ -4,7 +4,18 @@
 #
 #-------------------------------------------------------------------------------
 
-Version 3.4.2 - TBD.
+Version 3.4.2 - Changes to support larger groups of boards
+
+* ALL: License changed to Apache2 [#169]
+
+* SCAMP: Improvements to inter-board synch [#164]
+* SCAMP: Better link testing [#164]
+
+* SCAMP: More reliable application copy-and-boot [#162]
+
+* SARK+SCAMP: Better SDRAM allocation API [#159]
+
+* Spin1_API: Better support for TIMER2 to support split neuron models [#155]
 
 #-------------------------------------------------------------------------------
 
