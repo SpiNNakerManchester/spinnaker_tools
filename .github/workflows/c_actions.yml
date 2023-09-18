@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 10
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Install system dependencies
       run: |
         sudo apt-get update
@@ -53,9 +53,9 @@ jobs:
     timeout-minutes: 10
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Checkout SupportScripts
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: SpiNNakerManchester/SupportScripts
         path: support
