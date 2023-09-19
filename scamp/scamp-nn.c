@@ -1282,7 +1282,6 @@ void nn_cmd_biff(uint x, uint y, uint data)
         // disable blacklisted links
         // NB: blacklisted links are given as '1'
         sv->link_en = link_en = ((~data) >> 18) & link_en;
-        send_nn_links(link_en);
 
         // remember blacklisted cores
         uint dead_cores = data & 0x3ffff;
@@ -1381,6 +1380,8 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
             pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key);
         }
     }
+
+    send_nn_links(link_en);
 }
 
 void send_nn_netinit(uint netinit_level) {
