@@ -693,6 +693,7 @@ uint cmd_sync(sdp_msg_t *msg) {
 
 extern char eth_map[12][12];
 extern uint n_cores_in_state(uint app_id, uint state);
+extern void return_msg(sdp_msg_t *msg, uint rc);
 volatile uint p2p_count_result;
 volatile uint p2p_count_n_results;
 uint p2p_count_id;
