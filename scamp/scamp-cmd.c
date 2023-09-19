@@ -698,6 +698,18 @@ volatile uint p2p_count_n_results;
 uint p2p_count_id;
 static uint count_in_progress = 0;
 
+void send_count_response(uint msg_ptr, uint n_sent_packets) {
+    count_in_progress = 0;
+    sdp_msg_t *msg = (sdp_msg_t *) msg_ptr;
+    msg->arg1 = p2p_count_result;
+    msg->length = sizeof(cmd_hdr_t);
+    if (p2p_count_n_results < n_sent_packets) {
+        return_msg(msg, RC_P2P_NOREPLY);
+    } else {
+        return_msg(msg, 0);
+    }
+}
+
 uint cmd_count(sdp_msg_t *msg) {
     cpu_int_disable();
     if (count_in_progress) {
@@ -733,31 +745,11 @@ uint cmd_count(sdp_msg_t *msg) {
         }
     }
 
-    // Make a timeout
-    uint timeout = 0;
-    event_t* e = event_new(proc_word_set, (uint) &timeout, 1);
-    if (e == NULL) {
-        msg->cmd_rc = RC_BUF;
-        return 0;
-    }
+    timer_schedule_proc(send_count_response, (uint) msg, n_sent_packets, 10000);
 
-    uint id = e->ID;
-    timer_schedule(e, 500);
-
-    while (!timeout && (p2p_count_n_results < n_sent_packets)) {
-        continue;
-    }
-
-    if (timeout) {
-        msg->cmd_rc = RC_TIMEOUT;
-        return 0;
-    }
-
-    timer_cancel(e, id);
-
-    msg->arg1 = p2p_count_result;
-    count_in_progress = 0;
-    return 4;
+    // a 'wrong' message length indicates that the
+    // return message should not be sent at this time
+    return 0xffff0000;
 }
 
 //------------------------------------------------------------------------------
