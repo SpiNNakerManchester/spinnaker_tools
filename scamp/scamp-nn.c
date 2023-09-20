@@ -484,10 +484,12 @@ void biff_nn_send(uint data)
 
     key |= chksum_64(key, data);
 
-    // East, North-East, North only
-    for (uint link = 0; link <= 2; link++) {
-        // sark_delay_us(8);  // !! const
-        (void) pkt_tx_wait(PKT_NN + PKT_PL + (link << 18), data, key);
+    uint forward = 0x07; // East, North-East, North only
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        if (forward & (1 << link) & link_en) {
+            sark_delay_us(8);  // !! const
+            (void) pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
+        }
     }
 }
 //! \}
@@ -1375,12 +1377,24 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     key &= 0x0fffffff;
     key |= chksum_64(key, data);
 
-    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
-        if (lnk != link) {
-            pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key);
-        }
+    // Schedule packet for forwarding
+    pkt_buf_t *pkt = pkt_buf_get();
+
+    if (pkt == NULL) { // !! ??
+        sw_error(SW_OPT);
+        return;
     }
 
+    pkt->fwd = 0x3e; // Don't return to sender...
+    pkt->delay = 0; // Not sent more than once so no delay needed
+    pkt->link = link;
+
+    pkt_t tp = {PKT_NN + PKT_PL, data, key};
+    pkt->pkt = tp;
+
+    if (!timer_schedule_proc(proc_pkt_bc, (uint) pkt, 1, 8)) {
+        sw_error(SW_OPT);
+    }
     send_nn_links(link_en);
 }
 
