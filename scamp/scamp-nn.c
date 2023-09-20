@@ -487,9 +487,7 @@ void biff_nn_send(uint data)
     // East, North-East, North only
     for (uint link = 0; link <= 2; link++) {
         // sark_delay_us(8);  // !! const
-        if (!pkt_tx_wait(PKT_NN + PKT_PL + (link << 18), data, key)) {
-            io_printf(IO_BUF, "Failed to send BIFF to %u\n", link);
-        }
+        (void) pkt_tx_wait(PKT_NN + PKT_PL + (link << 18), data, key);
     }
 }
 //! \}
@@ -1347,8 +1345,6 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
         return;
     }
 
-    io_printf(IO_BUF, "BIFF id=%u, data=%u, x=%u, y=%u\n", id, data, x, y);
-
     // Filter out packets we've seen before (note that IDs are only unique
     // within a board so this process must occur *after* filtering packets
     // from other boards.
@@ -1381,9 +1377,7 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
 
     for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
         if (lnk != link) {
-            if (!pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key)) {
-                io_printf(IO_BUF, "Failed to send BIFF to %u\n", lnk);
-            }
+            pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key);
         }
     }
 
