@@ -486,12 +486,8 @@ void biff_nn_send(uint data)
 
     // East, North-East, North only
     for (uint link = 0; link <= 2; link++) {
-        // sark_delay_us(8);  // !! const
-        if (!pkt_tx_wait(PKT_NN + PKT_PL + (link << 18), data, key)) {
-            io_printf(IO_BUF, "-BS %u\n", link);
-        } else {
-            io_printf(IO_BUF, "+BS %u %x\n", link, data);
-        }
+        sark_delay_us(8);  // !! const
+        pkt_tx_wait(PKT_NN + PKT_PL + (link << 18), data, key);
     }
 }
 //! \}
@@ -1386,9 +1382,8 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
 
     for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
         if (lnk != link) {
-            if (!pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key)) {
-                io_printf(IO_BUF, "-B %u\n", lnk);
-            }
+            sark_delay_us(8);  // !! const
+            pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key);
         }
     }
 
