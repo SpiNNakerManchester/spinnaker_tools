@@ -489,6 +489,8 @@ void biff_nn_send(uint data)
         // sark_delay_us(8);  // !! const
         if (!pkt_tx_wait(PKT_NN + PKT_PL + (link << 18), data, key)) {
             io_printf(IO_BUF, "-BS %u\n", link);
+        } else {
+            io_printf(IO_BUF, "+BS %u %x\n", link, data);
         }
     }
 }

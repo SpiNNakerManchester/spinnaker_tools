@@ -1457,6 +1457,7 @@ static uint netinit_biff_barrier() {
 
 void send_biffs(uint unused0, uint unused1) {
     uint num_info_words = sv->board_info[0];
+    io_printf(IO_BUF, "%u Bs\n", num_info_words);
     uint *info_word = sv->board_info + 1;
     while (num_info_words--) {
         // Handle command on this chip
