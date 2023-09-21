@@ -1388,8 +1388,6 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
         if (lnk != link) {
             if (!pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key)) {
                 io_printf(IO_BUF, "-B %u\n", lnk);
-            } else {
-                io_printf(IO_BUF, "+B %u\n", lnk);
             }
         }
     }
