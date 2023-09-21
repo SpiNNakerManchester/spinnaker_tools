@@ -1350,7 +1350,7 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
         return;
     }
 
-    io_printf(IO_BUF, "B %u\n", id, data, x, y);
+    io_printf(IO_BUF, "BR %u %u %u %u %x\n", link, id, x, y, data);
 
     // Filter out packets we've seen before (note that IDs are only unique
     // within a board so this process must occur *after* filtering packets
