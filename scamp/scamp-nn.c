@@ -488,7 +488,7 @@ void biff_nn_send(uint data)
     for (uint link = 0; link <= 2; link++) {
         // sark_delay_us(8);  // !! const
         if (!pkt_tx_wait(PKT_NN + PKT_PL + (link << 18), data, key)) {
-            io_printf(IO_BUF, "Failed to send BIFF to %u\n", link);
+            io_printf(IO_BUF, "-BS %u\n", link);
         }
     }
 }
@@ -1288,6 +1288,9 @@ void nn_cmd_biff(uint x, uint y, uint data)
         // remember blacklisted cores
         uint dead_cores = data & 0x3ffff;
 
+
+        io_printf(IO_BUF, "B %x\n", data);
+
         // if blacklisted prepare to delegate
         if (dead_cores & (1 << sark.phys_cpu)) {
             uint * boot_img = (uint *) (DTCM_BASE + 0x00008000);
@@ -1347,7 +1350,7 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
         return;
     }
 
-    io_printf(IO_BUF, "BIFF id=%u, data=%u, x=%u, y=%u\n", id, data, x, y);
+    io_printf(IO_BUF, "B %u\n", id, data, x, y);
 
     // Filter out packets we've seen before (note that IDs are only unique
     // within a board so this process must occur *after* filtering packets
@@ -1382,7 +1385,9 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
         if (lnk != link) {
             if (!pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key)) {
-                io_printf(IO_BUF, "Failed to send BIFF to %u\n", lnk);
+                io_printf(IO_BUF, "-B %u\n", lnk);
+            } else {
+                io_printf(IO_BUF, "+B %u\n", lnk);
             }
         }
     }
