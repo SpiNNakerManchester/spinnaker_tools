@@ -1593,6 +1593,7 @@ void proc_100hz(uint a1, uint a2)
         } else if (n_biff_words > 0) {
             nn_cmd_biff(0, 0, *(next_biff_word));
             biff_nn_send(*(next_biff_word++));
+            n_biff_words--;
         } else if (netinit_biff_tick_counter == 1) {
             if (sv->board_info) {
                 n_biff_words = sv->board_info[0];
