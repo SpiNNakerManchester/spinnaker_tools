@@ -1316,7 +1316,6 @@ static void final_link_checks() {
         if ((link_en & (1 << lnk))) {
             if (mc_ping_count[lnk] < MINIMUM_PINGS_RECEIVED ||
                     pp_ping_count[lnk] < MINIMUM_PINGS_RECEIVED) {
-                io_printf(IO_BUF, "-pl %u\n", lnk);
                 link_en &= ~(1 << lnk);
             }
         }
@@ -1359,7 +1358,6 @@ static void disable_unidirectional_links(void)
             uint nl = neighbour_links_enabled[lnk];
             if ((nl & (1 << o_link)) == 0) {
                 link_en &= ~(1 << lnk);
-                io_printf(IO_BUF, "-ul %u\n", lnk);
             }
         }
     }

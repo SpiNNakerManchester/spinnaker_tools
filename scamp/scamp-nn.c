@@ -1286,9 +1286,6 @@ void nn_cmd_biff(uint x, uint y, uint data)
         // remember blacklisted cores
         uint dead_cores = data & 0x3ffff;
 
-
-        io_printf(IO_BUF, "B %x\n", data);
-
         // if blacklisted prepare to delegate
         if (dead_cores & (1 << sark.phys_cpu)) {
             uint * boot_img = (uint *) (DTCM_BASE + 0x00008000);
@@ -1347,8 +1344,6 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     if (id == 0) {
         return;
     }
-
-    io_printf(IO_BUF, "BR %u %u %u %u %x\n", link, id, x, y, data);
 
     // Filter out packets we've seen before (note that IDs are only unique
     // within a board so this process must occur *after* filtering packets
