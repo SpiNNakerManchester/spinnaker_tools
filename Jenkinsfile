@@ -47,7 +47,7 @@ pipeline {
             }
         }
 
-        /* stage('GCC Build and Test') {
+        stage('GCC Build and Test') {
             environment {
                 SPINN_DIRS = "${workspace}/spinnaker_tools"
                 SPINN_PATH = "${workspace}/hwtests/board_tests"
@@ -69,7 +69,7 @@ pipeline {
 
                 // Cannot build BMP with gcc so far
             }
-        } */
+        }
 
         stage('ARMCC Build and Test') {
             environment {
