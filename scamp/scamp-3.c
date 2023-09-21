@@ -216,7 +216,7 @@ uint opposite_link[NUM_LINKS];
 uint ping_addr[NUM_LINKS];
 
 //! The minimum number of packets we expect to receive over P2P or MC
-#define MINIMUM_PINGS_RECEIVED 80
+#define MINIMUM_PINGS_RECEIVED 60
 
 //! Interrupt handlers for multicast
 extern INT_HANDLER pkt_mc_int(void);
@@ -242,6 +242,12 @@ static uint p2pb_period;
 
 //! Division to apply to n_chips to work out the repeats
 #define P2PB_DIVISOR 8192
+
+//! Counter of how many more BIFF words need to be sent
+static uint n_biff_words;
+
+//! Pointer to the next BIFF word to send
+static uint* next_biff_word;
 
 const signed char dx[6] = { 1,  1,  0, -1, -1,  0}; //!< X deltas, by link ID
 const signed char dy[6] = { 0,  1,  1,  0, -1, -1}; //!< Y deltas, by link ID
@@ -1455,18 +1461,6 @@ static uint netinit_biff_barrier() {
     return (sv->bt_flags & 0x2) == 0;
 }
 
-void send_biffs(uint unused0, uint unused1) {
-    uint num_info_words = sv->board_info[0];
-    io_printf(IO_BUF, "%u Bs\n", num_info_words);
-    uint *info_word = sv->board_info + 1;
-    while (num_info_words--) {
-        // Handle command on this chip
-        nn_cmd_biff(0, 0, *(info_word));
-        // Also flood to other chips on this board
-        biff_nn_send(*(info_word++));
-    }
-}
-
 
 //------------------------------------------------------------------------------
 
@@ -1549,6 +1543,7 @@ void proc_100hz(uint a1, uint a2)
             init_link_en_nn();
 
             netinit_biff_tick_counter = 0;
+            n_biff_words = 0;
             netinit_phase = NETINIT_PHASE_BIFF;
 
             p2pb_period = ((p2p_dims >> 8) * (p2p_dims & 0xFF)) * P2PB_OFFSET_USEC;
@@ -1557,11 +1552,11 @@ void proc_100hz(uint a1, uint a2)
 
     case NETINIT_PHASE_BIFF:
         // The board information floodfill is allowed multiple 100Hz ticks:
-        // - 1: Send board information
-        // - 2-9: Do nothing - resync
-        // - 10-94: Send pings
-        // - 95-99: Do nothing - resync
-        // - 100: Move on to P2P generation.
+        // - 1-49: Send board information
+        // - 50-59: Do nothing - resync
+        // - 60-189: Send pings
+        // - 190-199: Do nothing - resync
+        // - 200: Move on to P2P generation.
         //
         // The reason for using more than one tick is that the 10ms ticks
         // around the machine are not aligned. As a result, some chips may be
@@ -1576,14 +1571,7 @@ void proc_100hz(uint a1, uint a2)
             netinit_biff_tick_counter++;
         }
 
-        // Do the send on counter == 1
-        if (netinit_biff_tick_counter == 1) {
-            if (sv->board_info) {
-                timer_schedule_proc(send_biffs, 0, 0, 1);
-            }
-
-        // End the phase on counter == 100
-        } else if (netinit_biff_tick_counter >= 200) {
+        if (netinit_biff_tick_counter >= 200) {
             // Do final link checks
             final_link_checks();
             // We can do this here first time; we can do it once more later
@@ -1593,12 +1581,24 @@ void proc_100hz(uint a1, uint a2)
             p2pb_repeats = sv->p2pb_repeats;
         } else if (netinit_biff_tick_counter >= 190) {
             // Do Nothing here - this is slack time to attempt to resync
-        } else if (netinit_biff_tick_counter >= 10) {
+        } else if (netinit_biff_tick_counter >= 60) {
             // Send out link pings
             if (netinit_biff_tick_counter % 2 != 0) {
                 send_link_checks_pp();
             } else {
                 send_link_checks_mc();
+            }
+        } else if (netinit_biff_tick_counter >= 50) {
+            // Do Nothing here - this is slack time to attempt to resync
+        } else if (n_biff_words > 0) {
+            nn_cmd_biff(0, 0, *(next_biff_word));
+            biff_nn_send(*(next_biff_word++));
+        } else if (netinit_biff_tick_counter == 1) {
+            if (sv->board_info) {
+                n_biff_words = sv->board_info[0];
+                next_biff_word = sv->board_info + 1;
+                nn_cmd_biff(0, 0, *(next_biff_word));
+                biff_nn_send(*(next_biff_word++));
             }
         }
         break;
