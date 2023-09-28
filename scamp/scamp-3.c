@@ -1347,6 +1347,11 @@ static void setup_link_checks() {
         rtr_mc_set(lnk + 6, (lnk << 16) + addr, 0xFFFFFFFF, MC_LINK_ROUTE(lnk));
     }
     sark_vic_set(MC_SLOT, CC_MC_INT, 1, test_mc_int);
+
+    // If we are local 4, 7 or 7, 7 disable link 2 as oddly it often fails!
+    if (sv->board_addr == 0x0407 || sv->board_addr == 0x0707) {
+        sv->link_en = link_en = link_en & ~(1 << 2);
+    }
 }
 
 //! Disable links that have been disabled by neighbours
