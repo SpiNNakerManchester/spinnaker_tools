@@ -1348,9 +1348,13 @@ static void setup_link_checks() {
     }
     sark_vic_set(MC_SLOT, CC_MC_INT, 1, test_mc_int);
 
-    // If we are local 4, 7 or 7, 7 disable link 2 as oddly it often fails!
     if (sv->board_addr == 0x0407 || sv->board_addr == 0x0707) {
+        // If we are local 4, 7 or 7, 7 disable link 2 as oddly it often fails!
         sv->link_en = link_en = link_en & ~(1 << 2);
+    } else if (sv->board_addr == 0x0100) {
+        // If we are local 1, 0 disable link 4 as oddly it often fails
+        // (this is opposite chip 4, 7 so it could be linked)!
+        sv->link_en = link_en = link_en & ~(1 << 4);
     }
 }
 
