@@ -105,20 +105,6 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a5e1efbbfd24bbb129fa0b848af91f6bd"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a5e1efbbfd24bbb129fa0b848af91f6bd">state_coalesce_mode</a> { <a class="el" href="scamp-cmd_8c.html#a5e1efbbfd24bbb129fa0b848af91f6bda4ec1b2da035462eb81e781e7db4e20ab">MODE_OR</a> = 0
-, <a class="el" href="scamp-cmd_8c.html#a5e1efbbfd24bbb129fa0b848af91f6bda4eb4f2f58e38344407155db5707749cc">MODE_AND</a> = 1
-, <a class="el" href="scamp-cmd_8c.html#a5e1efbbfd24bbb129fa0b848af91f6bdad2897b63cbac7d6dc9454b98252533ca">MODE_SUM</a> = 2
-, <a class="el" href="scamp-cmd_8c.html#a5e1efbbfd24bbb129fa0b848af91f6bdad94e70da03012c70efde66c9136b0981">MODE_3</a> = 3
- }</td></tr>
-<tr class="memdesc:a5e1efbbfd24bbb129fa0b848af91f6bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">State "counting" coalescing mode.  <a href="scamp-cmd_8c.html#a5e1efbbfd24bbb129fa0b848af91f6bd">More...</a><br /></td></tr>
-<tr class="separator:a5e1efbbfd24bbb129fa0b848af91f6bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c65d633ff0a6204f34778e9652f7abb"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abb">send_reg_ctrl</a> { <a class="el" href="scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abbabcf8baf265eb094e1f7a89cd75ce908a">APP_RET</a> = 0
-, <a class="el" href="scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abba0d274f1614f420b81d2bb10fb2e6210a">APP_STAT</a> = 1
-, <a class="el" href="scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abba721904392091b8a0af752ee3ba60d142">APP_SIG</a> = 2
-, <a class="el" href="scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abba80a5b0604a911accc4710cd613546c10">APP_3</a> = 3
- }</td></tr>
-<tr class="memdesc:a5c65d633ff0a6204f34778e9652f7abb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Operation to use for P2P_LEVEL messages.  <a href="scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abb">More...</a><br /></td></tr>
-<tr class="separator:a5c65d633ff0a6204f34778e9652f7abb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af9ca40705a5c5f739ca699c48cb3b0f7"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#af9ca40705a5c5f739ca699c48cb3b0f7">signal_type</a> { <a class="el" href="scamp-cmd_8c.html#af9ca40705a5c5f739ca699c48cb3b0f7ae158900398cd5b27a5e84bfbfa9079d4">SIG_TYPE_MC</a> = 0
 , <a class="el" href="scamp-cmd_8c.html#af9ca40705a5c5f739ca699c48cb3b0f7abe0b93cdeb51b07d7fe2a7d5af5d989a">SIG_TYPE_P2P</a> = 1
 , <a class="el" href="scamp-cmd_8c.html#af9ca40705a5c5f739ca699c48cb3b0f7abc60f3faee10c165c80dd154abce74d8">SIG_TYPE_NN</a> = 2
@@ -161,27 +147,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a4be1e518c81bd6eaef9665aabc1d6f82"><td class="memItemLeft" align="right" valign="top"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a4be1e518c81bd6eaef9665aabc1d6f82">pkt_tx</a> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> tcr, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> data, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> key)</td></tr>
 <tr class="memdesc:a4be1e518c81bd6eaef9665aabc1d6f82"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a SpiNNaker message to the queue of messages to send.  <a href="scamp-cmd_8c.html#a4be1e518c81bd6eaef9665aabc1d6f82">More...</a><br /></td></tr>
 <tr class="separator:a4be1e518c81bd6eaef9665aabc1d6f82"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16d46d803b3eac8b95613bfe5ad11621"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a16d46d803b3eac8b95613bfe5ad11621">return_msg</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> rc)</td></tr>
-<tr class="memdesc:a16d46d803b3eac8b95613bfe5ad11621"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a result message to the main message queue.  <a href="scamp-cmd_8c.html#a16d46d803b3eac8b95613bfe5ad11621">More...</a><br /></td></tr>
-<tr class="separator:a16d46d803b3eac8b95613bfe5ad11621"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae1532ca7d070c0943f25c97a29d49774"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#ae1532ca7d070c0943f25c97a29d49774">p2p_send_reg</a> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> ctrl, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> addr, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> data)</td></tr>
-<tr class="memdesc:ae1532ca7d070c0943f25c97a29d49774"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send a P2P packet encoding a value sent in response.  <a href="scamp-cmd_8c.html#ae1532ca7d070c0943f25c97a29d49774">More...</a><br /></td></tr>
-<tr class="separator:ae1532ca7d070c0943f25c97a29d49774"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1ad9c67faf6043f7c019a6637786646"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#ac1ad9c67faf6043f7c019a6637786646">proc_ret_msg</a> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> arg1, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> level)</td></tr>
-<tr class="memdesc:ac1ad9c67faf6043f7c019a6637786646"><td class="mdescLeft">&#160;</td><td class="mdescRight">Timer callback, used to finish <a class="el" href="scamp-cmd_8c.html#a4a6788278cb833a7e4c9e49984a70182" title="Signal command handler.">cmd_sig()</a> call for state counting.  <a href="scamp-cmd_8c.html#ac1ad9c67faf6043f7c019a6637786646">More...</a><br /></td></tr>
-<tr class="separator:ac1ad9c67faf6043f7c019a6637786646"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e192d94fd80cac785175cfa1d6a4a22"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a4e192d94fd80cac785175cfa1d6a4a22">proc_gather</a> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> level, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> mode)</td></tr>
-<tr class="memdesc:a4e192d94fd80cac785175cfa1d6a4a22"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback for <a class="el" href="scamp-cmd_8c.html#a0a21843f6edee24726e210a5badb3558" title="Callback for p2p_region(), distributing requests to other SCAMPs.">proc_send()</a>, gathering the results from sending and passing them on to our parent SCAMP.  <a href="scamp-cmd_8c.html#a4e192d94fd80cac785175cfa1d6a4a22">More...</a><br /></td></tr>
-<tr class="separator:a4e192d94fd80cac785175cfa1d6a4a22"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a21843f6edee24726e210a5badb3558"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a0a21843f6edee24726e210a5badb3558">proc_send</a> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> data, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> mask)</td></tr>
-<tr class="memdesc:a0a21843f6edee24726e210a5badb3558"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback for <a class="el" href="scamp-cmd_8c.html#abd17fb13cb0d84ec27ca5d0d1ceff39c" title="Handler for P2P Region packets (those with type P2P_LEVEL)">p2p_region()</a>, distributing requests to other SCAMPs.  <a href="scamp-cmd_8c.html#a0a21843f6edee24726e210a5badb3558">More...</a><br /></td></tr>
-<tr class="separator:a0a21843f6edee24726e210a5badb3558"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45e0235be906f7ab0645230ee26333ba"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a45e0235be906f7ab0645230ee26333ba">proc_process</a> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> data, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> srce)</td></tr>
-<tr class="memdesc:a45e0235be906f7ab0645230ee26333ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback for <a class="el" href="scamp-cmd_8c.html#abd17fb13cb0d84ec27ca5d0d1ceff39c" title="Handler for P2P Region packets (those with type P2P_LEVEL)">p2p_region()</a> when statistics are being collected, used so that low-priority processing does not block a high-priority interrupt.  <a href="scamp-cmd_8c.html#a45e0235be906f7ab0645230ee26333ba">More...</a><br /></td></tr>
-<tr class="separator:a45e0235be906f7ab0645230ee26333ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd17fb13cb0d84ec27ca5d0d1ceff39c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#abd17fb13cb0d84ec27ca5d0d1ceff39c">p2p_region</a> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> data, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> srce)</td></tr>
-<tr class="memdesc:abd17fb13cb0d84ec27ca5d0d1ceff39c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handler for P2P Region packets (those with type <a class="el" href="scamp_8h.html#a674d38d5c346910def25520a9d5505c0a64c4c01041f6edb1e9c1a6d1149ac347" title="Used for CountState requests.">P2P_LEVEL</a>)  <a href="scamp-cmd_8c.html#abd17fb13cb0d84ec27ca5d0d1ceff39c">More...</a><br /></td></tr>
-<tr class="separator:abd17fb13cb0d84ec27ca5d0d1ceff39c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a6788278cb833a7e4c9e49984a70182"><td class="memItemLeft" align="right" valign="top"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a4a6788278cb833a7e4c9e49984a70182">cmd_sig</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg)</td></tr>
 <tr class="memdesc:a4a6788278cb833a7e4c9e49984a70182"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal command handler.  <a href="scamp-cmd_8c.html#a4a6788278cb833a7e4c9e49984a70182">More...</a><br /></td></tr>
 <tr class="separator:a4a6788278cb833a7e4c9e49984a70182"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -197,16 +162,24 @@ Functions</h2></td></tr>
 <tr class="memitem:a4790c9260678d918df8300ac9192d263"><td class="memItemLeft" align="right" valign="top"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a4790c9260678d918df8300ac9192d263">cmd_sync</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg)</td></tr>
 <tr class="memdesc:a4790c9260678d918df8300ac9192d263"><td class="mdescLeft">&#160;</td><td class="mdescRight">Synchronization of cores handler.  <a href="scamp-cmd_8c.html#a4790c9260678d918df8300ac9192d263">More...</a><br /></td></tr>
 <tr class="separator:a4790c9260678d918df8300ac9192d263"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bb63f7e8f162957fe6ffd9bb0cfea85"><td class="memItemLeft" align="right" valign="top"><a id="a1bb63f7e8f162957fe6ffd9bb0cfea85" name="a1bb63f7e8f162957fe6ffd9bb0cfea85"></a>
+<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>n_cores_in_state</b> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> app_id, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> state)</td></tr>
+<tr class="separator:a1bb63f7e8f162957fe6ffd9bb0cfea85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16d46d803b3eac8b95613bfe5ad11621"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a16d46d803b3eac8b95613bfe5ad11621">return_msg</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> rc)</td></tr>
+<tr class="memdesc:a16d46d803b3eac8b95613bfe5ad11621"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a result message to the main message queue.  <a href="scamp-cmd_8c.html#a16d46d803b3eac8b95613bfe5ad11621">More...</a><br /></td></tr>
+<tr class="separator:a16d46d803b3eac8b95613bfe5ad11621"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0bbd7a775ceb56057027c41d296507f1"><td class="memItemLeft" align="right" valign="top"><a id="a0bbd7a775ceb56057027c41d296507f1" name="a0bbd7a775ceb56057027c41d296507f1"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>send_count_response</b> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> msg_ptr, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> n_sent_packets)</td></tr>
+<tr class="separator:a0bbd7a775ceb56057027c41d296507f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96bb80c6dbbe09ab0d97aa18a941b9cc"><td class="memItemLeft" align="right" valign="top"><a id="a96bb80c6dbbe09ab0d97aa18a941b9cc" name="a96bb80c6dbbe09ab0d97aa18a941b9cc"></a>
+<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>cmd_count</b> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg)</td></tr>
+<tr class="separator:a96bb80c6dbbe09ab0d97aa18a941b9cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b830754727615d4f6bba4876f348c27"><td class="memItemLeft" align="right" valign="top"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a5b830754727615d4f6bba4876f348c27">scamp_debug</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> srce_ip)</td></tr>
 <tr class="memdesc:a5b830754727615d4f6bba4876f348c27"><td class="mdescLeft">&#160;</td><td class="mdescRight">General debugging and control command handler.  <a href="scamp-cmd_8c.html#a5b830754727615d4f6bba4876f348c27">More...</a><br /></td></tr>
 <tr class="separator:a5b830754727615d4f6bba4876f348c27"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:ad415696ea03a6a1d98e2247335840836"><td class="memItemLeft" align="right" valign="top"><a id="ad415696ea03a6a1d98e2247335840836" name="ad415696ea03a6a1d98e2247335840836"></a>
-<a class="el" href="scamp_8h.html#structlevel__t">level_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>levels</b> [4]</td></tr>
-<tr class="memdesc:ad415696ea03a6a1d98e2247335840836"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used for tracking signal dispatch. <br /></td></tr>
-<tr class="separator:ad415696ea03a6a1d98e2247335840836"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7402f8e87c78b63b027fd7134836fdf0"><td class="memItemLeft" align="right" valign="top"><a id="a7402f8e87c78b63b027fd7134836fdf0" name="a7402f8e87c78b63b027fd7134836fdf0"></a>
 volatile <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>do_sync</b></td></tr>
 <tr class="memdesc:a7402f8e87c78b63b027fd7134836fdf0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether to perform clock synchronization (on by default at start) <br /></td></tr>
@@ -215,64 +188,28 @@ volatile <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14
 <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>n_beacons_sent</b></td></tr>
 <tr class="memdesc:a6ee20526fd90716c9af350599ed326df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time beacon counter. <br /></td></tr>
 <tr class="separator:a6ee20526fd90716c9af350599ed326df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd644f0d0600e8358411c6562983582d"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#afd644f0d0600e8358411c6562983582d">eth_map</a> [12][12]</td></tr>
+<tr class="memdesc:afd644f0d0600e8358411c6562983582d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Local ethernet chip locator map.  <a href="scamp-cmd_8c.html#afd644f0d0600e8358411c6562983582d">More...</a><br /></td></tr>
+<tr class="separator:afd644f0d0600e8358411c6562983582d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bb30ef809b7931f6b9f59f8fc675692"><td class="memItemLeft" align="right" valign="top"><a id="a6bb30ef809b7931f6b9f59f8fc675692" name="a6bb30ef809b7931f6b9f59f8fc675692"></a>
+volatile <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>p2p_count_result</b></td></tr>
+<tr class="memdesc:a6bb30ef809b7931f6b9f59f8fc675692"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reserved for performing a P2P count operation. <br /></td></tr>
+<tr class="separator:a6bb30ef809b7931f6b9f59f8fc675692"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11389b025a1841cd5027335a1cf06ad2"><td class="memItemLeft" align="right" valign="top"><a id="a11389b025a1841cd5027335a1cf06ad2" name="a11389b025a1841cd5027335a1cf06ad2"></a>
+volatile <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>p2p_count_n_results</b></td></tr>
+<tr class="separator:a11389b025a1841cd5027335a1cf06ad2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8cf3d2b156ce34418dba0bb1767a3b9f"><td class="memItemLeft" align="right" valign="top"><a id="a8cf3d2b156ce34418dba0bb1767a3b9f" name="a8cf3d2b156ce34418dba0bb1767a3b9f"></a>
+<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>p2p_count_id</b></td></tr>
+<tr class="separator:a8cf3d2b156ce34418dba0bb1767a3b9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8ff5d275819e39d90f641bb723894a2"><td class="memItemLeft" align="right" valign="top"><a id="ab8ff5d275819e39d90f641bb723894a2" name="ab8ff5d275819e39d90f641bb723894a2"></a>
+static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>count_in_progress</b> = 0</td></tr>
+<tr class="separator:ab8ff5d275819e39d90f641bb723894a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Command handling for SC&amp;MP. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>&copy; The University of Manchester - 2009-2011</dd></dl>
 <dl class="section author"><dt>Author</dt><dd>Steve Temple, APT Group, School of Computer Science </dd></dl>
 </div><h2 class="groupheader">Enumeration Type Documentation</h2>
-<a id="a5e1efbbfd24bbb129fa0b848af91f6bd" name="a5e1efbbfd24bbb129fa0b848af91f6bd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5e1efbbfd24bbb129fa0b848af91f6bd">&#9670;&#160;</a></span>state_coalesce_mode</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum <a class="el" href="scamp-cmd_8c.html#a5e1efbbfd24bbb129fa0b848af91f6bd">state_coalesce_mode</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>State "counting" coalescing mode. </p>
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a5e1efbbfd24bbb129fa0b848af91f6bda4ec1b2da035462eb81e781e7db4e20ab" name="a5e1efbbfd24bbb129fa0b848af91f6bda4ec1b2da035462eb81e781e7db4e20ab"></a>MODE_OR&#160;</td><td class="fielddoc"><p >Combine using bitwise OR (any in state?) </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a5e1efbbfd24bbb129fa0b848af91f6bda4eb4f2f58e38344407155db5707749cc" name="a5e1efbbfd24bbb129fa0b848af91f6bda4eb4f2f58e38344407155db5707749cc"></a>MODE_AND&#160;</td><td class="fielddoc"><p >Combine using bitwise AND (all in state?) </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a5e1efbbfd24bbb129fa0b848af91f6bdad2897b63cbac7d6dc9454b98252533ca" name="a5e1efbbfd24bbb129fa0b848af91f6bdad2897b63cbac7d6dc9454b98252533ca"></a>MODE_SUM&#160;</td><td class="fielddoc"><p >Combine using ADD. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a5e1efbbfd24bbb129fa0b848af91f6bdad94e70da03012c70efde66c9136b0981" name="a5e1efbbfd24bbb129fa0b848af91f6bdad94e70da03012c70efde66c9136b0981"></a>MODE_3&#160;</td><td class="fielddoc"><p >unused </p>
-</td></tr>
-</table>
-
-</div>
-</div>
-<a id="a5c65d633ff0a6204f34778e9652f7abb" name="a5c65d633ff0a6204f34778e9652f7abb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5c65d633ff0a6204f34778e9652f7abb">&#9670;&#160;</a></span>send_reg_ctrl</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum <a class="el" href="scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abb">send_reg_ctrl</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Operation to use for P2P_LEVEL messages. </p>
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a5c65d633ff0a6204f34778e9652f7abbabcf8baf265eb094e1f7a89cd75ce908a" name="a5c65d633ff0a6204f34778e9652f7abbabcf8baf265eb094e1f7a89cd75ce908a"></a>APP_RET&#160;</td><td class="fielddoc"><p >This is a RETURN (from APP_STAT) </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a5c65d633ff0a6204f34778e9652f7abba0d274f1614f420b81d2bb10fb2e6210a" name="a5c65d633ff0a6204f34778e9652f7abba0d274f1614f420b81d2bb10fb2e6210a"></a>APP_STAT&#160;</td><td class="fielddoc"><p >This is a request for statistics/count. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a5c65d633ff0a6204f34778e9652f7abba721904392091b8a0af752ee3ba60d142" name="a5c65d633ff0a6204f34778e9652f7abba721904392091b8a0af752ee3ba60d142"></a>APP_SIG&#160;</td><td class="fielddoc"><p >This is a request to signal cores. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a5c65d633ff0a6204f34778e9652f7abba80a5b0604a911accc4710cd613546c10" name="a5c65d633ff0a6204f34778e9652f7abba80a5b0604a911accc4710cd613546c10"></a>APP_3&#160;</td><td class="fielddoc"><p >unused </p>
-</td></tr>
-</table>
-
-</div>
-</div>
 <a id="af9ca40705a5c5f739ca699c48cb3b0f7" name="af9ca40705a5c5f739ca699c48cb3b0f7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af9ca40705a5c5f739ca699c48cb3b0f7">&#9670;&#160;</a></span>signal_type</h2>
 
@@ -655,312 +592,6 @@ volatile <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14
 
 </div>
 </div>
-<a id="a16d46d803b3eac8b95613bfe5ad11621" name="a16d46d803b3eac8b95613bfe5ad11621"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a16d46d803b3eac8b95613bfe5ad11621">&#9670;&#160;</a></span>return_msg()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void return_msg </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *&#160;</td>
-          <td class="paramname"><em>msg</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>rc</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Adds a result message to the main message queue. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">msg</td><td>The SCP message holding the reply. <em>Ownership transferred by this call.</em> </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">rc</td><td>The return code. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ae1532ca7d070c0943f25c97a29d49774" name="ae1532ca7d070c0943f25c97a29d49774"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae1532ca7d070c0943f25c97a29d49774">&#9670;&#160;</a></span>p2p_send_reg()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static void p2p_send_reg </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>ctrl</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>addr</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>data</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Send a P2P packet encoding a value sent in response. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ctrl</td><td>The packet control data (<a class="el" href="scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abb" title="Operation to use for P2P_LEVEL messages.">send_reg_ctrl</a> &lt;&lt; 22) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">addr</td><td>The packet target address (<a class="el" href="spinnaker_8h.html#ab95f123a6c9bcfee6a343170ef8c5f69" title="Unsigned integer - 16 bits.">ushort</a>) </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>The packet payload information </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ac1ad9c67faf6043f7c019a6637786646" name="ac1ad9c67faf6043f7c019a6637786646"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac1ad9c67faf6043f7c019a6637786646">&#9670;&#160;</a></span>proc_ret_msg()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static void proc_ret_msg </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>arg1</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>level</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Timer callback, used to finish <a class="el" href="scamp-cmd_8c.html#a4a6788278cb833a7e4c9e49984a70182" title="Signal command handler.">cmd_sig()</a> call for state counting. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">arg1</td><td>SDP message </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">level</td><td>Which counter are we reporting the value of? </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a4e192d94fd80cac785175cfa1d6a4a22" name="a4e192d94fd80cac785175cfa1d6a4a22"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4e192d94fd80cac785175cfa1d6a4a22">&#9670;&#160;</a></span>proc_gather()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static void proc_gather </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>level</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>mode</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Callback for <a class="el" href="scamp-cmd_8c.html#a0a21843f6edee24726e210a5badb3558" title="Callback for p2p_region(), distributing requests to other SCAMPs.">proc_send()</a>, gathering the results from sending and passing them on to our parent SCAMP. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">level</td><td>Which level are we processing at </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">mode</td><td>What mode were we operating in </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a0a21843f6edee24726e210a5badb3558" name="a0a21843f6edee24726e210a5badb3558"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0a21843f6edee24726e210a5badb3558">&#9670;&#160;</a></span>proc_send()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static void proc_send </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>data</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>mask</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Callback for <a class="el" href="scamp-cmd_8c.html#abd17fb13cb0d84ec27ca5d0d1ceff39c" title="Handler for P2P Region packets (those with type P2P_LEVEL)">p2p_region()</a>, distributing requests to other SCAMPs. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>The description of exactly what is to be done </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">mask</td><td>Which bits are relevant </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a45e0235be906f7ab0645230ee26333ba" name="a45e0235be906f7ab0645230ee26333ba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a45e0235be906f7ab0645230ee26333ba">&#9670;&#160;</a></span>proc_process()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static void proc_process </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>data</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>srce</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Callback for <a class="el" href="scamp-cmd_8c.html#abd17fb13cb0d84ec27ca5d0d1ceff39c" title="Handler for P2P Region packets (those with type P2P_LEVEL)">p2p_region()</a> when statistics are being collected, used so that low-priority processing does not block a high-priority interrupt. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>The description of exactly what is to be calculated </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">srce</td><td>Where the data came from </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="abd17fb13cb0d84ec27ca5d0d1ceff39c" name="abd17fb13cb0d84ec27ca5d0d1ceff39c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abd17fb13cb0d84ec27ca5d0d1ceff39c">&#9670;&#160;</a></span>p2p_region()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void p2p_region </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>data</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>srce</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Handler for P2P Region packets (those with type <a class="el" href="scamp_8h.html#a674d38d5c346910def25520a9d5505c0a64c4c01041f6edb1e9c1a6d1149ac347" title="Used for CountState requests.">P2P_LEVEL</a>) </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>The payload from the packet </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">srce</td><td>The sender address (lower 16 bits) from the packet </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a id="a4a6788278cb833a7e4c9e49984a70182" name="a4a6788278cb833a7e4c9e49984a70182"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4a6788278cb833a7e4c9e49984a70182">&#9670;&#160;</a></span>cmd_sig()</h2>
 
@@ -1096,6 +727,43 @@ volatile <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14
 
 </div>
 </div>
+<a id="a16d46d803b3eac8b95613bfe5ad11621" name="a16d46d803b3eac8b95613bfe5ad11621"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a16d46d803b3eac8b95613bfe5ad11621">&#9670;&#160;</a></span>return_msg()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void return_msg </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *&#160;</td>
+          <td class="paramname"><em>msg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
+          <td class="paramname"><em>rc</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Adds a result message to the main message queue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">msg</td><td>The SCP message holding the reply. <em>Ownership transferred by this call.</em> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">rc</td><td>The return code. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a5b830754727615d4f6bba4876f348c27" name="a5b830754727615d4f6bba4876f348c27"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5b830754727615d4f6bba4876f348c27">&#9670;&#160;</a></span>scamp_debug()</h2>
 
@@ -1154,10 +822,37 @@ volatile <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14
 
 </div>
 </div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="afd644f0d0600e8358411c6562983582d" name="afd644f0d0600e8358411c6562983582d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd644f0d0600e8358411c6562983582d">&#9670;&#160;</a></span>eth_map</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">char eth_map[12][12]</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Local ethernet chip locator map. </p>
+<p >Given a P2P address, compute P2P address of chip with Ethernet interface on same PCB. Table is for standard 48-chip boards only. Will work with 4-chip boards - may not work for more exotic combinations! Also computes the position of the chip on the PCB as offset from (0,0)</p>
+<p >Each byte in this table is a pair of X,Y values which are subtracted from a P2P address to give the address of the Ethernet-attached chip on the same 48-chip PCB. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 9 2023 10:13:33 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
+Generated on Wed Oct 11 2023 06:43:18 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
 </small></address>
 </body>
 </html>

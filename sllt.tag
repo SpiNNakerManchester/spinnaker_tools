@@ -1186,6 +1186,12 @@
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
+      <name>CMD_COUNT</name>
+      <anchorfile>sark_8h.html</anchorfile>
+      <anchor>add51abc04ff5e1d219053f53ce83fa05a35b507fe8adab9ba46257d13ba0b6d1d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
       <name>CMD_REMAP</name>
       <anchorfile>sark_8h.html</anchorfile>
       <anchor>add51abc04ff5e1d219053f53ce83fa05a1f6052e4d5cda4eeba5759bec798cd3e</anchor>
@@ -9359,6 +9365,41 @@
       <anchor>af1c503c50e6eb1b5e6cfbc63f2abb747</anchor>
       <arglist></arglist>
     </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MINIMUM_PINGS_RECEIVED</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a13da525a11fd4156ee20463afc472856</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>P2PB_DIVISOR</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>acdf21e254d7f32b232e84390ef9c5ae6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>TX_NOT_FULL_MASK</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>aa7a8813a57ee073fed88fce9f5745110</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>pkt_mc_int</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a56314b1d2c006c0714d7b5e0c5179dbe</anchor>
+      <arglist>(void)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>p2pc_reth_nn_send</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a3d3f9e0000ba0236af94412f688703a4</anchor>
+      <arglist>(uint, uint)</arglist>
+    </member>
     <member kind="function">
       <type>void</type>
       <name>iptag_timer</name>
@@ -9392,6 +9433,13 @@
       <name>proc_byte_set</name>
       <anchorfile>scamp-3_8c.html</anchorfile>
       <anchor>af34678867589f8ad07326a39a7a2d0e0</anchor>
+      <arglist>(uint a1, uint a2)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>proc_word_set</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a6b2f443ea0ffb5e680cbc711ef5625bf</anchor>
       <arglist>(uint a1, uint a2)</arglist>
     </member>
     <member kind="function">
@@ -9550,16 +9598,23 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>init_link_en</name>
+      <name>init_link_en_nn</name>
       <anchorfile>scamp-3_8c.html</anchorfile>
-      <anchor>aaae405876cf186270249c81d1be6569a</anchor>
-      <arglist>(void)</arglist>
+      <anchor>a21bb34c2c32e5f499aa7412887cd9c7f</anchor>
+      <arglist>()</arglist>
     </member>
-    <member kind="function">
-      <type>void</type>
+    <member kind="function" static="yes">
+      <type>static void</type>
+      <name>setup_link_checks</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a274f7482c046b7b6c9eec62f153b69d9</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function" static="yes">
+      <type>static void</type>
       <name>disable_unidirectional_links</name>
       <anchorfile>scamp-3_8c.html</anchorfile>
-      <anchor>a5505bb7a8760b0b56f386c9745a87c3a</anchor>
+      <anchor>a2105c0608f687098f8489f63c5b7b553</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
@@ -9799,6 +9854,104 @@
       <anchorfile>scamp-3_8c.html</anchorfile>
       <anchor>a7402f8e87c78b63b027fd7134836fdf0</anchor>
       <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>mc_ping_count</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a58e3c49bdc8ba5b70426f6e0fb160d23</anchor>
+      <arglist>[NUM_LINKS]</arglist>
+    </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>pp_ping_count</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>af3ae34c0074ff012334ee55346128e09</anchor>
+      <arglist>[NUM_LINKS]</arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static uint</type>
+      <name>x</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a7ce14bf4029a6d24e8c67abd1019dc49</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static uint</type>
+      <name>y</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>ac98ffc0d5712bf00634148edbd13fcc8</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static uint</type>
+      <name>w</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>afdeff54db9a334718662b709641fdfe1</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static uint</type>
+      <name>h</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a0cf902ed91cf35330b639ab2ec1038dc</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static uint</type>
+      <name>p2pb_repeats</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a1d79c600969ecb0126c9e31c249ae91e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static uint</type>
+      <name>p2pb_period</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a3934f110e94b867a3238255acabdf14d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static uint</type>
+      <name>n_biff_words</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a16291893aa68c4f39fb909da8224becf</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable" static="yes">
+      <type>static uint *</type>
+      <name>next_biff_word</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a641e2daff14235ea873b2823c1a8124a</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>const signed char</type>
+      <name>dx</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>ab22b4d66b6dd61d11e1a2303d2f4620f</anchor>
+      <arglist>[6]</arglist>
+    </member>
+    <member kind="variable">
+      <type>const signed char</type>
+      <name>dy</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a7640a75dba23c1afaf489c4b6be5f90e</anchor>
+      <arglist>[6]</arglist>
+    </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>neighbour_netinit_level</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a36ed5b21846e82a2607defc4d067cb5f</anchor>
+      <arglist>[NUM_LINKS]</arglist>
+    </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>neighbour_links_enabled</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>a3b9158d0560a685a1a9fb0f0f85a0b34</anchor>
+      <arglist>[NUM_LINKS]</arglist>
     </member>
     <member kind="variable">
       <type>const uint</type>
@@ -10085,68 +10238,6 @@
     </member>
     <member kind="enumeration">
       <type></type>
-      <name>state_coalesce_mode</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5e1efbbfd24bbb129fa0b848af91f6bd</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_OR</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5e1efbbfd24bbb129fa0b848af91f6bda4ec1b2da035462eb81e781e7db4e20ab</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_AND</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5e1efbbfd24bbb129fa0b848af91f6bda4eb4f2f58e38344407155db5707749cc</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_SUM</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5e1efbbfd24bbb129fa0b848af91f6bdad2897b63cbac7d6dc9454b98252533ca</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>MODE_3</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5e1efbbfd24bbb129fa0b848af91f6bdad94e70da03012c70efde66c9136b0981</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
-      <name>send_reg_ctrl</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5c65d633ff0a6204f34778e9652f7abb</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>APP_RET</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5c65d633ff0a6204f34778e9652f7abbabcf8baf265eb094e1f7a89cd75ce908a</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>APP_STAT</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5c65d633ff0a6204f34778e9652f7abba0d274f1614f420b81d2bb10fb2e6210a</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>APP_SIG</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5c65d633ff0a6204f34778e9652f7abba721904392091b8a0af752ee3ba60d142</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>APP_3</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a5c65d633ff0a6204f34778e9652f7abba80a5b0604a911accc4710cd613546c10</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
       <name>signal_type</name>
       <anchorfile>scamp-cmd_8c.html</anchorfile>
       <anchor>af9ca40705a5c5f739ca699c48cb3b0f7</anchor>
@@ -10248,55 +10339,6 @@
       <arglist>(uint tcr, uint data, uint key)</arglist>
     </member>
     <member kind="function">
-      <type>void</type>
-      <name>return_msg</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a16d46d803b3eac8b95613bfe5ad11621</anchor>
-      <arglist>(sdp_msg_t *msg, uint rc)</arglist>
-    </member>
-    <member kind="function" static="yes">
-      <type>static void</type>
-      <name>p2p_send_reg</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>ae1532ca7d070c0943f25c97a29d49774</anchor>
-      <arglist>(uint ctrl, uint addr, uint data)</arglist>
-    </member>
-    <member kind="function" static="yes">
-      <type>static void</type>
-      <name>proc_ret_msg</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>ac1ad9c67faf6043f7c019a6637786646</anchor>
-      <arglist>(uint arg1, uint level)</arglist>
-    </member>
-    <member kind="function" static="yes">
-      <type>static void</type>
-      <name>proc_gather</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a4e192d94fd80cac785175cfa1d6a4a22</anchor>
-      <arglist>(uint level, uint mode)</arglist>
-    </member>
-    <member kind="function" static="yes">
-      <type>static void</type>
-      <name>proc_send</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a0a21843f6edee24726e210a5badb3558</anchor>
-      <arglist>(uint data, uint mask)</arglist>
-    </member>
-    <member kind="function" static="yes">
-      <type>static void</type>
-      <name>proc_process</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a45e0235be906f7ab0645230ee26333ba</anchor>
-      <arglist>(uint data, uint srce)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>p2p_region</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>abd17fb13cb0d84ec27ca5d0d1ceff39c</anchor>
-      <arglist>(uint data, uint srce)</arglist>
-    </member>
-    <member kind="function">
       <type>uint</type>
       <name>cmd_sig</name>
       <anchorfile>scamp-cmd_8c.html</anchorfile>
@@ -10332,18 +10374,18 @@
       <arglist>(sdp_msg_t *msg)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>return_msg</name>
+      <anchorfile>scamp-cmd_8c.html</anchorfile>
+      <anchor>a16d46d803b3eac8b95613bfe5ad11621</anchor>
+      <arglist>(sdp_msg_t *msg, uint rc)</arglist>
+    </member>
+    <member kind="function">
       <type>uint</type>
       <name>scamp_debug</name>
       <anchorfile>scamp-cmd_8c.html</anchorfile>
       <anchor>a5b830754727615d4f6bba4876f348c27</anchor>
       <arglist>(sdp_msg_t *msg, uint srce_ip)</arglist>
-    </member>
-    <member kind="variable">
-      <type>level_t</type>
-      <name>levels</name>
-      <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>ad415696ea03a6a1d98e2247335840836</anchor>
-      <arglist>[4]</arglist>
     </member>
     <member kind="variable">
       <type>volatile uint</type>
@@ -10357,6 +10399,20 @@
       <name>n_beacons_sent</name>
       <anchorfile>scamp-cmd_8c.html</anchorfile>
       <anchor>a6ee20526fd90716c9af350599ed326df</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>char</type>
+      <name>eth_map</name>
+      <anchorfile>scamp-cmd_8c.html</anchorfile>
+      <anchor>afd644f0d0600e8358411c6562983582d</anchor>
+      <arglist>[12][12]</arglist>
+    </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>p2p_count_result</name>
+      <anchorfile>scamp-cmd_8c.html</anchorfile>
+      <anchor>a6bb30ef809b7931f6b9f59f8fc675692</anchor>
       <arglist></arglist>
     </member>
   </compound>
@@ -10382,13 +10438,6 @@
     <includes id="spinnaker_8h" name="spinnaker.h" local="yes" imported="no">spinnaker.h</includes>
     <includes id="sark_8h" name="sark.h" local="yes" imported="no">sark.h</includes>
     <includes id="scamp_8h" name="scamp.h" local="yes" imported="no">scamp.h</includes>
-    <member kind="define">
-      <type>#define</type>
-      <name>MC_SLOT</name>
-      <anchorfile>scamp-isr_8c.html</anchorfile>
-      <anchor>a2774b920be5c242f4bae9cc73cd44dcf</anchor>
-      <arglist></arglist>
-    </member>
     <member kind="define">
       <type>#define</type>
       <name>MAX_DIFF</name>
@@ -10423,13 +10472,6 @@
       <anchorfile>scamp-isr_8c.html</anchorfile>
       <anchor>a2e04f7624350167be41f3d22e72d560f</anchor>
       <arglist></arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>p2p_region</name>
-      <anchorfile>scamp-isr_8c.html</anchorfile>
-      <anchor>ad74c8b7f5472e3c90d814834ccd418bf</anchor>
-      <arglist>(uint data, uint key)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -10565,13 +10607,6 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>uchar</type>
-      <name>v2p_map</name>
-      <anchorfile>scamp-isr_8c.html</anchorfile>
-      <anchor>a1c21072a8d78d1aab5893bcb3df847ba</anchor>
-      <arglist>[MAX_CPUS]</arglist>
-    </member>
-    <member kind="variable">
       <type>uint</type>
       <name>num_cpus</name>
       <anchorfile>scamp-isr_8c.html</anchorfile>
@@ -10584,6 +10619,13 @@
       <anchorfile>scamp-isr_8c.html</anchorfile>
       <anchor>a7402f8e87c78b63b027fd7134836fdf0</anchor>
       <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>uint</type>
+      <name>mc_ping_count</name>
+      <anchorfile>scamp-isr_8c.html</anchorfile>
+      <anchor>ac0ceb506e246c58bb6d65d7b5d6c46bf</anchor>
+      <arglist>[NUM_LINKS]</arglist>
     </member>
     <member kind="variable" static="yes">
       <type>static uint</type>
@@ -10806,20 +10848,6 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>compute_level</name>
-      <anchorfile>scamp-nn_8c.html</anchorfile>
-      <anchor>af88d0fa5fd70112d7b52a6f83a8335e2</anchor>
-      <arglist>(uint p2p_addr)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>level_config</name>
-      <anchorfile>scamp-nn_8c.html</anchorfile>
-      <anchor>a1b8e69ce037967ab8324b4542710c83f</anchor>
-      <arglist>(void)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
       <name>peek_ack_pkt</name>
       <anchorfile>scamp-nn_8c.html</anchorfile>
       <anchor>ab66629ed994a2e5c075ba72364d96533</anchor>
@@ -11023,6 +11051,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>p2pc_reth_nn_send</name>
+      <anchorfile>scamp-nn_8c.html</anchorfile>
+      <anchor>abb907db95bbfa90f4dfd3efa02a124ff</anchor>
+      <arglist>(uint eth, uint arg2)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>p2pb_nn_send</name>
       <anchorfile>scamp-nn_8c.html</anchorfile>
       <anchor>a2a2df43005bb304519c395011e69cb4b</anchor>
@@ -11047,6 +11082,13 @@
       <name>nn_rcv_p2pc_dims_pct</name>
       <anchorfile>scamp-nn_8c.html</anchorfile>
       <anchor>a045bc9808d73503a7121f5318ab61ccf</anchor>
+      <arglist>(uint link, uint data, uint key)</arglist>
+    </member>
+    <member kind="function" static="yes">
+      <type>static void</type>
+      <name>nn_rcv_p2pc_reth_pct</name>
+      <anchorfile>scamp-nn_8c.html</anchorfile>
+      <anchor>afa306d731c731607cc3c2552ba3a5439</anchor>
       <arglist>(uint link, uint data, uint key)</arglist>
     </member>
     <member kind="function">
@@ -11092,13 +11134,6 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>level_t</type>
-      <name>levels</name>
-      <anchorfile>scamp-nn_8c.html</anchorfile>
-      <anchor>ad415696ea03a6a1d98e2247335840836</anchor>
-      <arglist>[4]</arglist>
-    </member>
-    <member kind="variable">
       <type>uchar</type>
       <name>core_app</name>
       <anchorfile>scamp-nn_8c.html</anchorfile>
@@ -11139,6 +11174,27 @@
       <anchorfile>scamp-nn_8c.html</anchorfile>
       <anchor>a6cee4e1b6ae56ab514bd02d7f432587d</anchor>
       <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>neighbour_netinit_level</name>
+      <anchorfile>scamp-nn_8c.html</anchorfile>
+      <anchor>a36ed5b21846e82a2607defc4d067cb5f</anchor>
+      <arglist>[NUM_LINKS]</arglist>
+    </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>neighbour_links_enabled</name>
+      <anchorfile>scamp-nn_8c.html</anchorfile>
+      <anchor>a3b9158d0560a685a1a9fb0f0f85a0b34</anchor>
+      <arglist>[NUM_LINKS]</arglist>
+    </member>
+    <member kind="variable">
+      <type>uint</type>
+      <name>mc_ping_count</name>
+      <anchorfile>scamp-nn_8c.html</anchorfile>
+      <anchor>ac0ceb506e246c58bb6d65d7b5d6c46bf</anchor>
+      <arglist>[NUM_LINKS]</arglist>
     </member>
     <member kind="variable">
       <type>char</type>
@@ -11282,6 +11338,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>p2pc_reth_nn_send</name>
+      <anchorfile>scamp-nn_8c.html</anchorfile>
+      <anchor>abb907db95bbfa90f4dfd3efa02a124ff</anchor>
+      <arglist>(uint eth, uint arg2)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>p2pb_nn_send</name>
       <anchorfile>scamp-nn_8c.html</anchorfile>
       <anchor>a2a2df43005bb304519c395011e69cb4b</anchor>
@@ -11306,6 +11369,13 @@
       <name>nn_rcv_p2pc_dims_pct</name>
       <anchorfile>scamp-nn_8c.html</anchorfile>
       <anchor>a045bc9808d73503a7121f5318ab61ccf</anchor>
+      <arglist>(uint link, uint data, uint key)</arglist>
+    </member>
+    <member kind="function" static="yes">
+      <type>static void</type>
+      <name>nn_rcv_p2pc_reth_pct</name>
+      <anchorfile>scamp-nn_8c.html</anchorfile>
+      <anchor>afa306d731c731607cc3c2552ba3a5439</anchor>
       <arglist>(uint link, uint data, uint key)</arglist>
     </member>
     <member kind="function">
@@ -11453,10 +11523,10 @@
       <arglist>(uint data, uint addr)</arglist>
     </member>
     <member kind="function" static="yes">
-      <type>static void</type>
+      <type>static uint</type>
       <name>p2p_send_ctl</name>
       <anchorfile>scamp-p2p_8c.html</anchorfile>
-      <anchor>ab06c49e5cd4bd7a8f409190576ea5fa3</anchor>
+      <anchor>a9f93767a396512fc88338e0f2efcbc09</anchor>
       <arglist>(uint ctrl, uint addr, uint data)</arglist>
     </member>
     <member kind="function">
@@ -11620,6 +11690,20 @@
       <anchor>ae93b432ce8ba390d291de74b532c004c</anchor>
       <arglist></arglist>
     </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>pp_ping_count</name>
+      <anchorfile>scamp-p2p_8c.html</anchorfile>
+      <anchor>af3ae34c0074ff012334ee55346128e09</anchor>
+      <arglist>[NUM_LINKS]</arglist>
+    </member>
+    <member kind="variable">
+      <type>volatile uint</type>
+      <name>p2p_count_result</name>
+      <anchorfile>scamp-p2p_8c.html</anchorfile>
+      <anchor>a6bb30ef809b7931f6b9f59f8fc675692</anchor>
+      <arglist></arglist>
+    </member>
   </compound>
   <compound kind="file">
     <name>scamp.h</name>
@@ -11669,6 +11753,13 @@
       <name>SCAMP_MC_SIGNAL_KEY</name>
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>ac01ccdb8c08824c4c840e85fabb7563e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MC_SLOT</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a2774b920be5c242f4bae9cc73cd44dcf</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -11986,15 +12077,15 @@
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
-      <name>NN_CMD_SP_9</name>
+      <name>NN_CMD_LKSYN</name>
       <anchorfile>scamp_8h.html</anchorfile>
-      <anchor>af04d3f5288e53ab1b6a585bffc694653af2d947cd2c885c3f3f8f939adae77822</anchor>
+      <anchor>af04d3f5288e53ab1b6a585bffc694653aec2b5235ed1e8f5161b35cfbecf358af</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
-      <name>NN_CMD_SP_10</name>
+      <name>NN_CMD_NISYN</name>
       <anchorfile>scamp_8h.html</anchorfile>
-      <anchor>af04d3f5288e53ab1b6a585bffc694653a9a41c2169b975a21345a9c26cf767b71</anchor>
+      <anchor>af04d3f5288e53ab1b6a585bffc694653add8e405cb250173023bf7e4679112c3a</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
@@ -12034,6 +12125,12 @@
       <anchor>ad23fbc028718d6180d16767b141c6106a2c8ea4a3d04d84c75587a7e503e025cb</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>P2PC_RETH</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>ad23fbc028718d6180d16767b141c6106a3fd47fbede6f2c21958304514acbc949</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>netinit_phase_e</name>
@@ -12057,6 +12154,18 @@
       <name>NETINIT_PHASE_BIFF</name>
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>a6651118d8fd7f3196f7e9845afe27699aae9306bdec4caca4457d5f67a25ed3f7</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>NETINIT_PHASE_P2P_TABLE_ETH</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a6651118d8fd7f3196f7e9845afe27699a7e91516c6d3f9d5de517cf13f05ad21d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>NETINIT_PHASE_P2P_TABLE_R_ETH</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a6651118d8fd7f3196f7e9845afe27699a56bb788446647f66635dd7e322246443</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
@@ -12178,13 +12287,6 @@
       <anchor>aeafed943f53ac9e25a483de3745935ad</anchor>
       <arglist>(uint hw_ver)</arglist>
     </member>
-    <member kind="function">
-      <type>void</type>
-      <name>disable_unidirectional_links</name>
-      <anchorfile>scamp_8h.html</anchorfile>
-      <anchor>a5505bb7a8760b0b56f386c9745a87c3a</anchor>
-      <arglist>(void)</arglist>
-    </member>
     <member kind="define">
       <type>#define</type>
       <name>MAX_CPUS</name>
@@ -12225,6 +12327,13 @@
       <name>SCAMP_MC_SIGNAL_KEY</name>
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>ac01ccdb8c08824c4c840e85fabb7563e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MC_SLOT</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a2774b920be5c242f4bae9cc73cd44dcf</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -12466,6 +12575,24 @@
       <anchor>a5f7bf8060bf3f077519a11b991abdc42a1cbf9729f6b5a985f723881a997aebfc</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>P2P_PING</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a5f7bf8060bf3f077519a11b991abdc42a71542edb5e47e145e521cadd486d4421</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>P2P_COUNT_REQ</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a5f7bf8060bf3f077519a11b991abdc42acce486fd7eb725f073842dd141272b8d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>P2P_COUNT_RESP</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a5f7bf8060bf3f077519a11b991abdc42aab1050cf842f1aa7105397fce143edf5</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="define">
       <type>#define</type>
       <name>NODE_DLY_NS</name>
@@ -12692,15 +12819,15 @@
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
-      <name>NN_CMD_SP_9</name>
+      <name>NN_CMD_LKSYN</name>
       <anchorfile>scamp_8h.html</anchorfile>
-      <anchor>af04d3f5288e53ab1b6a585bffc694653af2d947cd2c885c3f3f8f939adae77822</anchor>
+      <anchor>af04d3f5288e53ab1b6a585bffc694653aec2b5235ed1e8f5161b35cfbecf358af</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
-      <name>NN_CMD_SP_10</name>
+      <name>NN_CMD_NISYN</name>
       <anchorfile>scamp_8h.html</anchorfile>
-      <anchor>af04d3f5288e53ab1b6a585bffc694653a9a41c2169b975a21345a9c26cf767b71</anchor>
+      <anchor>af04d3f5288e53ab1b6a585bffc694653add8e405cb250173023bf7e4679112c3a</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
@@ -12740,6 +12867,12 @@
       <anchor>ad23fbc028718d6180d16767b141c6106a2c8ea4a3d04d84c75587a7e503e025cb</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>P2PC_RETH</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>ad23fbc028718d6180d16767b141c6106a3fd47fbede6f2c21958304514acbc949</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>netinit_phase_e</name>
@@ -12763,6 +12896,18 @@
       <name>NETINIT_PHASE_BIFF</name>
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>a6651118d8fd7f3196f7e9845afe27699aae9306bdec4caca4457d5f67a25ed3f7</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>NETINIT_PHASE_P2P_TABLE_ETH</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a6651118d8fd7f3196f7e9845afe27699a7e91516c6d3f9d5de517cf13f05ad21d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>NETINIT_PHASE_P2P_TABLE_R_ETH</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a6651118d8fd7f3196f7e9845afe27699a56bb788446647f66635dd7e322246443</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
@@ -12886,6 +13031,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>proc_word_set</name>
+      <anchorfile>scamp_8h.html</anchorfile>
+      <anchor>a6b2f443ea0ffb5e680cbc711ef5625bf</anchor>
+      <arglist>(uint a1, uint a2)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>msg_queue_insert</name>
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>ab23849915c3d356f3faad678962df4e2</anchor>
@@ -12952,20 +13104,6 @@
       <name>compute_eth</name>
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>a8ebd349f2396adb3ad66f51b0eae7e2d</anchor>
-      <arglist>(void)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>compute_level</name>
-      <anchorfile>scamp_8h.html</anchorfile>
-      <anchor>af88d0fa5fd70112d7b52a6f83a8335e2</anchor>
-      <arglist>(uint p2p_addr)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>level_config</name>
-      <anchorfile>scamp_8h.html</anchorfile>
-      <anchor>a1b8e69ce037967ab8324b4542710c83f</anchor>
       <arglist>(void)</arglist>
     </member>
     <member kind="function">
@@ -13226,13 +13364,6 @@
       <anchorfile>scamp_8h.html</anchorfile>
       <anchor>aeafed943f53ac9e25a483de3745935ad</anchor>
       <arglist>(uint hw_ver)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>disable_unidirectional_links</name>
-      <anchorfile>scamp_8h.html</anchorfile>
-      <anchor>a5505bb7a8760b0b56f386c9745a87c3a</anchor>
-      <arglist>(void)</arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -15824,13 +15955,6 @@
       <name>sum</name>
       <anchorfile>scamp-nn_8c.html</anchorfile>
       <anchor>a5a343f6659fd283b1da1e195d270f826</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="variable">
-      <type>uint</type>
-      <name>region</name>
-      <anchorfile>scamp-nn_8c.html</anchorfile>
-      <anchor>af608f29a0913f9662e9d4b16b36672e6</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">

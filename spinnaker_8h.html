@@ -870,10 +870,10 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>MC_RAM_MASK</b>&#160;&#160;&#160;((1 &lt;&lt; <a class="el" href="spinnaker_8h.html#a99de5b422263f0ab019974c73061ee5c">MC_RAM_WIDTH</a>) - 1)</td></tr>
 <tr class="memdesc:adf72de763fed05b4b4e9d7b0f70b28ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multicast route select mask. <br /></td></tr>
 <tr class="separator:adf72de763fed05b4b4e9d7b0f70b28ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab9d8a887acddae1c57b322d38ef22c83"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spinnaker_8h.html#ab9d8a887acddae1c57b322d38ef22c83">MC_CORE_ROUTE</a>(x)&#160;&#160;&#160;(1 &lt;&lt; ((x) + <a class="el" href="spinnaker_8h.html#adff16396e5bb9ba24b129ec2ab874031">NUM_LINKS</a>))</td></tr>
+<tr class="memitem:ab9d8a887acddae1c57b322d38ef22c83"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spinnaker_8h.html#ab9d8a887acddae1c57b322d38ef22c83">MC_CORE_ROUTE</a>(<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>)&#160;&#160;&#160;(1 &lt;&lt; ((<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>) + <a class="el" href="spinnaker_8h.html#adff16396e5bb9ba24b129ec2ab874031">NUM_LINKS</a>))</td></tr>
 <tr class="memdesc:ab9d8a887acddae1c57b322d38ef22c83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multicast route to CPU core.  <a href="spinnaker_8h.html#ab9d8a887acddae1c57b322d38ef22c83">More...</a><br /></td></tr>
 <tr class="separator:ab9d8a887acddae1c57b322d38ef22c83"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8eb639051cd9708c8c99c55727461e0c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spinnaker_8h.html#a8eb639051cd9708c8c99c55727461e0c">MC_LINK_ROUTE</a>(x)&#160;&#160;&#160;(1 &lt;&lt; (x))</td></tr>
+<tr class="memitem:a8eb639051cd9708c8c99c55727461e0c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spinnaker_8h.html#a8eb639051cd9708c8c99c55727461e0c">MC_LINK_ROUTE</a>(<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>)&#160;&#160;&#160;(1 &lt;&lt; (<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>))</td></tr>
 <tr class="memdesc:a8eb639051cd9708c8c99c55727461e0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multicast route to SpiNNaker link.  <a href="spinnaker_8h.html#a8eb639051cd9708c8c99c55727461e0c">More...</a><br /></td></tr>
 <tr class="separator:a8eb639051cd9708c8c99c55727461e0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2a84572c9232da1ed33c06662bf3dcf"><td class="memItemLeft" align="right" valign="top"><a id="ac2a84572c9232da1ed33c06662bf3dcf" name="ac2a84572c9232da1ed33c06662bf3dcf"></a>
@@ -1835,8 +1835,8 @@ static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">
           <td class="memname">#define MC_CORE_ROUTE</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">x</td><td>)</td>
-          <td>&#160;&#160;&#160;(1 &lt;&lt; ((x) + <a class="el" href="spinnaker_8h.html#adff16396e5bb9ba24b129ec2ab874031">NUM_LINKS</a>))</td>
+          <td class="paramname"><a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a></td><td>)</td>
+          <td>&#160;&#160;&#160;(1 &lt;&lt; ((<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>) + <a class="el" href="spinnaker_8h.html#adff16396e5bb9ba24b129ec2ab874031">NUM_LINKS</a>))</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1862,8 +1862,8 @@ static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">
           <td class="memname">#define MC_LINK_ROUTE</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">x</td><td>)</td>
-          <td>&#160;&#160;&#160;(1 &lt;&lt; (x))</td>
+          <td class="paramname"><a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a></td><td>)</td>
+          <td>&#160;&#160;&#160;(1 &lt;&lt; (<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>))</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -2189,7 +2189,7 @@ static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 9 2023 10:13:33 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
+Generated on Wed Oct 11 2023 06:43:18 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
 </small></address>
 </body>
 </html>

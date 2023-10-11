@@ -10,13 +10,14 @@ var searchData=
   ['mbox_5fmp_5fcmd_7',['mbox_mp_cmd',['../sark_8h.html#ace78a1ae748ce645c8f6a5a43442b3f7',1,'vcpu_t']]],
   ['mbox_5fmp_5fmsg_8',['mbox_mp_msg',['../sark_8h.html#a327484e6ef9ba2ee4ef5593af92fa242',1,'vcpu_t']]],
   ['mc_9',['mc',['../spinnaker_8h.html#a5ddc40f567e69ab64b239d75f4e96d39',1,'spinnaker.h']]],
-  ['mc_5fpkt_5fprio_10',['mc_pkt_prio',['../spin1__api_8c.html#aef62729ad78f2c897ef435cd5507eee8',1,'spin1_api.c']]],
-  ['mem_5fclk_11',['mem_clk',['../sark_8h.html#a5230445b1bb08c388c857f15b61123ed',1,'sv_t']]],
-  ['mem_5fptr_12',['mem_ptr',['../sark_8h.html#a50fe4ed552dfbae4ce47e773893483a6',1,'sv_t']]],
-  ['mod_13',['mod',['../sark_8h.html#ad7831d8b79f0ff56246c54533ad5e959',1,'divmod_t']]],
-  ['mon_5fdel_14',['mon_del',['../scamp-nn_8c.html#a6cee4e1b6ae56ab514bd02d7f432587d',1,'mon_del():&#160;scamp-nn.c'],['../scamp_8h.html#a6cee4e1b6ae56ab514bd02d7f432587d',1,'mon_del():&#160;scamp-nn.c']]],
-  ['msg_15',['msg',['../sark_8h.html#a5287eb212e8f9ee5787a17b15c54372e',1,'event_data_t']]],
-  ['msg_5frcvd_16',['msg_rcvd',['../sark_8h.html#afc90622cf71864dd02b771dfa80792a5',1,'sark_data_t']]],
-  ['msg_5froot_17',['msg_root',['../sark_8h.html#ab9377d15704f3fb65f0b2e78e16175d3',1,'sark_data_t']]],
-  ['msg_5fsent_18',['msg_sent',['../sark_8h.html#a681c8403fe34cc564a0bf14e85afae64',1,'sark_data_t']]]
+  ['mc_5fping_5fcount_10',['mc_ping_count',['../scamp-nn_8c.html#ac0ceb506e246c58bb6d65d7b5d6c46bf',1,'mc_ping_count():&#160;scamp-3.c'],['../scamp-isr_8c.html#ac0ceb506e246c58bb6d65d7b5d6c46bf',1,'mc_ping_count():&#160;scamp-3.c'],['../scamp-3_8c.html#a58e3c49bdc8ba5b70426f6e0fb160d23',1,'mc_ping_count():&#160;scamp-3.c']]],
+  ['mc_5fpkt_5fprio_11',['mc_pkt_prio',['../spin1__api_8c.html#aef62729ad78f2c897ef435cd5507eee8',1,'spin1_api.c']]],
+  ['mem_5fclk_12',['mem_clk',['../sark_8h.html#a5230445b1bb08c388c857f15b61123ed',1,'sv_t']]],
+  ['mem_5fptr_13',['mem_ptr',['../sark_8h.html#a50fe4ed552dfbae4ce47e773893483a6',1,'sv_t']]],
+  ['mod_14',['mod',['../sark_8h.html#ad7831d8b79f0ff56246c54533ad5e959',1,'divmod_t']]],
+  ['mon_5fdel_15',['mon_del',['../scamp-nn_8c.html#a6cee4e1b6ae56ab514bd02d7f432587d',1,'mon_del():&#160;scamp-nn.c'],['../scamp_8h.html#a6cee4e1b6ae56ab514bd02d7f432587d',1,'mon_del():&#160;scamp-nn.c']]],
+  ['msg_16',['msg',['../sark_8h.html#a5287eb212e8f9ee5787a17b15c54372e',1,'event_data_t']]],
+  ['msg_5frcvd_17',['msg_rcvd',['../sark_8h.html#afc90622cf71864dd02b771dfa80792a5',1,'sark_data_t']]],
+  ['msg_5froot_18',['msg_root',['../sark_8h.html#ab9377d15704f3fb65f0b2e78e16175d3',1,'sark_data_t']]],
+  ['msg_5fsent_19',['msg_sent',['../sark_8h.html#a681c8403fe34cc564a0bf14e85afae64',1,'sark_data_t']]]
 ];

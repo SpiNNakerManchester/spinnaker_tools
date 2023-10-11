@@ -17,9 +17,5 @@ var searchData=
   ['aplx_5fexec_14',['APLX_EXEC',['../sark_8h.html#a707dc476cdca6c9a8cd1695f25fe555aaf36a74033d29f7566f01738b80845e69',1,'sark.h']]],
   ['aplx_5ffill_15',['APLX_FILL',['../sark_8h.html#a707dc476cdca6c9a8cd1695f25fe555aadde259e49b3d9ddc8173d3627a1b5554',1,'sark.h']]],
   ['aplx_5frcopy_16',['APLX_RCOPY',['../sark_8h.html#a707dc476cdca6c9a8cd1695f25fe555aa14a3db1b3e820917f084acee5b0cbcbf',1,'sark.h']]],
-  ['app_5f3_17',['APP_3',['../scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abba80a5b0604a911accc4710cd613546c10',1,'scamp-cmd.c']]],
-  ['app_5fflag_5fwait_18',['APP_FLAG_WAIT',['../sark_8h.html#ada83d5de50faddcc7a1a3a3354b3ec49a4e78619422e7eaaea3803e2bf1e5b55e',1,'sark.h']]],
-  ['app_5fret_19',['APP_RET',['../scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abbabcf8baf265eb094e1f7a89cd75ce908a',1,'scamp-cmd.c']]],
-  ['app_5fsig_20',['APP_SIG',['../scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abba721904392091b8a0af752ee3ba60d142',1,'scamp-cmd.c']]],
-  ['app_5fstat_21',['APP_STAT',['../scamp-cmd_8c.html#a5c65d633ff0a6204f34778e9652f7abba0d274f1614f420b81d2bb10fb2e6210a',1,'scamp-cmd.c']]]
+  ['app_5fflag_5fwait_17',['APP_FLAG_WAIT',['../sark_8h.html#ada83d5de50faddcc7a1a3a3354b3ec49a4e78619422e7eaaea3803e2bf1e5b55e',1,'sark.h']]]
 ];

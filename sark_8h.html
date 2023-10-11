@@ -193,7 +193,7 @@ Macros</h2></td></tr>
 <tr class="memdesc:a9ae73de95a4f522c1dace01eab8ae063"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to convert shorts to network byte order. <br /></td></tr>
 <tr class="separator:a9ae73de95a4f522c1dace01eab8ae063"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20b085d7fd8f90ea0ed018cc74c08f27"><td class="memItemLeft" align="right" valign="top"><a id="a20b085d7fd8f90ea0ed018cc74c08f27" name="a20b085d7fd8f90ea0ed018cc74c08f27"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CHIP_ID</b>(x,  y)&#160;&#160;&#160;(((x) &lt;&lt; 8) + (y))</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>CHIP_ID</b>(<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>,  <a class="el" href="scamp-3_8c.html#ac98ffc0d5712bf00634148edbd13fcc8">y</a>)&#160;&#160;&#160;(((<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>) &lt;&lt; 8) + (<a class="el" href="scamp-3_8c.html#ac98ffc0d5712bf00634148edbd13fcc8">y</a>))</td></tr>
 <tr class="memdesc:a20b085d7fd8f90ea0ed018cc74c08f27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Make a chip ID from X and Y coordinates. <br /></td></tr>
 <tr class="separator:a20b085d7fd8f90ea0ed018cc74c08f27"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6dbfa8e49ec710299267b458040f8f16"><td class="memItemLeft" align="right" valign="top"><a id="a6dbfa8e49ec710299267b458040f8f16" name="a6dbfa8e49ec710299267b458040f8f16"></a>
@@ -634,28 +634,30 @@ Enumerations</h2></td></tr>
 , <br />
 &#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a3de37de83aeb28145a73805b4f4f5422">CMD_APLX</a> = 4
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05ac04c56b963737bed98a9765d300e60aa">CMD_FILL</a> = 5
+, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a35b507fe8adab9ba46257d13ba0b6d1d">CMD_COUNT</a> = 15
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a1f6052e4d5cda4eeba5759bec798cd3e">CMD_REMAP</a> = 16
-, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05ac7dc40ac7d7b36b33599a9647741ec3a">CMD_LINK_READ</a> = 17
 , <br />
-&#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05ae1b0881e5b6d1168e83be5ca76b40249">CMD_LINK_WRITE</a> = 18
+&#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05ac7dc40ac7d7b36b33599a9647741ec3a">CMD_LINK_READ</a> = 17
+, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05ae1b0881e5b6d1168e83be5ca76b40249">CMD_LINK_WRITE</a> = 18
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05ac200c7f643146c6174a04d70dd7c6765">CMD_AR</a> = 19
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a9768ff77bcde46195196e6466bc0ab5e">CMD_NNP</a> = 20
-, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a2337fa7150e5bf0a44deadcea53249ed">CMD_APP_COPY_RUN</a> = 21
 , <br />
-&#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a027c8932fc4f1f58d96be1c9d3573348">CMD_SIG</a> = 22
+&#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a2337fa7150e5bf0a44deadcea53249ed">CMD_APP_COPY_RUN</a> = 21
+, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a027c8932fc4f1f58d96be1c9d3573348">CMD_SIG</a> = 22
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05ad11c5b33509ea0f84a1b50666bc0a4ca">CMD_FFD</a> = 23
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05aab54e60c11c527ae91bb806c0806a7f6">CMD_AS</a> = 24
-, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a41754a0808533384d7667e0c7c70bb28">CMD_LED</a> = 25
 , <br />
-&#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05ae15692462fd93686a1e4c99d2eaea246">CMD_IPTAG</a> = 26
+&#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a41754a0808533384d7667e0c7c70bb28">CMD_LED</a> = 25
+, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05ae15692462fd93686a1e4c99d2eaea246">CMD_IPTAG</a> = 26
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a2cbdb534568d4ce50ae876dd98165dfb">CMD_SROM</a> = 27
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05aa1aeafde66020145ebd8c2cb24b522b8">CMD_ALLOC</a> = 28
-, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05adee488b16055c349f995c986587bbe26">CMD_RTR</a> = 29
 , <br />
-&#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a9ab7ff8466953d3cf4980188105b01fd">CMD_RSVD</a> = 30
+&#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05adee488b16055c349f995c986587bbe26">CMD_RTR</a> = 29
+, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a9ab7ff8466953d3cf4980188105b01fd">CMD_RSVD</a> = 30
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05a6b1ac29fd084fc49f7c5c5e80130614b">CMD_INFO</a> = 31
 , <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05adbb752da1732f16260da347efcfa3355">CMD_SYNC</a> = 32
-, <a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05afa121c234cf98fbef4bcf6da8a690c78">CMD_TUBE</a> = 64
+, <br />
+&#160;&#160;<a class="el" href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05afa121c234cf98fbef4bcf6da8a690c78">CMD_TUBE</a> = 64
 <br />
  }</td></tr>
 <tr class="memdesc:add51abc04ff5e1d219053f53ce83fa05"><td class="mdescLeft">&#160;</td><td class="mdescRight">SCP command codes.  <a href="sark_8h.html#add51abc04ff5e1d219053f53ce83fa05">More...</a><br /></td></tr>
@@ -1094,14 +1096,14 @@ char&#160;</td><td class="memItemRight" valign="bottom"><b>build_name</b> []</td
 <div class="line">            +-------------------------------+   f5000100 <a class="code hl_variable" href="sark_8h.html#a74ab0d3b2aa00fa87c323a46349fe3b9">sv</a>-&gt;<a class="code hl_variable" href="sark_8h.html#af6843a2eb98fe1699ffd4845a24ff359">sysram_base</a></div>
 <div class="line">            | 256 bytes                     |</div>
 <div class="line"><a class="code hl_define" href="spinnaker_8h.html#a2292f2ea539bb564b691a1a708447edf">SYSRAM_BASE</a> +-------------------------------+   f5000000</div>
-<div class="ttc" id="asark_8h_html_a06e96a522d4adf97fbb2549806f73cfb"><div class="ttname"><a href="sark_8h.html#a06e96a522d4adf97fbb2549806f73cfb">SV_VCPU</a></div><div class="ttdeci">#define SV_VCPU</div><div class="ttdoc">e5007000</div><div class="ttdef"><b>Definition:</b> sark.h:948</div></div>
-<div class="ttc" id="asark_8h_html_a41cd20bd99299a9ba4fbcc09768fb83e"><div class="ttname"><a href="sark_8h.html#a41cd20bd99299a9ba4fbcc09768fb83e">SV_SPARE</a></div><div class="ttdeci">#define SV_SPARE</div><div class="ttdoc">e5007900</div><div class="ttdef"><b>Definition:</b> sark.h:949</div></div>
-<div class="ttc" id="asark_8h_html_a4ea54a1b50b0f5d74df91b604006bca9"><div class="ttname"><a href="sark_8h.html#a4ea54a1b50b0f5d74df91b604006bca9">SV_RANDOM</a></div><div class="ttdeci">#define SV_RANDOM</div><div class="ttdoc">e5007ea0</div><div class="ttdef"><b>Definition:</b> sark.h:946</div></div>
-<div class="ttc" id="asark_8h_html_a6060b669d3bbd8528c906953d482b12e"><div class="ttname"><a href="sark_8h.html#a6060b669d3bbd8528c906953d482b12e">VCPU_SIZE</a></div><div class="ttdeci">#define VCPU_SIZE</div><div class="ttdoc">Size of vcpu_t.</div><div class="ttdef"><b>Definition:</b> sark.h:759</div></div>
-<div class="ttc" id="asark_8h_html_a74ab0d3b2aa00fa87c323a46349fe3b9"><div class="ttname"><a href="sark_8h.html#a74ab0d3b2aa00fa87c323a46349fe3b9">sv</a></div><div class="ttdeci">static sv_t *const sv</div><div class="ttdef"><b>Definition:</b> sark.h:1079</div></div>
-<div class="ttc" id="asark_8h_html_a993ec852f04f051ca86338808f053b93"><div class="ttname"><a href="sark_8h.html#a993ec852f04f051ca86338808f053b93">SV_VECTORS</a></div><div class="ttdeci">#define SV_VECTORS</div><div class="ttdoc">e5007ee0</div><div class="ttdef"><b>Definition:</b> sark.h:945</div></div>
-<div class="ttc" id="asark_8h_html_ae64acf62910ab7afdbbe57fbd92e3026"><div class="ttname"><a href="sark_8h.html#ae64acf62910ab7afdbbe57fbd92e3026">SV_SV</a></div><div class="ttdeci">#define SV_SV</div><div class="ttdoc">e5007f00</div><div class="ttdef"><b>Definition:</b> sark.h:939</div></div>
-<div class="ttc" id="asark_8h_html_af6843a2eb98fe1699ffd4845a24ff359"><div class="ttname"><a href="sark_8h.html#af6843a2eb98fe1699ffd4845a24ff359">sv_t::sysram_base</a></div><div class="ttdeci">uint * sysram_base</div><div class="ttdoc">c4 Base of user SysRAM</div><div class="ttdef"><b>Definition:</b> sark.h:1052</div></div>
+<div class="ttc" id="asark_8h_html_a06e96a522d4adf97fbb2549806f73cfb"><div class="ttname"><a href="sark_8h.html#a06e96a522d4adf97fbb2549806f73cfb">SV_VCPU</a></div><div class="ttdeci">#define SV_VCPU</div><div class="ttdoc">e5007000</div><div class="ttdef"><b>Definition:</b> sark.h:949</div></div>
+<div class="ttc" id="asark_8h_html_a41cd20bd99299a9ba4fbcc09768fb83e"><div class="ttname"><a href="sark_8h.html#a41cd20bd99299a9ba4fbcc09768fb83e">SV_SPARE</a></div><div class="ttdeci">#define SV_SPARE</div><div class="ttdoc">e5007900</div><div class="ttdef"><b>Definition:</b> sark.h:950</div></div>
+<div class="ttc" id="asark_8h_html_a4ea54a1b50b0f5d74df91b604006bca9"><div class="ttname"><a href="sark_8h.html#a4ea54a1b50b0f5d74df91b604006bca9">SV_RANDOM</a></div><div class="ttdeci">#define SV_RANDOM</div><div class="ttdoc">e5007ea0</div><div class="ttdef"><b>Definition:</b> sark.h:947</div></div>
+<div class="ttc" id="asark_8h_html_a6060b669d3bbd8528c906953d482b12e"><div class="ttname"><a href="sark_8h.html#a6060b669d3bbd8528c906953d482b12e">VCPU_SIZE</a></div><div class="ttdeci">#define VCPU_SIZE</div><div class="ttdoc">Size of vcpu_t.</div><div class="ttdef"><b>Definition:</b> sark.h:760</div></div>
+<div class="ttc" id="asark_8h_html_a74ab0d3b2aa00fa87c323a46349fe3b9"><div class="ttname"><a href="sark_8h.html#a74ab0d3b2aa00fa87c323a46349fe3b9">sv</a></div><div class="ttdeci">static sv_t *const sv</div><div class="ttdef"><b>Definition:</b> sark.h:1080</div></div>
+<div class="ttc" id="asark_8h_html_a993ec852f04f051ca86338808f053b93"><div class="ttname"><a href="sark_8h.html#a993ec852f04f051ca86338808f053b93">SV_VECTORS</a></div><div class="ttdeci">#define SV_VECTORS</div><div class="ttdoc">e5007ee0</div><div class="ttdef"><b>Definition:</b> sark.h:946</div></div>
+<div class="ttc" id="asark_8h_html_ae64acf62910ab7afdbbe57fbd92e3026"><div class="ttname"><a href="sark_8h.html#ae64acf62910ab7afdbbe57fbd92e3026">SV_SV</a></div><div class="ttdeci">#define SV_SV</div><div class="ttdoc">e5007f00</div><div class="ttdef"><b>Definition:</b> sark.h:940</div></div>
+<div class="ttc" id="asark_8h_html_af6843a2eb98fe1699ffd4845a24ff359"><div class="ttname"><a href="sark_8h.html#af6843a2eb98fe1699ffd4845a24ff359">sv_t::sysram_base</a></div><div class="ttdeci">uint * sysram_base</div><div class="ttdoc">c4 Base of user SysRAM</div><div class="ttdef"><b>Definition:</b> sark.h:1053</div></div>
 <div class="ttc" id="aspinnaker_8h_html_a2292f2ea539bb564b691a1a708447edf"><div class="ttname"><a href="spinnaker_8h.html#a2292f2ea539bb564b691a1a708447edf">SYSRAM_BASE</a></div><div class="ttdeci">#define SYSRAM_BASE</div><div class="ttdoc">Base address of System RAM.</div><div class="ttdef"><b>Definition:</b> spinnaker.h:112</div></div>
 <div class="ttc" id="aspinnaker_8h_html_aa061b51fb2d77d7721a3882edf5cd84a"><div class="ttname"><a href="spinnaker_8h.html#aa061b51fb2d77d7721a3882edf5cd84a">NUM_CPUS</a></div><div class="ttdeci">#define NUM_CPUS</div><div class="ttdoc">Number of CPU cores per chip.</div><div class="ttdef"><b>Definition:</b> spinnaker.h:64</div></div>
 <div class="ttc" id="aspinnaker_8h_html_ae91b1725f67078b99e68cc3508d7f2e6"><div class="ttname"><a href="spinnaker_8h.html#ae91b1725f67078b99e68cc3508d7f2e6">SYSRAM_TOP</a></div><div class="ttdeci">#define SYSRAM_TOP</div><div class="ttdoc">Top address of System RAM.</div><div class="ttdef"><b>Definition:</b> spinnaker.h:120</div></div>
@@ -3627,6 +3629,8 @@ fc Software version number </td></tr>
 <tr><td class="fieldname"><a id="add51abc04ff5e1d219053f53ce83fa05a3de37de83aeb28145a73805b4f4f5422" name="add51abc04ff5e1d219053f53ce83fa05a3de37de83aeb28145a73805b4f4f5422"></a>CMD_APLX&#160;</td><td class="fielddoc"><p >Run via APLX (Deprecated) </p>
 </td></tr>
 <tr><td class="fieldname"><a id="add51abc04ff5e1d219053f53ce83fa05ac04c56b963737bed98a9765d300e60aa" name="add51abc04ff5e1d219053f53ce83fa05ac04c56b963737bed98a9765d300e60aa"></a>CMD_FILL&#160;</td><td class="fielddoc"><p >Fill memory. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="add51abc04ff5e1d219053f53ce83fa05a35b507fe8adab9ba46257d13ba0b6d1d" name="add51abc04ff5e1d219053f53ce83fa05a35b507fe8adab9ba46257d13ba0b6d1d"></a>CMD_COUNT&#160;</td><td class="fielddoc"><p >Count state of application processors. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="add51abc04ff5e1d219053f53ce83fa05a1f6052e4d5cda4eeba5759bec798cd3e" name="add51abc04ff5e1d219053f53ce83fa05a1f6052e4d5cda4eeba5759bec798cd3e"></a>CMD_REMAP&#160;</td><td class="fielddoc"><p >Remap application core. </p>
 </td></tr>
@@ -7645,7 +7649,7 @@ e-&gt;time == 0
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 9 2023 10:13:33 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
+Generated on Wed Oct 11 2023 06:43:18 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
 </small></address>
 </body>
 </html>

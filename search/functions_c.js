@@ -24,7 +24,8 @@ var searchData=
   ['nn_5frcv_5fp2pc_5fdims_5fpct_21',['nn_rcv_p2pc_dims_pct',['../scamp-nn_8c.html#a045bc9808d73503a7121f5318ab61ccf',1,'scamp-nn.c']]],
   ['nn_5frcv_5fp2pc_5fnew_5fpct_22',['nn_rcv_p2pc_new_pct',['../scamp-nn_8c.html#a2e3353aa3f23a0571ed0bb4e5a9e8b18',1,'scamp-nn.c']]],
   ['nn_5frcv_5fp2pc_5fpct_23',['nn_rcv_p2pc_pct',['../scamp-nn_8c.html#a892388f45c16849c408880a1b981b817',1,'scamp-nn.c']]],
-  ['nn_5frcv_5fpkt_24',['nn_rcv_pkt',['../scamp-isr_8c.html#a38a39f4802a84cc8b44112fc770e523d',1,'nn_rcv_pkt(uint link, uint data, uint key):&#160;scamp-nn.c'],['../scamp-nn_8c.html#a38a39f4802a84cc8b44112fc770e523d',1,'nn_rcv_pkt(uint link, uint data, uint key):&#160;scamp-nn.c']]],
-  ['nn_5ftx_25',['nn_tx',['../scamp-boot_8c.html#a83fbf16ea2957916f6cda66902a72182',1,'scamp-boot.c']]],
-  ['null_5fint_5fhan_26',['null_int_han',['../sark__hw_8c.html#a4f49b7b8f990fad416ad7a5f50585ccc',1,'sark_hw.c']]]
+  ['nn_5frcv_5fp2pc_5freth_5fpct_24',['nn_rcv_p2pc_reth_pct',['../scamp-nn_8c.html#afa306d731c731607cc3c2552ba3a5439',1,'scamp-nn.c']]],
+  ['nn_5frcv_5fpkt_25',['nn_rcv_pkt',['../scamp-isr_8c.html#a38a39f4802a84cc8b44112fc770e523d',1,'nn_rcv_pkt(uint link, uint data, uint key):&#160;scamp-nn.c'],['../scamp-nn_8c.html#a38a39f4802a84cc8b44112fc770e523d',1,'nn_rcv_pkt(uint link, uint data, uint key):&#160;scamp-nn.c']]],
+  ['nn_5ftx_26',['nn_tx',['../scamp-boot_8c.html#a83fbf16ea2957916f6cda66902a72182',1,'scamp-boot.c']]],
+  ['null_5fint_5fhan_27',['null_int_han',['../sark__hw_8c.html#a4f49b7b8f990fad416ad7a5f50585ccc',1,'sark_hw.c']]]
 ];

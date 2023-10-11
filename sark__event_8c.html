@@ -96,7 +96,7 @@ $(function() {
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a02cfa0a6c71550c8857e2ad599c1fed2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sark__event_8c.html#a02cfa0a6c71550c8857e2ad599c1fed2">EFAIL</a>(x)&#160;&#160;&#160;(1 &lt;&lt; (x))</td></tr>
+<tr class="memitem:a02cfa0a6c71550c8857e2ad599c1fed2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sark__event_8c.html#a02cfa0a6c71550c8857e2ad599c1fed2">EFAIL</a>(<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>)&#160;&#160;&#160;(1 &lt;&lt; (<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>))</td></tr>
 <tr class="memdesc:a02cfa0a6c71550c8857e2ad599c1fed2"><td class="mdescLeft">&#160;</td><td class="mdescRight">How to encode a failure code to go in an event (as events can have multiple failures).  <a href="sark__event_8c.html#a02cfa0a6c71550c8857e2ad599c1fed2">More...</a><br /></td></tr>
 <tr class="separator:a02cfa0a6c71550c8857e2ad599c1fed2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -218,8 +218,8 @@ Variables</h2></td></tr>
           <td class="memname">#define EFAIL</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname">x</td><td>)</td>
-          <td>&#160;&#160;&#160;(1 &lt;&lt; (x))</td>
+          <td class="paramname"><a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a></td><td>)</td>
+          <td>&#160;&#160;&#160;(1 &lt;&lt; (<a class="el" href="scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49">x</a>))</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1040,8 +1040,8 @@ Variables</h2></td></tr>
 <div class="line">    <a class="code hl_define" href="sark_8h.html#ad8cb7bda8b7575fcf048185ba2bed463">SARK_SIG_INT</a>,       </div>
 <div class="line">    <a class="code hl_enumvalue" href="spinnaker_8h.html#a5b54d10e21fcb49a0672c0212179600ca7db46b6d08cd7733f042fb63832749b9">DMA_DONE_INT</a>        </div>
 <div class="line">}</div>
-<div class="ttc" id="asark_8h_html_ad8cb7bda8b7575fcf048185ba2bed463"><div class="ttname"><a href="sark_8h.html#ad8cb7bda8b7575fcf048185ba2bed463">SARK_SIG_INT</a></div><div class="ttdeci">#define SARK_SIG_INT</div><div class="ttdoc">Used for SARK to APP signalling.</div><div class="ttdef"><b>Definition:</b> sark.h:769</div></div>
-<div class="ttc" id="asark_8h_html_af848793a9b2d4e9ec085572513370ec9"><div class="ttname"><a href="sark_8h.html#af848793a9b2d4e9ec085572513370ec9">SARK_MSG_INT</a></div><div class="ttdeci">#define SARK_MSG_INT</div><div class="ttdoc">Used for SARK to APP messaging.</div><div class="ttdef"><b>Definition:</b> sark.h:768</div></div>
+<div class="ttc" id="asark_8h_html_ad8cb7bda8b7575fcf048185ba2bed463"><div class="ttname"><a href="sark_8h.html#ad8cb7bda8b7575fcf048185ba2bed463">SARK_SIG_INT</a></div><div class="ttdeci">#define SARK_SIG_INT</div><div class="ttdoc">Used for SARK to APP signalling.</div><div class="ttdef"><b>Definition:</b> sark.h:770</div></div>
+<div class="ttc" id="asark_8h_html_af848793a9b2d4e9ec085572513370ec9"><div class="ttname"><a href="sark_8h.html#af848793a9b2d4e9ec085572513370ec9">SARK_MSG_INT</a></div><div class="ttdeci">#define SARK_MSG_INT</div><div class="ttdoc">Used for SARK to APP messaging.</div><div class="ttdef"><b>Definition:</b> sark.h:769</div></div>
 <div class="ttc" id="aspinnaker_8h_html_a5b54d10e21fcb49a0672c0212179600ca17487a178a53e1db4d365f9a55e2fed2"><div class="ttname"><a href="spinnaker_8h.html#a5b54d10e21fcb49a0672c0212179600ca17487a178a53e1db4d365f9a55e2fed2">SOFTWARE_INT</a></div><div class="ttdeci">@ SOFTWARE_INT</div><div class="ttdoc">Used only for local software interrupt generation.</div><div class="ttdef"><b>Definition:</b> spinnaker.h:356</div></div>
 <div class="ttc" id="aspinnaker_8h_html_a5b54d10e21fcb49a0672c0212179600ca7db46b6d08cd7733f042fb63832749b9"><div class="ttname"><a href="spinnaker_8h.html#a5b54d10e21fcb49a0672c0212179600ca7db46b6d08cd7733f042fb63832749b9">DMA_DONE_INT</a></div><div class="ttdeci">@ DMA_DONE_INT</div><div class="ttdoc">Local DMA controller transfer complete.</div><div class="ttdef"><b>Definition:</b> spinnaker.h:367</div></div>
 <div class="ttc" id="aspinnaker_8h_html_a5b54d10e21fcb49a0672c0212179600ca98eb3a6f9f7094c28d8eed0aa4800e9f"><div class="ttname"><a href="spinnaker_8h.html#a5b54d10e21fcb49a0672c0212179600ca98eb3a6f9f7094c28d8eed0aa4800e9f">CC_MC_INT</a></div><div class="ttdeci">@ CC_MC_INT</div><div class="ttdoc">Local comms controller multicast packet received.</div><div class="ttdef"><b>Definition:</b> spinnaker.h:379</div></div>
@@ -1054,7 +1054,7 @@ Variables</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Oct 9 2023 10:13:33 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
+Generated on Wed Oct 11 2023 06:43:18 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
 </small></address>
 </body>
 </html>

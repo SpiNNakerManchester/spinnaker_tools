@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['zero_5fmac_0',['zero_mac',['../spinn__net_8c.html#a60ba9867665dc144f8e0c33a0fc9b8fb',1,'zero_mac():&#160;spinn_net.c'],['../spinn__net_8h.html#a60ba9867665dc144f8e0c33a0fc9b8fb',1,'zero_mac():&#160;spinn_net.c']]]
+  ['x_0',['x',['../scamp-3_8c.html#a7ce14bf4029a6d24e8c67abd1019dc49',1,'scamp-3.c']]]
 ];

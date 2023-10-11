@@ -38,6 +38,7 @@ var searchData=
   ['true_35',['TRUE',['../spin1__api_8h.html#aa8cecfc5c5c054d2875c03e77b7be15d',1,'spin1_api.h']]],
   ['tx_5fempty_5fmask_36',['TX_EMPTY_MASK',['../spin1__api__params_8h.html#acb5c29649337b14c5d6acafa13e18b98',1,'spin1_api_params.h']]],
   ['tx_5ffull_5fmask_37',['TX_FULL_MASK',['../spin1__api__params_8h.html#a08168d9862022c86f84ecb1afaa9d0c5',1,'spin1_api_params.h']]],
-  ['tx_5fpacket_5fqueue_5fsize_38',['TX_PACKET_QUEUE_SIZE',['../spin1__api__params_8h.html#affdc2771823cfd6bbd6d7722af52fc60',1,'spin1_api_params.h']]],
-  ['tx_5ftcr_5fmcdefault_39',['TX_TCR_MCDEFAULT',['../spin1__api__params_8h.html#aed27e951beff3526b1fda3db1a99205d',1,'spin1_api_params.h']]]
+  ['tx_5fnot_5ffull_5fmask_38',['TX_NOT_FULL_MASK',['../scamp-3_8c.html#aa7a8813a57ee073fed88fce9f5745110',1,'scamp-3.c']]],
+  ['tx_5fpacket_5fqueue_5fsize_39',['TX_PACKET_QUEUE_SIZE',['../spin1__api__params_8h.html#affdc2771823cfd6bbd6d7722af52fc60',1,'spin1_api_params.h']]],
+  ['tx_5ftcr_5fmcdefault_40',['TX_TCR_MCDEFAULT',['../spin1__api__params_8h.html#aed27e951beff3526b1fda3db1a99205d',1,'spin1_api_params.h']]]
 ];
