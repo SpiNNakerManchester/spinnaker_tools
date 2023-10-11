@@ -29,15 +29,10 @@
 #include "scamp.h"
 #include <scamp_spin1_sync.h>
 
-//! Multicast packet handler uses the FIQ VIC slot
-#define MC_SLOT SLOT_FIQ
-
-
 //------------------------------------------------------------------------------
 
 extern pkt_queue_t tx_pkt_queue;
 
-extern void p2p_region(uint data, uint key);
 extern void p2p_rcv_data(uint data, uint key);
 extern void p2p_rcv_ctrl(uint data, uint key);
 extern void nn_rcv_pkt(uint link, uint data, uint key);
@@ -52,9 +47,10 @@ extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 
 //------------------------------------------------------------------------------
 
-extern uchar v2p_map[MAX_CPUS];
 extern uint num_cpus;
 extern volatile uint do_sync;
+
+extern uint mc_ping_count[NUM_LINKS];
 
 static uint centi_ms;   //!< Counts 0 to 9 in ms
 
@@ -235,6 +231,21 @@ INT_HANDLER pkt_mc_int(void)
 #endif
 }
 
+INT_HANDLER test_mc_int(void) {
+    // When we receive a ping, respond
+    uint data = cc[CC_RXDATA];
+    uint key = cc[CC_RXKEY];
+
+    // This is a response to a ping
+    if (data < 6) {
+        mc_ping_count[data] += 1;
+    }
+
+#if MC_SLOT != SLOT_FIQ
+    vic[VIC_VADDR] = (uint) vic;
+#endif
+}
+
 //! \brief Nearest-neighbour packet received handler
 //!
 //! Delegates to one of:
@@ -279,7 +290,7 @@ INT_HANDLER pkt_p2p_int(void)
     key &= 0xffff;
 
     if (p2p_type == P2P_LEVEL) {
-        p2p_region(data, key);
+        // Do Nothing - no longer supported!
     } else if (p2p_type == P2P_DATA) {
         p2p_rcv_data(data, key);
     } else if (p2p_type == P2P_CTRL) {

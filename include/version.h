@@ -29,8 +29,8 @@
 #define __VERSION_H__
 
 //! SpiNNaker Low Level Tools Version: string
-#define SLLT_VER_STR    "3.4.2"
+#define SLLT_VER_STR    "4.0.0"
 //! SpiNNaker Low Level Tools Version: BCD
-#define SLLT_VER_NUM    0x030402
+#define SLLT_VER_NUM    0x040000
 
 #endif

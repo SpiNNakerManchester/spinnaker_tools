@@ -4,7 +4,27 @@
 #
 #-------------------------------------------------------------------------------
 
-Version 3.4.2 - TBD.
+Version 4.0.0 - Major improvements to boot and unused feature removal 
+ (some breaking changes)
+
+Changes:
+
+* SCAMP: Boot has been stablised so that machines should boot the same way each
+         time.  This adds some testing of the links using MC and P2P to make
+         sure that they all work as expected.  The P2P tables are also now
+         restricted to communications between the chips and Ethernet chips to
+         reduce the packets flying around during this process and therefore
+         making this more reliable.
+
+* SCAMP: Signals using the levels have been removed, so a signal with type
+         P2P will fail!
+         
+* SCAMP: A new command has been added to count cores in a given state on a  
+         board (CMD_COUNT).  This only works for a single state with a single 
+         app_id per call (as this is how the core state count was being used),
+         and should only be called on each Ethernet chip (though it will work
+         on other chips too, it might give misleading results).
+
 
 #-------------------------------------------------------------------------------
 

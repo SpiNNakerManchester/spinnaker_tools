@@ -48,7 +48,7 @@ mem_clk              v  0x26  %d    130         # SDRAM clock frequency (MHz)
 
 forward              C  0x28  %02x  0x3f        # NNP forward parameter
 retry                C  0x29  %02x  0           # NNP retry parameter
-peek_time            C  0x2a  %d    100         # Link peek/poke timeout (us)
+peek_time            C  0x2a  %d    200         # Link peek/poke timeout (us)
 led_period           C  0x2b  %d    1           # LED half-period (10ms units) or 1 to show load
 
 netinit_bc_wait      C  0x2c  %d    50          # Time to wait after last BC during netinit (*10 ms)

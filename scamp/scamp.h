@@ -54,6 +54,9 @@
 
 //! The key used for signal packets
 #define SCAMP_MC_SIGNAL_KEY 0xffff5555
+
+//! Multicast packet handler uses the FIQ VIC slot
+#define MC_SLOT SLOT_FIQ
 //! \}
 //------------------------------------------------------------------------------
 
@@ -65,7 +68,7 @@
 // BLOCK_COUNT * BYTE_COUNT must be < 32kB
 
 //! The number of blocks in the image to boot
-#define BLOCK_COUNT     31      // From 1-256
+#define BLOCK_COUNT     32      // From 1-32
 //! The number of words in a block (1kB)
 #define WORD_COUNT      256     // From 1-256
 //! The number of bytes in a block
@@ -229,8 +232,8 @@ enum scamp_nn_opcodes {
     NN_CMD_FFCS =  7,  //!< Flood fill core and region select
 
     NN_CMD_P2PB =  8,  //!< Hop count limited
-    NN_CMD_SP_9 =  9,  //!< Spare
-    NN_CMD_SP_10 = 10, //!< Spare
+    NN_CMD_LKSYN = 9,  //!< Synchronize opposite links
+    NN_CMD_NISYN = 10, //!< Synchronize Netinit level
     NN_CMD_BIFF =  11, //!< Board-info flood-fill (handled specially)
 
     NN_CMD_FBS =   12, //!< Filtered in FF code
@@ -242,7 +245,8 @@ enum scamp_nn_opcodes {
 enum scamp_nn_p2p_config_subcommands {
     P2PC_ADDR = 0, //!< Your P2P address is...
     P2PC_NEW = 1,  //!< (Broadcast) I/somebody just discovered/updated my/their P2P address
-    P2PC_DIMS = 2  //!< (Broadcast) The current best guess of P2P coordinates is...
+    P2PC_DIMS = 2, //!< (Broadcast) The current best guess of P2P coordinates is...
+    P2PC_RETH = 3  //!< Sending route back to 0, 0 or nearest Ethernet
 };
 //! \}
 
@@ -255,16 +259,19 @@ enum scamp_nn_p2p_config_subcommands {
 enum scamp_p2p_type_codes {
     P2P_DATA =  0,      //!< Data message
     P2P_CTRL =  1,      //!< Control message
-    P2P_LEVEL = 2       //!< Used for CountState requests
+    P2P_LEVEL = 2       //!< Currently unimplemented
 };
 
-//! Distinguish data/control packets in SDP/P2P
+//! Distinguish data/control packets in SDP/P2P (4 bits)
 enum scamp_p2p_control_message_codes {
     P2P_OPEN_REQ =      (1 << 24),      //!< Open channel request
     P2P_OPEN_ACK =      (2 << 24),      //!< Open channel acknowledge
     P2P_DATA_ACK =      (3 << 24),      //!< Data acknowledge
     P2P_CLOSE_REQ =     (4 << 24),      //!< Close channel request
-    P2P_CLOSE_ACK =     (5 << 24)       //!< Close channel acknowledge
+    P2P_CLOSE_ACK =     (5 << 24),      //!< Close channel acknowledge
+    P2P_PING =          (6 << 24),      //!< Ping from a neighbor
+    P2P_COUNT_REQ =     (7 << 24),      //!< Count state request
+    P2P_COUNT_RESP =    (8 << 24)       //!< Count state response
 };
 
 #define P2P_DEF_SQL     4               //!< Seq len = 2<sup>4</sup>
@@ -320,6 +327,10 @@ enum netinit_phase_e {
     //! Send Board-info flood-fill messages to disable all known iffy links,
     //! cores and chips.
     NETINIT_PHASE_BIFF,
+    //! Construct the P2P routing tables for Ethernet chips (more critical)
+    NETINIT_PHASE_P2P_TABLE_ETH,
+    //! Construct the P2P routing tables for return to Ethernet (next critical)
+    NETINIT_PHASE_P2P_TABLE_R_ETH,
     //! Construct the P2P routing tables
     NETINIT_PHASE_P2P_TABLE,
     //! Setting the Ethernet address
@@ -417,7 +428,9 @@ typedef struct {        // 64 bytes
 //! \{
 
 extern uint pkt_tx(uint tcr, uint data, uint key);
+extern uint pkt_tx_wait(uint tcr, uint data, uint key);
 extern void proc_byte_set(uint a1, uint a2);
+extern void proc_word_set(uint a1, uint a2);
 extern void msg_queue_insert(sdp_msg_t *msg, uint srce_ip);
 extern uint iptag_new(void);
 extern void assign_virt_cpu(uint phys_cpu);
@@ -431,7 +444,6 @@ extern void delegate(void);
 
 extern void compute_eth(void);
 extern void compute_level(uint p2p_addr);
-extern void level_config(void);
 extern void ff_nn_send(uint key, uint data, uint fwd_rty, uint log);
 extern void biff_nn_send(uint data);
 extern void nn_cmd_biff(uint x, uint y, uint data);
@@ -500,6 +512,8 @@ extern void reset_ap(uint virt_mask);
 
 extern uint p2p_send_msg(uint addr, sdp_msg_t *msg);
 extern void desc_init(void);
+extern uint p2p_send_ping(uint addr, uint link);
+extern void p2p_req_count(uint addr, uint app_id, uint state);
 //! \}
 
 //! \name SCAMP nearest-neighbour discovery protocol
@@ -524,8 +538,6 @@ extern uint scamp_debug(sdp_msg_t *msg, uint srce_ip);
 
 extern void boot_nn(uint hw_ver);
 
-//! \name SCAMP disable links function.  See scamp-3.c
-extern void disable_unidirectional_links(void);
 //! \}
 
 //------------------------------------------------------------------------------

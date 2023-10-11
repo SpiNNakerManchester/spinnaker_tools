@@ -60,7 +60,7 @@ typedef struct nn_desc_t {
     uchar block_num;            //!< Block number
 
     uchar app_id;               //!< AppID
-    uchar load;                 //!< Set if for us
+    uchar load;                 //!< Whether to load locally
     ushort srce_addr;           //!< P2P of sender
 
     ushort word_len;            //!< Number of words in block
@@ -69,7 +69,6 @@ typedef struct nn_desc_t {
     uint gidr_id;               //!< GIDR ID
 
     uint sum;                   //!< Checksum
-    uint region;                //!< Region
     uint cores;                 //!< Selected cores to load
     uint* aplx_addr;            //!< APLX block addr
     uint load_addr;             //!< Block load base
@@ -106,9 +105,6 @@ uint pkt_buf_max;
 //! Stored in SYSRAM so visible to all cores. Should only be updated by SCAMP
 uint *hop_table;
 
-//! Used for tracking signal dispatch
-level_t levels[4];
-
 //! What application (or at least AppID) is running on each core.
 uchar core_app[MAX_CPUS];
 //! Unused?
@@ -124,6 +120,19 @@ pkt_buf_t poke_pkt;
 
 //! delegate blacklisted monitor
 uint mon_del = 0;
+
+//! neighbour over link netinit level
+volatile uint neighbour_netinit_level[NUM_LINKS];
+
+//! neighbour over link links enabled
+volatile uint neighbour_links_enabled[NUM_LINKS];
+
+// External counts
+extern uint pp_ping_count[NUM_LINKS];
+extern uint mc_ping_count[NUM_LINKS];
+
+void send_nn_links(uint);
+
 //------------------------------------------------------------------------------
 
 //! Initialise the nearest-neighbour data structures
@@ -233,68 +242,6 @@ const signed char lx[6] = {-1, -1,  0, +1, +1,  0}; //!< X deltas, by link ID
 const signed char ly[6] = { 0, -1, -1,  0, +1, +1}; //!< Y deltas, by link ID
 
 //! \}
-
-//------------------------------------------------------------------------------
-
-//! \brief Given a P2P address, compute region addresses for each of the four
-//!     levels, updating the levels structure.
-//! \param[in] p2p_addr: The address to compute for.
-void compute_level(uint p2p_addr)
-{
-    uint x = p2p_addr >> 8;
-    uint y = p2p_addr & 255;
-
-    for (uint lvl = 0; lvl < 4; lvl++) {
-        uint shift = 6 - 2 * lvl;
-        uint mask = ~((4 << shift) - 1);
-        uint bit = ((x >> shift) & 3) + 4 * ((y >> shift) & 3);
-        uint nx = x & mask;
-        uint ny = y & mask;
-        levels[lvl].level_addr = (nx << 24) + ((ny + lvl) << 16) + (1 << bit);
-    }
-}
-
-//! \brief For all regions at all levels, find a working chip within each of
-//!     the 16 subregions and record its coordinates.
-void level_config(void)
-{
-    compute_level(p2p_addr);
-
-    for (uint level = 0; level < 4; level++) {
-        uint base = (levels[level].level_addr >> 16) & 0xfcfc;
-        uint shift = 6 - 2 * level;     // {6, 4, 2, 0};
-        uint width = (1 << shift);      // {64, 16, 4, 1};
-
-        for (uint ix = 0; ix < 4; ix++) {
-            for (uint iy = 0; iy < 4; iy++) {
-                uint num = ix + 4 * iy;
-                uint addr = ((ix << 8) + iy) << shift;
-
-                // Now search for a working chip within the subregion.
-
-                for (uint i = 0; i < (width * width); i++) {
-                    uint wx = i & ((1 << shift) - 1);
-                    uint wy = i >> shift;
-                    uint a = base + addr + (wx << 8) + wy;
-
-                    // Don't bother trying outside the scope of the system
-                    if (a >= p2p_dims || (a & 0xFF) >= (p2p_dims & 0xFF)) {
-                        continue;
-                    }
-
-                    uint link = rtr_p2p_get(a);
-
-                    if (link != 6) {
-                        levels[level].addr[num] = a;
-                        levels[level].valid[num] = 1;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-}
-
 
 //------------------------------------------------------------------------------
 
@@ -537,12 +484,10 @@ void biff_nn_send(uint data)
 
     key |= chksum_64(key, data);
 
-    uint forward = 0x07; // East, North-East, North only
-    for (uint link = 0; link < NUM_LINKS; link++) {
-        if (forward & (1 << link) & link_en) {
-            sark_delay_us(8);  // !! const
-            (void) pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
-        }
+    // East, North-East, North only
+    for (uint link = 0; link <= 2; link++) {
+        sark_delay_us(8);  // !! const
+        pkt_tx_wait(PKT_NN + PKT_PL + (link << 18), data, key);
     }
 }
 //! \}
@@ -609,6 +554,25 @@ void p2pc_dims_nn_send(uint arg1, uint arg2)
     }
 }
 
+//! \brief Transmit our address back to an Ethernet
+//! \param eth: The Ethernet address to send to
+//! \param arg2: unused
+void p2pc_reth_nn_send(uint eth, uint arg2)
+{
+    uint key = (NN_CMD_P2PC << 24) | (P2PC_RETH << 2);
+
+    // Identify the nearest Ethernet to get back to
+    uint data = (sv->p2p_addr << 16) | eth;
+
+    key |= chksum_64(key, data);
+
+    // Send to link that we know goes to the Ethernet address
+    uint eth_link = rtr_p2p_get(eth);
+    if (eth_link < NUM_LINKS) {
+        pkt_tx(PKT_NN + PKT_PL + (eth_link << 18), data, key);
+    }
+}
+
 //! \brief Transmit "P2PB" table generating packets
 //! \param arg1: unused
 //! \param arg2: unused
@@ -621,6 +585,7 @@ void p2pb_nn_send(uint arg1, uint arg2)
 
     key |= chksum_64(key, data);
 
+    // Send down the link used to get to 0,0 and nearest ethernet
     for (uint link = 0; link < NUM_LINKS; link++) {
         if (link_en & (1 << link)) {
             pkt_tx(PKT_NN + PKT_PL + (link << 18), data, key);
@@ -766,6 +731,40 @@ static void nn_rcv_p2pc_dims_pct(uint link, uint data, uint key)
     }
 }
 
+//! \brief A P2P address to link back to Ethernet has been sent
+//! \param[in] link: What link was the packet received on
+//! \param[in] data: The payload from the packet
+//! \param[in] key: The key from the packet
+static void nn_rcv_p2pc_reth_pct(uint link, uint data, uint key)
+{
+    // Get the address of the source
+    uint addr = data >> 16;
+
+    // Get the sources nearest Ethernet
+    uint eth_addr = data & 0xFFFF;
+
+    if ((hop_table[addr] & 0xFFFF) == 0xffff) {
+        sv->p2p_active++;
+    }
+
+    // We now know this is how we should be able to get to this chip from here.
+    // Note that the hop table in this direction is unimportant, so use 1 to
+    // show that we have had a packet from this chip.
+    rtr_p2p_set(addr, link);
+    hop_table[addr] = 1;
+
+    // If we are the Ethernet in question we can stop
+    if (sv->p2p_addr == eth_addr) {
+        return;
+    }
+
+    // Otherwise continue to send to the Ethernet if possible
+    uint eth_link = rtr_p2p_get(eth_addr);
+    if (eth_link < NUM_LINKS) {
+        pkt_tx(PKT_NN + PKT_PL + (eth_link << 18), data, key);
+    }
+}
+
 //! \brief Handle P2PC packet
 //!
 //! Delegates to:
@@ -789,6 +788,9 @@ void nn_rcv_p2pc_pct(uint link, uint data, uint key)
         break;
     case P2PC_DIMS:
         nn_rcv_p2pc_dims_pct(link, data, key);
+        break;
+    case P2PC_RETH:
+        nn_rcv_p2pc_reth_pct(link, data, key);
         break;
     }
 }
@@ -849,7 +851,7 @@ enum sig0_operations {
     SIG0_LEDS,          //!< Set LEDs (call sark_led_set())
     SIG0_GTP,           //!< Global Time Phase
     SIG0_ID,            //!< ID set/reset
-    SIG0_LEVEL,         //!< Trigger level_config()
+    SIG0_LEVEL,         //!< Trigger level_config() _(unimplemented)_
     SIG0_APP,           //!< Signal application (call signal_app())
     SIG0_TP,            //!< Router time phase period _(unimplemented)_
     SIG0_RST,           //!< Shut down APs _(unimplemented)_
@@ -893,14 +895,12 @@ uint nn_cmd_sig0(uint data)
         sark_word_set(nn_desc.id_set, (data & 1) ? 0xff : 0x00, 16);
         break;
 
-    case SIG0_LEVEL:
-        event_queue_proc((event_proc) level_config, 0, 0, PRIO_0);
-        break;
 
     case SIG0_APP:
         signal_app(data);
         break;
       /*
+    case SIG0_LEVEL:    // Level config (levels no longer implemented)
     case SIG0_TP:       // Router time phase period
     case SIG0_RST:      // Shut down APs
     case SIG0_DOWN:     // Minimum power mode
@@ -990,14 +990,21 @@ static uint nn_cmd_p2pb(uint id, uint data, uint link)
 
     uint table_hops = hop_table[addr] & 0xffff;
 
-    if ((netinit_phase == NETINIT_PHASE_P2P_TABLE) &&
-	    (addr != p2p_addr) &&
+    if ((addr != p2p_addr) &&
 	    (hops < table_hops) &&
 	    (link_en & (1 << link))) {
 
         // keep a count of P2P addresses we've heard of
         if (table_hops == 0xffff) {
             sv->p2p_active++;
+        } else {
+            // Don't use less reliable links over more reliable links
+            uint existing_link = rtr_p2p_get(addr);
+            if (pp_ping_count[existing_link] + mc_ping_count[existing_link] >
+                    pp_ping_count[link] + mc_ping_count[link]) {
+                data |= P2PB_STOP_BIT;
+                return data;
+            }
         }
 
         hop_table[addr] = (id << 24) + hops;
@@ -1005,13 +1012,18 @@ static uint nn_cmd_p2pb(uint id, uint data, uint link)
         rtr_p2p_set(addr, link);
 
         if (hops >= 0x3FF) {
+            // Stop sending
             data |= P2PB_STOP_BIT;
+            return data;
         }
-    } else {
-        data |= P2PB_STOP_BIT;
+
+        // Continue, with hops = hops + 1
+        return data + 1;
     }
 
-    return data + 1;
+    // Not applicable, so stop sending
+    data |= P2PB_STOP_BIT;
+    return data;
 }
 
 
@@ -1026,7 +1038,6 @@ static uint nn_cmd_p2pb(uint id, uint data, uint link)
 static void nn_cmd_ffs(uint data, uint key)
 {
     nn_desc.aplx_addr = sv->sdram_sys;
-    nn_desc.region = data;
     nn_desc.id = (key >> 17) & 127;     // 8 bits (LSB zero)
     nn_desc.block_len = key >> 8;       // 8 bits
     nn_desc.block_count = 0;            // 8 bits
@@ -1039,16 +1050,6 @@ static void nn_cmd_ffs(uint data, uint key)
     nn_desc.cores = 0;
     nn_desc.last_ffcs = 0;
 
-    uint mask = nn_desc.region & 0xffff;
-    uint region = nn_desc.region >> 16;
-    uint level = region & 3;
-
-    if ((mask == 0) ||
-            (((levels[level].level_addr >> 16) == region)) &&
-            (levels[level].level_addr & mask)) {
-        nn_desc.load = 1;
-    }
-
     nn_desc.state = FF_ST_EXBLK;
 }
 
@@ -1058,12 +1059,6 @@ static void nn_cmd_ffs(uint data, uint key)
 //! \return 1 if the packet should not be propagated further
 static uint nn_cmd_ffcs(uint data, uint key)
 {
-    // Select cores to flood-fill to
-    // Determine if we're in the region specified by the packet
-    uint mask = data & 0xffff;
-    uint region = data >> 16;
-    uint level = region & 3;
-
     // Extract the cores from the key.
     uint cores = key & 0x0003ffff;
 
@@ -1075,15 +1070,11 @@ static uint nn_cmd_ffcs(uint data, uint key)
     }
     nn_desc.last_ffcs = id;
 
-    if ((mask == 0) ||
-            (((levels[level].level_addr >> 16) == region)) &&
-            (levels[level].level_addr & mask)) {
-        // We're in the region, so ensure that load is set
-        nn_desc.load = 1;
+    // Ensure that load is set
+    nn_desc.load = 1;
 
-        // And include the cores that we wish to load
-        nn_desc.cores |= cores;
-    }
+    // And include the cores that we wish to load
+    nn_desc.cores |= cores;
 
     return 0;
 }
@@ -1384,23 +1375,31 @@ void nn_rcv_biff_pct(uint link, uint data, uint key)
     key &= 0x0fffffff;
     key |= chksum_64(key, data);
 
-    // Schedule packet for forwarding
-    pkt_buf_t *pkt = pkt_buf_get();
-
-    if (pkt == NULL) { // !! ??
-        sw_error(SW_OPT);
-        return;
+    for (uint lnk = 0; lnk < NUM_LINKS; lnk++) {
+        if (lnk != link) {
+            sark_delay_us(8);  // !! const
+            pkt_tx_wait(PKT_NN + PKT_PL + (lnk << 18), data, key);
+        }
     }
 
-    pkt->fwd = 0x3e; // Don't return to sender...
-    pkt->delay = 0; // Not sent more than once so no delay needed
-    pkt->link = link;
+    send_nn_links(link_en);
+}
 
-    pkt_t tp = {PKT_NN + PKT_PL, data, key};
-    pkt->pkt = tp;
+void send_nn_netinit(uint netinit_level) {
+    uint key = NN_CMD_NISYN << 24;
+    key |= chksum_64(key, netinit_level);
 
-    if (!timer_schedule_proc(proc_pkt_bc, (uint) pkt, 1, 8)) {
-        sw_error(SW_OPT);
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        pkt_tx(PKT_NN + PKT_PL + (link << 18), netinit_level, key);
+    }
+}
+
+void send_nn_links(uint links_enabled) {
+    uint key = NN_CMD_LKSYN << 24;
+    key |= chksum_64(key, links_enabled);
+
+    for (uint link = 0; link < NUM_LINKS; link++) {
+        pkt_tx(PKT_NN + PKT_PL + (link << 18), links_enabled, key);
     }
 }
 
@@ -1421,12 +1420,18 @@ void nn_rcv_pkt(uint link, uint data, uint key)
     uint cmd = (key >> 24) & 15;
     uint id = (key >> 1) & 127;
 
-    // NN_CMD_BIFF and NN_CMD_P2PC are handled separately
+    // These commands are handled separately as forward/retry is not the same
     if (cmd == NN_CMD_BIFF) {
         nn_rcv_biff_pct(link, data, key);
         return;
     } else if (cmd == NN_CMD_P2PC) {
         nn_rcv_p2pc_pct(link, data, key);
+        return;
+    } else if (cmd == NN_CMD_NISYN) {
+        neighbour_netinit_level[link] = data & 0xFF;
+        return;
+    } else if (cmd == NN_CMD_LKSYN) {
+        neighbour_links_enabled[link] = data & 0x3F;
         return;
     }
 

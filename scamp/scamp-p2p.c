@@ -152,6 +152,13 @@ const uint data_time = 500;
 //! Timeout on close acknowledge, in &mu;s
 const uint close_ack_time = 250;
 
+//! Reserved for performing P2P pings
+extern volatile uint pp_ping_count[NUM_LINKS];
+
+//! Reserved for performing a P2P count operation
+extern volatile uint p2p_count_result;
+extern volatile uint p2p_count_n_results;
+extern uint p2p_count_id;
 
 //------------------------------------------------------------------------------
 
@@ -246,14 +253,16 @@ static void p2p_send_data(uint data, uint addr)
 //! \param[in] ctrl: What message to send
 //! \param[in] addr: Where to send to
 //! \param[in] data: Payload of the message
-static void p2p_send_ctl(uint ctrl, uint addr, uint data)
+static uint p2p_send_ctl(uint ctrl, uint addr, uint data)
 {
     data |= ctrl;
     data |= chksum_32(data);
     uint r = pkt_tx(PKT_P2P_PL, data, addr + (P2P_CTRL << 16));
     if (r == 0) {
         p2p_stats[TX_FAIL]++;
+        return 0;
     }
+    return 1;
 }
 
 #endif // ASM
@@ -789,6 +798,52 @@ void p2p_rcv_data(uint data, uint addr)
     }
 }
 
+uint p2p_send_ping(uint addr, uint link) {
+    return p2p_send_ctl(P2P_PING, addr, link);
+}
+
+void p2p_ping(uint data, uint addr) {
+    // Count pings received from each neighbor
+    uint link = data & 0x7;
+    if (link < 6) {
+        pp_ping_count[link] += 1;
+    }
+}
+
+void p2p_req_count(uint addr, uint app_id, uint state) {
+    uint data = app_id | (state << 8) | (p2p_count_id << 16);
+    p2p_send_ctl(P2P_COUNT_REQ, addr, data);
+}
+
+uint n_cores_in_state(uint app_id, uint state) {
+    uint result = 0;
+    for (uint i = 1; i < num_cpus; i++) {
+        if ((core_app[i] == app_id) && (sv_vcpu[i].cpu_state == state)) {
+            result++;
+        }
+    }
+    return result;
+}
+
+void p2p_count(uint data, uint addr) {
+    uint app_id = data & 255;
+    uint state = (data >> 8) & 15;
+    uint count_id = (data >> 16) & 0xFF;
+
+    // "Return" the count
+    uint n_cores = n_cores_in_state(app_id, state);
+    uint return_data = n_cores | (count_id << 16);
+    p2p_send_ctl(P2P_COUNT_RESP, addr, return_data);
+}
+
+void p2p_count_resp(uint data, uint addr) {
+    uint count_id = (data >> 16) & 0xFF;
+    if (count_id == p2p_count_id) {
+        p2p_count_result += data & 31;
+        p2p_count_n_results += 1;
+    }
+}
+
 #ifdef ASM // !! Needs updating
 
 __asm void p2p_rcv_pkt(uint data, uint addr)
@@ -862,6 +917,12 @@ void p2p_rcv_ctrl(uint data, uint addr)
         p2p_close_req(data, addr);
     } else if (cmd == P2P_CLOSE_ACK >> 24) {
         p2p_close_ack(data, addr);
+    } else if (cmd == P2P_PING >> 24) {
+        p2p_ping(data, addr);
+    } else if (cmd == P2P_COUNT_REQ >> 24) {
+        p2p_count(data, addr);
+    } else if (cmd == P2P_COUNT_RESP >> 24) {
+        p2p_count_resp(data, addr);
     }
 }
 #endif

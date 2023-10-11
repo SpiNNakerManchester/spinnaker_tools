@@ -436,6 +436,7 @@ enum sark_scp_command_codes {
     CMD_FILL = 5,               //!< Fill memory
 
     // Following for monitors only
+    CMD_COUNT = 15,             //!< Count state of application processors
     CMD_REMAP = 16,             //!< Remap application core
     CMD_LINK_READ = 17,         //!< Read neighbour memory
     CMD_LINK_WRITE = 18,        //!< Write neighbour memory
