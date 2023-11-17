@@ -9521,10 +9521,17 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>return_msg</name>
+      <name>return_msg_err</name>
       <anchorfile>scamp-3_8c.html</anchorfile>
-      <anchor>a16d46d803b3eac8b95613bfe5ad11621</anchor>
-      <arglist>(sdp_msg_t *msg, uint rc)</arglist>
+      <anchor>a32b419e570c3f9aa0f1f1ebe397b5e66</anchor>
+      <arglist>(sdp_msg_t *msg, uint rc, uint extra_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>return_msg_ok</name>
+      <anchorfile>scamp-3_8c.html</anchorfile>
+      <anchor>ab73c326f4f143d8ac770fc6bf0ba973a</anchor>
+      <arglist>(sdp_msg_t *msg)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -10375,10 +10382,17 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>return_msg</name>
+      <name>return_msg_err</name>
       <anchorfile>scamp-cmd_8c.html</anchorfile>
-      <anchor>a16d46d803b3eac8b95613bfe5ad11621</anchor>
-      <arglist>(sdp_msg_t *msg, uint rc)</arglist>
+      <anchor>a32b419e570c3f9aa0f1f1ebe397b5e66</anchor>
+      <arglist>(sdp_msg_t *msg, uint rc, uint extra_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>return_msg_ok</name>
+      <anchorfile>scamp-cmd_8c.html</anchorfile>
+      <anchor>ab73c326f4f143d8ac770fc6bf0ba973a</anchor>
+      <arglist>(sdp_msg_t *msg)</arglist>
     </member>
     <member kind="function">
       <type>uint</type>

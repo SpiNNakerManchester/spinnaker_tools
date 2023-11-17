@@ -165,9 +165,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a1bb63f7e8f162957fe6ffd9bb0cfea85"><td class="memItemLeft" align="right" valign="top"><a id="a1bb63f7e8f162957fe6ffd9bb0cfea85" name="a1bb63f7e8f162957fe6ffd9bb0cfea85"></a>
 <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td><td class="memItemRight" valign="bottom"><b>n_cores_in_state</b> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> app_id, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> state)</td></tr>
 <tr class="separator:a1bb63f7e8f162957fe6ffd9bb0cfea85"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16d46d803b3eac8b95613bfe5ad11621"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a16d46d803b3eac8b95613bfe5ad11621">return_msg</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> rc)</td></tr>
-<tr class="memdesc:a16d46d803b3eac8b95613bfe5ad11621"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a result message to the main message queue.  <a href="scamp-cmd_8c.html#a16d46d803b3eac8b95613bfe5ad11621">More...</a><br /></td></tr>
-<tr class="separator:a16d46d803b3eac8b95613bfe5ad11621"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32b419e570c3f9aa0f1f1ebe397b5e66"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#a32b419e570c3f9aa0f1f1ebe397b5e66">return_msg_err</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> rc, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> extra_size)</td></tr>
+<tr class="memdesc:a32b419e570c3f9aa0f1f1ebe397b5e66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a result message to the main message queue.  <a href="scamp-cmd_8c.html#a32b419e570c3f9aa0f1f1ebe397b5e66">More...</a><br /></td></tr>
+<tr class="separator:a32b419e570c3f9aa0f1f1ebe397b5e66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab73c326f4f143d8ac770fc6bf0ba973a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scamp-cmd_8c.html#ab73c326f4f143d8ac770fc6bf0ba973a">return_msg_ok</a> (<a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *msg)</td></tr>
+<tr class="memdesc:ab73c326f4f143d8ac770fc6bf0ba973a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an OK result message to the main message queue.  <a href="scamp-cmd_8c.html#ab73c326f4f143d8ac770fc6bf0ba973a">More...</a><br /></td></tr>
+<tr class="separator:ab73c326f4f143d8ac770fc6bf0ba973a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0bbd7a775ceb56057027c41d296507f1"><td class="memItemLeft" align="right" valign="top"><a id="a0bbd7a775ceb56057027c41d296507f1" name="a0bbd7a775ceb56057027c41d296507f1"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>send_count_response</b> (<a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> msg_ptr, <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a> n_sent_packets)</td></tr>
 <tr class="separator:a0bbd7a775ceb56057027c41d296507f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -727,14 +730,14 @@ static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">
 
 </div>
 </div>
-<a id="a16d46d803b3eac8b95613bfe5ad11621" name="a16d46d803b3eac8b95613bfe5ad11621"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a16d46d803b3eac8b95613bfe5ad11621">&#9670;&#160;</a></span>return_msg()</h2>
+<a id="a32b419e570c3f9aa0f1f1ebe397b5e66" name="a32b419e570c3f9aa0f1f1ebe397b5e66"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32b419e570c3f9aa0f1f1ebe397b5e66">&#9670;&#160;</a></span>return_msg_err()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void return_msg </td>
+          <td class="memname">void return_msg_err </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *&#160;</td>
           <td class="paramname"><em>msg</em>, </td>
@@ -743,7 +746,13 @@ static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
-          <td class="paramname"><em>rc</em>&#160;</td>
+          <td class="paramname"><em>rc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">uint</a>&#160;</td>
+          <td class="paramname"><em>extra_size</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -758,6 +767,33 @@ static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">msg</td><td>The SCP message holding the reply. <em>Ownership transferred by this call.</em> </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">rc</td><td>The return code. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">extra_size</td><td>Size over and above error size </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ab73c326f4f143d8ac770fc6bf0ba973a" name="ab73c326f4f143d8ac770fc6bf0ba973a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab73c326f4f143d8ac770fc6bf0ba973a">&#9670;&#160;</a></span>return_msg_ok()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void return_msg_ok </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="sark_8h.html#structsdp__msg__t">sdp_msg_t</a> *&#160;</td>
+          <td class="paramname"><em>msg</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Adds an OK result message to the main message queue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">msg</td><td>The SCP message holding the reply. <em>Ownership transferred by this call.</em> </td></tr>
   </table>
   </dd>
 </dl>
@@ -852,7 +888,7 @@ static <a class="el" href="spinnaker_8h.html#a91ad9478d81a7aaf2593e8d9c3d06a14">
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 11 2023 06:44:44 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
+Generated on Fri Nov 17 2023 12:19:56 for spinnaker_tools by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.5
 </small></address>
 </body>
 </html>
