@@ -777,19 +777,33 @@ void swap_sdp_hdr(sdp_msg_t *msg)
 //! \param[in] msg: The SCP message holding the reply.
 //!     _Ownership transferred by this call._
 //! \param[in] rc: The return code.
-void return_msg(sdp_msg_t *msg, uint rc) // Zero "rc" skips updating cmd_hdr
+//! \param[in] extra_size: Size over and above error size
+void return_msg_err(sdp_msg_t *msg, uint rc, uint extra_size)
 {
     uint f = msg->flags;
 
     if (f & SDPF_REPLY) {
         msg->flags = f & ~SDPF_REPLY;
         swap_sdp_hdr(msg);
+        msg->cmd_rc = rc;
+        msg->length = 12 + extra_size;
+        msg_queue_insert(msg, 0);
+    } else {
+        sark_msg_free(msg);
+    }
+}
 
-        if (rc != 0) {
-            msg->cmd_rc = rc;
-            msg->length = 12;
-        }
+//! \brief Adds an OK result message to the main message queue.
+//! \param[in] msg: The SCP message holding the reply.
+//!     _Ownership transferred by this call._
+void return_msg_ok(sdp_msg_t *msg)
+{
+    uint f = msg->flags;
 
+    if (f & SDPF_REPLY) {
+        msg->flags = f & ~SDPF_REPLY;
+        swap_sdp_hdr(msg);
+        msg->cmd_rc = RC_OK;
         msg_queue_insert(msg, 0);
     } else {
         sark_msg_free(msg);
@@ -828,7 +842,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
     if (msg->dest_addr != msg->srce_addr && msg->dest_addr != p2p_addr &&
             (flags & SDPF_NR) == 0) {
         if (p2p_up == 0 || rtr_p2p_get(msg->dest_addr) == 6) {
-            return_msg(msg, RC_ROUTE);
+            return_msg_err(msg, RC_ROUTE, 0);
             return;
         }
 
@@ -836,7 +850,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
         if (rc == RC_OK) {
             sark_msg_free(msg);
         } else {
-            return_msg(msg, rc);
+            return_msg_err(msg, rc, 0);
         }
         return;
     }
@@ -849,7 +863,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
 
     uint dest_cpu = msg->dest_port & CPU_MASK;
     if (dest_cpu >= num_cpus) {
-        return_msg(msg, RC_CPU);
+        return_msg_err(msg, RC_CPU, 0);
         return;
     }
 
@@ -858,7 +872,7 @@ void proc_route_msg(uint arg1, uint srce_ip)
         if (rc == RC_OK) {
             sark_msg_free(msg);
         } else {
-            return_msg(msg, rc);
+            return_msg_err(msg, rc, 0);
         }
         return;
     }
@@ -871,10 +885,10 @@ void proc_route_msg(uint arg1, uint srce_ip)
         // message should not be sent at this time.
         if (len <= SDP_BUF_SIZE) {
             msg->length = 12 + len;  // !!const
-            return_msg(msg, 0);
+            return_msg_ok(msg);
         }
     } else {
-        return_msg(msg, RC_PORT);       // APs should not do this!!
+        return_msg_err(msg, RC_PORT, 0);       // APs should not do this!!
     }
 }
 

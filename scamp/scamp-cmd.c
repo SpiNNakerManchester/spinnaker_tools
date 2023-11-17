@@ -693,7 +693,8 @@ uint cmd_sync(sdp_msg_t *msg) {
 
 extern char eth_map[12][12];
 extern uint n_cores_in_state(uint app_id, uint state);
-extern void return_msg(sdp_msg_t *msg, uint rc);
+extern void return_msg_err(sdp_msg_t *msg, uint rc, uint extra_size);
+extern void return_msg_ok(sdp_msg_t *msg);
 volatile uint p2p_count_result;
 volatile uint p2p_count_n_results;
 uint p2p_count_id;
@@ -703,11 +704,10 @@ void send_count_response(uint msg_ptr, uint n_sent_packets) {
     count_in_progress = 0;
     sdp_msg_t *msg = (sdp_msg_t *) msg_ptr;
     msg->arg1 = p2p_count_result;
-    msg->length = sizeof(cmd_hdr_t);
     if (p2p_count_n_results < n_sent_packets) {
-        return_msg(msg, RC_P2P_NOREPLY);
+        return_msg_err(msg, RC_P2P_NOREPLY, 4);
     } else {
-        return_msg(msg, 0);
+        return_msg_ok(msg);
     }
 }
 
