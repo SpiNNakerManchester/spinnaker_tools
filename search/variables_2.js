@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['bc_5fmac_0',['bc_mac',['../spinn__net_8c.html#af171d36c38fbcb714f943cee285412e2',1,'bc_mac():&#160;spinn_net.c'],['../spinn__net_8h.html#af171d36c38fbcb714f943cee285412e2',1,'bc_mac():&#160;spinn_net.c']]],
+  ['bc_5fmac_0',['bc_mac',['../spinn__net_8c.html#af171d36c38fbcb714f943cee285412e2',1,'bc_mac:&#160;spinn_net.c'],['../spinn__net_8h.html#af171d36c38fbcb714f943cee285412e2',1,'bc_mac:&#160;spinn_net.c']]],
   ['biff_5fid_5fset_1',['biff_id_set',['../scamp-nn_8c.html#ab082317572856bf1d509d559034942af',1,'nn_desc_t']]],
   ['block_5fcount_2',['block_count',['../scamp-nn_8c.html#ac0a94c707e2fc033eb79b021d1a3bd4e',1,'nn_desc_t']]],
   ['block_5flen_3',['block_len',['../scamp-nn_8c.html#a21b71c178084b7ac68093a024f15fe69',1,'nn_desc_t']]],

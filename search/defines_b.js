@@ -8,7 +8,7 @@ var searchData=
   ['node_5fdly_5fns_5',['NODE_DLY_NS',['../scamp_8h.html#acb9f8fcbb74c4d411b39ed05ed24ae0b',1,'scamp.h']]],
   ['non_5froot_6',['NON_ROOT',['../spin1__api__params_8h.html#a26c31bf9a4f87dc346a7516b73d3d9e1',1,'spin1_api_params.h']]],
   ['ntohs_7',['ntohs',['../sark_8h.html#ae886ad5b9af398395184d1bf093481c6',1,'sark.h']]],
-  ['null_8',['NULL',['../spin1__api_8h.html#a070d2ce7b6bb7e5c05602aa8c308d0c4',1,'NULL():&#160;spin1_api.h'],['../spinnaker_8h.html#a070d2ce7b6bb7e5c05602aa8c308d0c4',1,'NULL():&#160;spinnaker.h']]],
+  ['null_8',['null',['../spin1__api_8h.html#a070d2ce7b6bb7e5c05602aa8c308d0c4',1,'NULL:&#160;spin1_api.h'],['../spinnaker_8h.html#a070d2ce7b6bb7e5c05602aa8c308d0c4',1,'NULL:&#160;spinnaker.h']]],
   ['num_5fcpus_9',['NUM_CPUS',['../spinnaker_8h.html#aa061b51fb2d77d7721a3882edf5cd84a',1,'spinnaker.h']]],
   ['num_5flinks_10',['NUM_LINKS',['../spinnaker_8h.html#adff16396e5bb9ba24b129ec2ab874031',1,'spinnaker.h']]],
   ['num_5fsdp_5fmsgs_11',['NUM_SDP_MSGS',['../sark_8h.html#ad6eff7d653ca04b3398d701c8182fb99',1,'sark.h']]],

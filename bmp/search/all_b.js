@@ -1,7 +1,7 @@
 var searchData=
 [
   ['net_5fmask_0',['net_mask',['../bmp_8h.html#a95855d9707c8c0a75fc3b0d89c91b698',1,'ip_data_t']]],
-  ['next_1',['next',['../bmp_8h.html#ada6b8682b4353b619c34fb400d059051',1,'sdp_msg_t::next()'],['../bmp_8h.html#a51ac1505b09e624cf35376047e992126',1,'event_t::next()']]],
+  ['next_1',['next',['../bmp_8h.html#ada6b8682b4353b619c34fb400d059051',1,'sdp_msg_t::next'],['../bmp_8h.html#a51ac1505b09e624cf35376047e992126',1,'event_t::next']]],
   ['nmi_5fhandler_2',['NMI_Handler',['../bmp__init_8c.html#a6ad7a5e3ee69cb6db6a6b9111ba898bc',1,'bmp_init.c']]],
   ['ntohs_3',['ntohs',['../bmp__net_8c.html#ae886ad5b9af398395184d1bf093481c6',1,'bmp_net.c']]],
   ['null_4',['NULL',['../bmp_8h.html#a070d2ce7b6bb7e5c05602aa8c308d0c4',1,'bmp.h']]],
