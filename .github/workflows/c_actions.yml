@@ -66,31 +66,31 @@ jobs:
         echo "PERL5LIB=$PWD/tools" >> $GITHUB_ENV
         echo "$PWD/tools" >> $GITHUB_PATH
     - name: "Lint sark code using Vera++"
-      uses: ./support/actions/vera
+      uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:
         base-dir: sark
     - name: "Lint scamp code using Vera++"
-      uses: ./support/actions/vera
+      uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:
         base-dir: scamp
         profile: spinnaker-asm
     - name: "Lint spin1_api code using Vera++"
-      uses: ./support/actions/vera
+      uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:
         base-dir: spin1_api
     - name: "Lint apps code using Vera++"
-      uses: ./support/actions/vera
+      uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:
         base-dir: apps
         options: -P max-line-length=200
     - name: "Lint bmp code using Vera++"
-      uses: ./support/actions/vera
+      uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:
         base-dir: bmp
         profile: spinnaker-asm
         options: -P max-line-length=200
     - name: "Lint include code using Vera++"
-      uses: ./support/actions/vera
+      uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:
         base-dir: include
         options: -P max-line-length=200 -P max-file-length=3000
