@@ -95,7 +95,7 @@ jobs:
         base-dir: include
         options: -P max-line-length=200 -P max-file-length=3000
     - name: Run rat copyright enforcement
-      uses: SpiNNakerManchester/SupportScripts/actions/check-copyrights@action-dash
+      uses: SpiNNakerManchester/SupportScripts/actions/check-copyrights@main
       with:
         config-file: rat_asl20.xml
     - name: Build documentation using doxygen
