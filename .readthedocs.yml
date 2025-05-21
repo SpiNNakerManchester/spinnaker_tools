@@ -20,7 +20,10 @@ build:
   jobs:
     build:
       html:
-        - doxygen
-        - cd bmp; doxygen
+        - doxygen ./Doxyfile
+        - cd bmp; doxygen ./Doxyfile
         - mkdir -p ${READTHEDOCS_OUTPUT}html/bmp
-        - cd doxybuild; cp -a tools/html/* $READTHEDOCS_OUTPUT/html/; cp -a bmp/html $READTHEDOCS_OUTPUT/html/bmp
+        - ls -l doxybuild/tools/html/
+        - ls -l doxybuild/bmp/html/
+        - cp -a doxybuild/tools/html/* $READTHEDOCS_OUTPUT/html/
+        - cp -a doxybuild/bmp/html/* $READTHEDOCS_OUTPUT/html/bmp
