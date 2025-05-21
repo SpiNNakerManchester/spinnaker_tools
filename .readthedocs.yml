@@ -22,4 +22,4 @@ build:
       html:
         - doxygen
         - cd bmp; doxygen
-        - cd doxybuild; rm -rf $READTHEDOCS_OUTPUT/html/bmp || true; cp -a ../tools/html/* $READTHEDOCS_OUTPUT/html/; cp -a ../bmp/html $READTHEDOCS_OUTPUT/html
+        - cd doxybuild; rm -rf $READTHEDOCS_OUTPUT/html/bmp || true; cp -a tools/html/* $READTHEDOCS_OUTPUT/html/; cp -a bmp/html $READTHEDOCS_OUTPUT/html/bmp
