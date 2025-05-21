@@ -21,8 +21,3 @@ sphinx:
   configuration: doc/source/conf.py
   builder: dirhtml
   fail_on_warning: false
-python:
-  install:
-    - requirements: doc/doc_requirements.txt
-    - method: pip
-      path: .
