@@ -26,7 +26,7 @@
 * * SC&MP &mdash; The SpiNNaker Control and Monitor Processor (see [scamp.h](scamp_8h.html)).
 *   This can be considered to be the operating system of SpiNNaker.
 * * Spin1 API &mdash; The SpiNNaker API runtime environment for simulation
-*   applications (see [spin1_api.h](spin1_api_8h.html)).
+*   applications (see [spin1_api.h](spin1__api_8h.html)).
 *
 * There is also the [Board Management Processor (BMP)][bmp], but this is
 * normally transparent to user code (and not usually addressable).

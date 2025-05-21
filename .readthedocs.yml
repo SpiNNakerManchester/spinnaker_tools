@@ -23,6 +23,5 @@ build:
         - doxygen ./Doxyfile
         - cd bmp; doxygen ./Doxyfile
         - mkdir -p ${READTHEDOCS_OUTPUT}html/bmp
-        - cat doxybuild/tools/html/index.html
         - cp -a doxybuild/tools/html/* $READTHEDOCS_OUTPUT/html/
         - cp -a doxybuild/bmp/html/* $READTHEDOCS_OUTPUT/html/bmp
