@@ -19,6 +19,7 @@ build:
     python: "3.10"
   jobs:
     build:
-      - doxygen
-      - cd bmp; doxygen
-      - cd doxybuild; rm -rf $READTHEDOCS_OUTPUT/html/bmp || true; cp -a ../tools/html/* $READTHEDOCS_OUTPUT/html/; cp -a ../bmp/html $READTHEDOCS_OUTPUT/html
+      html:
+        - doxygen
+        - cd bmp; doxygen
+        - cd doxybuild; rm -rf $READTHEDOCS_OUTPUT/html/bmp || true; cp -a ../tools/html/* $READTHEDOCS_OUTPUT/html/; cp -a ../bmp/html $READTHEDOCS_OUTPUT/html
