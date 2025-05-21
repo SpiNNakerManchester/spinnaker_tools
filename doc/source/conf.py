@@ -7,9 +7,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import subprocess
-subprocess.call('cd .. ; doxygen', shell=True)
-subprocess.call('cd ../bmp ; doxygen', shell=True)
-subprocess.call('cd ../doxybuild ; rm -rf deploy/bmp || true ; cp -a tools/html/* deploy ; cp -a bmp/html deploy/bmp')
+subprocess.call('cd ../.. ; doxygen', shell=True)
+subprocess.call('cd ../../bmp ; doxygen', shell=True)
+subprocess.call('cd ../../doxybuild ; rm -rf deploy/bmp || true ; cp -a tools/html/* deploy ; cp -a bmp/html deploy/bmp')
 
 project = 'spinnaker_tools'
 copyright = '%Y, The University of Manchester'
