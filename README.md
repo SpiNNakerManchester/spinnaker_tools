@@ -1,9 +1,8 @@
 [![C Actions](https://github.com/SpiNNakerManchester/spinnaker_tools/workflows/C%20Actions/badge.svg?branch=master)](https://github.com/SpiNNakerManchester/spinnaker_tools/actions?query=workflow%3A%22C+Actions%22+branch%3Amaster)
+[![Documentation Status](https://readthedocs.org/projects/spinnaker-tools/badge/?version=latest)](https://spinnaker-tools.readthedocs.io/en/latest/?badge=latest)
 
 SpiNNaker Low-Level Software Tools
 ==================================
-[<small>Automated Documentation Build</small>](http://spinnakermanchester.github.io/spinnaker_tools/)
-
 
 Installation and Setup
 ----------------------
@@ -210,3 +209,7 @@ Additional Resources
 
         sudo apt-get install perl-tk		# Ubuntu, etc
         sudo yum     install perl-Tk		# Fedora, etc
+        
+Documentation
+=============
+[SpiNNaker Tools C documentation](http://spinnaker-tools.readthedocs.io)
