@@ -19,14 +19,14 @@
 *
 * The SpiNNaker low-level software tools consist of:
 *
-* * spinnaker.h &mdash; The low-level definition of how to access the SpiNNaker
+* * [spinnaker.h](spinnaker_8h.html) &mdash; The low-level definition of how to access the SpiNNaker
 *   hardware
-* * SARK &mdash; The SpiNNaker Application Runtime Kernel (see sark.h).
+* * SARK &mdash; The SpiNNaker Application Runtime Kernel (see [sark.h](sark_8h.html)).
 *   This can be considered to be the C library of SpiNNaker.
-* * SC&MP &mdash; The SpiNNaker Control and Monitor Processor (see scamp.h).
+* * SC&MP &mdash; The SpiNNaker Control and Monitor Processor (see [scamp.h](scamp_8h.html)).
 *   This can be considered to be the operating system of SpiNNaker.
 * * Spin1 API &mdash; The SpiNNaker API runtime environment for simulation
-*   applications (see spin1_api.h).
+*   applications (see [spin1_api.h](spin1__api_8h.html)).
 *
 * There is also the [Board Management Processor (BMP)][bmp], but this is
 * normally transparent to user code (and not usually addressable).
