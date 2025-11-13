@@ -34,9 +34,6 @@ DEBUG := 1
 # Set to 1 if making a library (advanced!)
 LIB := 0
 
-# Set to 1 if building scamp (advanced!)
-SCAMP := 0
-
 # Prefix for GNU tool binaries
 GP := arm-none-eabi
 
@@ -60,7 +57,6 @@ SPINN_LIB_DIR = $(SPINN_DIRS)/lib
 SPINN_INC_DIR = $(SPINN_DIRS)/include
 SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
 SPINN_MAKE_LIB_DIR = $(SPINN_DIRS)/make
-SPINN_SCAMP_DIR = $(SPINN_DIRS)/scamp
 
 # ------------------------------------------------------------------------------
 # Tools
@@ -78,12 +74,8 @@ ifeq ($(GNU),1)
     OTIME := -Ofast
     ALL_WARNINGS := -Wall -Wextra
 
-    # scamp needs the stacks in a different address of DTCM
-    ifeq ($(SCAMP), 1)
-        LD_LNK := $(SPINN_SCAMP_DIR)/scamp-3.lnk
-    else
-        LD_LNK := $(SPINN_TOOLS_DIR)/sark.lnk
-    endif
+    LD_LNK := $(SPINN_TOOLS_DIR)/sark.lnk
+    LD_FLAG :=
 
     ifeq ($(LIB), 1)
         CFLAGS += -fdata-sections -ffunction-sections
@@ -110,11 +102,6 @@ else
     OSPACE := -Ospace
     OTIME := -Otime
     ALL_WARNINGS :=
-
-    # suppress linker warning about empty RW sections when building scamp
-    ifeq ($(SCAMP), 1)
-        LD_FLAG := --diag_suppress L6329W
-    endif
 
     ifeq ($(LIB), 1)
         CFLAGS += --split_sections

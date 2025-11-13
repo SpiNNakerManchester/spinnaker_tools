@@ -19,6 +19,8 @@ endif
 APP := scamp-3
 override THUMB := 1
 override SCAMP := 1
+override LD_LNK := scamp-3.lnk
+override LD_FLAG := --diag_suppress L6329W
 include $(SPINN_INSTALL_DIR)/make/spinnaker_tools.mk
 
 SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
@@ -72,11 +74,11 @@ endif
 
 # Create the sv structure from perl
 %.sv:
-	PERL5LIB=$(SPINN_TOOLS_DIR):$(PERL5LIB) perl $(CURRENT_DIR)/mksv > $@
+	PERL5LIB=$(SPINN_TOOLS_DIR):$(PERL5LIB) perl mksv > $@
 
 # Create the padded sark APLX
 $(BUILD_DIR)sark_pad.aplx: $(BUILD_DIR)sark.aplx
-	PERL5LIB=$(SPINN_TOOLS_DIR):$(PERL5LIB) perl $(CURRENT_DIR)/mkpad $< 3584 > $@
+	PERL5LIB=$(SPINN_TOOLS_DIR):$(PERL5LIB) perl mkpad $< 3584 > $@
 # Create the SARK elf file (uses own objects)
 $(BUILD_DIR)$(BUILD_DIR)sark.elf: $(BUILD_DIR)sark.o $(BUILD_DIR)sark_build.o $(SARKLIB)
 	$(MKDIR) $(BUILD_DIR)$(BUILD_DIR)
