@@ -14,6 +14,11 @@
 
 # Common includes for making SpiNNaker binaries
 
+# Find where we are now so we can keep track of where things are now
+# Note this will move when this is "installed" (but that happens elsewhere)
+CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SPINN_DIRS = $(abspath $(CURRENT_DIR)/..)
+
 # Set to 1 for GNU tools, 0 for ARM
 GNU := 1
 
@@ -34,11 +39,6 @@ SCAMP := 0
 
 # Prefix for GNU tool binaries
 GP := arm-none-eabi
-
-# If SPINN_DIRS is not defined, this is an error!
-ifndef SPINN_DIRS
-    $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker tools folder))
-endif
 
 ifndef APP_OUTPUT_DIR
     APP_OUTPUT_DIR := ./
@@ -137,6 +137,7 @@ LS := ls -l
 MKDIR := mkdir -p
 CP := cp
 MV := mv
+INSTALL := install
 
 ifeq ($(THUMB),1)
   CC := $(CC_THUMB)
@@ -163,7 +164,7 @@ $(APP_OUTPUT_DIR)%.aplx: $(BUILD_DIR)%.bin $(BUILD_DIR)%.nm
 # Create a list of the objects in the file using nm
 $(BUILD_DIR)%.nm: $(BUILD_DIR)%.elf
 	$(NM) $< > $@
-	
+
 # Create a binary file which is the concatenation of RO and RW sections
 $(BUILD_DIR)%.bin: $(BUILD_DIR)%.elf
 ifeq ($(GNU),1)

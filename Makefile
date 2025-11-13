@@ -22,6 +22,9 @@ all: $(DIRS)
 clean: $(DIRS)
 	@for d in $(DIRS); do $(MAKE) -C $$d GNU=$(GNU) clean || exit $$?; done
 
+install: $(DIRS) tools
+	@for d in $(DIRS) tools; do $(MAKE) -C $$d GNU=$(GNU) install || exit $$?; done
+
 doxygen:
 	doxygen
 	(cd bmp; exec doxygen)

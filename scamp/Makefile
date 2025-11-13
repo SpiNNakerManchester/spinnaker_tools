@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
 APP := scamp-3
 override THUMB := 1
 override SCAMP := 1
-include ../make/spinnaker_tools.mk
+include $(CURRENT_DIR)/../make/spinnaker_tools.mk
 
 SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
              scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o scamp-del.o \
@@ -41,7 +43,11 @@ $(APP).aplx: $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP)_boot.tab $(BUILD_DIR)$
 
 # Install the boot file (default)
 install: $(APP).boot
-	$(MV) $(APP).boot ../tools/boot/scamp.boot
+ifndef SPINN_INSTALL_DIR
+	$(error SPINN_INSTALL_DIR is not set.  Please define SPINN_INSTALL_DIR)
+endif
+	$(MKDIR) $(SPINN_INSTALL_DIR)/tools/boot
+	$(INSTALL) $(APP).boot $(SPINN_INSTALL_DIR)/tools/boot/scamp.boot
 
 # Install the aplx file (optional)
 install-aplx: $(APP).aplx
@@ -66,12 +72,11 @@ endif
 
 # Create the sv structure from perl
 %.sv:
-	perl mksv > $@
+	PERL5LIB=$(SPINN_TOOLS_DIR):$(PERL5LIB) perl $(CURRENT_DIR)/mksv > $@
 
 # Create the padded sark APLX
 $(BUILD_DIR)sark_pad.aplx: $(BUILD_DIR)sark.aplx
-	perl mkpad $< 3584 > $@
-
+	PERL5LIB=$(SPINN_TOOLS_DIR):$(PERL5LIB) perl $(CURRENT_DIR)/mkpad $< 3584 > $@
 # Create the SARK elf file (uses own objects)
 $(BUILD_DIR)$(BUILD_DIR)sark.elf: $(BUILD_DIR)sark.o $(BUILD_DIR)sark_build.o $(SARKLIB)
 	$(MKDIR) $(BUILD_DIR)$(BUILD_DIR)
@@ -103,7 +108,7 @@ endif
 $(BUILD_DIR)%.s: $(SPINN_INC_DIR)/%.h
 	$(MKDIR) $(BUILD_DIR)
 	$(MKDIR) $(BUILD_DIR)
-	h2asm $< > $@
+	$(SPINN_TOOLS_DIR)/h2asm $< > $@
 
 # Compile the interrupt service routines without THUMB
 $(BUILD_DIR)scamp-isr.o: scamp-isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h scamp.h
