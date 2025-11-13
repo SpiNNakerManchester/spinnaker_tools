@@ -38,6 +38,7 @@ jobs:
     - name: Build C code
       run: |
         make
+        make install
         make -C scamp
         make -C apps/hello
         make -C apps/hello_cpp
