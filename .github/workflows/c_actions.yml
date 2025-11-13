@@ -31,7 +31,7 @@ jobs:
         sudo apt-get -q install --fix-missing gcc-arm-none-eabi freeglut3-dev
     - name: Set C environment variables
       run: |
-        echo "SPINN_INSTALL_DIRS=$PWD/spinnaker_install" >> $GITHUB_ENV
+        echo "SPINN_INSTALL_DIR=$PWD/spinnaker_install" >> $GITHUB_ENV
         echo "SPINN_PATH=$PWD/spinnaker_install/tools/boot" >> $GITHUB_ENV
         echo "PERL5LIB=$PWD/spinnaker_install/tools" >> $GITHUB_ENV
         echo "$PWD/spinnaker_install/tools" >> $GITHUB_PATH
