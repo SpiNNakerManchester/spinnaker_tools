@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+ifndef SPINN_INSTALL_DIR
+	$(error SPINN_INSTALL_DIR is not set.  Please define SPINN_INSTALL_DIR to the location where the tools are installed)
+endif
 
 APP := scamp-3
 override THUMB := 1
 override SCAMP := 1
-include $(CURRENT_DIR)/../make/spinnaker_tools.mk
+include $(SPINN_INSTALL_DIR)/make/spinnaker_tools.mk
 
 SCAMP_OBJS = spinn_phy.o spinn_srom.o spinn_net.o scamp-app.o \
              scamp-p2p.o scamp-nn.o scamp-cmd.o scamp-boot.o scamp-isr.o scamp-del.o \
@@ -43,15 +45,13 @@ $(APP).aplx: $(BUILD_DIR)boot_aplx.bin $(BUILD_DIR)$(APP)_boot.tab $(BUILD_DIR)$
 
 # Install the boot file (default)
 install: $(APP).boot
-ifndef SPINN_INSTALL_DIR
-	$(error SPINN_INSTALL_DIR is not set.  Please define SPINN_INSTALL_DIR)
-endif
 	$(MKDIR) $(SPINN_INSTALL_DIR)/tools/boot
 	$(INSTALL) $(APP).boot $(SPINN_INSTALL_DIR)/tools/boot/scamp.boot
 
 # Install the aplx file (optional)
 install-aplx: $(APP).aplx
-	$(MV) $(APP).aplx ../tools/boot/scamp.aplx
+	$(MKDIR) $(SPINN_INSTALL_DIR)/tools/boot
+	$(INSTALL) $(APP).aplx $(SPINN_INSTALL_DIR)/tools/boot/scamp.aplx
 
 # Build the SCAMP elf file - uses scatter file on ARM
 $(BUILD_DIR)$(APP).elf: $(OBJS) $(SARK_LIB) $(BUILD_DIR)$(APP)_build.o $(APP).sct
