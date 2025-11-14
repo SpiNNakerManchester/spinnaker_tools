@@ -56,7 +56,6 @@ endif
 SPINN_LIB_DIR = $(SPINN_DIRS)/lib
 SPINN_INC_DIR = $(SPINN_DIRS)/include
 SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
-SPINN_MAKE_LIB_DIR = $(SPINN_DIRS)/make
 
 # ------------------------------------------------------------------------------
 # Tools
@@ -169,7 +168,7 @@ endif
 #  2) Create a list file
 $(BUILD_DIR)%.elf: $(OBJECTS) $(BUILD_DIR)%_build.o
 	# spinnaker_tools.mk elf
-	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
+	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(SPINN_LIBS) -o $@
 	$(OD) $(BUILD_DIR)$*.txt $@
 
 # Build sark_build.o
