@@ -168,7 +168,7 @@ endif
 #  2) Create a list file
 $(BUILD_DIR)%.elf: $(OBJECTS) $(BUILD_DIR)%_build.o
 	# spinnaker_tools.mk elf
-	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(SPINN_LIBS) -o $@
+	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBS) $(SPINN_LIBS) -o $@
 	$(OD) $(BUILD_DIR)$*.txt $@
 
 # Build sark_build.o
