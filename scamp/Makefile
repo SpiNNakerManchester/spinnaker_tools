@@ -12,13 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifndef SPINN_INSTALL_DIR
-	ifndef SPINN_DIRS
-	    $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS)
-	else
-	    SPINN_INSTALL_DIR := $(abspath $(SPINN_DIRS)/spinnaker_tools_install)
-	endif
-endif
+SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/spinnaker_tools_install, $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS))))
 
 APP := scamp-3
 override THUMB := 1
