@@ -107,7 +107,6 @@ $(BUILD_DIR)/sark_div0.o: sark_div0.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_D
 	$(CC) $(CFLAGS) -o $@ $<
 
 #-------------------------------------------------------------------------------
-$(info SPINN_DIRS is $(SPINN_DIRS))
 install: $(SARKLIB)
 	$(eval SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/spinnaker_tools_install, $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS)))))
 	$(MKDIR) $(SPINN_INSTALL_DIR)/lib
