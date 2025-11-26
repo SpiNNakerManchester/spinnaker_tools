@@ -110,7 +110,11 @@ $(BUILD_DIR)/sark_div0.o: sark_div0.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_D
 
 install: $(SARKLIB)
 ifndef SPINN_INSTALL_DIR
-	$(error SPINN_INSTALL_DIR is not set.  Please define SPINN_INSTALL_DIR)
+	ifndef SPINN_DIRS
+	    $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS)
+	else
+	    SPINN_INSTALL_DIR := $(abspath $(SPINN_DIRS)/spinnaker_tools_install)
+	endif
 endif
 	$(MKDIR) $(SPINN_INSTALL_DIR)/lib
 	$(MKDIR) $(SPINN_INSTALL_DIR)/include

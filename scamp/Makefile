@@ -13,7 +13,11 @@
 # limitations under the License.
 
 ifndef SPINN_INSTALL_DIR
-	$(error SPINN_INSTALL_DIR is not set.  Please define SPINN_INSTALL_DIR to the location where the tools are installed)
+	ifndef SPINN_DIRS
+	    $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS)
+	else
+	    SPINN_INSTALL_DIR := $(abspath $(SPINN_DIRS)/spinnaker_tools_install)
+	endif
 endif
 
 APP := scamp-3
