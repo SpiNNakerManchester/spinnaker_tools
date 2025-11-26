@@ -42,7 +42,7 @@ jobs:
       env:
         GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
         CFLAGS: -fdiagnostics-color
-        SPINN_INSTALL_DIR: ${GITHUB_WORKSPACE}/spinnaker_install"
+        SPINN_INSTALL_DIR: ${GITHUB_WORKSPACE}/spinnaker_install
 
     - name: Build C code with global install path
       run: |
@@ -56,7 +56,7 @@ jobs:
       env:
         GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
         CFLAGS: -fdiagnostics-color
-        SPINN_DIRS: ${GITHUB_WORKSPACE}/spinn_dirs"
+        SPINN_DIRS: ${GITHUB_WORKSPACE}/spinn_dirs
 
   verify:
     # Checks that don't need to compile things
