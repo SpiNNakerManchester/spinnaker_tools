@@ -29,9 +29,7 @@ PERL_SRC = $(PERL:%=$(CURRENT_DIR)/%)
 TOOLS_SRC = $(TOOLS:%=$(CURRENT_DIR)/%)
 
 install:
-ifndef SPINN_INSTALL_DIR
-	$(error SPINN_INSTALL_DIR is not set.  Please define SPINN_INSTALL_DIR)
-endif
+	$(eval SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/spinnaker_tools_install, $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS)))))
 	$(MKDIR) $(SPINN_INSTALL_DIR)/tools
 	$(MKDIR) $(SPINN_INSTALL_DIR)/tools/SpiNN
 	$(MKDIR) $(SPINN_INSTALL_DIR)/tools/boot

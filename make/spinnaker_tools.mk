@@ -17,7 +17,7 @@
 # Find where we are now so we can keep track of where things are now
 # Note this will move when this is "installed" (but that happens elsewhere)
 CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-SPINN_DIRS = $(abspath $(CURRENT_DIR)/..)
+SPINNAKER_TOOLS_DIRS = $(abspath $(CURRENT_DIR)/..)
 
 # Set to 1 for GNU tools, 0 for ARM
 GNU := 1
@@ -53,9 +53,9 @@ ifeq ($(DEBUG),1)
 .SECONDARY: $(BUILD_DIR)$(APP).elf
 endif
 
-SPINN_LIB_DIR = $(SPINN_DIRS)/lib
-SPINN_INC_DIR = $(SPINN_DIRS)/include
-SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
+SPINN_LIB_DIR = $(SPINNAKER_TOOLS_DIRS)/lib
+SPINN_INC_DIR = $(SPINNAKER_TOOLS_DIRS)/include
+SPINN_TOOLS_DIR = $(SPINNAKER_TOOLS_DIRS)/tools
 
 # ------------------------------------------------------------------------------
 # Tools

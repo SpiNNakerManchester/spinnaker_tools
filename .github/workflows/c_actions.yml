@@ -32,6 +32,7 @@ jobs:
 
     - name: Build C code
       run: |
+        make clean
         make
         make install
         make -C scamp
@@ -46,6 +47,7 @@ jobs:
 
     - name: Build C code with global install path
       run: |
+        make clean
         make
         make install
         make -C scamp
