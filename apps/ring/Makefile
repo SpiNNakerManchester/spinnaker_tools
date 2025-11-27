@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifndef SPINN_INSTALL_DIR
-	$(error SPINN_INSTALL_DIR is not set.  Please define SPINN_INSTALL_DIR to the location where the tools are installed)
-endif
+SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/spinnaker_tools_install, $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS))))
 
 APP := ring
 include $(SPINN_INSTALL_DIR)/make/app.make
