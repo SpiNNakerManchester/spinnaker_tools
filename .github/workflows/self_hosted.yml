@@ -37,13 +37,13 @@ jobs:
         token: ${{ secrets.SPINNAKER_PAT }}
         path: spinnaker_tools
 
-    - name: Checkout hardware tests
+    - name: Checkout SpiNNMan
       uses: actions/checkout@v5
       with:
         token: ${{ secrets.SPINNAKER_PAT }}
-        repository: SpiNNakerManchester/SpiNNaker_hardware_tests
-        path: hwtests
-    
+        repository: SpiNNakerManchester/SpiNMan
+        path: SpiNNMan
+
     - name: Install Python Dependencies
       id: python-install
       run: |
@@ -53,14 +53,13 @@ jobs:
         pip install --upgrade setuptools wheel
         pip install --upgrade pip
 
-    - name: Setup
+    - name: Install SpiNNMan in Editable Mode
       run: |
         source pyenv/bin/activate
-        pip install spalloc
-        mkdir -p ~/.config
-        echo "[spalloc]" > ~/.config/spalloc
-        echo "hostname = spinnaker.cs.man.ac.uk" >> ~/.config/spalloc
-        echo "owner = Jenkins" >> ~/.config/spalloc
+        pip install -e ./SpiNNMan
+
+    - name: Setup Environment Variables
+      run: |
         echo "SPINN_INSTALL_DIR=${GITHUB_WORKSPACE}/spinnaker_tools_install" >> $GITHUB_ENV
         echo "SPINN_PATH=${GITHUB_WORKSPACE}/hwtests/board_tests" >> $GITHUB_ENV
 
@@ -74,10 +73,14 @@ jobs:
         # Build base and SCAMP with gcc
         make GNU=1 -C spinnaker_tools install
         make GNU=1 -C spinnaker_tools/scamp
-        make GNU=1 -C spinnaker_tools/scamp install
 
-        # Boot a SpiNN-5 board
-        spalloc -c hwtests/board_tests/boot-bt {}
+        # Copy SCAMP to SpiNNMan
+        cp spinnaker_tools/scamp/scamp-3.boot \
+           ${GITHUB_WORKSPACE}/SpiNNMan/spinnman/messages/spinnaker_boot/boot_data/scamp.boot
+
+        # Get a machine and boot it
+        cd SpiNNMan/manual_scripts
+        python get_machine.py
 
     - name: Build and Test with ARM Compiler
       run: |
@@ -89,9 +92,12 @@ jobs:
         # Build base and SCAMP with gcc
         make GNU=0 -C spinnaker_tools install
         make GNU=0 -C spinnaker_tools/scamp
-        make GNU=0 -C spinnaker_tools/scamp install
+        make GNU=0 -C spinnaker_tools/bmp
 
-        # Boot a SpiNN-5 board
-        spalloc -c hwtests/board_tests/boot-bt {}
+        # Copy SCAMP to SpiNNMan
+        cp spinnaker_tools/scamp/scamp-3.boot \
+           ${GITHUB_WORKSPACE}/SpiNNMan/spinnman/messages/spinnaker_boot/boot_data/scamp.boot
 
-        make -C spinnaker_tools/bmp
+        # Get a machine and boot it
+        cd SpiNNMan/manual_scripts
+        python get_machine.py
