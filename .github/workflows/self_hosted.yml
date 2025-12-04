@@ -46,6 +46,7 @@ jobs:
 
     - name: Setup
       run: |
+        source pyenv/bin/activate
         pip install spalloc
         mkdir -p ~/.config
         echo "[spalloc]" > ~/.config/spalloc
@@ -56,28 +57,32 @@ jobs:
 
     - name: Build and Test with GCC
       run: |
-        // show compiler version
+        source pyenv/bin/activate
+
+        # show compiler version
         arm-none-eabi-gcc --version
 
-        // Build base and SCAMP with gcc
+        # Build base and SCAMP with gcc
         make GNU=1 -C spinnaker_tools install
         make GNU=1 -C spinnaker_tools/scamp
         make GNU=1 -C spinnaker_tools/scamp install
 
-        // Boot a SpiNN-5 board
+        # Boot a SpiNN-5 board
         spalloc -c hwtests/board_tests/boot-bt {}
 
     - name: Build and Test with ARM Compiler
       run: |
-        // show compiler version
+        source pyenv/bin/activate
+
+        # show compiler version
         armcc --vsn
 
-        // Build base and SCAMP with gcc
+        # Build base and SCAMP with gcc
         make GNU=0 -C spinnaker_tools install
         make GNU=0 -C spinnaker_tools/scamp
         make GNU=0 -C spinnaker_tools/scamp install
 
-        // Boot a SpiNN-5 board
+        # Boot a SpiNN-5 board
         spalloc -c hwtests/board_tests/boot-bt {}
 
         make -C spinnaker_tools/bmp
