@@ -1,0 +1,70 @@
+name: "Clone matching"
+description: "Clone the branch with a name matching that of the tests being done, or master if that doesn't exist"
+inputs:
+  repository:
+    description: The repository (or repositories on multiple lines) to clone
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - id: git_clone_matching
+      run: |
+        SAVEIFS=$IFS   # Save current IFS
+        IFS=$'\n'      # Change IFS to new line
+        REPOS=(${{ inputs.repository }}) # split to array
+        IFS=$SAVEIFS   # Restore IFS
+        # For each repositoty in the list
+        for (( i=0; i<${#REPOS[@]}; i++))
+        do
+          REPO=${REPOS[$i]}
+          echo "Testing branch of $REPO"
+          # for each pair $1 commit id and $2 full branch name
+          BRANCH=$(git ls-remote $REPO | awk '
+              BEGIN {
+                  id = "x"
+                  # The next line is a default signalling not found
+                  branch = "REMOTE_PARSE_FAILED"
+                  # In this repository it could be a branch or a tag
+                  # Full branch names of branches are in the format refs/heads/foobar
+                  target_branch = "refs/heads/" ENVIRON["GITHUB_REF_NAME"]
+                  # Full branch names of tags are in the format refs/tags/foobar
+                  target_tag = "refs/tags/" ENVIRON["GITHUB_REF_NAME"]
+              }
+              $2=="HEAD" {
+                  # Found the HEAD commit save its id to match below 
+                  # Note that the remote HEAD ref comes first
+                  id = $1
+              }
+              $1==id {
+                  # Find the full branch or tag name for the HEAD
+                  # Strip out the start to leave the short branch name
+                  sub(/refs\/(heads|tags)\//, "", $2)
+                  branch = $2
+                  # May be overwritten by the rule below; this is OK
+              }
+              $2==target_branch || $2==target_tag {
+                  # Found a commit with a matching full branch or tag name
+                  # save just the short name
+                  branch = ENVIRON["GITHUB_REF_NAME"]
+                  # Reset the ID to a non-hash so the rule to match it will not fire
+                  id = "x"
+              }
+              END {
+                  # return branch
+                  # AKA set $BRANCH to branch 
+                  print branch
+              }')
+          git clone --branch $BRANCH --single-branch --depth 1 $REPO
+          echo "Checked out branch $BRANCH of $REPO"
+        done
+      shell: bash
+
+# Notes:
+# Variable naming is different inside the awk equation and outside of it
+# Outside it is $GITHUB_REF_NAME Inside ENVIRON["GITHUB_REF_NAME"]
+
+# GITHUB_REF is the full name. example /ref/heads/foobar
+# GITHUB_REF_NAME is just branch nam. example foobar
+
+# Integration many be a branch while repositories may be tags or vice versa
+# The HEAD could be refs/heads/master or refs/heads/main ect

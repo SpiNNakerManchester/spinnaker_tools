@@ -37,12 +37,14 @@ jobs:
         token: ${{ secrets.SPINNAKER_PAT }}
         path: spinnaker_tools
 
-    - name: Checkout SpiNNMan
-      uses: actions/checkout@v5
+    - name: Clone Repositories to be tested
+      id: clone-repos
+      uses: ./.github/actions/clone_matching
       with:
-        token: ${{ secrets.SPINNAKER_PAT }}
-        repository: SpiNNakerManchester/SpiNNMan
-        path: SpiNNMan
+        repository: |
+          https://github.com/SpiNNakerManchester/SpiNNUtils.git
+          https://github.com/SpiNNakerManchester/SpiNNMachine.git
+          https://github.com/SpiNNakerManchester/SpiNNMan.git
 
     - name: Install Python Dependencies
       id: python-install
