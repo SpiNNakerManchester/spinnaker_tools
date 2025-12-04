@@ -46,7 +46,7 @@ jobs:
         path: hwtests
 
     - name: Setup
-      run:
+      run: |
         pip install spalloc
         mkdir ~/.config
         echo "[spalloc]" > ~/.config/spalloc
@@ -56,7 +56,7 @@ jobs:
         echo "SPINN_PATH=${GITHUB_WORKSPACE}/hwtests/board_tests" >> $GITHUB_ENV
 
     - name: Build and Test with GCC
-      run:
+      run: |
         // show compiler version
         arm-none-eabi-gcc --version
 
@@ -69,7 +69,7 @@ jobs:
         spalloc -c hwtests/board_tests/boot-bt {}
 
     - name: Build and Test with ARM Compiler
-      run:
+      run: |
         // show compiler version
         armcc --vsn
 
