@@ -39,7 +39,7 @@ jobs:
 
     - name: Clone Repositories to be tested
       id: clone-repos
-      uses: ./.github/actions/clone_matching
+      uses: ./spinnaker_tools/.github/actions/clone_matching
       with:
         repository: |
           https://github.com/SpiNNakerManchester/SpiNNUtils.git
