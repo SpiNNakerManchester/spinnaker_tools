@@ -95,23 +95,22 @@ jobs:
         cd SpiNNMan/manual_scripts
         python get_machine.py
 
-    # To be restored when ARM compiler licences are available
-    # - name: Build and Test with ARM Compiler
-    #   run: |
-    #     source pyenv/bin/activate
+    - name: Build and Test with ARM Compiler
+      run: |
+        source pyenv/bin/activate
 
-    #     # show compiler version
-    #     armcc --vsn
+        # show compiler version
+        armcc --vsn
 
-    #     # Build base and SCAMP with gcc
-    #     make GNU=0 -C spinnaker_tools install
-    #     make GNU=0 -C spinnaker_tools/scamp
-    #     make GNU=0 -C spinnaker_tools/bmp
+        # Build base and SCAMP with gcc
+        make GNU=0 -C spinnaker_tools install
+        make GNU=0 -C spinnaker_tools/scamp
+        make GNU=0 -C spinnaker_tools/bmp
 
-    #     # Copy SCAMP to SpiNNMan
-    #     cp spinnaker_tools/scamp/scamp-3.boot \
-    #        ${GITHUB_WORKSPACE}/SpiNNMan/spinnman/messages/spinnaker_boot/boot_data/scamp.boot
+        # Copy SCAMP to SpiNNMan
+        cp spinnaker_tools/scamp/scamp-3.boot \
+           ${GITHUB_WORKSPACE}/SpiNNMan/spinnman/messages/spinnaker_boot/boot_data/scamp.boot
 
-    #     # Get a machine and boot it
-    #     cd SpiNNMan/manual_scripts
-    #     python get_machine.py
+        # Get a machine and boot it
+        cd SpiNNMan/manual_scripts
+        python get_machine.py
