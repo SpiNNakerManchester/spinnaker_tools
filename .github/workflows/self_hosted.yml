@@ -61,6 +61,8 @@ jobs:
     - name: Install SpiNNMan in Editable Mode
       run: |
         source pyenv/bin/activate
+        pip install -e ./SpiNNUtils
+        pip install -e ./SpiNNMachine
         pip install -e ./SpiNNMan
 
     - name: Setup Environment Variables
