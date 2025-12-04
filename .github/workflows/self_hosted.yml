@@ -37,6 +37,9 @@ jobs:
         token: ${{ secrets.SPINNAKER_PAT }}
         path: spinnaker_tools
 
+    - name: See folders
+      run: ls -l $GITHUB_WORKSPACE
+
     - name: Clone Repositories to be tested
       id: clone-repos
       uses: ./spinnaker_tools/.github/actions/clone_matching
