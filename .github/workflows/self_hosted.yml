@@ -1,0 +1,84 @@
+# Copyright (c) 2020 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This workflow will install Python dependencies, run tests, lint and rat with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Self Hosted Tests
+
+on:
+  push:
+  schedule:
+    - cron: '0 1 * * 1-5'
+
+jobs:
+  integration_tests:
+    runs-on: self-hosted
+    # 24 * 60 minutes
+    timeout-minutes: 1440
+    container:
+        image: localhost:5000/python3.13:latest
+    steps:
+    - name: Checkout
+      id: checkout
+      uses: actions/checkout@v5
+      with:
+        token: ${{ secrets.SPINNAKER_PAT }}
+        path: spinnaker_tools
+
+    - name: Checkout hardware tests
+      uses: actions/checkout@v5
+      with:
+        token: ${{ secrets.SPINNAKER_PAT }}
+        repository: SpiNNakerManchester/SpiNNaker_hardware_tests
+        path: hwtests
+
+    - name: Setup
+      run:
+        pip install spalloc
+        mkdir ~/.config
+        echo "[spalloc]" > ~/.config/spalloc
+        echo "hostname = spinnaker.cs.man.ac.uk" >> ~/.config/spalloc
+        echo "owner = Jenkins" >> ~/.config/spalloc
+        echo "SPINN_INSTALL_DIR=${GITHUB_WORKSPACE}/spinnaker_tools_install" >> $GITHUB_ENV
+        echo "SPINN_PATH=${GITHUB_WORKSPACE}/hwtests/board_tests" >> $GITHUB_ENV
+
+    - name: Build and Test with GCC
+      run:
+        // show compiler version
+        arm-none-eabi-gcc --version
+
+        // Build base and SCAMP with gcc
+        make GNU=1 -C spinnaker_tools install
+        make GNU=1 -C spinnaker_tools/scamp
+        make GNU=1 -C spinnaker_tools/scamp install
+
+        // Boot a SpiNN-5 board
+        spalloc -c hwtests/board_tests/boot-bt {}
+
+    - name: Build and Test with ARM Compiler
+      run:
+        // show compiler version
+        armcc --vsn
+
+        // Build base and SCAMP with gcc
+        make GNU=0 -C spinnaker_tools install
+        make GNU=0 -C spinnaker_tools/scamp
+        make GNU=0 -C spinnaker_tools/scamp install
+
+        // Boot a SpiNN-5 board
+        spalloc -c hwtests/board_tests/boot-bt {}
+
+        make -C spinnaker_tools/bmp
