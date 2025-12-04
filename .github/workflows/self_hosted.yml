@@ -30,6 +30,10 @@ jobs:
     container:
         image: localhost:5000/python3.13:latest
     steps:
+    - name: Clean Self-Hosted Runner
+      if: always()
+      uses: eviden-actions/clean-self-hosted-runner@v1
+
     - name: Checkout
       id: checkout
       uses: actions/checkout@v5
