@@ -69,6 +69,8 @@ jobs:
       run: |
         echo "SPINN_INSTALL_DIR=${GITHUB_WORKSPACE}/spinnaker_tools_install" >> $GITHUB_ENV
         echo "SPINN_PATH=${GITHUB_WORKSPACE}/hwtests/board_tests" >> $GITHUB_ENV
+        echo "[Machine]" >> ~/.spinnman.cfg
+        echo "spalloc_server = https://${{ secrets.SPALLOC_USER }}:${{ secrets.SPALLOC_PASSWORD }}@spinnaker.cs.man.ac.uk/spalloc/" >> ~/.spinnman.cfg
 
     - name: Build and Test with GCC
       run: |
