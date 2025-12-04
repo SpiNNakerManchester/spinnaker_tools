@@ -43,6 +43,15 @@ jobs:
         token: ${{ secrets.SPINNAKER_PAT }}
         repository: SpiNNakerManchester/SpiNNaker_hardware_tests
         path: hwtests
+    
+    - name: Install Python Dependencies
+      id: python-install
+      run: |
+        pip install virtualenv
+        virtualenv pyenv
+        source pyenv/bin/activate
+        pip install --upgrade setuptools wheel
+        pip install --upgrade pip
 
     - name: Setup
       run: |
