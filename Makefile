@@ -15,6 +15,16 @@
 DIRS = sark spin1_api
 
 GNU = 1
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(dir $(MAKEFILE_PATH))
+
+ifndef SPINN_DIRS
+    $(error Should not be here as SPINN_DIRS exists for us)
+endif
+ifndef NEW_ENV_VAR
+    $(error Please set Environment variable NEW_ENV_VAR to $(CURRENT_DIR))
+endif
+$(error why here)
 
 all: $(DIRS)
 	@for d in $(DIRS); do $(MAKE) -C $$d GNU=$(GNU) || exit $$?; done
