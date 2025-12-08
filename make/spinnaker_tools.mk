@@ -14,6 +14,11 @@
 
 # Common includes for making SpiNNaker binaries
 
+# Find where we are now so we can keep track of where things are now
+# Note this will move when this is "installed" (but that happens elsewhere)
+CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SPINNAKER_TOOLS_DIRS = $(abspath $(CURRENT_DIR)/..)
+
 # Set to 1 for GNU tools, 0 for ARM
 GNU := 1
 
@@ -29,16 +34,8 @@ DEBUG := 1
 # Set to 1 if making a library (advanced!)
 LIB := 0
 
-# Set to 1 if building scamp (advanced!)
-SCAMP := 0
-
 # Prefix for GNU tool binaries
 GP := arm-none-eabi
-
-# If SPINN_DIRS is not defined, this is an error!
-ifndef SPINN_DIRS
-    $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker tools folder))
-endif
 
 ifndef APP_OUTPUT_DIR
     APP_OUTPUT_DIR := ./
@@ -56,11 +53,9 @@ ifeq ($(DEBUG),1)
 .SECONDARY: $(BUILD_DIR)$(APP).elf
 endif
 
-SPINN_LIB_DIR = $(SPINN_DIRS)/lib
-SPINN_INC_DIR = $(SPINN_DIRS)/include
-SPINN_TOOLS_DIR = $(SPINN_DIRS)/tools
-SPINN_MAKE_LIB_DIR = $(SPINN_DIRS)/make
-SPINN_SCAMP_DIR = $(SPINN_DIRS)/scamp
+SPINN_LIB_DIR = $(SPINNAKER_TOOLS_DIRS)/lib
+SPINN_INC_DIR = $(SPINNAKER_TOOLS_DIRS)/include
+SPINN_TOOLS_DIR = $(SPINNAKER_TOOLS_DIRS)/tools
 
 # ------------------------------------------------------------------------------
 # Tools
@@ -78,12 +73,8 @@ ifeq ($(GNU),1)
     OTIME := -Ofast
     ALL_WARNINGS := -Wall -Wextra
 
-    # scamp needs the stacks in a different address of DTCM
-    ifeq ($(SCAMP), 1)
-        LD_LNK := $(SPINN_SCAMP_DIR)/scamp-3.lnk
-    else
-        LD_LNK := $(SPINN_TOOLS_DIR)/sark.lnk
-    endif
+    LD_LNK := $(SPINN_TOOLS_DIR)/sark.lnk
+    LD_FLAG :=
 
     ifeq ($(LIB), 1)
         CFLAGS += -fdata-sections -ffunction-sections
@@ -111,11 +102,6 @@ else
     OTIME := -Otime
     ALL_WARNINGS :=
 
-    # suppress linker warning about empty RW sections when building scamp
-    ifeq ($(SCAMP), 1)
-        LD_FLAG := --diag_suppress L6329W
-    endif
-
     ifeq ($(LIB), 1)
         CFLAGS += --split_sections
         LD := armlink --partial
@@ -137,6 +123,7 @@ LS := ls -l
 MKDIR := mkdir -p
 CP := cp
 MV := mv
+INSTALL := install
 
 ifeq ($(THUMB),1)
   CC := $(CC_THUMB)
@@ -158,19 +145,19 @@ endif
 #  2) "ls" the APLX file
 $(APP_OUTPUT_DIR)%.aplx: $(BUILD_DIR)%.bin $(BUILD_DIR)%.nm
 	$(MKDIR) $(APP_OUTPUT_DIR)
-	$(SPINN_TOOLS_DIR)/mkaplx $(BUILD_DIR)$*.nm | $(CAT) - $(BUILD_DIR)$*.bin > $@
+	PERL5LIB=$(SPINN_TOOLS_DIR):$$PERL5LIB $(SPINN_TOOLS_DIR)/mkaplx $(BUILD_DIR)$*.nm | $(CAT) - $(BUILD_DIR)$*.bin > $@
 
 # Create a list of the objects in the file using nm
 $(BUILD_DIR)%.nm: $(BUILD_DIR)%.elf
 	$(NM) $< > $@
-	
+
 # Create a binary file which is the concatenation of RO and RW sections
 $(BUILD_DIR)%.bin: $(BUILD_DIR)%.elf
 ifeq ($(GNU),1)
 	$(OC) -O binary -j RO_DATA -j EX_DATA $< $(BUILD_DIR)RO_DATA.bin
 	$(OC) -O binary -j RW_DATA $< $(BUILD_DIR)RW_DATA.bin
 	ls -l $(BUILD_DIR)RO_DATA.bin
-	$(SPINN_TOOLS_DIR)/mkbin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin > $@
+	PERL5LIB=$(SPINN_TOOLS_DIR):$$PERL5LIB $(SPINN_TOOLS_DIR)/mkbin $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin > $@
 	$(RM) $(BUILD_DIR)RO_DATA.bin $(BUILD_DIR)RW_DATA.bin
 else
 	$(OC) --bin --output $@ $<
@@ -181,13 +168,13 @@ endif
 #  2) Create a list file
 $(BUILD_DIR)%.elf: $(OBJECTS) $(BUILD_DIR)%_build.o
 	# spinnaker_tools.mk elf
-	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBRARIES) $(SPINN_LIBS) -o $@
+	$(LD) $(LFLAGS) $(OBJECTS) $(BUILD_DIR)$*_build.o $(LIBS) $(SPINN_LIBS) -o $@
 	$(OD) $(BUILD_DIR)$*.txt $@
 
 # Build sark_build.o
 $(BUILD_DIR)%_build.c:
 	$(MKDIR) $(BUILD_DIR)
-	$(SPINN_TOOLS_DIR)/mkbuild $* > $@
+	PERL5LIB=$(SPINN_TOOLS_DIR):$$PERL5LIB $(SPINN_TOOLS_DIR)/mkbuild $* > $@
 
 $(BUILD_DIR)%.o: %.c
 	# spinnaker_tools.mk c

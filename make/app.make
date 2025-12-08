@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifndef SPINN_DIRS
-    $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker tools folder))
+ifndef SPINN_INSTALL_DIR
+	$(error SPINN_INSTALL_DIR is not set.  Please define SPINN_INSTALL_DIR to the location where the tools are installed)
 endif
 
 ifndef APP
@@ -24,7 +24,7 @@ ifndef OBJECTS
     OBJECTS = $(BUILD_DIR)$(APP).o
 endif
 
-include $(SPINN_DIRS)/make/spinnaker_tools.mk
+include $(SPINN_INSTALL_DIR)/make/spinnaker_tools.mk
 
 all: $(APP_OUTPUT_DIR)$(APP).aplx
 

@@ -29,15 +29,12 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -q install --fix-missing gcc-arm-none-eabi freeglut3-dev
-    - name: Set C environment variables
-      run: |
-        echo "SPINN_DIRS=$PWD" >> $GITHUB_ENV
-        echo "SPINN_PATH=$PWD/tools/boot" >> $GITHUB_ENV
-        echo "PERL5LIB=$PWD/tools" >> $GITHUB_ENV
-        echo "$PWD/tools" >> $GITHUB_PATH
+
     - name: Build C code
       run: |
+        make clean
         make
+        make install
         make -C scamp
         make -C apps/hello
         make -C apps/hello_cpp
@@ -46,6 +43,22 @@ jobs:
       env:
         GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
         CFLAGS: -fdiagnostics-color
+        SPINN_INSTALL_DIR: ${GITHUB_WORKSPACE}/spinnaker_install
+
+    - name: Build C code with global install path
+      run: |
+        make clean
+        make
+        make install
+        make -C scamp
+        make -C apps/hello
+        make -C apps/hello_cpp
+        make -C apps/life
+        make -C apps/pt_demo
+      env:
+        GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
+        CFLAGS: -fdiagnostics-color
+        SPINN_DIRS: ${GITHUB_WORKSPACE}/spinn_dirs
 
   verify:
     # Checks that don't need to compile things
@@ -61,10 +74,7 @@ jobs:
         path: support
     - name: Set C environment variables
       run: |
-        echo "SPINN_DIRS=$PWD" >> $GITHUB_ENV
-        echo "SPINN_PATH=$PWD/tools/boot" >> $GITHUB_ENV
-        echo "PERL5LIB=$PWD/tools" >> $GITHUB_ENV
-        echo "$PWD/tools" >> $GITHUB_PATH
+        echo "SPINN_INSTALL_DIRS=$PWD" >> $GITHUB_ENV
     - name: "Lint sark code using Vera++"
       uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:

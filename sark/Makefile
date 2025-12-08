@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
 # Makefile for SARK
 ifeq ($(GNU),1)
-    BUILD_DIR := ../build/gnu
+    BUILD_DIR := $(abspath $(CURRENT_DIR)/../build/gnu)
 else
-    BUILD_DIR := ../build/arm
+    BUILD_DIR := $(abspath $(CURRENT_DIR)/../build/arm)
 endif
 override LIB := 1
-include ../make/spinnaker_tools.mk
+include $(CURRENT_DIR)/../make/spinnaker_tools.mk
 
 SARKOPT := $(OSPACE)
 CFLAGS += -DSARK_API $(SARKOPT)
@@ -33,7 +35,7 @@ else
     AS_END := s
 endif
 
-SARKLIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
+SARKLIB := $(BUILD_DIR)/$(LIBNAME).a
 
 
 #-------------------------------------------------------------------------------
@@ -95,17 +97,22 @@ endif
 
 # SARK C sources
 
-$(BUILD_DIR)/%.o: %.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h $(SPINN_INC_DIR)/spin1_api.h
+$(BUILD_DIR)/%.o: %.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h
 	$(CC_THUMB) $(CFLAGS) -o $@ $<
-	
-$(BUILD_DIR)/sark_isr.o: sark_isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h $(SPINN_INC_DIR)/spin1_api.h
+
+$(BUILD_DIR)/sark_isr.o: sark_isr.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h
 	$(CC) $(CFLAGS) -o $@ $<
-	
+
 $(BUILD_DIR)/sark_div0.o: sark_div0.c $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 #-------------------------------------------------------------------------------
-
+install: $(SARKLIB)
+	$(eval SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/spinnaker_tools_install, $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS)))))
+	$(MKDIR) $(SPINN_INSTALL_DIR)/lib
+	$(MKDIR) $(SPINN_INSTALL_DIR)/include
+	$(INSTALL) -c -m644 $< $(SPINN_INSTALL_DIR)/lib
+	$(INSTALL) -c -m644 $(SPINN_INC_DIR)/version.h $(SPINN_INC_DIR)/spinnaker.h $(SPINN_INC_DIR)/sark.h $(SPINN_INC_DIR)/sark_cpp.h $(SPINN_INSTALL_DIR)/include
 clean:
 	$(RM) $(SARKLIB) $(SARKOBJ) $(SARK_ASM_OBJ)
 

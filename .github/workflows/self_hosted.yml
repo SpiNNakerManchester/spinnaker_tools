@@ -1,0 +1,119 @@
+# Copyright (c) 2025 The University of Manchester
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This workflow will install Python dependencies, run tests, lint and rat with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Self Hosted Tests
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  push:
+  schedule:
+    - cron: '0 1 * * 1-5'
+
+jobs:
+  integration_tests:
+    runs-on: self-hosted
+    # 24 * 60 minutes
+    timeout-minutes: 1440
+    container:
+        image: localhost:5000/python3.13:latest
+    steps:
+    - name: Clean Self-Hosted Runner
+      if: always()
+      uses: eviden-actions/clean-self-hosted-runner@v1
+
+    - name: Checkout
+      id: checkout
+      uses: actions/checkout@v5
+      with:
+        token: ${{ secrets.SPINNAKER_PAT }}
+        path: spinnaker_tools
+
+    - name: See folders
+      run: ls -l $GITHUB_WORKSPACE
+
+    - name: Clone Repositories to be tested
+      id: clone-repos
+      uses: ./spinnaker_tools/.github/actions/clone_matching
+      with:
+        repository: |
+          https://github.com/SpiNNakerManchester/SpiNNUtils.git
+          https://github.com/SpiNNakerManchester/SpiNNMachine.git
+          https://github.com/SpiNNakerManchester/SpiNNMan.git
+
+    - name: Install Python Dependencies
+      id: python-install
+      run: |
+        pip install virtualenv
+        virtualenv pyenv
+        source pyenv/bin/activate
+        pip install --upgrade setuptools wheel
+        pip install --upgrade pip
+
+    - name: Install SpiNNMan in Editable Mode
+      run: |
+        source pyenv/bin/activate
+        pip install -e ./SpiNNUtils
+        pip install -e ./SpiNNMachine
+        pip install -e ./SpiNNMan
+
+    - name: Setup Environment Variables
+      run: |
+        echo "SPINN_INSTALL_DIR=${GITHUB_WORKSPACE}/spinnaker_tools_install" >> $GITHUB_ENV
+        echo "SPINN_PATH=${GITHUB_WORKSPACE}/hwtests/board_tests" >> $GITHUB_ENV
+        echo "[Machine]" >> ~/.spinnman.cfg
+        echo "spalloc_server = https://${{ secrets.SPALLOC_USER }}:${{ secrets.SPALLOC_PASSWORD }}@spinnaker.cs.man.ac.uk/spalloc/" >> ~/.spinnman.cfg
+
+    - name: Build and Test with GCC
+      run: |
+        source pyenv/bin/activate
+
+        # show compiler version
+        arm-none-eabi-gcc --version
+
+        # Build base and SCAMP with gcc
+        make GNU=1 -C spinnaker_tools install
+        make GNU=1 -C spinnaker_tools/scamp
+
+        # Copy SCAMP to SpiNNMan
+        cp spinnaker_tools/scamp/scamp-3.boot \
+           ${GITHUB_WORKSPACE}/SpiNNMan/spinnman/messages/spinnaker_boot/boot_data/scamp.boot
+
+        # Get a machine and boot it
+        cd SpiNNMan/manual_scripts
+        python get_machine.py
+
+    - name: Build and Test with ARM Compiler
+      run: |
+        source pyenv/bin/activate
+
+        # show compiler version
+        armcc --vsn
+
+        # Build base and SCAMP with gcc
+        make GNU=0 -C spinnaker_tools install
+        make GNU=0 -C spinnaker_tools/scamp
+        make GNU=0 -C spinnaker_tools/bmp
+
+        # Copy SCAMP to SpiNNMan
+        cp spinnaker_tools/scamp/scamp-3.boot \
+           ${GITHUB_WORKSPACE}/SpiNNMan/spinnman/messages/spinnaker_boot/boot_data/scamp.boot
+
+        # Get a machine and boot it
+        cd SpiNNMan/manual_scripts
+        python get_machine.py

@@ -16,7 +16,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BOOT_OBJ = bmp_clock.o bmp_flash.o bmp_crc.o 
+CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SPINN_TOOLS_DIR = $(abspath $(CURRENT_DIR)/../tools)
+
+BOOT_OBJ = bmp_clock.o bmp_flash.o bmp_crc.o
 
 MAIN_OBJ = bmp_can.o bmp_net.o bmp_cmd.o bmp_event.o bmp_hw.o \
 	   bmp_io.o bmp_flash.o bmp_ssp.o bmp_crc.o bmp_eth.o bmp_i2c.o \
@@ -46,28 +49,28 @@ MV = /bin/mv
 all: bmp_main.elf bmp_boot.elf
 
 bmp_boot.elf: $(BOOT_OBJ) $(BOOT_SCT) bmp_boot.c
-	perl -pe "s/BUILD_DATE/time/e" bmp_boot.c > bmp_tmp.c
+	PERL5LIB=$(SPINN_TOOLS_DIR):$$PERL5LIB perl -pe "s/BUILD_DATE/time/e" bmp_boot.c > bmp_tmp.c
 	$(CC) $(CFLAGS) -o bmp_boot.o bmp_tmp.c
-	$(RM) bmp_tmp.c 
+	$(RM) bmp_tmp.c
 
 	$(LD) $(BOOT_LFLAGS) $(BOOT_OBJ) bmp_boot.o -o bmp_boot.elf
 	$(OBJDUMP) bmp_boot.elf -o bmp_boot.txt
 	$(OBJCOPY) --bin --output bin/bmp_boot bmp_boot.elf
-	perl sum.pl bin/bmp_boot bin/BOOT
+	PERL5LIB=$(SPINN_TOOLS_DIR):$$PERL5LIB perl sum.pl bin/bmp_boot bin/BOOT
 
 bmp_main.elf: $(MAIN_OBJ) $(MAIN_SCT) bmp_init.c
-	perl -pe "s/BUILD_DATE/time/e" bmp_init.c > bmp_tmp.c
+	PERL5LIB=$(SPINN_TOOLS_DIR):$$PERL5LIB perl -pe "s/BUILD_DATE/time/e" bmp_init.c > bmp_tmp.c
 	$(CC) $(CFLAGS) -o bmp_init.o bmp_tmp.c
-	$(RM) bmp_tmp.c 
+	$(RM) bmp_tmp.c
 
 	$(LD) $(MAIN_LFLAGS_H) $(MAIN_OBJ) bmp_init.o -o bmp_main.elf
 	$(OBJCOPY) --bin --output bin/bmp_main bmp_main.elf
-	perl sum.pl bin/bmp_main bin/PROGH
+	PERL5LIB=$(SPINN_TOOLS_DIR):$$PERL5LIB perl sum.pl bin/bmp_main bin/PROGH
 
 	$(LD) $(MAIN_LFLAGS_L) $(MAIN_OBJ) bmp_init.o -o bmp_main.elf
 	$(OBJDUMP) bmp_main.elf -o bmp_main.txt
 	$(OBJCOPY) --bin --output bin/bmp_main bmp_main.elf
-	perl sum.pl bin/bmp_main bin/PROGL
+	PERL5LIB=$(SPINN_TOOLS_DIR):$$PERL5LIB perl sum.pl bin/bmp_main bin/PROGL
 
 # bmp_boot.o: bmp_boot.c bmp.h
 # 	$(CC) $(CFLAGS) $<

@@ -12,20 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
 # Makefile for spin1_api
 ifeq ($(GNU),1)
-    BUILD_DIR := ../build/gnu
+    BUILD_DIR := $(abspath $(CURRENT_DIR)/../build/gnu)
 else
-    BUILD_DIR := ../build/arm
+    BUILD_DIR := $(abspath $(CURRENT_DIR)/../build/arm)
 endif
 override LIB := 1
-include ../make/spinnaker_tools.mk
+
+include $(CURRENT_DIR)/../make/spinnaker_tools.mk
 
 #-------------------------------------------------------------------------------
 
 APIOBJS := spin1_api.o spin1_isr.o
 APIOBJ := $(APIOBJS:%.o=$(BUILD_DIR)/%.o)
-HEADERS := spinnaker.h sark.h spin1_api.h spin1_api_params.h
+HEADERS := spin1_api.h spin1_api_params.h scamp_spin1_sync.h spin1_api_cpp.h
 HEADER := $(HEADERS:%.h=$(SPINN_INC_DIR)/%.h)
 
 ifeq ($(GNU),1)
@@ -34,7 +37,7 @@ else
     LIBNAME := spin1_api
 endif
 
-APILIB := $(SPINN_LIB_DIR)/$(LIBNAME).a
+APILIB := $(BUILD_DIR)/$(LIBNAME).a
 
 APIOPT := $(OSPACE)
 CFLAGS += $(APIOPT)
@@ -54,13 +57,19 @@ $(BUILD_DIR)/sark.o:
 
 # API
 
-$(BUILD_DIR)/spin1_api.o: spin1_api.c $(HEADER) 
+$(BUILD_DIR)/spin1_api.o: spin1_api.c $(HEADER)
 	$(CC_THUMB) $(CFLAGS) -o $@ $<
 
-$(BUILD_DIR)/spin1_isr.o: spin1_isr.c $(HEADER) 
+$(BUILD_DIR)/spin1_isr.o: spin1_isr.c $(HEADER)
 	$(CC) $(CFLAGS) -o $@ $<
 
 #-------------------------------------------------------------------------------
+install: $(APILIB)
+	$(eval SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/spinnaker_tools_install, $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS)))))
+	$(MKDIR) $(SPINN_INSTALL_DIR)/lib
+	$(MKDIR) $(SPINN_INSTALL_DIR)/include
+	$(INSTALL) -c -m644 $< $(SPINN_INSTALL_DIR)/lib
+	$(INSTALL) -c -m644 $(HEADERS:%.h=$(SPINN_INC_DIR)/%.h) $(SPINN_INSTALL_DIR)/include
 
 clean:
 	$(RM) $(APILIB) $(APIOBJ) $(BUILD_DIR)/sark.o
