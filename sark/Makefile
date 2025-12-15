@@ -35,8 +35,7 @@ else
     AS_END := s
 endif
 
-SARKLIB := $(BUILD_DIR)/$(LIBNAME).a
-
+SARKLIB := $(CURRENT_DIR)../lib/$(LIBNAME).a
 
 #-------------------------------------------------------------------------------
 

@@ -37,7 +37,7 @@ else
     LIBNAME := spin1_api
 endif
 
-APILIB := $(BUILD_DIR)/$(LIBNAME).a
+APILIB := $(CURRENT_DIR)../lib/$(LIBNAME).a
 
 APIOPT := $(OSPACE)
 CFLAGS += $(APIOPT)
