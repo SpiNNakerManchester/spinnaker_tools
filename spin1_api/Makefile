@@ -63,9 +63,13 @@ $(BUILD_DIR)/spin1_api.o: spin1_api.c $(HEADER)
 $(BUILD_DIR)/spin1_isr.o: spin1_isr.c $(HEADER)
 	$(CC) $(CFLAGS) -o $@ $<
 
+INSTALL_ERROR := spinnaker_tools install is only required if you are building in a temporary location.
+INSTALL_ERROR += In which case you must set the environment variable SPINN_INSTALL_DIR to where the install should go.
+INSTALL_ERROR += This environment variable must also exist for all higher level makes.
+
 #-------------------------------------------------------------------------------
 install: $(APILIB)
-	$(eval SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/spinnaker_tools_install, $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS)))))
+	$(eval SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(error $(INSTALL_ERROR)))))
 	$(MKDIR) $(SPINN_INSTALL_DIR)/lib
 	$(MKDIR) $(SPINN_INSTALL_DIR)/include
 	$(INSTALL) -c -m644 $< $(SPINN_INSTALL_DIR)/lib
