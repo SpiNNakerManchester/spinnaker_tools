@@ -112,7 +112,6 @@ INSTALL_ERROR += This environment variable must also exist for all higher level 
 
 install: $(SARKLIB)
 	$(eval SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(error $(INSTALL_ERROR)))))
-	#$(eval SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/spinnaker_tools_install, $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS)))))
 	$(MKDIR) $(SPINN_INSTALL_DIR)/lib
 	$(MKDIR) $(SPINN_INSTALL_DIR)/include
 	$(INSTALL) -c -m644 $< $(SPINN_INSTALL_DIR)/lib

@@ -11,7 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/spinnaker_tools_install, $(error SPINN_INSTALL_DIR or SPINN_DIRS is not set.  Please define SPINN_INSTALL_DIR or SPINN_DIRS))))
+ifndef SPINN_INSTALL_DIR:
+    CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+    # Use not installed version
+    SPINN_INSTALL_DIR = $(abspath $(CUR_DIR)/../..)
+endif
 
 APP := hello
 include $(SPINN_INSTALL_DIR)/make/app.make
