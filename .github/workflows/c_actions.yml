@@ -45,11 +45,10 @@ jobs:
         CFLAGS: -fdiagnostics-color
         SPINN_INSTALL_DIR: ${GITHUB_WORKSPACE}/spinnaker_install
 
-    - name: Build C code with global install path
+    - name: Build C code with no install path
       run: |
         make clean
         make
-        make install
         make -C scamp
         make -C apps/hello
         make -C apps/hello_cpp
