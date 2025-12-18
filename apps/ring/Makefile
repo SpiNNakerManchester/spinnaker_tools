@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifndef SPINN_INSTALL_DIR:
-    CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-    # Use not installed version
-    SPINN_INSTALL_DIR = $(abspath $(CUR_DIR)/../..)
-endif
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(abspath $(CUR_DIR)/../..)))
 
 APP := ring
 include $(SPINN_INSTALL_DIR)/make/app.make

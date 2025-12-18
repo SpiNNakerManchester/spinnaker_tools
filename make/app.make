@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifndef SPINN_INSTALL_DIR
-	$(error SPINN_INSTALL_DIR is not set.  Please define SPINN_INSTALL_DIR to the location where the tools are installed)
-endif
+CUR_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SPINN_INSTALL_DIR := $(strip $(if $(SPINN_INSTALL_DIR), $(SPINN_INSTALL_DIR), $(abspath $(CUR_DIR)/../..)))
 
 ifndef APP
     $(error APP is not defined.  Please rerun with APP=<app_name>)
