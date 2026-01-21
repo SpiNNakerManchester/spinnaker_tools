@@ -168,9 +168,9 @@ sub parse_cores
 sub sllt_version
 {
     my $version = "[unknown]";
-    return $version unless defined $ENV{SPINN_DIRS};
+    return $version unless defined $ENV{SPINN_INSTALL_DIR};
 
-    my $vf = "$ENV{SPINN_DIRS}/include/version.h";
+    my $vf = "$ENV{SPINN_INSTALL_DIR}/include/version.h";
     return $version unless -r $vf;
 
     open my $vh, "<", $vf or die;
@@ -191,7 +191,7 @@ sub sllt_version
 sub bmp_version
 {
     my $version = "[unknown]";
-    return $version unless defined $ENV{SPINN_DIRS};
+    return $version unless defined $ENV{SPINN_INSTALL_DIR};
 
     my $vf = "$ENV{SPINN_DIRS}/bmp/bmp.h";
     return $version unless -r $vf;
