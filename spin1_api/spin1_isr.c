@@ -547,3 +547,14 @@ INT_HANDLER sark_fiqsr(void)
 {
     sark_int(NULL);
 }
+
+INT_HANDLER signal_received_int(void) {
+    vic[VIC_SOFT_CLR] = (1 << SARK_SIG_INT);
+    if (callback[SIGNAL_RECEIVED].cback != NULL) {
+        schedule(SIGNAL_RECEIVED, event.signal, 0);
+    }
+}
+
+INT_HANDLER signal_received_fiqsr(void) {
+    callback[SIGNAL_RECEIVED].cback(event.signal, 0);
+}

@@ -60,7 +60,7 @@
 // ------------------------------------------------------------------------
 //! event-related parameters
 enum {
-    NUM_EVENTS =           8, //!< Count of possible events
+    NUM_EVENTS =           9, //!< Count of possible events
     MC_PACKET_RECEIVED =   0, //!< Multicast packet received
     DMA_TRANSFER_DONE =    1, //!< DMA transfer complete
     TIMER_TICK =           2, //!< Regular timer tick
@@ -68,7 +68,8 @@ enum {
     USER_EVENT =           4, //!< User-triggered interrupt
     MCPL_PACKET_RECEIVED = 5, //!< Multicast packet with payload received
     FR_PACKET_RECEIVED =   6, //!< Fixed route packet received
-    FRPL_PACKET_RECEIVED = 7  //!< Fixed route packet with payload received
+    FRPL_PACKET_RECEIVED = 7, //!< Fixed route packet with payload received
+    SIGNAL_RECEIVED =      8  //!< Signal received
 };
 
 //! Match events above to their VIC interrupts.  Indices must match!
@@ -80,7 +81,8 @@ static const uint VIC_EVENTS[] = {
     (1 << SOFTWARE_INT),      //!< 4. User-triggered interrupt
     (1 << CC_MC_INT),         //!< 5. Mulitcast packet with payload received
     (1 << CC_FR_INT),         //!< 6. Fixed route packet received
-    (1 << CC_FR_INT)          //!< 7. Fixed route packet with payload received
+    (1 << CC_FR_INT),         //!< 7. Fixed route packet with payload received
+    (1 << SARK_SIG_INT)       //!< 8. Signal received
 };
 
 // ------------------------------------------------------------------------
@@ -216,6 +218,11 @@ spin1_schedule_callback(callback_t cback, uint arg0, uint arg1, uint priority);
 uint spin1_trigger_user_event(uint arg0, uint arg1);
 // ------------------------------------------------------------------------
 
+//! \brief This function sends a signal to another core.
+//! \param[in] cpu_id: The ID of the core to send the signal to.
+//! \param[in] signal: The signal to send.  This must be one of SIG_USR0-3.
+//! \return #SUCCESS or #FAILURE
+uint spin1_send_signal(uint cpu_id, enum signal_e signal);
 
 // ------------------------------------------------------------------------
 //  data transfer functions
