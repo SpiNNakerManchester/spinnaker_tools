@@ -358,13 +358,16 @@ enum ethinit_phase_e {
 enum alloc_cmd_e {
     ALLOC_SDRAM,                //!< Allocate SDRAM
     FREE_SDRAM,                 //!< Free SDRAM
-    FREE_SDRAM_ID,              //!< Free DRAM by ID
+    FREE_SDRAM_ID,              //!< Free DRAM by app ID
     ALLOC_RTR,                  //!< Allocate Router
     FREE_RTR,                   //!< Free Router
     FREE_RTR_ID,                //!< Free Router by ID
     SDRAM_SPACE,                //!< Total free space & largest free block
     HEAP_TAG_PTR,               //!< Heap block from tag & ID
-    ALLOC_MAX=HEAP_TAG_PTR      //!< Maximum command
+    ALLOC_SYSRAM,               //!< Allocate system RAM
+    FREE_SYSRAM,                //!< Free system RAM
+    FREE_SYSRAM_ID,             //!< Free system RAM by app ID
+    ALLOC_MAX=FREE_SYSRAM_ID    //!< Maximum command
 };
 
 //------------------------------------------------------------------------------

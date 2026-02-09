@@ -516,12 +516,15 @@ uint cmd_sig(sdp_msg_t *msg)
 
 // op 0 - allocate SDRAM - arg2 = size, arg3 = tag
 // op 1 - free SDRAM - arg2 = ptr
-// op 2 - free SDRAM by ID
+// op 2 - free SDRAM by app ID
 // op 3 - allocate router - arg2 = count
 // op 4 - free router - arg2 = entry, arg3 = clear
 // op 5 - free router by ID - arg2 = clear
 // op 6 - return free bytes in SDRAM heap & largest block size
 // op 7 - return block point by AppID and Tag
+// op 8 - allocate System RAM - arg2 = size, arg3 = tag
+// op 9 - free System RAM - arg2 = ptr
+// op 10 - free System RAM by app ID
 
 //! \param[in,out] msg: SCP message, will be updated with result + payload
 //! \return The length of the payload of \p msg
@@ -572,6 +575,20 @@ uint cmd_alloc(sdp_msg_t *msg)
 
     case HEAP_TAG_PTR:
         msg->arg1 = (uint) sark_tag_ptr(msg->arg2 & 255, app_id);
+        break;
+
+    case ALLOC_SYSRAM:
+        msg->arg1 = (uint) sark_xalloc(sv->sysram_heap, msg->arg2, msg->arg3,
+        ALLOC_LOCK + ALLOC_ID + (app_id << 8) + extra_flag);
+        sv->app_data[app_id].clean = 0;
+        break;
+
+    case FREE_SYSRAM:
+        sark_xfree(sv->sysram_heap, (void*) msg->arg2, ALLOC_LOCK);
+        return 0;
+
+    case FREE_SYSRAM_ID:
+        msg->arg1 = sark_xfree_id(sv->sysram_heap, app_id, ALLOC_LOCK);
         break;
     }
 
