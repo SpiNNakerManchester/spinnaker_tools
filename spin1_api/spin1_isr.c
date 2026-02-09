@@ -548,13 +548,26 @@ INT_HANDLER sark_fiqsr(void)
     sark_int(NULL);
 }
 
+/*! \brief Signal interrupt handler.
+*
+*  This interrupt service routine is called when sark raises a custom interrupt
+*  in response to a packet being received. The routine simply clears the
+*  interrupt and schedules a callback to handle it, if set.
+*/
 INT_HANDLER signal_received_isr(void) {
     vic[VIC_SOFT_CLR] = (1 << SARK_SIG_INT);
     if (callback[SIGNAL_RECEIVED].cback != NULL) {
         schedule(SIGNAL_RECEIVED, event.signal, 0);
     }
+    vic[VIC_VADDR] = (uint) vic;
 }
 
+/*! \brief Signal interrupt handler (FIQ)
+*
+*  This interrupt service routine is called when sark raises a custom interrupt
+*  in response to a packet being received. The routine
+*/
 INT_HANDLER signal_received_fiqsr(void) {
+    vic[VIC_SOFT_CLR] = (1 << SARK_SIG_INT);
     callback[SIGNAL_RECEIVED].cback(event.signal, 0);
 }
