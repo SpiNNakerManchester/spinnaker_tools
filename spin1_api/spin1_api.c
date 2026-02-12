@@ -54,8 +54,7 @@ static uint user_int_select = 0;
 //! All VIC interrupts that are handled by the API
 static const uint ALL_HANDLED_INTERRUPTS =
         ((1 << TIMER1_INT) | (1 << SOFTWARE_INT) | (1 << CC_MC_INT) |
-         (1 << CC_FR_INT) | (1 << DMA_ERR_INT)  | (1 << DMA_DONE_INT) |
-         (1 << SARK_SIG_INT));
+         (1 << CC_FR_INT) | (1 << DMA_ERR_INT)  | (1 << DMA_DONE_INT));
 //! The highest priority selected
 static uint highest_priority = 0;
 
@@ -102,13 +101,6 @@ tx_packet_queue_t tx_packet_queue;
 //! \brief The pending user event callbacks to call.
 //! \details Registered by spin1_trigger_user_event()
 user_event_queue_t user_event_queue;
-// --------------
-
-// --------------
-/* signals */
-// --------------
-//! \brief The pending signal to raise.
-signal_queue_t signal_queue;
 // --------------
 
 // -----------------------
@@ -163,8 +155,6 @@ extern INT_HANDLER soft_int_fiqsr(void);
 //! \brief Interrupt handler for messages from SCAMP.
 extern INT_HANDLER sark_int_han(void);
 extern INT_HANDLER sark_fiqsr(void);
-extern INT_HANDLER signal_received_isr(void);
-extern INT_HANDLER signal_received_fiqsr(void);
 
 // ----------------------------
 /* intercore synchronisation */
@@ -335,10 +325,6 @@ static void configure_vic(uint enable_timer)
         sark_vec->fiq_vec = sark_fiqsr;
         fiq_select = (1 << CPU_INT);
         break;
-    case SIGNAL_RECEIVED:
-        sark_vec->fiq_vec = signal_received_fiqsr;
-        fiq_select = (1 << SARK_SIG_INT);
-        break;
     }
 
     // Move the SARK interrupt to chosen slot
@@ -368,10 +354,6 @@ static void configure_vic(uint enable_timer)
     // configure the software interrupt
     vic_vectors[SOFT_INT_PRIORITY]  = soft_int_isr;
     vic_controls[SOFT_INT_PRIORITY] = VIC_ENABLE_VECTOR | SOFTWARE_INT;
-
-    // configure the signal interrupt
-    vic_vectors[SIGNAL_PRIORITY]  = signal_received_isr;
-    vic_controls[SIGNAL_PRIORITY] = VIC_ENABLE_VECTOR | SARK_SIG_INT;
 
 #if USE_WRITE_BUFFER == TRUE
     /* configure the DMA error interrupt */
@@ -1526,39 +1508,6 @@ uint spin1_trigger_user_event(uint arg0, uint arg1)
 }
 /*
 *******/
-
-uint spin1_send_signal(uint cpu_id, enum signal_e signal) {
-    if (signal < SIG_USR0 || signal > SIG_USR3) {
-        return FAILURE;
-    }
-
-    uint dest = sv->v2p_map[cpu_id];
-    vcpu_t *vcpu = sv_vcpu + dest;
-
-    // Wait for the box to be idle if it isn't already
-    // Timeout using bottom 32 bits of clock_ms!
-    volatile uint *ms = (uint *) &sv->clock_ms;
-    uint start = *ms;
-    while (vcpu->mbox_ap_cmd != SHM_IDLE) {
-        if (*ms - start > 10) {
-            break;
-        }
-    }
-
-    // If the mailbox is still not free, exit
-    if (vcpu->mbox_ap_cmd != SHM_IDLE) {
-        return 0;
-    }
-
-    // Send the message
-    vcpu->mbox_ap_msg = (void *) signal;
-    vcpu->mbox_ap_cmd = SHM_SIGNAL;
-
-    // Interrupt the CPU to say the signal is there
-    sc[SC_SET_IRQ] = SC_CODE + (1 << dest);
-
-    return SUCCESS;
-}
 
 
 /*! \brief Runtime initialisation; called before the application program starts!

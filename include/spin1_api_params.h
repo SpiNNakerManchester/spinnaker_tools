@@ -182,9 +182,8 @@ enum spin1_api_vic_priorties {
     FR_READY_PRIORITY =    5,   //!< Fixed route message ready to receive
     CC_TMT_PRIORITY =      6,   //!< Comms controller timeout
     SOFT_INT_PRIORITY =    7,   //!< Software-driven interrupt
-    SIGNAL_PRIORITY =      8,   //!< User signal
 #if USE_WRITE_BUFFER == TRUE
-    DMA_ERR_PRIORITY =     9    //!< DMA error
+    DMA_ERR_PRIORITY =     8    //!< DMA error
 #endif
 };
 
@@ -270,24 +269,6 @@ typedef struct {
     //! Array holding event descriptors
     user_event_t queue[USER_EVENT_QUEUE_SIZE];
 } user_event_queue_t;
-
-// ----------
-/* signals */
-// ---------
-//! \brief Describes the parameters to pass to a signal
-typedef struct {
-    uint signal_type;            //!< The type of signal
-    uint cpu;                    //!< The CPU to send the signal to
-} signal_t;
-
-//! \brief The type of the fixed-capacity queue of signals.
-//! \details Implemented as a circular buffer.
-typedef struct {
-    uint start;                 //!< Index of first signal
-    uint end;                   //!< Index of last signal
-    //! Array holding signal descriptors
-    signal_t queue[USER_EVENT_QUEUE_SIZE];
-} signal_queue_t;
 
 // -----------------------
 /* scheduler/dispatcher */
