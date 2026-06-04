@@ -190,7 +190,9 @@ enum spin_lock_e {
     LOCK_API_ROOT,      //!< Spin1 API
     LOCK_SEMA,          //!< Sema access
     LOCK_HEAP,          //!< Heap in System / SDRAM
-    LOCK_RTR            //!< Router
+    LOCK_RTR,           //!< Router
+    LOCK_USR_MIN,       //!< First user lock
+    LOCK_USR_MAX = 31   //!< Last user lock (max 32 locks)
 };
 
 typedef enum spin_lock_e spin_lock; //!< Typedef for enum spin_lock_e
@@ -2647,7 +2649,7 @@ used.
 
 NONNULL void
 event_register_queue(event_proc proc, event_type event, vic_slot slot,
-	event_priority priority);
+    event_priority priority);
 
 /*!
 \brief Register an event_proc to be called when event processing is paused.
